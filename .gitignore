@@ -1,0 +1,35 @@
+# Node
+node_modules/
+.pnpm-store/
+.next/
+out/
+dist/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Env files (keep .env.example, ignore real .env)
+.env
+.env.local
+.env.*.local
+
+# Docker volumes (local)
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude local settings
+.claude/settings.local.json
+
+# Playbook reference files (not part of the project)
+files/
+files.zip
