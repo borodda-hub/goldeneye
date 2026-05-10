@@ -1,0 +1,74 @@
+[
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGM26",
+    "expiry_date": "2026-05-27",
+    "is_front_month": true
+  },
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGN26",
+    "expiry_date": "2026-06-25",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGQ26",
+    "expiry_date": "2026-07-29",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGU26",
+    "expiry_date": "2026-08-27",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGV26",
+    "expiry_date": "2026-09-28",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGX26",
+    "expiry_date": "2026-10-29",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGZ26",
+    "expiry_date": "2026-11-25",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGF27",
+    "expiry_date": "2026-12-29",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGG27",
+    "expiry_date": "2027-01-28",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGH27",
+    "expiry_date": "2027-02-25",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGJ27",
+    "expiry_date": "2027-03-29",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGK27",
+    "expiry_date": "2027-04-28",
+    "is_front_month": false
+  }
+]

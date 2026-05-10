@@ -1,0 +1,158 @@
+[
+  {
+    "instrument_symbol": "NG",
+    "name": "Cold Snap — Northeast 10 Days",
+    "shocks": [
+      { "type": "weather", "region": "northeast", "delta_temp_f": -12, "days": 10 },
+      { "type": "weather", "region": "midwest",   "delta_temp_f": -6,  "days": 7 }
+    ],
+    "result": {
+      "directional_pressure": "bullish",
+      "confidence": "medium",
+      "affected_timeframe": "1-3 weeks",
+      "expected_pct_range": { "low": 0.04, "high": 0.11 },
+      "assumptions": [
+        "Cold air mass persists for the full 10-day window without premature moderation",
+        "Production does not accelerate meaningfully to offset the demand increase",
+        "Storage inventory remains below the 5-year average heading into the event"
+      ],
+      "counterarguments": [
+        "Forecasts at 6-10 days carry substantial uncertainty; the cold snap may be shorter or less intense",
+        "If managed-money positioning is already long, price may not react as strongly to the fundamentals",
+        "LNG export demand could soften if European buyers reduce purchases in response to a price spike"
+      ],
+      "data_needed_to_validate": [
+        "NWS 6-10 day temperature anomaly map — update Thursday morning",
+        "EIA weekly storage report Thursday 10:30 ET",
+        "Daily dry gas production estimate from Platts or equivalent",
+        "Henry Hub basis vs. Transco Zone 6 — watches for Northeast demand pull"
+      ],
+      "narrative": "The scenario suggests a moderately bullish directional pressure on Henry Hub over a 1-to-3-week timeframe, with the primary driver being elevated residential and commercial heating demand in the Northeast and a secondary contribution from Midwest heating load. The expected percentage range of 4–11% reflects uncertainty about the intensity and duration of the cold event; forecast models at the 6-10 day horizon are less reliable than at shorter ranges. Contradicting this view is the possibility that managed-money positioning is already net long at elevated levels, which historically limits additional upside momentum. Validation requires confirmation from updated NWS anomaly maps and the next EIA storage report."
+    },
+    "created_at": "2026-04-03T14:22:00Z"
+  },
+  {
+    "instrument_symbol": "NG",
+    "name": "LNG Export Disruption — Gulf Coast 14 Days",
+    "shocks": [
+      { "type": "lng_export", "delta_bcfd": -2.1, "days": 14 }
+    ],
+    "result": {
+      "directional_pressure": "bearish",
+      "confidence": "medium",
+      "affected_timeframe": "2-4 weeks",
+      "expected_pct_range": { "low": -0.08, "high": -0.02 },
+      "assumptions": [
+        "The outage lasts the full 14 days without early restoration",
+        "Domestic demand is average for the season — no compensating cold weather demand",
+        "The gas that would have been exported remains in domestic circulation"
+      ],
+      "counterarguments": [
+        "Partial restoration within the first week would shrink the bearish impact considerably",
+        "If the outage is already widely known, price may have already adjusted",
+        "Any concurrent cold snap would offset or reverse the directional pressure"
+      ],
+      "data_needed_to_validate": [
+        "Operator communications or FERC filings confirming outage duration",
+        "LNG cargo tracking data showing reduced feedgas nominations",
+        "EIA storage report for evidence of reduced export pulls on inventory"
+      ],
+      "narrative": "A 2.1 Bcfd reduction in LNG feedgas demand over 14 days reads as moderately bearish for front-month Henry Hub prices, as the displaced gas adds incremental supply pressure to the domestic market. The directional pressure is contingent on weather remaining near seasonal norms; any concurrent cold event could neutralize or reverse the impact. The expected range of -2% to -8% is wide, reflecting uncertainty about how quickly the market prices in the restoration timeline. Managed-money positioning and storage levels at the time of the disruption are the key moderating variables."
+    },
+    "created_at": "2026-03-18T09:47:00Z"
+  },
+  {
+    "instrument_symbol": "NG",
+    "name": "Appalachian Production Freeze-Off",
+    "shocks": [
+      { "type": "weather",    "region": "northeast", "delta_temp_f": -18, "days": 7 },
+      { "type": "production", "delta_bcfd": -3.5,    "days": 7 }
+    ],
+    "result": {
+      "directional_pressure": "bullish",
+      "confidence": "high",
+      "affected_timeframe": "1-2 weeks",
+      "expected_pct_range": { "low": 0.07, "high": 0.22 },
+      "assumptions": [
+        "Wellhead freeze-offs occur at -18°F surface temperatures in Appalachian basin wells",
+        "Pipeline constraints prevent rapid rerouting of Midcontinent supply to the Northeast",
+        "The freeze-off lasts the full 7 days without interim thaw"
+      ],
+      "counterarguments": [
+        "Modern wellhead heating equipment reduces freeze-off risk relative to historical events",
+        "Higher current storage levels (relative to this scenario's baseline) dampen the price response",
+        "The 7-day duration is short enough that power generators may switch fuels before a significant storage draw"
+      ],
+      "data_needed_to_validate": [
+        "Real-time dry gas production estimates from Platts or BloombergNEF",
+        "Transcontinental Gas Pipe Line (Transco) Zone 5 and 6 daily nominations",
+        "NWS point forecasts for key Appalachian producing counties (Susquehanna, Tioga, Potter, PA)"
+      ],
+      "narrative": "This scenario combines a severe cold snap with physical production impairment, resulting in high-confidence bullish directional pressure over a 1-to-2-week window. The simultaneous heating demand surge and supply reduction create a self-reinforcing tightness that is more compelling than either factor alone. The expected range of 7–22% reflects the historical volatility of similar events; the upper bound assumes storage inventory is already below average and managed-money positioning adds momentum to the fundamental move. The primary counterargument is that modern wellhead infrastructure has reduced freeze-off risk since the most severe historical precedents."
+    },
+    "created_at": "2026-02-12T16:05:00Z"
+  },
+  {
+    "instrument_symbol": "NG",
+    "name": "Hurricane — Gulf Coast Production Disruption",
+    "shocks": [
+      { "type": "production",  "delta_bcfd": -5.0, "days": 5 },
+      { "type": "production",  "delta_bcfd": -2.0, "days": 14 },
+      { "type": "lng_export",  "delta_bcfd": -1.5, "days": 10 }
+    ],
+    "result": {
+      "directional_pressure": "bullish",
+      "confidence": "low",
+      "affected_timeframe": "1-4 weeks",
+      "expected_pct_range": { "low": -0.02, "high": 0.14 },
+      "assumptions": [
+        "The hurricane makes direct landfall in key Gulf Coast production areas",
+        "Offshore platforms require 5 days for evacuation and production shut-in",
+        "Post-storm production restoration follows a typical historical ramp profile"
+      ],
+      "counterarguments": [
+        "Hurricane impacts during summer typically coincide with lower-demand shoulder season, limiting the net effect",
+        "Storage is typically near seasonal highs in August–September, providing a buffer",
+        "Production restores faster than assumed if storm damage is limited to shutting in rather than physical destruction"
+      ],
+      "data_needed_to_validate": [
+        "National Hurricane Center track and intensity forecast",
+        "BSEE shut-in reports from Gulf of Mexico operators",
+        "Post-storm pipeline and LNG terminal damage assessment reports"
+      ],
+      "narrative": "Hurricane scenarios produce wide outcome ranges because the market's response depends critically on storm track, intensity, and the coincidence with demand conditions. This scenario suggests a modestly bullish directional pressure with low confidence, as the summer seasonal context — higher storage and lower heating demand — partially offsets the supply disruption. The -2% lower bound reflects the possibility that the market had already partially priced in weather risk before the storm made landfall. The 14% upper bound assumes direct infrastructure damage beyond a simple production shut-in."
+    },
+    "created_at": "2025-09-08T11:30:00Z"
+  },
+  {
+    "instrument_symbol": "NG",
+    "name": "Geopolitical Shock — European LNG Demand Spike",
+    "shocks": [
+      { "type": "lng_export", "delta_bcfd": 3.2,  "days": 21 },
+      { "type": "storage",    "delta_bcf": -45,   "days": 7 }
+    ],
+    "result": {
+      "directional_pressure": "bullish",
+      "confidence": "medium",
+      "affected_timeframe": "3-6 weeks",
+      "expected_pct_range": { "low": 0.06, "high": 0.18 },
+      "assumptions": [
+        "US LNG export infrastructure can absorb the incremental feedgas demand without operational constraints",
+        "The geopolitical disruption persists long enough for multiple LNG cargoes to reload before resolution",
+        "Domestic demand remains near seasonal norms — no concurrent cold weather event"
+      ],
+      "counterarguments": [
+        "US LNG export capacity is near physical limits; incremental feedgas demand may not translate to incremental throughput",
+        "If European buyers have contracted storage, spot demand may be less than the headline disruption implies",
+        "Resolution of the geopolitical event within the first week would limit the duration of demand pressure"
+      ],
+      "data_needed_to_validate": [
+        "Daily LNG cargo loading data from European AIS tracking services",
+        "Henry Hub basis vs. Title Transfer Facility (TTF) spread to verify arbitrage remains open",
+        "Weekly EIA storage report showing larger-than-normal draw attributable to export feedgas"
+      ],
+      "narrative": "A sustained increase in European LNG feedgas demand reads as moderately bullish for Henry Hub over a 3-to-6-week window, with the key transmission mechanism being an incremental draw on domestic storage inventory. The expected range of 6–18% is consistent with historical responses to similar demand-pull events. The primary risk to this view is US LNG physical capacity: if the terminals are already operating near nameplate capacity, the incremental demand translates to higher prices without additional cargo throughput. The TTF-Henry Hub spread is the most reliable real-time indicator of whether the arbitrage is open and driving actual export decisions."
+    },
+    "created_at": "2025-11-22T10:15:00Z"
+  }
+]

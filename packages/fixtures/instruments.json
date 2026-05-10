@@ -1,0 +1,17 @@
+[
+  {
+    "symbol": "NG",
+    "name": "Henry Hub Natural Gas",
+    "exchange": "NYMEX",
+    "asset_class": "commodity",
+    "currency": "USD",
+    "unit": "MMBtu",
+    "contract_size": 10000,
+    "tick_size": 0.001,
+    "metadata": {
+      "bloomberg_ticker": "NG1 Comdty",
+      "description": "NYMEX Henry Hub Natural Gas Futures",
+      "trading_hours": "Sunday–Friday 18:00–17:00 ET"
+    }
+  }
+]

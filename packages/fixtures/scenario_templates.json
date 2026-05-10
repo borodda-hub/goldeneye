@@ -1,0 +1,63 @@
+[
+  {
+    "id": "cold_snap_northeast",
+    "name": "Cold Snap — Northeast 10 Days",
+    "description": "Sustained Arctic air mass moves into the Northeast for 10 days, driving residential and commercial heating demand well above seasonal norms.",
+    "instrument": "NG",
+    "shocks": [
+      { "type": "weather", "region": "northeast", "delta_temp_f": -12, "days": 10 },
+      { "type": "weather", "region": "midwest",   "delta_temp_f": -6,  "days": 7 }
+    ]
+  },
+  {
+    "id": "lng_export_disruption",
+    "name": "LNG Export Disruption — Gulf Coast 14 Days",
+    "description": "A major Gulf Coast LNG terminal goes offline for maintenance or an unplanned outage, reducing export capacity significantly for two weeks.",
+    "instrument": "NG",
+    "shocks": [
+      { "type": "lng_export", "delta_bcfd": -2.1, "days": 14 }
+    ]
+  },
+  {
+    "id": "appalachia_freeze_off",
+    "name": "Appalachian Production Freeze-Off",
+    "description": "Extreme cold in key Appalachian producing regions causes wellhead freeze-offs, reducing dry gas production for roughly one week.",
+    "instrument": "NG",
+    "shocks": [
+      { "type": "weather",    "region": "northeast", "delta_temp_f": -18, "days": 7 },
+      { "type": "production", "delta_bcfd": -3.5,    "days": 7 }
+    ]
+  },
+  {
+    "id": "hurricane_gulf_coast",
+    "name": "Hurricane — Gulf Coast Production Disruption",
+    "description": "A major hurricane tracks through the Gulf of Mexico, forcing offshore platform evacuations and briefly disrupting pipeline infrastructure.",
+    "instrument": "NG",
+    "shocks": [
+      { "type": "production",  "delta_bcfd": -5.0, "days": 5 },
+      { "type": "production",  "delta_bcfd": -2.0, "days": 14 },
+      { "type": "lng_export",  "delta_bcfd": -1.5, "days": 10 }
+    ]
+  },
+  {
+    "id": "geopolitical_europe_demand",
+    "name": "Geopolitical Shock — European LNG Demand Spike",
+    "description": "A synthetic supply disruption in European pipeline infrastructure triggers a surge in spot LNG demand from European buyers, pulling more US LNG exports.",
+    "instrument": "NG",
+    "shocks": [
+      { "type": "lng_export", "delta_bcfd": 3.2,  "days": 21 },
+      { "type": "storage",    "delta_bcf": -45,   "days": 7 }
+    ]
+  },
+  {
+    "id": "heat_wave_national",
+    "name": "Heat Wave — National Cooling Demand Surge",
+    "description": "An early-season or late-season heat wave across multiple major population centers elevates power-sector gas burn beyond seasonal norms.",
+    "instrument": "NG",
+    "shocks": [
+      { "type": "weather", "region": "southeast",    "delta_temp_f": 10, "days": 12 },
+      { "type": "weather", "region": "south_central", "delta_temp_f": 8,  "days": 12 },
+      { "type": "weather", "region": "midwest",       "delta_temp_f": 7,  "days": 10 }
+    ]
+  }
+]

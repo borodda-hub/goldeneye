@@ -1,0 +1,53 @@
+[
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGM26",
+    "side": "long",
+    "size_contracts": 2,
+    "entry_price": 3.312,
+    "exit_price": 3.581,
+    "stop_loss": 3.10,
+    "take_profit": 3.65,
+    "status": "closed",
+    "opened_at": "2026-04-29T13:45:00Z",
+    "closed_at": "2026-05-07T14:22:00Z",
+    "rationale": "Storage deficit tracking 140 Bcf below 5-year average heading into withdrawal season with persistent cold weather risk in the Northeast. Entered long at market open after third consecutive above-seasonal storage withdrawal confirmed the thesis.",
+    "outcome_pnl": 5380.00,
+    "reflection": "Trade performed as hypothesized. The storage setup drove the move; managed-money positioning extended rather than liquidating as feared. Exited slightly below take-profit target — no regrets on the early close given the elevated positioning risk.",
+    "journal_ref_index": 0
+  },
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGK26",
+    "side": "short",
+    "size_contracts": 1,
+    "entry_price": 3.281,
+    "exit_price": 3.092,
+    "stop_loss": 3.40,
+    "take_profit": 3.05,
+    "status": "closed",
+    "opened_at": "2026-03-16T09:31:00Z",
+    "closed_at": "2026-03-21T15:04:00Z",
+    "rationale": "Three consecutive above-consensus EIA builds and stretched managed-money net longs at 1.8 standard deviations above 2-year seasonal average. Warm temperature outlook provides the near-term catalyst.",
+    "outcome_pnl": 1890.00,
+    "reflection": "Mean-reversion trade worked cleanly. The COT signal was the most differentiated factor. Should have held slightly longer toward the 3.05 target rather than taking profits at 3.09.",
+    "journal_ref_index": 2
+  },
+  {
+    "instrument_symbol": "NG",
+    "contract_code": "NGQ26",
+    "side": "long",
+    "size_contracts": 1,
+    "entry_price": 3.184,
+    "exit_price": null,
+    "stop_loss": 3.00,
+    "take_profit": 3.55,
+    "status": "open",
+    "opened_at": "2026-04-17T10:15:00Z",
+    "closed_at": null,
+    "rationale": "LNG export capacity ramp-up thesis: new Gulf Coast train approaching commercial operations, which should add ~0.8 Bcfd of feedgas demand by late June. Targeting summer injection season.",
+    "outcome_pnl": null,
+    "reflection": null,
+    "journal_ref_index": 1
+  }
+]
