@@ -1,10 +1,13 @@
-import { EMPTY_STATE } from "../../../lib/strings";
+import { getDashboardSummary } from "@/lib/api";
+import { DashboardShell } from "./DashboardShell";
+import type { DashboardSummary } from "./types";
 
-export default function DashboardPage() {
-	return (
-		<div className="flex flex-col gap-4">
-			<h1 className="text-xl font-semibold text-ink-1">Dashboard</h1>
-			<p className="text-sm text-ink-3">{EMPTY_STATE.dashboard}</p>
-		</div>
-	);
+export default async function DashboardPage() {
+  let initialData: DashboardSummary | null = null;
+  try {
+    initialData = (await getDashboardSummary("NG")) as DashboardSummary;
+  } catch {
+    // Backend offline — shell will retry client-side
+  }
+  return <DashboardShell initialData={initialData} />;
 }

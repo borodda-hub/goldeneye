@@ -12,14 +12,15 @@ interface Envelope {
 
 interface Props {
   envelope: Envelope;
+  defaultOpen?: boolean;
 }
 
 function isDirection(s: string): s is "bullish" | "bearish" | "neutral" {
   return s === "bullish" || s === "bearish" || s === "neutral";
 }
 
-export function SafetyEnvelopeNote({ envelope }: Props) {
-  const [open, setOpen] = useState(false);
+export function SafetyEnvelopeNote({ envelope, defaultOpen = false }: Props) {
+  const [open, setOpen] = useState(defaultOpen);
 
   return (
     <div className="text-xs text-ink-3 border border-line-1 rounded-md p-2">

@@ -22,17 +22,17 @@ export async function getDashboardSummary(symbol = "NG"): Promise<unknown> {
 
 // ── Chart ──────────────────────────────────────────────────────────────────
 export async function getChartBars(params: {
-  symbol?: string;
-  interval?: string;
-  start?: string;
-  end?: string;
+  contract_code?: string;
+  resolution?: string;
+  from?: string;
+  to?: string;
   limit?: number;
 }): Promise<unknown> {
   const q = new URLSearchParams();
-  if (params.symbol) q.set("symbol", params.symbol);
-  if (params.interval) q.set("interval", params.interval);
-  if (params.start) q.set("start", params.start);
-  if (params.end) q.set("end", params.end);
+  if (params.contract_code) q.set("contract_code", params.contract_code);
+  if (params.resolution) q.set("resolution", params.resolution);
+  if (params.from) q.set("from", params.from);
+  if (params.to) q.set("to", params.to);
   if (params.limit !== undefined) q.set("limit", String(params.limit));
   return apiFetch(`/v1/chart/bars?${q.toString()}`);
 }
