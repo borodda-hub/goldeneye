@@ -9,6 +9,7 @@ import {
   getDashboardSummary,
   getDataHealth,
   getScenarioTemplates,
+  getSignalHistory,
   listJournalEntries,
   listPaperTrades,
 } from "./api";
@@ -97,6 +98,14 @@ export function useChartBars(
     queryKey: queryKeys.chartBars(contractCode, resolution, from, to),
     queryFn: () => getChartBars({ contract_code: contractCode, resolution, from, to }),
     staleTime: resolution === "1m" ? 0 : 60_000,
+  });
+}
+
+export function useSignalHistory(symbol = "NG", limit = 25, status = "scored") {
+  return useQuery({
+    queryKey: ["signal", "history", symbol, limit, status],
+    queryFn: () => getSignalHistory({ symbol, limit, status }),
+    staleTime: 30_000,
   });
 }
 

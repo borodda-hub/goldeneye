@@ -39,7 +39,7 @@ async def run_all(ctx: ForecastContext) -> list[ForecastResult]:
             ma_predict(ctx.closes, "1d"),
             vol_predict(ctx.closes, "1d"),
             prophet_predict(ctx.closes, "1w"),
-            xgb_predict(ctx.closes, "1d"),
+            xgb_predict(ctx.closes, "1d", latest_storage=ctx.latest_storage, latest_cot=ctx.latest_cot),
         ]
     else:
         results = [
@@ -60,6 +60,7 @@ async def run_all(ctx: ForecastContext) -> list[ForecastResult]:
                         "note": "Need at least 55 bars for full model suite.",
                     }
                 ],
+                inputs_used=["closes"],
             )
         ]
     return results

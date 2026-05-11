@@ -74,4 +74,5 @@ def predict(closes: list[float], horizon: str = "1d") -> "ForecastResult":  # no
         vol_regime=regime,
         supporting=supporting,
         contradicting=contradicting,
+        inputs_used=["closes"],
     )

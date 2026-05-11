@@ -74,14 +74,29 @@ Ensemble signal + per-model breakdown.
     "confidence": "medium",
     "vol_regime": "elevated",
     "expected_pct": 0.018,
-    "range": { "low_pct": -0.012, "high_pct": 0.045 }
+    "range": { "low_pct": -0.012, "high_pct": 0.045 },
+    "agreement": {
+      "bullish": 2,
+      "bearish": 1,
+      "neutral": 1,
+      "total": 4,
+      "input_diversity": "high"  // "low" | "medium" | "high"
+    },
+    "confidence_rationale": [
+      "2 of 4 models agree on bullish direction.",
+      "Mixed price + fundamental signals (high input diversity)."
+    ],
+    "caveats": []  // non-empty on ties or elevated-regime disagreements
   },
   "models": [
     {
-      "name": "moving_average_directional",
+      "model_name": "moving_average_directional",
       "horizon": "1d",
       "direction": "bullish",
       "confidence": "high",
+      "expected_pct": 0.022,
+      "inputs_used": ["closes"],
+      "range": { "low_pct": -0.012, "high_pct": 0.045 },
       "supporting": [{ "factor": "20d > 50d cross 3d ago", "weight": 0.6, "note": "..." }],
       "contradicting": [{ "factor": "rsi_14 = 71 (overbought)", "weight": 0.3, "note": "..." }]
     }
@@ -91,7 +106,43 @@ Ensemble signal + per-model breakdown.
 }
 ```
 
-`GET /v1/signals/history?symbol=NG&from=...&to=...&model=...` — historical forecasts table.
+`GET /v1/signals/history?symbol=NG&from=YYYY-MM-DD&to=YYYY-MM-DD&model=...&limit=25&status=scored`
+
+Query params:
+- `from` / `to` — date range (default: 2026-01-01 to today)
+- `model` — filter by model name (optional)
+- `limit` — max rows returned (1–500, default 25)
+- `status` — `"all"` | `"scored"` (default, excludes pending) | `"pending"`
+
+```jsonc
+{
+  "instrument": "NG",
+  "rows": [
+    {
+      "id": "uuid",
+      "generated_at": "2026-03-01T12:00:00",
+      "horizon_end": "2026-03-02T12:00:00Z",
+      "model_name": "moving_average_directional",
+      "horizon": "1d",
+      "direction": "bullish",
+      "confidence": "medium",
+      "expected_pct": 0.01,
+      "vol_regime": "normal",
+      "outcome": "hit",          // "hit" | "miss" | "indeterminate" | "neutral" | "pending"
+      "realized_pct": 0.015,
+      "delta_from_expected_pct": 0.005,
+      "scored_at": "2026-03-02T12:00:00Z"
+    }
+  ]
+}
+```
+
+Scoring logic (`services/signal_scoring.py`):
+- `pending` — horizon has not elapsed yet
+- `neutral` — direction was neutral (no directional call to score)
+- `indeterminate` — `|realized_pct| < 0.003` (deadband; move too small to call)
+- `hit` — direction matches sign of realized move
+- `miss` — direction opposes sign of realized move
 
 ### Scenarios
 

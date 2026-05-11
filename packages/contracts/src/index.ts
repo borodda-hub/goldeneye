@@ -690,6 +690,8 @@ export interface operations {
                 from?: string;
                 to?: string;
                 model?: string | null;
+                limit?: number;
+                status?: string;
             };
             header?: never;
             path?: never;

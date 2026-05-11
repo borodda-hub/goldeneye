@@ -33,7 +33,13 @@ def predict(closes: list[float], horizon: str = "1w") -> "ForecastResult":  # no
             range_low_pct=None,
             range_high_pct=None,
             vol_regime=None,
-            supporting=[],
+            supporting=[
+                {
+                    "factor": "Stub mode",
+                    "weight": 0.0,
+                    "note": "Prophet package unavailable; model returning neutral.",
+                }
+            ],
             contradicting=[
                 {
                     "factor": "Prophet package not installed",
@@ -41,6 +47,7 @@ def predict(closes: list[float], horizon: str = "1w") -> "ForecastResult":  # no
                     "note": "Install with: uv pip install prophet",
                 }
             ],
+            inputs_used=["closes"],
         )
 
     if len(closes) < 10:
@@ -61,6 +68,7 @@ def predict(closes: list[float], horizon: str = "1w") -> "ForecastResult":  # no
                     "note": "Need at least 10 data points to fit Prophet.",
                 }
             ],
+            inputs_used=["closes"],
         )
 
     # Build a daily date series ending today
@@ -146,4 +154,5 @@ def predict(closes: list[float], horizon: str = "1w") -> "ForecastResult":  # no
         vol_regime=None,
         supporting=supporting,
         contradicting=contradicting,
+        inputs_used=["closes"],
     )

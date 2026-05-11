@@ -72,23 +72,30 @@ def explain_signal_messages(signal: dict, ctx: dict) -> list[dict]:  # type: ign
     Build messages for the explain_signal task.
 
     signal keys:
-        direction: str       Ensemble direction (bullish/bearish/neutral)
-        confidence: str      Ensemble confidence (low/medium/high)
-        models: list[dict]   Per-model results with direction, supporting, contradicting
-        vol_regime: str      Volatility regime
+        direction: str                Ensemble direction (bullish/bearish/neutral)
+        confidence: str               Ensemble confidence (low/medium/high)
+        models: list[dict]            Per-model results with direction, supporting, contradicting
+        vol_regime: str               Volatility regime
+        agreement: dict               Agreement counts from compute_ensemble
+        confidence_rationale: list    Rationale strings from compute_ensemble
 
     ctx keys:
-        cot_crowdedness: float   Crowdedness score from COT (0-1)
+        storage: dict | None          Latest storage data (delta_vs_consensus)
+        cot: dict | None              Latest COT data (mm_net_delta)
+        models: list[dict]            Per-model results (same as signal["models"])
     """
     direction = signal.get("direction", "neutral")
     confidence = signal.get("confidence", "low")
     models = signal.get("models", [])
     vol_regime = signal.get("vol_regime", "unknown")
-    cot_crowdedness = ctx.get("cot_crowdedness", "N/A")
+    agreement = signal.get("agreement", {})
+    confidence_rationale = signal.get("confidence_rationale", [])
+    storage = ctx.get("storage")
+    cot = ctx.get("cot")
 
     models_text_parts: list[str] = []
     for m in models:
-        name = m.get("model_name", "unknown")
+        name = m.get("model_name", m.get("name", "unknown"))
         dir_ = m.get("direction", "neutral")
         supporting = m.get("supporting", [])
         contradicting = m.get("contradicting", [])
@@ -99,13 +106,32 @@ def explain_signal_messages(signal: dict, ctx: dict) -> list[dict]:  # type: ign
         )
     models_text = "\n".join(models_text_parts) if models_text_parts else "  - No model detail available"
 
+    agreement_text = (
+        f"{agreement.get('bullish', 0)} bullish, "
+        f"{agreement.get('bearish', 0)} bearish, "
+        f"{agreement.get('neutral', 0)} neutral of {agreement.get('total', 0)} models"
+        if agreement else "N/A"
+    )
+    rationale_text = "; ".join(confidence_rationale) if confidence_rationale else "N/A"
+
+    storage_text = (
+        f"EIA storage delta vs consensus: {storage.get('delta_vs_consensus', 'N/A')} Bcf"
+        if storage else "N/A"
+    )
+    cot_text = (
+        f"Managed-money net WoW delta: {cot.get('mm_net_delta', 'N/A')} contracts"
+        if cot else "N/A"
+    )
+
     user_content = (
         "Task: explain_signal\n\n"
         "Inputs:\n"
         f"- Ensemble direction: {direction}, confidence: {confidence}\n"
+        f"- Model agreement: {agreement_text}\n"
+        f"- Confidence rationale: {rationale_text}\n"
         f"- Per-model results:\n{models_text}\n"
         f"- Volatility regime: {vol_regime}\n"
-        f"- COT crowdedness score: {cot_crowdedness}\n\n"
+        f"- Alt-data context: storage={storage_text}; COT={cot_text}\n\n"
         "Write 3-5 sentences. First sentence states the ensemble view. Following sentences walk "
         "through the strongest supporting factor and the strongest contradicting factor. Conclude "
         "with the confidence band and one caveat about what could invalidate."

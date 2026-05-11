@@ -54,10 +54,12 @@ export async function getCurrentSignal(symbol = "NG"): Promise<unknown> {
 export async function getSignalHistory(params: {
   symbol?: string;
   limit?: number;
+  status?: string;
 }): Promise<unknown> {
   const q = new URLSearchParams();
   if (params.symbol) q.set("symbol", params.symbol);
   if (params.limit !== undefined) q.set("limit", String(params.limit));
+  if (params.status) q.set("status", params.status);
   return apiFetch(`/v1/signals/history?${q.toString()}`);
 }
 

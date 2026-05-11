@@ -22,6 +22,7 @@ class ForecastResult:
     vol_regime: str | None  # compressed / normal / elevated / crisis
     supporting: list[dict] = field(default_factory=list)   # type: ignore[type-arg]
     contradicting: list[dict] = field(default_factory=list)  # type: ignore[type-arg]
+    inputs_used: list[str] = field(default_factory=lambda: ["closes"])
 
 
 def _annualized_vol(closes: list[float]) -> float:
@@ -83,6 +84,7 @@ def predict(closes: list[float], horizon: str = "1d") -> ForecastResult:
                     "note": "Need at least 55 bars for SMA-50 calculation",
                 }
             ],
+            inputs_used=["closes"],
         )
 
     sma20 = sum(closes[-20:]) / 20.0
@@ -158,4 +160,5 @@ def predict(closes: list[float], horizon: str = "1d") -> ForecastResult:
         vol_regime=vol_regime,
         supporting=supporting,
         contradicting=contradicting,
+        inputs_used=["closes"],
     )
