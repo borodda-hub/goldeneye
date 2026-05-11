@@ -8,6 +8,8 @@ import {
   getCurrentSignal,
   getDashboardSummary,
   getDataHealth,
+  getJournalEntry,
+  getPaperEquityCurve,
   getScenarioRuns,
   getScenarioTemplates,
   getSignalHistory,
@@ -21,7 +23,9 @@ export const queryKeys = {
   scenarioTemplates: () => ["scenario", "templates"],
   scenarioRuns: () => ["scenario", "runs"],
   journalEntries: () => ["journal", "entries"],
+  journalEntry: (id: string) => ["journal", "entry", id],
   paperTrades: (status?: string) => ["paper", status],
+  paperEquityCurve: (since?: string) => ["paper", "equity-curve", since ?? ""],
   dataHealth: () => ["admin", "health"],
   alerts: (unread: boolean) => ["admin", "alerts", unread],
   chartBars: (
@@ -65,11 +69,28 @@ export function useJournalEntries(limit?: number) {
   });
 }
 
+export function useJournalEntry(id: string | null | undefined) {
+  return useQuery({
+    queryKey: queryKeys.journalEntry(id ?? ""),
+    queryFn: () => getJournalEntry(id as string),
+    enabled: Boolean(id),
+    staleTime: 30_000,
+  });
+}
+
 export function usePaperTrades(status?: string) {
   return useQuery({
     queryKey: queryKeys.paperTrades(status),
     queryFn: () => listPaperTrades(status ? { status } : undefined),
     staleTime: 30_000,
+  });
+}
+
+export function usePaperEquityCurve(since?: string) {
+  return useQuery({
+    queryKey: queryKeys.paperEquityCurve(since),
+    queryFn: () => getPaperEquityCurve(since),
+    staleTime: 60_000,
   });
 }
 

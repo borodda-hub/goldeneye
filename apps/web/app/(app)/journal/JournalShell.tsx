@@ -1,0 +1,55 @@
+"use client";
+
+import { useState } from "react";
+import { useJournalEntries } from "../../../lib/queries";
+import { EntryList } from "../../../components/journal/EntryList";
+import { NewEntryForm } from "../../../components/journal/NewEntryForm";
+import { EntryDetailDrawer } from "../../../components/journal/EntryDetailDrawer";
+import type { JournalEntriesResponse, JournalEntry } from "./types";
+
+interface Props {
+  initialEntries: JournalEntry[];
+}
+
+export function JournalShell({ initialEntries }: Props) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const { data } = useJournalEntries(20);
+  const entries =
+    (data as JournalEntriesResponse | undefined)?.entries ?? initialEntries;
+
+  const selected = entries.find((e) => e.id === selectedId) ?? null;
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex items-baseline gap-3">
+        <h1 className="text-xl font-semibold text-ink-1">Decision Journal</h1>
+        <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">
+          Hypothesis log with AI assumption review
+        </span>
+      </div>
+
+      {/* Two-column layout */}
+      <div className="flex gap-4">
+        <div className="flex-1 min-w-0">
+          <EntryList
+            entries={entries}
+            selectedId={selectedId}
+            onSelect={(id) => setSelectedId(id)}
+          />
+        </div>
+        <div className="w-96 shrink-0">
+          {selected ? (
+            <EntryDetailDrawer
+              entry={selected}
+              onClose={() => setSelectedId(null)}
+            />
+          ) : (
+            <NewEntryForm onCreated={(id) => setSelectedId(id)} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

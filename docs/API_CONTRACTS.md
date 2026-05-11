@@ -232,6 +232,7 @@ shocks list and the complete `result` block above. Returns 404 if the
 `POST /v1/paper-trades/{id}/close`
 `GET /v1/paper-trades?status=open|closed`
 `GET /v1/paper-trades/{id}` — detail with PnL recompute.
+`GET /v1/paper-trades/equity-curve?since=YYYY-MM-DD`
 
 ```jsonc
 // POST /open
@@ -247,6 +248,42 @@ shocks list and the complete `result` block above. Returns 404 if the
   "journal_ref": "uuid|null"
 }
 ```
+
+`POST /open` returns `409` with `{"detail": "Leverage breach: ..."}` when the notional
+size of the requested trade exceeds the leverage cap. The cap is **10× current simulated
+equity**, where current equity = $100,000 starting balance + sum of closed-trade PnL.
+Notional per NG contract is `entry_price × 10,000 USD/MMBtu`.
+
+`POST /open` also returns `400` on inverted stops (long with stop ≥ entry or take-profit
+≤ entry; short inverted), non-positive size, or non-positive entry_price.
+
+```jsonc
+// POST /{id}/close — exit_price is OPTIONAL
+{
+  "exit_price": 3.521,   // null/omitted → mark-to-market off latest 1d bar close
+  "reflection": "..."    // optional
+}
+```
+
+If `exit_price` is omitted (or null), the engine marks-to-market off the latest 1d bar
+for the trade's bound contract (falling back to the instrument's front-month contract
+if no contract was bound). `409` if no price bar is available.
+
+```jsonc
+// GET /equity-curve?since=2026-02-10
+{
+  "series": [
+    { "date": "2026-02-10", "equity": 100000.00 },
+    { "date": "2026-02-11", "equity": 100123.45 },
+    // ...one entry per calendar day through today (UTC)
+  ]
+}
+```
+
+`since` defaults to 90 days ago when omitted. Equity for day `d` =
+`$100,000 + sum(closed-trade PnL where closed_at ≤ EOD(d)) + sum(MTM PnL of trades
+still open at EOD(d))`. Open-position MTM uses the day's 1d bar close (carry-forward
+from the most recent prior close if a day is missing).
 
 ### Admin / Data Health
 

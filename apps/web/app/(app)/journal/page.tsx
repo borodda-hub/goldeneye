@@ -1,10 +1,20 @@
-import { EMPTY_STATE } from "../../../lib/strings";
+import { listJournalEntries } from "../../../lib/api";
+import { JournalShell } from "./JournalShell";
+import type { JournalEntriesResponse, JournalEntry } from "./types";
 
-export default function JournalPage() {
-	return (
-		<div className="flex flex-col gap-4">
-			<h1 className="text-xl font-semibold text-ink-1">Decision Journal</h1>
-			<p className="text-sm text-ink-3">{EMPTY_STATE.journal}</p>
-		</div>
-	);
+export default async function JournalPage() {
+  let entries: JournalEntry[] = [];
+
+  try {
+    const resp = (await listJournalEntries(20)) as JournalEntriesResponse;
+    entries = resp.entries ?? [];
+  } catch {
+    // Server-side prefetch failed; render empty list
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      <JournalShell initialEntries={entries} />
+    </div>
+  );
 }

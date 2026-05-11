@@ -227,6 +227,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/paper-trades/equity-curve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Equity Curve */
+        get: operations["get_equity_curve_v1_paper_trades_equity_curve_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/paper-trades": {
         parameters: {
             query?: never;
@@ -404,7 +421,7 @@ export interface components {
         /** CloseTradeRequest */
         CloseTradeRequest: {
             /** Exit Price */
-            exit_price: number;
+            exit_price?: number | null;
             /** Reflection */
             reflection?: string | null;
         };
@@ -1080,6 +1097,39 @@ export interface operations {
                 "application/json": components["schemas"]["CloseTradeRequest"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_equity_curve_v1_paper_trades_equity_curve_get: {
+        parameters: {
+            query?: {
+                since?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

@@ -89,12 +89,25 @@ export async function getScenarioRuns(limit?: number): Promise<unknown> {
 }
 
 // ── Journal ────────────────────────────────────────────────────────────────
-export async function createJournalEntry(body: {
-  title: string;
-  content: string;
-  tags?: string[];
-  symbol?: string;
-}): Promise<unknown> {
+export interface JournalEvidenceItem {
+  source: string;
+  summary: string;
+  weight: number;
+}
+
+export interface JournalCreateBody {
+  instrument?: string;
+  hypothesis: string;
+  evidence?: JournalEvidenceItem[];
+  confidence_pct: number;
+  planned_action?: string | null;
+  risk_factors?: string[];
+  invalidation_criteria?: string | null;
+}
+
+export async function createJournalEntry(
+  body: JournalCreateBody,
+): Promise<unknown> {
   return apiFetch("/v1/journal", {
     method: "POST",
     body: JSON.stringify(body),
@@ -112,7 +125,7 @@ export async function getJournalEntry(id: string): Promise<unknown> {
 
 export async function patchJournalEntry(
   id: string,
-  body: Partial<{ title: string; content: string; tags: string[] }>,
+  body: Partial<{ outcome: string; reflection: string }>,
 ): Promise<unknown> {
   return apiFetch(`/v1/journal/${encodeURIComponent(id)}`, {
     method: "PATCH",
@@ -121,14 +134,22 @@ export async function patchJournalEntry(
 }
 
 // ── Paper Trading ──────────────────────────────────────────────────────────
-export async function openPaperTrade(body: {
-  symbol: string;
-  direction: "long" | "short";
-  quantity: number;
+export interface OpenPaperTradeBody {
+  instrument?: string;
+  contract_code?: string;
+  side: "long" | "short";
+  size_contracts: number;
   entry_price: number;
-  notes?: string;
-}): Promise<unknown> {
-  return apiFetch("/v1/paper/trades", {
+  stop_loss?: number | null;
+  take_profit?: number | null;
+  rationale?: string | null;
+  journal_ref?: string | null;
+}
+
+export async function openPaperTrade(
+  body: OpenPaperTradeBody,
+): Promise<unknown> {
+  return apiFetch("/v1/paper-trades/open", {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -136,9 +157,9 @@ export async function openPaperTrade(body: {
 
 export async function closePaperTrade(
   id: string,
-  body: { exit_price: number; notes?: string },
+  body: { exit_price?: number; reflection?: string },
 ): Promise<unknown> {
-  return apiFetch(`/v1/paper/trades/${encodeURIComponent(id)}/close`, {
+  return apiFetch(`/v1/paper-trades/${encodeURIComponent(id)}/close`, {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -152,11 +173,16 @@ export async function listPaperTrades(params?: {
   if (params?.status) q.set("status", params.status);
   if (params?.limit !== undefined) q.set("limit", String(params.limit));
   const qs = q.toString();
-  return apiFetch(`/v1/paper/trades${qs ? `?${qs}` : ""}`);
+  return apiFetch(`/v1/paper-trades${qs ? `?${qs}` : ""}`);
 }
 
 export async function getPaperTrade(id: string): Promise<unknown> {
-  return apiFetch(`/v1/paper/trades/${encodeURIComponent(id)}`);
+  return apiFetch(`/v1/paper-trades/${encodeURIComponent(id)}`);
+}
+
+export async function getPaperEquityCurve(since?: string): Promise<unknown> {
+  const q = since ? `?since=${encodeURIComponent(since)}` : "";
+  return apiFetch(`/v1/paper-trades/equity-curve${q}`);
 }
 
 // ── Admin ──────────────────────────────────────────────────────────────────

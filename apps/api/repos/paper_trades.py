@@ -47,3 +47,36 @@ async def close_trade(
         trade.reflection = reflection  # type: ignore[assignment]
     await session.flush()
     return trade
+
+
+async def list_open(session: AsyncSession) -> list[PaperTrade]:
+    result = await session.execute(
+        select(PaperTrade).where(PaperTrade.status == "open")
+    )
+    return list(result.scalars().all())
+
+
+async def list_closed_between(
+    session: AsyncSession,
+    from_dt: datetime,
+    to_dt: datetime,
+) -> list[PaperTrade]:
+    result = await session.execute(
+        select(PaperTrade)
+        .where(
+            PaperTrade.status == "closed",
+            PaperTrade.closed_at >= from_dt,
+            PaperTrade.closed_at <= to_dt,
+        )
+    )
+    return list(result.scalars().all())
+
+
+async def list_opened_before(
+    session: AsyncSession,
+    cutoff: datetime,
+) -> list[PaperTrade]:
+    result = await session.execute(
+        select(PaperTrade).where(PaperTrade.opened_at <= cutoff)
+    )
+    return list(result.scalars().all())

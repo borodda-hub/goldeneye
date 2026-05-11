@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.db.session import get_db
-from apps.api.repos import instruments as instr_repo
 from apps.api.repos import contracts as contract_repo
+from apps.api.repos import instruments as instr_repo
 from apps.api.repos import paper_trades as trade_repo
+from apps.api.services import paper_engine
 
 router = APIRouter(prefix="/v1/paper-trades", tags=["paper-trades"])
 
@@ -28,7 +29,7 @@ class OpenTradeRequest(BaseModel):
 
 
 class CloseTradeRequest(BaseModel):
-    exit_price: float
+    exit_price: float | None = None
     reflection: str | None = None
 
 
@@ -46,18 +47,18 @@ async def open_trade(
         contract = await contract_repo.get_by_code(session, req.contract_code)
         contract_id = contract.id if contract else None
 
-    data: dict[str, Any] = {
-        "side": req.side,
-        "size_contracts": req.size_contracts,
-        "entry_price": req.entry_price,
-        "stop_loss": req.stop_loss,
-        "take_profit": req.take_profit,
-        "rationale": req.rationale,
-        "journal_ref": req.journal_ref,
-        "contract_id": contract_id,
-        "status": "open",
-    }
-    trade = await trade_repo.create(session, instrument.id, data)
+    trade = await paper_engine.open_trade(
+        session,
+        instrument_id=instrument.id,
+        contract_id=contract_id,
+        side=req.side,
+        size=req.size_contracts,
+        entry_price=req.entry_price,
+        stop_loss=req.stop_loss,
+        take_profit=req.take_profit,
+        rationale=req.rationale,
+        journal_ref=req.journal_ref,
+    )
     await session.commit()
     return _serialize(trade)
 
@@ -68,14 +69,23 @@ async def close_trade(
     req: CloseTradeRequest,
     session: AsyncSession = Depends(get_db),
 ) -> dict:
-    trade = await trade_repo.get_by_id(session, trade_id)
-    if trade is None:
-        raise HTTPException(status_code=404, detail="Trade not found")
-    if trade.status != "open":
-        raise HTTPException(status_code=409, detail=f"Trade is already {trade.status}")
-    trade = await trade_repo.close_trade(session, trade, req.exit_price, req.reflection)
+    trade = await paper_engine.close_trade(
+        session,
+        trade_id,
+        exit_price=req.exit_price,
+        reflection=req.reflection,
+    )
     await session.commit()
     return _serialize(trade)
+
+
+@router.get("/equity-curve")
+async def get_equity_curve(
+    since: date | None = Query(default=None),
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    series = await paper_engine.equity_curve(session, since=since)
+    return {"series": series}
 
 
 @router.get("")

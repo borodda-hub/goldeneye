@@ -766,6 +766,58 @@
         }
       }
     },
+    "/v1/paper-trades/equity-curve": {
+      "get": {
+        "tags": [
+          "paper-trades"
+        ],
+        "summary": "Get Equity Curve",
+        "operationId": "get_equity_curve_v1_paper_trades_equity_curve_get",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Equity Curve V1 Paper Trades Equity Curve Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/paper-trades": {
       "get": {
         "tags": [
@@ -1197,7 +1249,14 @@
       "CloseTradeRequest": {
         "properties": {
           "exit_price": {
-            "type": "number",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Exit Price"
           },
           "reflection": {
@@ -1213,9 +1272,6 @@
           }
         },
         "type": "object",
-        "required": [
-          "exit_price"
-        ],
         "title": "CloseTradeRequest"
       },
       "EvidenceItem": {
