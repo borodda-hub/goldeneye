@@ -440,6 +440,50 @@
         }
       }
     },
+    "/v1/scenarios/runs/{run_id}": {
+      "get": {
+        "tags": [
+          "scenarios"
+        ],
+        "summary": "Get Run",
+        "operationId": "get_run_v1_scenarios_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Run V1 Scenarios Runs  Run Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/journal": {
       "post": {
         "tags": [
@@ -1313,6 +1357,34 @@
         "type": "object",
         "title": "JournalPatchRequest"
       },
+      "LngExportShock": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "lng_export",
+            "title": "Type"
+          },
+          "delta_bcfd": {
+            "type": "number",
+            "maximum": 15.0,
+            "minimum": -15.0,
+            "title": "Delta Bcfd"
+          },
+          "days": {
+            "type": "integer",
+            "maximum": 60.0,
+            "minimum": 1.0,
+            "title": "Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "delta_bcfd",
+          "days"
+        ],
+        "title": "LngExportShock"
+      },
       "MarketExplainRequest": {
         "properties": {
           "ctx": {
@@ -1409,6 +1481,34 @@
         ],
         "title": "OpenTradeRequest"
       },
+      "ProductionShock": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "production",
+            "title": "Type"
+          },
+          "delta_bcfd": {
+            "type": "number",
+            "maximum": 15.0,
+            "minimum": -15.0,
+            "title": "Delta Bcfd"
+          },
+          "days": {
+            "type": "integer",
+            "maximum": 60.0,
+            "minimum": 1.0,
+            "title": "Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "delta_bcfd",
+          "days"
+        ],
+        "title": "ProductionShock"
+      },
       "ScenarioExplainRequest": {
         "properties": {
           "run_id": {
@@ -1432,13 +1532,39 @@
           },
           "name": {
             "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
             "title": "Name"
           },
           "shocks": {
             "items": {
-              "$ref": "#/components/schemas/ShockItem"
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/WeatherShock"
+                },
+                {
+                  "$ref": "#/components/schemas/LngExportShock"
+                },
+                {
+                  "$ref": "#/components/schemas/ProductionShock"
+                },
+                {
+                  "$ref": "#/components/schemas/StorageShock"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "lng_export": "#/components/schemas/LngExportShock",
+                  "production": "#/components/schemas/ProductionShock",
+                  "storage": "#/components/schemas/StorageShock",
+                  "weather": "#/components/schemas/WeatherShock"
+                }
+              }
             },
             "type": "array",
+            "maxItems": 10,
+            "minItems": 1,
             "title": "Shocks"
           }
         },
@@ -1448,68 +1574,6 @@
           "shocks"
         ],
         "title": "ScenarioRunRequest"
-      },
-      "ShockItem": {
-        "properties": {
-          "type": {
-            "type": "string",
-            "title": "Type"
-          },
-          "region": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Region"
-          },
-          "delta_temp_f": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Delta Temp F"
-          },
-          "delta_bcfd": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Delta Bcfd"
-          },
-          "delta_bcf": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Delta Bcf"
-          },
-          "days": {
-            "type": "integer",
-            "title": "Days",
-            "default": 7
-          }
-        },
-        "type": "object",
-        "required": [
-          "type"
-        ],
-        "title": "ShockItem"
       },
       "SignalExplainRequest": {
         "properties": {
@@ -1532,6 +1596,34 @@
         },
         "type": "object",
         "title": "SignalExplainRequest"
+      },
+      "StorageShock": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "storage",
+            "title": "Type"
+          },
+          "delta_bcf": {
+            "type": "number",
+            "maximum": 500.0,
+            "minimum": -500.0,
+            "title": "Delta Bcf"
+          },
+          "days": {
+            "type": "integer",
+            "maximum": 60.0,
+            "minimum": 1.0,
+            "title": "Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "delta_bcf",
+          "days"
+        ],
+        "title": "StorageShock"
       },
       "ValidationError": {
         "properties": {
@@ -1572,6 +1664,41 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WeatherShock": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "weather",
+            "title": "Type"
+          },
+          "region": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Region"
+          },
+          "delta_temp_f": {
+            "type": "number",
+            "maximum": 50.0,
+            "minimum": -50.0,
+            "title": "Delta Temp F"
+          },
+          "days": {
+            "type": "integer",
+            "maximum": 60.0,
+            "minimum": 1.0,
+            "title": "Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "region",
+          "delta_temp_f",
+          "days"
+        ],
+        "title": "WeatherShock"
       }
     }
   }

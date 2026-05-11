@@ -160,6 +160,25 @@ Scoring logic (`services/signal_scoring.py`):
 }
 ```
 
+Shocks are validated as a strict Pydantic v2 discriminated union — each `type`
+admits only its own fields with the bounds below. The 6 fixture templates in
+`packages/fixtures/scenario_templates.json` compose these 4 primitives;
+"hurricane" = `production + lng_export`, "demand" = multiple `weather`, etc.
+There are no composite shock types.
+
+| `type` | Required fields | Bounds |
+| --- | --- | --- |
+| `weather` | `region` (string, 1-64 chars), `delta_temp_f`, `days` | `delta_temp_f ∈ [-50, 50]`, `days ∈ [1, 60]` |
+| `lng_export` | `delta_bcfd`, `days` | `delta_bcfd ∈ [-15, 15]`, `days ∈ [1, 60]` |
+| `production` | `delta_bcfd`, `days` | `delta_bcfd ∈ [-15, 15]`, `days ∈ [1, 60]` |
+| `storage` | `delta_bcf`, `days` | `delta_bcf ∈ [-500, 500]`, `days ∈ [1, 60]` |
+
+Validation rules:
+- `shocks` must contain at least 1 and at most 10 items.
+- `name` must be 1-200 chars.
+- Unknown `type` values, out-of-bounds deltas, or wrong fields for a given
+  type return **HTTP 422** with the standard FastAPI/Pydantic error envelope.
+
 Response:
 
 ```jsonc
@@ -175,14 +194,17 @@ Response:
     "assumptions": ["...", "..."],
     "counterarguments": ["...", "..."],
     "data_needed_to_validate": ["NWS 6-10 day temp anomaly map", "EIA weekly storage Thu", "..."],
-    "narrative": "string — services/llm_explainer.narrate_scenario output"
-  },
-  "safety": { ... }
+    "narrative": "string — services/llm_explainer.narrate_scenario output",
+    "safety": { "confidence": "low", "caveats": ["..."], "as_of": "...", "disclaimer": "..." }
+  }
 }
 ```
 
 `GET /v1/scenarios/templates` — preset shock templates (cold snap, LNG outage, production freeze, demand collapse, geopolitical shock, hurricane).
-`GET /v1/scenarios/runs?limit=20` — recent runs.
+`GET /v1/scenarios/runs?limit=20` — recent runs (id, name, created_at, instrument_id).
+`GET /v1/scenarios/runs/{run_id}` — full stored run including the original
+shocks list and the complete `result` block above. Returns 404 if the
+`run_id` is unknown, 400 if it is not a valid UUID.
 
 ### Decision Journal
 

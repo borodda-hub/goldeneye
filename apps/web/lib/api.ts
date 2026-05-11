@@ -65,14 +65,18 @@ export async function getSignalHistory(params: {
 
 // ── Scenarios ──────────────────────────────────────────────────────────────
 export async function runScenario(body: {
-  template_id?: string;
-  symbol?: string;
-  parameters?: Record<string, unknown>;
+  instrument?: string;
+  name: string;
+  shocks: Array<Record<string, unknown>>;
 }): Promise<unknown> {
   return apiFetch("/v1/scenarios/run", {
     method: "POST",
     body: JSON.stringify(body),
   });
+}
+
+export async function getScenarioRun(runId: string): Promise<unknown> {
+  return apiFetch(`/v1/scenarios/runs/${encodeURIComponent(runId)}`);
 }
 
 export async function getScenarioTemplates(): Promise<unknown> {

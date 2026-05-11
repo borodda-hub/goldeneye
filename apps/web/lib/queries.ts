@@ -8,6 +8,7 @@ import {
   getCurrentSignal,
   getDashboardSummary,
   getDataHealth,
+  getScenarioRuns,
   getScenarioTemplates,
   getSignalHistory,
   listJournalEntries,
@@ -98,6 +99,14 @@ export function useChartBars(
     queryKey: queryKeys.chartBars(contractCode, resolution, from, to),
     queryFn: () => getChartBars({ contract_code: contractCode, resolution, from, to }),
     staleTime: resolution === "1m" ? 0 : 60_000,
+  });
+}
+
+export function useScenarioRuns(limit = 20) {
+  return useQuery({
+    queryKey: ["scenario", "runs", limit],
+    queryFn: () => getScenarioRuns(limit),
+    staleTime: 30_000,
   });
 }
 

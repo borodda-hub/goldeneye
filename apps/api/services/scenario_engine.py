@@ -10,31 +10,32 @@ from dataclasses import replace
 from apps.api.services.ensemble import compute_ensemble
 from apps.api.services.llm_explainer import narrate_scenario
 from apps.api.services.model_registry import ForecastContext, run_all
-from apps.api.services.safety import SafetyEnvelope
 
 
-async def run_scenario(
-    name: str,
-    instrument: str,
+def apply(
     shocks: list[dict],  # type: ignore[type-arg]
     baseline_ctx: ForecastContext,
-) -> dict:  # type: ignore[type-arg]
+) -> tuple[ForecastContext, list[str], int]:
     """
-    Apply shocks to a baseline ForecastContext, re-run the model suite, compute the ensemble,
-    and generate a narrative.
+    Apply shocks composably to a baseline ForecastContext.
+
+    Later shocks compose on the output of earlier ones (e.g. two weather shocks both
+    contribute to the cumulative weather_anomaly; two production shocks both reduce
+    closes). Returns (shocked_ctx, assumptions, max_days).
 
     Shock types and their application logic:
     - type="weather":     weather_anomaly += shock["delta_temp_f"]
-    - type="production":  closes slightly adjusted downward by delta_bcfd * 0.01 per day
-    - type="lng_export":  closes adjusted upward by delta_bcfd * 0.01 (export → demand increase)
+    - type="production":  closes adjusted downward by delta_bcfd * 0.01 per day
+                          (production increase → price headwind heuristic)
+    - type="lng_export":  closes adjusted upward by delta_bcfd * 0.01
+                          (export increase → demand increase → price tailwind)
     - type="storage":     latest_storage["delta"] adjusted by shock["delta_bcf"]
-
-    Returns a result dict per docs/API_CONTRACTS.md §scenarios.
     """
-    # Apply shocks to a copy of the baseline context
     shocked_closes = list(baseline_ctx.closes)
     shocked_weather = baseline_ctx.weather_anomaly or 0.0
-    shocked_storage = copy.deepcopy(baseline_ctx.latest_storage) if baseline_ctx.latest_storage else {}
+    shocked_storage = (
+        copy.deepcopy(baseline_ctx.latest_storage) if baseline_ctx.latest_storage else {}
+    )
 
     max_days = 0
     assumptions: list[str] = []
@@ -82,13 +83,30 @@ async def run_scenario(
                 f"over the next {days} days."
             )
 
-    # Build shocked context
     shocked_ctx = replace(
         baseline_ctx,
         closes=shocked_closes,
         weather_anomaly=shocked_weather,
         latest_storage=shocked_storage if shocked_storage else baseline_ctx.latest_storage,
     )
+
+    return shocked_ctx, assumptions, max_days
+
+
+async def run_scenario(
+    name: str,
+    instrument: str,
+    shocks: list[dict],  # type: ignore[type-arg]
+    baseline_ctx: ForecastContext,
+) -> dict:  # type: ignore[type-arg]
+    """
+    Apply shocks to a baseline ForecastContext, re-run the model suite, compute the ensemble,
+    and generate a narrative.
+
+    Returns a result dict per docs/API_CONTRACTS.md §scenarios.
+    """
+    # Apply shocks composably to the baseline context
+    shocked_ctx, assumptions, max_days = apply(shocks, baseline_ctx)
 
     # Run models on baseline and shocked contexts
     baseline_results = await run_all(baseline_ctx)
@@ -123,7 +141,8 @@ async def run_scenario(
     else:
         affected_timeframe = f"{max_days} days"
 
-    # Standard counterarguments and validation signals based on dominant shock type
+    # Standard counterarguments and validation signals based on dominant shock type —
+    # these are deterministic, NOT LLM-generated (per docs/PHASE_06_PLAN.md §override 3).
     shock_types = {s.get("type", "") for s in shocks}
     counterarguments = _standard_counterarguments(shock_types, s_dir)
     data_needed = _standard_validation_data(shock_types)

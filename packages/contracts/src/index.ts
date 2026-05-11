@@ -140,6 +140,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/scenarios/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Run */
+        get: operations["get_run_v1_scenarios_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/journal": {
         parameters: {
             query?: never;
@@ -443,6 +460,18 @@ export interface components {
             /** Reflection */
             reflection?: string | null;
         };
+        /** LngExportShock */
+        LngExportShock: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "lng_export";
+            /** Delta Bcfd */
+            delta_bcfd: number;
+            /** Days */
+            days: number;
+        };
         /** MarketExplainRequest */
         MarketExplainRequest: {
             /**
@@ -477,6 +506,18 @@ export interface components {
             /** Journal Ref */
             journal_ref?: string | null;
         };
+        /** ProductionShock */
+        ProductionShock: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "production";
+            /** Delta Bcfd */
+            delta_bcfd: number;
+            /** Days */
+            days: number;
+        };
         /** ScenarioExplainRequest */
         ScenarioExplainRequest: {
             /**
@@ -495,25 +536,7 @@ export interface components {
             /** Name */
             name: string;
             /** Shocks */
-            shocks: components["schemas"]["ShockItem"][];
-        };
-        /** ShockItem */
-        ShockItem: {
-            /** Type */
-            type: string;
-            /** Region */
-            region?: string | null;
-            /** Delta Temp F */
-            delta_temp_f?: number | null;
-            /** Delta Bcfd */
-            delta_bcfd?: number | null;
-            /** Delta Bcf */
-            delta_bcf?: number | null;
-            /**
-             * Days
-             * @default 7
-             */
-            days: number;
+            shocks: (components["schemas"]["WeatherShock"] | components["schemas"]["LngExportShock"] | components["schemas"]["ProductionShock"] | components["schemas"]["StorageShock"])[];
         };
         /** SignalExplainRequest */
         SignalExplainRequest: {
@@ -524,6 +547,18 @@ export interface components {
              * @default NG
              */
             symbol: string;
+        };
+        /** StorageShock */
+        StorageShock: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "storage";
+            /** Delta Bcf */
+            delta_bcf: number;
+            /** Days */
+            days: number;
         };
         /** ValidationError */
         ValidationError: {
@@ -537,6 +572,20 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** WeatherShock */
+        WeatherShock: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "weather";
+            /** Region */
+            region: string;
+            /** Delta Temp F */
+            delta_temp_f: number;
+            /** Days */
+            days: number;
         };
     };
     responses: never;
@@ -785,6 +834,39 @@ export interface operations {
             };
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_run_v1_scenarios_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
             cookie?: never;
         };
         requestBody?: never;

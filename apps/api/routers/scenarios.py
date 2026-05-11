@@ -3,9 +3,10 @@ from __future__ import annotations
 import json
 import uuid
 from pathlib import Path
+from typing import Annotated, Literal, Union
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.db.session import get_db
@@ -21,19 +22,45 @@ router = APIRouter(prefix="/v1/scenarios", tags=["scenarios"])
 _FIXTURES_DIR = Path(__file__).resolve().parents[4] / "packages" / "fixtures"
 
 
-class ShockItem(BaseModel):
-    type: str
-    region: str | None = None
-    delta_temp_f: float | None = None
-    delta_bcfd: float | None = None
-    delta_bcf: float | None = None
-    days: int = 7
+# ---------------------------------------------------------------------------
+# Strict shock discriminated union — see docs/PHASE_06_PLAN.md and
+# docs/API_CONTRACTS.md §scenarios. Out-of-bounds values produce 422.
+# ---------------------------------------------------------------------------
+class WeatherShock(BaseModel):
+    type: Literal["weather"]
+    region: str = Field(min_length=1, max_length=64)
+    delta_temp_f: float = Field(ge=-50, le=50)
+    days: int = Field(ge=1, le=60)
+
+
+class LngExportShock(BaseModel):
+    type: Literal["lng_export"]
+    delta_bcfd: float = Field(ge=-15, le=15)
+    days: int = Field(ge=1, le=60)
+
+
+class ProductionShock(BaseModel):
+    type: Literal["production"]
+    delta_bcfd: float = Field(ge=-15, le=15)
+    days: int = Field(ge=1, le=60)
+
+
+class StorageShock(BaseModel):
+    type: Literal["storage"]
+    delta_bcf: float = Field(ge=-500, le=500)
+    days: int = Field(ge=1, le=60)
+
+
+Shock = Annotated[
+    Union[WeatherShock, LngExportShock, ProductionShock, StorageShock],
+    Field(discriminator="type"),
+]
 
 
 class ScenarioRunRequest(BaseModel):
     instrument: str = "NG"
-    name: str
-    shocks: list[ShockItem]
+    name: str = Field(min_length=1, max_length=200)
+    shocks: list[Shock] = Field(min_length=1, max_length=10)
 
 
 @router.post("/run")
@@ -51,7 +78,7 @@ async def run_scenario_endpoint(
     )
 
     baseline_ctx = ForecastContext(symbol=req.instrument, closes=closes)
-    shocks_dicts = [s.model_dump(exclude_none=True) for s in req.shocks]
+    shocks_dicts = [s.model_dump() for s in req.shocks]
 
     result = await run_scenario(
         name=req.name,
@@ -98,4 +125,28 @@ async def list_runs(
             }
             for r in runs
         ]
+    }
+
+
+@router.get("/runs/{run_id}")
+async def get_run(
+    run_id: str,
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        run_uuid = uuid.UUID(run_id)
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid run_id format") from exc
+
+    run = await scenario_repo.get_by_id(session, run_uuid)
+    if run is None:
+        raise HTTPException(status_code=404, detail=f"Scenario run {run_id!r} not found")
+
+    return {
+        "run_id": str(run.id),
+        "created_at": run.created_at.isoformat(),
+        "instrument_id": str(run.instrument_id),
+        "name": run.name,
+        "shocks": run.shocks,
+        "result": run.result,
     }
