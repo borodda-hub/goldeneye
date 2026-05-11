@@ -12,7 +12,9 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "target": "ES2017",
     "plugins": [{ "name": "next" }],
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
     "paths": {
       "@/*": ["./*"],
       "@ngti/contracts": ["../../packages/contracts/src/index.ts"]

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "docker compose -f infra/docker-compose.yml up -d postgres redis && concurrently \"uv run --directory apps/api uvicorn src.main:app --reload --port 8000\" \"pnpm --filter web dev\"",
     "contracts:gen": "curl -s http://localhost:8000/openapi.json | pnpm --filter @ngti/contracts exec openapi-typescript /dev/stdin -o src/index.ts",
+    "contracts:gen:local": "pnpm --filter @ngti/contracts run gen",
     "health": "uv run --directory apps/api ruff check src tests && uv run --directory apps/api mypy --strict src && uv run --directory apps/api pytest && pnpm --filter web run lint && pnpm --filter web run typecheck && pnpm --filter web run test"
   },
   "devDependencies": {
