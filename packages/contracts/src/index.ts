@@ -285,7 +285,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Data Health */
+        /**
+         * Data Health
+         * @description Adapter and model rollups.
+         */
         get: operations["data_health_v1_admin_data_health_get"];
         put?: never;
         post?: never;

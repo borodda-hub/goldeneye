@@ -1,52 +1,70 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.db.session import get_db
-from apps.api.repos import alerts as alert_repo
+from apps.api.models.orm.forecasts import ModelForecast
 from apps.api.repos import adapter_runs as run_repo
+from apps.api.repos import alerts as alert_repo
+from apps.api.services.data_health import (
+    expected_cadence_minutes,
+    rollup_adapter_run,
+)
+from apps.api.src.settings import settings
 
 router = APIRouter(prefix="/v1/admin", tags=["admin"])
 
 
 @router.get("/data-health")
 async def data_health(session: AsyncSession = Depends(get_db)) -> dict:
-    runs = await run_repo.get_latest_per_adapter(session)
+    """Adapter and model rollups."""
     now = datetime.utcnow()
+    runs = await run_repo.get_latest_per_adapter(session)
 
-    adapters = []
-    for run in runs:
-        lag_minutes: float | None = None
-        if run.finished_at:
-            lag_minutes = round((now - run.finished_at).total_seconds() / 60, 1)
+    adapters = [rollup_adapter_run(run, now=now) for run in runs]
 
-        adapters.append({
-            "name": run.adapter_name,
-            "status": run.status,
-            "last_success": run.finished_at.isoformat() if run.finished_at else None,
-            "lag_minutes": lag_minutes,
-            "rows_ingested": run.rows_ingested,
-            "error": run.error,
-        })
-
-    # If no runs exist, show mock adapters as "ok"
+    # Mock fallback when no adapter_runs exist yet
     if not adapters:
-        from apps.api.src.settings import settings
         for domain in ("market", "energy", "weather", "positioning", "news"):
+            adapter = getattr(settings, f"adapter_{domain}", "mock")
+            name = f"{domain}.{adapter}"
             adapters.append({
-                "name": f"{domain}.{getattr(settings, f'adapter_{domain}', 'mock')}",
+                "name": name,
                 "status": "ok",
                 "last_success": now.isoformat(),
-                "lag_minutes": 0,
+                "lag_minutes": 0.0,
                 "rows_ingested": 0,
                 "error": None,
+                "expected_cadence_minutes": expected_cadence_minutes(name),
             })
 
-    return {"adapters": adapters}
+    # Model rollup: count forecasts per model in last 7 days, get most recent generated_at
+    seven_days_ago = now - timedelta(days=7)
+    model_q = (
+        select(
+            ModelForecast.model_name,
+            func.max(ModelForecast.generated_at).label("last_generated"),
+            func.count(ModelForecast.id).label("sample_count_7d"),
+        )
+        .where(ModelForecast.generated_at >= seven_days_ago)
+        .group_by(ModelForecast.model_name)
+    )
+    model_rows = (await session.execute(model_q)).all()
+    models = [
+        {
+            "name": row.model_name,
+            "last_forecast_at": row.last_generated.isoformat() if row.last_generated else None,
+            "sample_count_7d": int(row.sample_count_7d),
+        }
+        for row in model_rows
+    ]
+
+    return {"adapters": adapters, "models": models}
 
 
 @router.get("/alerts")

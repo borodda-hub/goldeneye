@@ -931,6 +931,7 @@
           "admin"
         ],
         "summary": "Data Health",
+        "description": "Adapter and model rollups.",
         "operationId": "data_health_v1_admin_data_health_get",
         "responses": {
           "200": {
