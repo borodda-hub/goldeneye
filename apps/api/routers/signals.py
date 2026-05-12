@@ -35,31 +35,37 @@ async def get_current_signal(
         session, front.id if front else instrument.id, n=100
     )
 
-    # Fetch alt-data for xgboost
-    # These repos may not exist yet; use try/except to gracefully degrade
+    # Fetch alt-data for xgboost from the eia + cot repos. The xgboost
+    # placeholder treats either input as optional and falls back to price
+    # momentum only when missing.
     latest_storage: dict | None = None
     latest_cot: dict | None = None
     try:
-        from apps.api.repos import energy_data as energy_repo  # type: ignore[import]
-        storage_row = await energy_repo.get_latest_storage(session, symbol)
-        if storage_row is not None:
-            latest_storage = {
-                "delta_vs_consensus": float(storage_row.delta_vs_consensus)
-                if storage_row.delta_vs_consensus is not None else 0.0,
-                "actual_bcf": float(storage_row.actual_bcf) if storage_row.actual_bcf is not None else None,
-            }
-    except (ImportError, AttributeError, Exception):
-        pass
+        from apps.api.repos import eia as eia_repo
+        from apps.api.repos import cot as cot_repo
 
-    try:
-        from apps.api.repos import positioning_data as pos_repo  # type: ignore[import]
-        cot_row = await pos_repo.get_latest_cot(session, symbol)
-        if cot_row is not None:
-            latest_cot = {
-                "mm_net_delta": float(cot_row.mm_net_delta)
-                if cot_row.mm_net_delta is not None else 0.0,
+        storage_row = await eia_repo.get_latest(session)
+        if storage_row is not None and storage_row.surprise_bcf is not None:
+            # surprise_bcf = actual net_change - consensus → matches the
+            # xgboost placeholder's "delta_vs_consensus" semantics. When
+            # surprise is None (e.g. real EIA path, which doesn't publish
+            # analyst consensus), we leave latest_storage as None so the
+            # placeholder reports "Missing alt-data" honestly.
+            latest_storage = {
+                "delta_vs_consensus": float(storage_row.surprise_bcf),
+                "actual_bcf": float(storage_row.net_change_bcf)
+                if storage_row.net_change_bcf is not None
+                else None,
             }
-    except (ImportError, AttributeError, Exception):
+
+        cot_recent = await cot_repo.get_recent(session, limit=2)
+        if len(cot_recent) >= 2:
+            curr_net = cot_recent[0].managed_money_net
+            prev_net = cot_recent[1].managed_money_net
+            if curr_net is not None and prev_net is not None:
+                latest_cot = {"mm_net_delta": float(curr_net - prev_net)}
+    except Exception:
+        # Defensive: alt-data lookup must never crash the signals path.
         pass
 
     ctx = ForecastContext(
