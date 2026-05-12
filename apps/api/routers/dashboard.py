@@ -62,7 +62,7 @@ async def get_summary(
             "published_at": e.published_at.isoformat() if e.published_at else None,
             "headline": e.headline,
             "category": e.category,
-            "impact_score": e.impact_score,
+            "impact_score": float(e.impact_score) if e.impact_score is not None else None,
         }
         for e in events
     ]

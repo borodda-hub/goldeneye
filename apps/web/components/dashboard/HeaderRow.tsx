@@ -12,10 +12,10 @@ interface Props {
 }
 
 const REGIME_STYLES: Record<VolRegime, string> = {
-  low: "bg-surface-2 text-ink-3",
+  compressed: "bg-surface-2 text-ink-3",
   normal: "bg-surface-2 text-flat",
   elevated: "bg-down-soft text-down",
-  extreme: "bg-down-soft text-down font-semibold",
+  crisis: "bg-down-soft text-down font-semibold",
 } as const;
 
 function VolRegimeChip({ regime }: { regime: VolRegime }) {
@@ -76,7 +76,7 @@ export function HeaderRow({
         </span>
         <span className={`font-mono text-sm tabular-nums ${changeColor}`}>
           ({pctSign}
-          {frontMonth.change_pct.toFixed(2)}%)
+          {(frontMonth.change_pct * 100).toFixed(2)}%)
         </span>
       </div>
 

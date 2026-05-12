@@ -13,7 +13,7 @@ export interface FrontMonth {
   as_of: string;
 }
 
-export type VolRegime = "low" | "normal" | "elevated" | "extreme";
+export type VolRegime = "compressed" | "normal" | "elevated" | "crisis";
 
 export type Direction = "bullish" | "bearish" | "neutral";
 

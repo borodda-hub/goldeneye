@@ -28,7 +28,7 @@ export function PriceMiniChart({ volRegime, contractCode }: Props) {
   const { data, isLoading } = useChartBars(contractCode, "1d", from30dAgo, today);
   const chartData = (data as ChartBarsResponse | undefined)?.bars ?? [];
 
-  const isHot = volRegime === "elevated" || volRegime === "extreme";
+  const isHot = volRegime === "elevated" || volRegime === "crisis";
   const strokeColor = isHot ? "#f87171" : "#34d399";
   const fillColor = isHot ? "#2c1416" : "#0d2820";
 
