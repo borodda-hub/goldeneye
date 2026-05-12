@@ -12,8 +12,10 @@ from apps.api.adapters.news.rss import (
     RssNewsAdapter,
     _classify,
     _matches_ng,
+    _parse_atom,
     _parse_pub_date,
     _parse_rss,
+    _should_keep,
     _strip_tags,
     _to_event,
 )
@@ -275,3 +277,110 @@ def test_ng_keywords_list_is_lowercase():
     """Filter uses .lower(); the keyword list must already be lowercase."""
     for kw in NG_KEYWORDS:
         assert kw == kw.lower(), f"keyword has uppercase: {kw!r}"
+
+
+# ── Atom / NWS support ────────────────────────────────────────────────────
+
+
+def _atom(entries_xml: str) -> bytes:
+    return f"""<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Test Atom Feed</title>
+  <id>urn:test:feed</id>
+  {entries_xml}
+</feed>""".strip().encode()
+
+
+def _entry(
+    title: str,
+    href: str = "https://example.com/x",
+    published: str = "2026-05-11T20:30:00-04:00",
+    summary: str = "",
+) -> str:
+    return f"""<entry>
+  <title>{title}</title>
+  <link href="{href}"/>
+  <published>{published}</published>
+  <summary>{summary}</summary>
+  <id>urn:test:{title}</id>
+</entry>"""
+
+
+def test_parse_atom_extracts_entries():
+    xml = _atom(
+        _entry("Winter Storm Warning issued for Pennsylvania")
+        + _entry("Freeze Watch for Texas", published="2026-05-12T08:00:00Z")
+    )
+    items = _parse_atom(xml, "nws_alerts")
+    assert len(items) == 2
+    assert items[0]["title"] == "Winter Storm Warning issued for Pennsylvania"
+    assert items[0]["link"] == "https://example.com/x"
+    assert items[0]["source_id"] == "nws_alerts"
+
+
+def test_parse_atom_skips_entries_without_title():
+    xml = _atom(
+        """<entry><id>urn:notitle</id><published>2026-05-11T20:30:00Z</published></entry>"""
+        + _entry("Real alert")
+    )
+    items = _parse_atom(xml, "nws_alerts")
+    assert len(items) == 1
+    assert items[0]["title"] == "Real alert"
+
+
+def test_parse_atom_tolerates_malformed_xml():
+    items = _parse_atom(b"<not valid", "src")
+    assert items == []
+
+
+def test_parse_pub_date_handles_iso8601_atom():
+    iso = _parse_pub_date("2026-05-11T20:30:00-04:00")
+    assert iso is not None and iso.startswith("2026-05-12T00:30:00")
+
+
+def test_parse_pub_date_handles_z_suffix():
+    iso = _parse_pub_date("2026-05-11T20:30:00Z")
+    assert iso is not None and iso.startswith("2026-05-11T20:30:00")
+
+
+def test_should_keep_accepts_all_for_nws():
+    """NWS items are accepted regardless of NG keywords."""
+    nws_item = {
+        "title": "Severe Thunderstorm Warning",  # no NG keyword
+        "description": "Hail and damaging winds expected",
+        "source_id": "nws_alerts",
+    }
+    assert _should_keep(nws_item) is True
+
+
+def test_should_keep_still_filters_yahoo():
+    """Other sources still go through the NG keyword filter."""
+    irrelevant = {
+        "title": "Apple announces new iPhone",
+        "description": "tech news",
+        "source_id": "yahoo_finance_ng",
+    }
+    assert _should_keep(irrelevant) is False
+
+
+def test_to_event_overrides_category_for_nws():
+    event = _to_event(
+        {
+            "title": "Severe Thunderstorm Warning",
+            "link": "https://api.weather.gov/x",
+            "description": "Hail and damaging winds",
+            "pubDate": "2026-05-11T20:30:00-04:00",
+            "source_id": "nws_alerts",
+        }
+    )
+    assert event is not None
+    assert event["category"] == "weather"
+
+
+def test_feeds_registry_uses_tuple_shape():
+    """All registry entries are (url, format) tuples; format is rss or atom."""
+    for source_id, value in FEEDS.items():
+        assert isinstance(value, tuple) and len(value) == 2, source_id
+        url, fmt = value
+        assert isinstance(url, str) and url.startswith("https://"), source_id
+        assert fmt in ("rss", "atom"), source_id
