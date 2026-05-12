@@ -19,7 +19,9 @@ from apps.api.services.scenario_engine import run_scenario
 
 router = APIRouter(prefix="/v1/scenarios", tags=["scenarios"])
 
-_FIXTURES_DIR = Path(__file__).resolve().parents[4] / "packages" / "fixtures"
+# Repo layout: apps/api/routers/scenarios.py → parents[3] is the repo root.
+# (parents[4] walked one level above, missing packages/fixtures every time.)
+_FIXTURES_DIR = Path(__file__).resolve().parents[3] / "packages" / "fixtures"
 
 
 # ---------------------------------------------------------------------------
