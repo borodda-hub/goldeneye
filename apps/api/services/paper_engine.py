@@ -321,8 +321,12 @@ async def equity_curve(
         front_month_cache[t.instrument_id] = front_id
         trade_price_contract[t.id] = front_id
 
-    window_from = datetime.combine(since, time.min, tzinfo=timezone.utc)
-    window_to = _end_of_day(today)
+    # PriceBar.ts is a naive Postgres TIMESTAMP column. asyncpg rejects a
+    # tz-aware datetime against a naive column ("can't subtract offset-naive
+    # and offset-aware datetimes"), so the bar-window bounds must be stripped
+    # to naive UTC before binding.
+    window_from = datetime.combine(since, time.min)
+    window_to = datetime.combine(today, time(23, 59, 59, 999999))
 
     bars_by_contract: dict[uuid.UUID, dict[date, float]] = {}
     for cid in {c for c in trade_price_contract.values() if c is not None}:
