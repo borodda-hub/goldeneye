@@ -11,6 +11,9 @@ from apps.api.src.settings import settings
 
 @lru_cache(maxsize=None)
 def get_market():
+    if settings.adapter_market == "yahoo_delayed":
+        from apps.api.adapters.market.yahoo_delayed import YahooDelayedMarketAdapter
+        return YahooDelayedMarketAdapter()
     if settings.adapter_market == "mock":
         from apps.api.adapters.market.mock import MockMarketAdapter
         return MockMarketAdapter()
