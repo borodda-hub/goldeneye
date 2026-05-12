@@ -19,22 +19,44 @@ def apply(
     """
     Apply shocks composably to a baseline ForecastContext.
 
-    Later shocks compose on the output of earlier ones (e.g. two weather shocks both
-    contribute to the cumulative weather_anomaly; two production shocks both reduce
-    closes). Returns (shocked_ctx, assumptions, max_days).
+    Each shock both records itself on its native field AND translates into a
+    price-impact heuristic on `closes`, so the models (which read `closes`
+    plus optional alt-data) actually see the shock. Prior to this fix,
+    weather and storage shocks only wrote to fields no model consumed —
+    changing shock values produced identical forecasts.
 
-    Shock types and their application logic:
-    - type="weather":     weather_anomaly += shock["delta_temp_f"]
-    - type="production":  closes adjusted downward by delta_bcfd * 0.01 per day
-                          (production increase → price headwind heuristic)
-    - type="lng_export":  closes adjusted upward by delta_bcfd * 0.01
-                          (export increase → demand increase → price tailwind)
-    - type="storage":     latest_storage["delta"] adjusted by shock["delta_bcf"]
+    Heuristics (rough magnitudes; not calibrated to historical sensitivities):
+
+    - type="weather":     each 1°F of anomaly → -0.005/MMBtu (cold = up).
+                          Scaled by days / 7 so a longer event has more impact.
+                          Also accumulates into weather_anomaly.
+
+    - type="production":  each 1 Bcf/d → -0.01/MMBtu (more supply = down).
+                          Scaled by days / 7.
+
+    - type="lng_export":  each 1 Bcf/d → +0.01/MMBtu (more exports = up).
+                          Scaled by days / 7.
+
+    - type="storage":     writes delta_vs_consensus on latest_storage so the
+                          xgboost placeholder sees it (positive = larger build
+                          than expected = bearish in xgboost's logic).
+                          Also accumulates into closes via a small price
+                          heuristic so even non-xgboost models register it.
     """
+    # Tunable magnitudes — kept in one place so backtests can sweep them.
+    WEATHER_PRICE_PER_DEG_F = -0.005   # cold (negative ΔT) → price up
+    PRODUCTION_PRICE_PER_BCFD = -0.01  # supply ↑ → price ↓
+    LNG_EXPORT_PRICE_PER_BCFD = 0.01   # demand ↑ → price ↑
+    STORAGE_PRICE_PER_BCF = -0.0005    # bigger build vs consensus = bearish
+
     shocked_closes = list(baseline_ctx.closes)
     shocked_weather = baseline_ctx.weather_anomaly or 0.0
-    shocked_storage = (
-        copy.deepcopy(baseline_ctx.latest_storage) if baseline_ctx.latest_storage else {}
+    # Always start from a dict — storage shocks need somewhere to write the
+    # delta_vs_consensus key even when the baseline context has no storage data.
+    shocked_storage: dict = (
+        copy.deepcopy(baseline_ctx.latest_storage)
+        if isinstance(baseline_ctx.latest_storage, dict)
+        else {}
     )
 
     max_days = 0
@@ -44,49 +66,59 @@ def apply(
         shock_type = shock.get("type", "")
         days = int(shock.get("days", 7))
         max_days = max(max_days, days)
+        # Persistence multiplier — a 14-day event has ~2× the cumulative
+        # impact of a 7-day one. Capped so a 60-day shock isn't 8×.
+        days_factor = min(days / 7.0, 4.0)
 
         if shock_type == "weather":
             delta_temp = float(shock.get("delta_temp_f", 0.0))
             shocked_weather += delta_temp
             region = shock.get("region", "US national")
+            price_impact = delta_temp * WEATHER_PRICE_PER_DEG_F * days_factor
+            shocked_closes = [c + price_impact for c in shocked_closes]
             assumptions.append(
-                f"Cold air mass of {delta_temp:+.1f}°F persists for {days} days in {region}."
+                f"Temperature anomaly of {delta_temp:+.1f}°F persists for {days} days "
+                f"in {region}, applying a {price_impact:+.4f}/MMBtu price-impact "
+                f"heuristic to all closes."
             )
 
         elif shock_type == "production":
             delta_bcfd = float(shock.get("delta_bcfd", 0.0))
-            # Price impact heuristic: production increase → price headwind (small per-day reduction)
-            price_impact = delta_bcfd * 0.01
-            shocked_closes = [c - price_impact for c in shocked_closes]
+            price_impact = delta_bcfd * PRODUCTION_PRICE_PER_BCFD * days_factor
+            shocked_closes = [c + price_impact for c in shocked_closes]
             assumptions.append(
                 f"Production changes by {delta_bcfd:+.2f} Bcf/d for {days} days, "
-                f"applying a {price_impact:.4f}/MMBtu price headwind heuristic."
+                f"applying a {price_impact:+.4f}/MMBtu price impact (supply heuristic)."
             )
 
         elif shock_type == "lng_export":
             delta_bcfd = float(shock.get("delta_bcfd", 0.0))
-            # Export increase → demand increase → price tailwind
-            price_impact = delta_bcfd * 0.01
+            price_impact = delta_bcfd * LNG_EXPORT_PRICE_PER_BCFD * days_factor
             shocked_closes = [c + price_impact for c in shocked_closes]
             assumptions.append(
                 f"LNG export demand changes by {delta_bcfd:+.2f} Bcf/d for {days} days, "
-                f"applying a {price_impact:.4f}/MMBtu price tailwind heuristic."
+                f"applying a {price_impact:+.4f}/MMBtu price impact (demand heuristic)."
             )
 
         elif shock_type == "storage":
             delta_bcf = float(shock.get("delta_bcf", 0.0))
-            if isinstance(shocked_storage, dict):
-                current = shocked_storage.get("delta", 0.0) or 0.0
-                shocked_storage["delta"] = current + delta_bcf
+            # Field name that xgboost_placeholder actually reads.
+            existing = shocked_storage.get("delta_vs_consensus", 0.0) or 0.0
+            shocked_storage["delta_vs_consensus"] = existing + delta_bcf
+            # Also nudge closes so non-xgboost models see something.
+            price_impact = delta_bcf * STORAGE_PRICE_PER_BCF * days_factor
+            shocked_closes = [c + price_impact for c in shocked_closes]
             assumptions.append(
-                f"Storage injection/withdrawal shifts by {delta_bcf:+.1f} Bcf "
-                f"over the next {days} days."
+                f"Storage delta vs consensus shifts by {delta_bcf:+.1f} Bcf over "
+                f"{days} days, applying a {price_impact:+.4f}/MMBtu price-impact "
+                f"heuristic to closes and surfacing the delta on the xgboost input."
             )
 
     shocked_ctx = replace(
         baseline_ctx,
         closes=shocked_closes,
         weather_anomaly=shocked_weather,
+        # Pass the dict even when empty — keeps the storage path consistent.
         latest_storage=shocked_storage if shocked_storage else baseline_ctx.latest_storage,
     )
 

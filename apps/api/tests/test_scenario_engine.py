@@ -87,20 +87,23 @@ def test_apply_weather_shock_updates_weather_anomaly(baseline_ctx: ForecastConte
 
 
 def test_apply_composes_weather_and_lng_export(baseline_ctx: ForecastContext) -> None:
-    """Both effects must be present in the returned ctx."""
+    """Weather and LNG-export shocks both push closes (weather: cold = up,
+    LNG: more exports = up)."""
     shocks = [
         {"type": "weather", "region": "midwest", "delta_temp_f": -8.0, "days": 7},
         {"type": "lng_export", "delta_bcfd": 2.0, "days": 14},
     ]
     shocked, assumptions, max_days = apply(shocks, baseline_ctx)
 
-    # Weather anomaly composed
+    # Weather anomaly composed onto its own field.
     assert shocked.weather_anomaly == pytest.approx(-8.0)
-    # LNG export tailwind composed onto closes: each close increased by 2.0 * 0.01 = 0.02
-    expected_first_close = baseline_ctx.closes[0] + 0.02
-    assert shocked.closes[0] == pytest.approx(expected_first_close)
+    # Composed price impacts (days_factor 7d→1.0, 14d→2.0):
+    #   weather: -8 °F × -0.005 × (7/7)  = +0.040
+    #   lng:     +2 Bcf/d × 0.01 × (14/7) = +0.040
+    #   total adjustment:                  +0.080
+    expected_first_close = baseline_ctx.closes[0] + 0.08
+    assert shocked.closes[0] == pytest.approx(expected_first_close, abs=1e-9)
     assert len(shocked.closes) == len(baseline_ctx.closes)
-    # Both assumptions captured
     assert len(assumptions) == 2
     assert max_days == 14
 
@@ -109,10 +112,10 @@ def test_apply_production_reduces_closes(baseline_ctx: ForecastContext) -> None:
     shocks = [{"type": "production", "delta_bcfd": 5.0, "days": 7}]
     shocked, assumptions, max_days = apply(shocks, baseline_ctx)
 
-    # Production *increase* of +5 bcfd → price headwind of 0.05/MMBtu off every close
+    # Production *increase* of +5 bcfd × -0.01 × (7d/7) = -0.05/MMBtu off every close.
     assert len(shocked.closes) == len(baseline_ctx.closes)
     for orig, new in zip(baseline_ctx.closes, shocked.closes):
-        assert new == pytest.approx(orig - 0.05)
+        assert new == pytest.approx(orig - 0.05, abs=1e-9)
     assert len(assumptions) == 1
 
 
@@ -120,8 +123,12 @@ def test_apply_storage_shock_updates_latest_storage(baseline_ctx: ForecastContex
     shocks = [{"type": "storage", "delta_bcf": -45.0, "days": 7}]
     shocked, assumptions, max_days = apply(shocks, baseline_ctx)
 
+    # Storage shocks write delta_vs_consensus — that's the key xgboost actually
+    # reads. Negative = smaller build / larger draw vs consensus = bullish.
     assert shocked.latest_storage is not None
-    assert shocked.latest_storage["delta"] == pytest.approx(-45.0)
+    assert shocked.latest_storage["delta_vs_consensus"] == pytest.approx(-45.0)
+    # Also nudges closes via heuristic: -45 × -0.0005 × 1.0 = +0.0225.
+    assert shocked.closes[0] == pytest.approx(baseline_ctx.closes[0] + 0.0225, abs=1e-9)
     assert len(assumptions) == 1
 
 
