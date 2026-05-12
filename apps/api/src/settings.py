@@ -13,6 +13,14 @@ class Settings(BaseSettings):
     llm_mode: Literal["fake", "real"] = "fake"
     llm_model_fast: str = "claude-haiku-4-5-20251001"
     llm_model_smart: str = "claude-sonnet-4-6"
+    llm_model_premium: str = "claude-opus-4-7"
+
+    # Per-task overrides (empty = use routing default). Format: model ID string.
+    llm_model_summarize_market: str = ""
+    llm_model_explain_signal: str = ""
+    llm_model_narrate_scenario: str = ""
+    llm_model_review_journal_entry: str = ""
+    llm_model_extract_event: str = ""
     adapter_market: str = "mock"
     adapter_energy: str = "mock"
     adapter_weather: str = "mock"

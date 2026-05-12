@@ -1,7 +1,8 @@
-"""
-LLM explainer service. All methods return (text: str, envelope: SafetyEnvelope).
-Every response goes through scan_for_forbidden; raises SafetyViolation on second failure.
-Results are cached in memory (simple dict) keyed by hash of inputs.
+"""LLM explainer service. All methods return (text: str, envelope: SafetyEnvelope).
+
+Every response goes through scan_for_forbidden; raises SafetyViolation on
+second failure. Results are cached in memory keyed by hash of the prompt
+text. Model selection routes through `services.llm_routing.select_model`.
 """
 from __future__ import annotations
 
@@ -9,57 +10,60 @@ import hashlib
 import json
 import logging
 from datetime import datetime
+from typing import Any
 
 from apps.api.services.llm_client import call_llm
 from apps.api.services.llm_prompts import (
+    PromptParts,
     explain_signal_messages,
     extract_event_messages,
     narrate_scenario_messages,
     review_journal_entry_messages,
     summarize_market_messages,
 )
+from apps.api.services.llm_routing import select_model
 from apps.api.services.safety import (
-    DISCLAIMER,
     SafetyEnvelope,
     SafetyViolation,
     scan_for_forbidden,
     wrap_with_uncertainty,
 )
-from apps.api.src.settings import settings
 
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# In-memory response caches: keyed by hex digest of message content
+# In-memory response caches: keyed by hex digest of prompt content.
 # ---------------------------------------------------------------------------
 _cache: dict[str, tuple[str, SafetyEnvelope]] = {}
-_event_cache: dict[str, dict] = {}  # type: ignore[type-arg]
+_event_cache: dict[str, dict[str, Any]] = {}
 
 
-def _cache_key(messages: list[dict]) -> str:  # type: ignore[type-arg]
-    """Return a stable hex digest for a list of messages."""
-    serialized = json.dumps(messages, sort_keys=True, ensure_ascii=False)
+def _cache_key(prompt: PromptParts) -> str:
+    """Return a stable hex digest for a PromptParts object."""
+    payload = {
+        "system": [b.get("text", "") for b in prompt.system_blocks],
+        "user": [m.get("content", "") for m in prompt.user_messages],
+    }
+    serialized = json.dumps(payload, sort_keys=True, ensure_ascii=False)
     return hashlib.sha256(serialized.encode()).hexdigest()
 
 
 async def _call_with_safety_check(
     task: str,
-    messages: list[dict],  # type: ignore[type-arg]
+    prompt: PromptParts,
     model: str,
     max_tokens: int = 400,
 ) -> str:
-    """
-    Call LLM, check forbidden phrases. If first attempt fails, retry once with a stricter
-    addendum. Second failure raises SafetyViolation.
-    """
-    text = await call_llm(task=task, messages=messages, model=model, max_tokens=max_tokens)
+    """Call LLM, check forbidden phrases. Retry once with stricter prompt on first fail."""
+    text = await call_llm(task=task, prompt=prompt, model=model, max_tokens=max_tokens)
 
     if not scan_for_forbidden(text):
         return text
 
-    # First failure — retry with a stricter prompt addendum
-    logger.warning("Safety scan failed on first attempt for task=%r. Retrying with stricter prompt.", task)
-    strict_messages = messages + [
+    logger.warning(
+        "Safety scan failed on first attempt for task=%r. Retrying with stricter prompt.", task
+    )
+    strict_user = list(prompt.user_messages) + [
         {
             "role": "user",
             "content": (
@@ -71,38 +75,25 @@ async def _call_with_safety_check(
             ),
         }
     ]
-    text = await call_llm(task=task, messages=strict_messages, model=model, max_tokens=max_tokens)
+    strict_prompt = PromptParts(system_blocks=prompt.system_blocks, user_messages=strict_user)
+    text = await call_llm(task=task, prompt=strict_prompt, model=model, max_tokens=max_tokens)
 
     if scan_for_forbidden(text):
         raise SafetyViolation(
-            f"LLM output for task={task!r} contains forbidden phrases after retry. "
-            "Response blocked."
+            f"LLM output for task={task!r} contains forbidden phrases after retry. Response blocked."
         )
 
     return text
 
 
-def _select_model(task: str) -> str:
-    """Select fast or smart model based on task type."""
-    fast_tasks = {"summarize_market", "extract_event"}
-    if task in fast_tasks:
-        return settings.llm_model_fast
-    return settings.llm_model_smart
-
-
-async def summarize_market(ctx: dict) -> tuple[str, SafetyEnvelope]:  # type: ignore[type-arg]
-    """
-    Generate a market summary narrative.
-
-    Returns (text, SafetyEnvelope) with confidence="medium".
-    """
-    messages = summarize_market_messages(ctx)
-    key = _cache_key(messages)
+async def summarize_market(ctx: dict[str, Any]) -> tuple[str, SafetyEnvelope]:
+    prompt = summarize_market_messages(ctx)
+    key = _cache_key(prompt)
     if key in _cache:
         return _cache[key]
 
-    model = _select_model("summarize_market")
-    text = await _call_with_safety_check("summarize_market", messages, model=model)
+    model = select_model("summarize_market", ctx)
+    text = await _call_with_safety_check("summarize_market", prompt, model=model)
 
     envelope = wrap_with_uncertainty(
         {},
@@ -118,19 +109,16 @@ async def summarize_market(ctx: dict) -> tuple[str, SafetyEnvelope]:  # type: ig
     return result
 
 
-async def explain_signal(signal: dict, ctx: dict) -> tuple[str, SafetyEnvelope]:  # type: ignore[type-arg]
-    """
-    Generate a signal explanation narrative.
-
-    Returns (text, SafetyEnvelope) with confidence="medium".
-    """
-    messages = explain_signal_messages(signal, ctx)
-    key = _cache_key(messages)
+async def explain_signal(
+    signal: dict[str, Any], ctx: dict[str, Any]
+) -> tuple[str, SafetyEnvelope]:
+    prompt = explain_signal_messages(signal, ctx)
+    key = _cache_key(prompt)
     if key in _cache:
         return _cache[key]
 
-    model = _select_model("explain_signal")
-    text = await _call_with_safety_check("explain_signal", messages, model=model)
+    model = select_model("explain_signal", {**ctx, **signal})
+    text = await _call_with_safety_check("explain_signal", prompt, model=model)
 
     envelope = wrap_with_uncertainty(
         {},
@@ -147,22 +135,19 @@ async def explain_signal(signal: dict, ctx: dict) -> tuple[str, SafetyEnvelope]:
 
 
 async def narrate_scenario(
-    scenario: dict,  # type: ignore[type-arg]
-    results: dict,  # type: ignore[type-arg]
-    ctx: dict,  # type: ignore[type-arg]
+    scenario: dict[str, Any],
+    results: dict[str, Any],
+    ctx: dict[str, Any],
 ) -> tuple[str, SafetyEnvelope]:
-    """
-    Generate a scenario narrative.
-
-    Returns (text, SafetyEnvelope) with confidence="low" (scenario forecasts carry higher uncertainty).
-    """
-    messages = narrate_scenario_messages(scenario, results, ctx)
-    key = _cache_key(messages)
+    prompt = narrate_scenario_messages(scenario, results, ctx)
+    key = _cache_key(prompt)
     if key in _cache:
         return _cache[key]
 
-    model = _select_model("narrate_scenario")
-    text = await _call_with_safety_check("narrate_scenario", messages, model=model)
+    # Escalate to Opus when shocks ≥ 4 (locked rule).
+    routing_ctx = {"num_shocks": len(scenario.get("shocks", []) or [])}
+    model = select_model("narrate_scenario", routing_ctx)
+    text = await _call_with_safety_check("narrate_scenario", prompt, model=model)
 
     envelope = wrap_with_uncertainty(
         {},
@@ -179,17 +164,14 @@ async def narrate_scenario(
     return result
 
 
-async def review_journal_entry(entry: dict) -> tuple[str, SafetyEnvelope]:  # type: ignore[type-arg]
-    """
-    Generate a decision-quality review of a journal entry.
-    Journal review is NOT cached (per docs/AI_BEHAVIOR.md §caching).
+async def review_journal_entry(entry: dict[str, Any]) -> tuple[str, SafetyEnvelope]:
+    """Journal review is NOT cached (per docs/AI_BEHAVIOR.md §caching)."""
+    prompt = review_journal_entry_messages(entry)
 
-    Returns (text, SafetyEnvelope) with confidence="medium".
-    """
-    messages = review_journal_entry_messages(entry)
-
-    model = _select_model("review_journal_entry")
-    text = await _call_with_safety_check("review_journal_entry", messages, model=model)
+    # Escalate to Opus when confidence_pct ≥ 80 (locked rule).
+    routing_ctx = {"confidence_pct": entry.get("confidence_pct") or 0}
+    model = select_model("review_journal_entry", routing_ctx)
+    text = await _call_with_safety_check("review_journal_entry", prompt, model=model)
 
     envelope = wrap_with_uncertainty(
         {},
@@ -203,34 +185,24 @@ async def review_journal_entry(entry: dict) -> tuple[str, SafetyEnvelope]:  # ty
     return (text, envelope)
 
 
-async def extract_event(article: dict) -> dict:  # type: ignore[type-arg]
-    """
-    Extract structured event metadata from a news article.
-
-    Returns a dict with keys: category, sentiment, impact_score, affected_regions, entities.
-    """
-    messages = extract_event_messages(article)
-    key = _cache_key(messages)
-
+async def extract_event(article: dict[str, Any]) -> dict[str, Any]:
+    prompt = extract_event_messages(article)
+    key = _cache_key(prompt)
     if key in _event_cache:
         return _event_cache[key]
 
-    model = _select_model("extract_event")
-    text = await call_llm(task="extract_event", messages=messages, model=model)
-
-    # Parse JSON response; fall back to safe default on failure
+    model = select_model("extract_event", article)
+    text = await call_llm(task="extract_event", prompt=prompt, model=model)
     result = _parse_event_json(text)
     _event_cache[key] = result
     return result
 
 
-def _parse_event_json(text: str) -> dict:  # type: ignore[type-arg]
+def _parse_event_json(text: str) -> dict[str, Any]:
     """Parse JSON from LLM output; return safe default on error."""
-    # Strip markdown code fences if present
     stripped = text.strip()
     if stripped.startswith("```"):
         lines = stripped.splitlines()
-        # Remove first and last fence lines
         inner_lines = lines[1:-1] if lines[-1].strip().startswith("```") else lines[1:]
         stripped = "\n".join(inner_lines)
 

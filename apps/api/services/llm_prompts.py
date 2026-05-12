@@ -1,15 +1,25 @@
-"""
-LLM prompt builder functions.
+"""LLM prompt builder functions.
 
 Implements the 5 prompt builders from docs/AI_BEHAVIOR.md §prompt_templates.
-Each function returns messages: list[dict] ready to pass to call_llm().
+Each builder returns a `PromptParts` (system_blocks, user_messages) so the
+persona/rules block can be cached at the API level (~90% input-token
+reduction on repeat calls).
+
+Cache layout per call:
+    system: [PERSONA + HARD_RULES]   ← cached (ephemeral, 5-min TTL)
+    system: [task-specific instructions]
+    user:   [dynamic ctx]            ← not cached
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Any
+
 # ---------------------------------------------------------------------------
-# Shared system prompt — exactly from docs/AI_BEHAVIOR.md §prompt_templates §shared_system_prompt
+# Cacheable persona + hard-rules block. Identical across all 5 methods.
+# (Exact text from docs/AI_BEHAVIOR.md §prompt_templates §shared_system_prompt.)
 # ---------------------------------------------------------------------------
-SYSTEM_PROMPT: str = (
+PERSONA_PROMPT: str = (
     "You are the NGTI desk analyst. You write short, institutional, cautious commodity research "
     "notes for an internal team.\n\n"
     "Hard rules:\n"
@@ -23,22 +33,62 @@ SYSTEM_PROMPT: str = (
     "Output is read by analysts who have already seen the underlying data. Be concise."
 )
 
+# Backwards-compatibility alias for tests still importing SYSTEM_PROMPT directly.
+SYSTEM_PROMPT: str = PERSONA_PROMPT
 
-def summarize_market_messages(ctx: dict) -> list[dict]:  # type: ignore[type-arg]
-    """
-    Build messages for the summarize_market task.
+# Context-trimming caps (locked in docs/PHASE_09_PLAN.md §1.5c).
+_EXPLAIN_SIGNAL_TOP_FACTORS = 2
+_REVIEW_JOURNAL_TOP_EVIDENCE = 5
+_EXTRACT_EVENT_BODY_CHARS = 800
 
-    ctx keys (all optional, use sensible defaults if absent):
-        price: float            Front-month price
-        intraday_change: float  Intraday price change
-        vol_regime: str         Volatility regime
-        storage_delta: float    Delta vs consensus (Bcf)
-        storage_vs_5y: float    Delta vs 5-year average (Bcf)
-        cot_mm_change: float    Week-over-week managed-money net change
-        top_events: list[str]   Top 3 events of last 5 days
-        temp_anomaly: float     14-day HDD-weighted national temperature anomaly (°F)
+
+@dataclass(frozen=True)
+class PromptParts:
+    """Structured prompt — system blocks (cacheable) + user messages (dynamic)."""
+
+    system_blocks: list[dict[str, Any]]
+    user_messages: list[dict[str, Any]]
+
+    def to_legacy_messages(self) -> list[dict[str, Any]]:
+        """Flatten into the legacy single-message format (system inlined into user).
+
+        Used by the fake LLM path and by older tests that still inspect messages
+        as a flat list.
+        """
+        if not self.user_messages:
+            return []
+        first = self.user_messages[0]
+        system_text = "\n\n".join(
+            b.get("text", "") for b in self.system_blocks if b.get("type") == "text"
+        )
+        combined_content = (
+            f"{system_text}\n\n{first.get('content', '')}" if system_text else first.get("content", "")
+        )
+        return [{"role": first.get("role", "user"), "content": combined_content}, *self.user_messages[1:]]
+
+
+def _persona_block() -> dict[str, Any]:
+    """Persona/rules block with cache_control. Identical across methods."""
+    return {
+        "type": "text",
+        "text": PERSONA_PROMPT,
+        "cache_control": {"type": "ephemeral"},
+    }
+
+
+def _task_block(task_instructions: str) -> dict[str, Any]:
+    """Per-task instructions block. Not cached (varies in length but always small)."""
+    return {"type": "text", "text": task_instructions}
+
+
+def summarize_market_messages(ctx: dict) -> PromptParts:  # type: ignore[type-arg]
+    """Build messages for summarize_market.
+
+    Recognized ctx keys: price, intraday_change, vol_regime, storage_delta,
+    storage_vs_5y, cot_mm_change, top_events (list), temp_anomaly. Additional
+    keys are ignored (caller can pass a fuller dict without inflating tokens).
     """
-    price = ctx.get("price", "N/A")
+    price = ctx.get("price", ctx.get("last_price", "N/A"))
     intraday_change = ctx.get("intraday_change", "N/A")
     vol_regime = ctx.get("vol_regime", "unknown")
     storage_delta = ctx.get("storage_delta", "N/A")
@@ -47,43 +97,30 @@ def summarize_market_messages(ctx: dict) -> list[dict]:  # type: ignore[type-arg
     top_events = ctx.get("top_events", [])
     temp_anomaly = ctx.get("temp_anomaly", "N/A")
 
-    events_text = "\n".join(f"  - {e}" for e in top_events) if top_events else "  - None available"
+    events_text = "\n".join(f"  - {e}" for e in top_events[:3]) if top_events else "  - None available"
 
+    task_instructions = (
+        "Task: summarize_market. Write 2-3 sentences. Lead with the most informative data point. "
+        "Mark inference. Include one caveat."
+    )
     user_content = (
-        "Task: summarize_market\n\n"
         "Inputs:\n"
         f"- Front-month price: {price}, intraday change: {intraday_change}\n"
         f"- Volatility regime: {vol_regime}\n"
         f"- Storage delta vs consensus: {storage_delta} Bcf; vs 5-year average: {storage_vs_5y} Bcf\n"
         f"- COT managed-money net WoW change: {cot_mm_change}\n"
         f"- Top events (last 5 days):\n{events_text}\n"
-        f"- 14-day HDD-weighted temperature anomaly: {temp_anomaly} °F\n\n"
-        "Write 2-3 sentences. Lead with the most informative data point. Mark inference. "
-        "Include one caveat."
+        f"- 14-day HDD-weighted temperature anomaly: {temp_anomaly} °F"
     )
 
-    return [
-        {"role": "user", "content": f"{SYSTEM_PROMPT}\n\n{user_content}"},
-    ]
+    return PromptParts(
+        system_blocks=[_persona_block(), _task_block(task_instructions)],
+        user_messages=[{"role": "user", "content": user_content}],
+    )
 
 
-def explain_signal_messages(signal: dict, ctx: dict) -> list[dict]:  # type: ignore[type-arg]
-    """
-    Build messages for the explain_signal task.
-
-    signal keys:
-        direction: str                Ensemble direction (bullish/bearish/neutral)
-        confidence: str               Ensemble confidence (low/medium/high)
-        models: list[dict]            Per-model results with direction, supporting, contradicting
-        vol_regime: str               Volatility regime
-        agreement: dict               Agreement counts from compute_ensemble
-        confidence_rationale: list    Rationale strings from compute_ensemble
-
-    ctx keys:
-        storage: dict | None          Latest storage data (delta_vs_consensus)
-        cot: dict | None              Latest COT data (mm_net_delta)
-        models: list[dict]            Per-model results (same as signal["models"])
-    """
+def explain_signal_messages(signal: dict, ctx: dict) -> PromptParts:  # type: ignore[type-arg]
+    """Build messages for explain_signal. Caps supporting/contradicting to top-2 per model."""
     direction = signal.get("direction", "neutral")
     confidence = signal.get("confidence", "low")
     models = signal.get("models", [])
@@ -97,10 +134,10 @@ def explain_signal_messages(signal: dict, ctx: dict) -> list[dict]:  # type: ign
     for m in models:
         name = m.get("model_name", m.get("name", "unknown"))
         dir_ = m.get("direction", "neutral")
-        supporting = m.get("supporting", [])
-        contradicting = m.get("contradicting", [])
-        sup_str = "; ".join(f["factor"] for f in supporting) if supporting else "none"
-        con_str = "; ".join(f["factor"] for f in contradicting) if contradicting else "none"
+        supporting = (m.get("supporting") or [])[:_EXPLAIN_SIGNAL_TOP_FACTORS]
+        contradicting = (m.get("contradicting") or [])[:_EXPLAIN_SIGNAL_TOP_FACTORS]
+        sup_str = "; ".join(f.get("factor", "") for f in supporting) if supporting else "none"
+        con_str = "; ".join(f.get("factor", "") for f in contradicting) if contradicting else "none"
         models_text_parts.append(
             f"  - {name}: {dir_} | supporting: {sup_str} | contradicting: {con_str}"
         )
@@ -110,54 +147,48 @@ def explain_signal_messages(signal: dict, ctx: dict) -> list[dict]:  # type: ign
         f"{agreement.get('bullish', 0)} bullish, "
         f"{agreement.get('bearish', 0)} bearish, "
         f"{agreement.get('neutral', 0)} neutral of {agreement.get('total', 0)} models"
-        if agreement else "N/A"
+        if agreement
+        else "N/A"
     )
     rationale_text = "; ".join(confidence_rationale) if confidence_rationale else "N/A"
 
     storage_text = (
         f"EIA storage delta vs consensus: {storage.get('delta_vs_consensus', 'N/A')} Bcf"
-        if storage else "N/A"
+        if storage
+        else "N/A"
     )
     cot_text = (
         f"Managed-money net WoW delta: {cot.get('mm_net_delta', 'N/A')} contracts"
-        if cot else "N/A"
+        if cot
+        else "N/A"
     )
 
+    task_instructions = (
+        "Task: explain_signal. Write 3-5 sentences. First sentence states the ensemble view. "
+        "Following sentences walk through the strongest supporting factor and the strongest "
+        "contradicting factor. Conclude with the confidence band and one caveat about what "
+        "could invalidate."
+    )
     user_content = (
-        "Task: explain_signal\n\n"
         "Inputs:\n"
         f"- Ensemble direction: {direction}, confidence: {confidence}\n"
         f"- Model agreement: {agreement_text}\n"
         f"- Confidence rationale: {rationale_text}\n"
-        f"- Per-model results:\n{models_text}\n"
+        f"- Per-model results (top-{_EXPLAIN_SIGNAL_TOP_FACTORS} factors each):\n{models_text}\n"
         f"- Volatility regime: {vol_regime}\n"
-        f"- Alt-data context: storage={storage_text}; COT={cot_text}\n\n"
-        "Write 3-5 sentences. First sentence states the ensemble view. Following sentences walk "
-        "through the strongest supporting factor and the strongest contradicting factor. Conclude "
-        "with the confidence band and one caveat about what could invalidate."
+        f"- Alt-data context: storage={storage_text}; COT={cot_text}"
     )
 
-    return [
-        {"role": "user", "content": f"{SYSTEM_PROMPT}\n\n{user_content}"},
-    ]
+    return PromptParts(
+        system_blocks=[_persona_block(), _task_block(task_instructions)],
+        user_messages=[{"role": "user", "content": user_content}],
+    )
 
 
-def narrate_scenario_messages(scenario: dict, results: dict, ctx: dict) -> list[dict]:  # type: ignore[type-arg]
-    """
-    Build messages for the narrate_scenario task.
-
-    scenario keys:
-        name: str            Scenario name
-        shocks: list[dict]   List of shock dicts
-
-    results keys:
-        baseline: dict       Baseline ensemble result
-        shocked: dict        Shocked ensemble result
-        delta_direction: str Change in directional pressure
-        delta_range: dict    Change in expected range
-
-    ctx: additional context (optional)
-    """
+def narrate_scenario_messages(
+    scenario: dict, results: dict, ctx: dict  # type: ignore[type-arg]
+) -> PromptParts:
+    """Build messages for narrate_scenario."""
     name = scenario.get("name", "Unnamed scenario")
     shocks = scenario.get("shocks", [])
     baseline = results.get("baseline", {})
@@ -165,12 +196,20 @@ def narrate_scenario_messages(scenario: dict, results: dict, ctx: dict) -> list[
     delta_direction = results.get("delta_direction", "unchanged")
     delta_range = results.get("delta_range", {})
 
-    shocks_text = "\n".join(
-        f"  - type={s.get('type', '?')}, {s}" for s in shocks
-    ) if shocks else "  - None"
+    shocks_text = (
+        "\n".join(f"  - type={s.get('type', '?')}, {s}" for s in shocks) if shocks else "  - None"
+    )
 
+    task_instructions = (
+        "Task: narrate_scenario. Output a structured narrative with these sections, each 1-3 sentences:\n"
+        "1. What the scenario assumes\n"
+        "2. How the data would shift if the scenario plays out\n"
+        "3. The directional pressure and confidence band, with the timeframe\n"
+        "4. The strongest counterargument\n"
+        "5. What data would validate or invalidate this scenario in the next 1-2 weeks\n"
+        "Do not add any other sections."
+    )
     user_content = (
-        "Task: narrate_scenario\n\n"
         f"Scenario name: {name}\n"
         f"Shocks:\n{shocks_text}\n\n"
         f"Baseline forecast: direction={baseline.get('direction', 'N/A')}, "
@@ -180,33 +219,17 @@ def narrate_scenario_messages(scenario: dict, results: dict, ctx: dict) -> list[
         f"confidence={shocked.get('confidence', 'N/A')}, "
         f"expected_pct={shocked.get('expected_pct', 'N/A')}\n"
         f"Delta in directional pressure: {delta_direction}\n"
-        f"Delta in expected range: {delta_range}\n\n"
-        "Output a structured narrative with these sections, each 1-3 sentences:\n"
-        "1. What the scenario assumes\n"
-        "2. How the data would shift if the scenario plays out\n"
-        "3. The directional pressure and confidence band, with the timeframe\n"
-        "4. The strongest counterargument\n"
-        "5. What data would validate or invalidate this scenario in the next 1-2 weeks\n\n"
-        "Do not add any other sections."
+        f"Delta in expected range: {delta_range}"
     )
 
-    return [
-        {"role": "user", "content": f"{SYSTEM_PROMPT}\n\n{user_content}"},
-    ]
+    return PromptParts(
+        system_blocks=[_persona_block(), _task_block(task_instructions)],
+        user_messages=[{"role": "user", "content": user_content}],
+    )
 
 
-def review_journal_entry_messages(entry: dict) -> list[dict]:  # type: ignore[type-arg]
-    """
-    Build messages for the review_journal_entry task.
-
-    entry keys:
-        hypothesis: str
-        evidence: str | list
-        confidence_pct: int | float
-        planned_action: str
-        risk_factors: str | list
-        invalidation_criteria: str
-    """
+def review_journal_entry_messages(entry: dict) -> PromptParts:  # type: ignore[type-arg]
+    """Build messages for review_journal_entry. Caps evidence to first 5 rows."""
     hypothesis = entry.get("hypothesis", "N/A")
     evidence = entry.get("evidence", "N/A")
     confidence_pct = entry.get("confidence_pct", "N/A")
@@ -214,62 +237,57 @@ def review_journal_entry_messages(entry: dict) -> list[dict]:  # type: ignore[ty
     risk_factors = entry.get("risk_factors", "N/A")
     invalidation_criteria = entry.get("invalidation_criteria", "N/A")
 
-    # Normalise list fields
     if isinstance(evidence, list):
-        evidence = "; ".join(str(e) for e in evidence)
+        evidence_capped = evidence[:_REVIEW_JOURNAL_TOP_EVIDENCE]
+        evidence_str = "; ".join(str(e) for e in evidence_capped)
+        if len(evidence) > _REVIEW_JOURNAL_TOP_EVIDENCE:
+            evidence_str += f" (+{len(evidence) - _REVIEW_JOURNAL_TOP_EVIDENCE} more, omitted)"
+    else:
+        evidence_str = str(evidence)
     if isinstance(risk_factors, list):
         risk_factors = "; ".join(str(r) for r in risk_factors)
 
-    user_content = (
-        "Task: review_journal_entry\n\n"
-        "Decision Journal Entry:\n"
-        f"- Hypothesis: {hypothesis}\n"
-        f"- Evidence: {evidence}\n"
-        f"- Confidence: {confidence_pct}%\n"
-        f"- Planned action: {planned_action}\n"
-        f"- Risk factors: {risk_factors}\n"
-        f"- Invalidation criteria: {invalidation_criteria}\n\n"
-        "Review for decision quality, not endorsing the trade. Identify, in 4-6 short bullets:\n"
+    task_instructions = (
+        "Task: review_journal_entry. Review for decision quality, not endorsing the trade. "
+        "Identify, in 4-6 short bullets:\n"
         "- one assumption that is implicit but not stated\n"
         "- one piece of evidence that would strengthen or weaken the hypothesis\n"
         "- one risk factor that is missing or underweighted\n"
         "- whether the invalidation criteria is testable and time-bound\n"
         "- whether the confidence_pct is consistent with the evidence weight\n"
-        "- one process improvement for the next entry\n\n"
+        "- one process improvement for the next entry\n"
         "Do not say whether the trade is a good idea. Do not give a directional view."
     )
+    user_content = (
+        "Decision Journal Entry:\n"
+        f"- Hypothesis: {hypothesis}\n"
+        f"- Evidence: {evidence_str}\n"
+        f"- Confidence: {confidence_pct}%\n"
+        f"- Planned action: {planned_action}\n"
+        f"- Risk factors: {risk_factors}\n"
+        f"- Invalidation criteria: {invalidation_criteria}"
+    )
 
-    return [
-        {"role": "user", "content": f"{SYSTEM_PROMPT}\n\n{user_content}"},
-    ]
+    return PromptParts(
+        system_blocks=[_persona_block(), _task_block(task_instructions)],
+        user_messages=[{"role": "user", "content": user_content}],
+    )
 
 
-def extract_event_messages(article: dict) -> list[dict]:  # type: ignore[type-arg]
-    """
-    Build messages for the extract_event task.
-
-    article keys:
-        title: str
-        body: str
-        source: str
-        published_at: str
-    """
+def extract_event_messages(article: dict) -> PromptParts:  # type: ignore[type-arg]
+    """Build messages for extract_event."""
     title = article.get("title", "N/A")
     body = article.get("body", "")
     source = article.get("source", "unknown")
     published_at = article.get("published_at", "unknown")
 
-    # Truncate body to avoid excessive tokens
-    body_snippet = body[:800] + ("..." if len(body) > 800 else "")
+    body_snippet = body[:_EXTRACT_EVENT_BODY_CHARS] + (
+        "..." if len(body) > _EXTRACT_EVENT_BODY_CHARS else ""
+    )
 
-    user_content = (
-        "Task: extract_event\n\n"
-        "Article:\n"
-        f"- Title: {title}\n"
-        f"- Source: {source}\n"
-        f"- Published: {published_at}\n"
-        f"- Body (excerpt): {body_snippet}\n\n"
-        "Extract the following fields and return ONLY a valid JSON object with no additional text:\n"
+    task_instructions = (
+        "Task: extract_event. Extract the following fields and return ONLY a valid JSON object "
+        "with no additional text:\n"
         '{\n'
         '  "category": "<supply|demand|weather|geopolitical|regulatory|other>",\n'
         '  "sentiment": <float -1.0 to 1.0>,\n'
@@ -278,7 +296,15 @@ def extract_event_messages(article: dict) -> list[dict]:  # type: ignore[type-ar
         '  "entities": [<list of entity name strings>]\n'
         '}'
     )
+    user_content = (
+        "Article:\n"
+        f"- Title: {title}\n"
+        f"- Source: {source}\n"
+        f"- Published: {published_at}\n"
+        f"- Body (excerpt): {body_snippet}"
+    )
 
-    return [
-        {"role": "user", "content": f"{SYSTEM_PROMPT}\n\n{user_content}"},
-    ]
+    return PromptParts(
+        system_blocks=[_persona_block(), _task_block(task_instructions)],
+        user_messages=[{"role": "user", "content": user_content}],
+    )

@@ -1,14 +1,18 @@
-"""
-Thin wrapper over the Anthropic SDK.
-When settings.llm_mode == "fake", returns deterministic canned responses without any API call.
-When settings.llm_mode == "real", calls Claude API.
+"""Thin wrapper over the Anthropic SDK.
 
-Canned responses (fake mode) are realistic but safe — they pass scan_for_forbidden().
-They include inference markers ("appears", "suggests") and contradicting evidence.
+Two execution modes:
+    - settings.llm_mode == "fake" → return deterministic canned responses, no API call
+    - settings.llm_mode == "real" → call Claude with prompt caching on the persona block
+
+`call_llm` accepts either a `PromptParts` (preferred, enables caching) or a
+legacy flat `list[dict]` of messages (the fake-mode tests still use this).
 """
 from __future__ import annotations
 
 import logging
+from typing import Any
+
+from apps.api.services.llm_prompts import PromptParts
 
 logger = logging.getLogger(__name__)
 
@@ -59,28 +63,27 @@ _CANNED: dict[str, str] = {
 
 async def call_llm(
     task: str,
-    messages: list[dict],  # type: ignore[type-arg]
+    prompt: PromptParts | list[dict[str, Any]],
     model: str = "claude-haiku-4-5-20251001",
     max_tokens: int = 400,
 ) -> str:
-    """
-    Returns the text of the LLM response.
+    """Return the text of the LLM response.
 
     Args:
         task: One of "summarize_market" | "explain_signal" | "narrate_scenario" |
               "review_journal_entry" | "extract_event"
-        messages: List of message dicts e.g. [{"role": "user", "content": "..."}]
+        prompt: A `PromptParts` (preferred — enables prompt caching) or a flat
+                `list[dict]` of messages (legacy / fake-mode callers).
         model: Claude model identifier.
         max_tokens: Maximum tokens to generate.
     """
-    # Import here to avoid circular-import issues with settings
+    # Import here to avoid circular-import issues with settings.
     from apps.api.src.settings import settings
 
     if settings.llm_mode == "fake":
         return _get_canned(task)
 
-    # Real mode
-    return await _call_real(task=task, messages=messages, model=model, max_tokens=max_tokens)
+    return await _call_real(task=task, prompt=prompt, model=model, max_tokens=max_tokens)
 
 
 def _get_canned(task: str) -> str:
@@ -91,22 +94,38 @@ def _get_canned(task: str) -> str:
 async def _call_real(
     *,
     task: str,
-    messages: list[dict],  # type: ignore[type-arg]
+    prompt: PromptParts | list[dict[str, Any]],
     model: str,
     max_tokens: int,
 ) -> str:
-    """Call the Anthropic API and return the response text. Falls back to canned on error."""
+    """Call the Anthropic API with prompt caching on the persona block.
+
+    Falls back to the canned response on any error so the request path
+    stays alive when the API is misconfigured or unreachable.
+    """
     try:
         import anthropic  # type: ignore[import-untyped]
 
         from apps.api.src.settings import settings
 
         client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key or None)
-        response = await client.messages.create(
-            model=model,
-            max_tokens=max_tokens,
-            messages=messages,  # type: ignore[arg-type]
-        )
+
+        if isinstance(prompt, PromptParts):
+            response = await client.messages.create(
+                model=model,
+                max_tokens=max_tokens,
+                system=prompt.system_blocks,  # type: ignore[arg-type]
+                messages=prompt.user_messages,  # type: ignore[arg-type]
+            )
+        else:
+            # Legacy flat-list path — no caching available because the persona
+            # is embedded in the user message. Tests still hit this path.
+            response = await client.messages.create(
+                model=model,
+                max_tokens=max_tokens,
+                messages=prompt,  # type: ignore[arg-type]
+            )
+
         content = response.content[0]
         if hasattr(content, "text"):
             return str(content.text)
