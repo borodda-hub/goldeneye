@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, Index, Numeric, Text, func
+from sqlalchemy import ForeignKey, Index, Numeric, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -20,13 +20,13 @@ class PaperTrade(Base):
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     instrument_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("instruments.id"), nullable=False)
     contract_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("contracts.id"))
-    side: Mapped[str] = mapped_column(Enum("long", "short", name="trade_side_t"), nullable=False)
+    side: Mapped[str] = mapped_column(Text, nullable=False)
     size_contracts: Mapped[float] = mapped_column(Numeric, nullable=False)
     entry_price: Mapped[float] = mapped_column(Numeric, nullable=False)
     exit_price: Mapped[float | None] = mapped_column(Numeric)
     stop_loss: Mapped[float | None] = mapped_column(Numeric)
     take_profit: Mapped[float | None] = mapped_column(Numeric)
-    status: Mapped[str] = mapped_column(Enum("open", "closed", "cancelled", name="trade_status_t"), nullable=False, server_default="open")
+    status: Mapped[str] = mapped_column(Text, nullable=False, server_default="open")
     rationale: Mapped[str | None] = mapped_column(Text)
     outcome_pnl: Mapped[float | None] = mapped_column(Numeric)
     reflection: Mapped[str | None] = mapped_column(Text)

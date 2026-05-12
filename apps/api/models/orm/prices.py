@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Enum, ForeignKey, Numeric, Text
+from sqlalchemy import BigInteger, ForeignKey, Numeric, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -13,9 +13,7 @@ class PriceBar(Base):
 
     ts: Mapped[datetime] = mapped_column(primary_key=True)
     contract_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("contracts.id"), primary_key=True)
-    resolution: Mapped[str] = mapped_column(
-        Enum("1m", "5m", "15m", "1h", "1d", name="bar_resolution_t"), primary_key=True
-    )
+    resolution: Mapped[str] = mapped_column(Text, primary_key=True)
     open: Mapped[float] = mapped_column(Numeric, nullable=False)
     high: Mapped[float] = mapped_column(Numeric, nullable=False)
     low: Mapped[float] = mapped_column(Numeric, nullable=False)

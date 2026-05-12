@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import ARRAY, Enum, ForeignKey, Index, Numeric, Text, func
+from sqlalchemy import ARRAY, ForeignKey, Index, Numeric, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -19,12 +19,12 @@ class ModelForecast(Base):
     instrument_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("instruments.id"), nullable=False)
     model_name: Mapped[str] = mapped_column(Text, nullable=False)
     horizon: Mapped[str] = mapped_column(Text, nullable=False)
-    direction: Mapped[str] = mapped_column(Enum("bullish", "bearish", "neutral", name="direction_t"), nullable=False)
-    confidence: Mapped[str] = mapped_column(Enum("low", "medium", "high", name="confidence_t"), nullable=False)
+    direction: Mapped[str] = mapped_column(Text, nullable=False)
+    confidence: Mapped[str] = mapped_column(Text, nullable=False)
     expected_pct: Mapped[float | None] = mapped_column(Numeric)
     range_low_pct: Mapped[float | None] = mapped_column(Numeric)
     range_high_pct: Mapped[float | None] = mapped_column(Numeric)
-    vol_regime: Mapped[str | None] = mapped_column(Enum("compressed", "normal", "elevated", "crisis", name="volatility_regime_t"))
+    vol_regime: Mapped[str | None] = mapped_column(Text)
     supporting: Mapped[list] = mapped_column(JSONB, nullable=False, server_default="[]")
     contradicting: Mapped[list] = mapped_column(JSONB, nullable=False, server_default="[]")
     features: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default="{}")
