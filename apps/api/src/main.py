@@ -16,6 +16,7 @@ from apps.api.routers import (
     paper,
     admin,
     explain,
+    news,
     realtime,
 )
 from apps.api.realtime.ticker import start_ticker
@@ -64,6 +65,7 @@ app.include_router(journal.router)
 app.include_router(paper.router)
 app.include_router(admin.router)
 app.include_router(explain.router)
+app.include_router(news.router)
 app.include_router(realtime.router)
 
 

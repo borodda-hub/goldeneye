@@ -6,6 +6,7 @@ import { EnsembleHeader } from "@/components/signals/EnsembleHeader";
 import { ModelGrid } from "@/components/signals/ModelGrid";
 import { ExplanationPanel } from "@/components/signals/ExplanationPanel";
 import { HistoryTable } from "@/components/signals/HistoryTable";
+import { NewsFeedPanel } from "@/components/signals/NewsFeedPanel";
 import type { CurrentSignal } from "./types";
 
 interface Props {
@@ -36,7 +37,7 @@ export function SignalsShell({ initialSignal }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex flex-col gap-4">
       {/* Row 1: Ensemble headline */}
       <EnsembleHeader ensemble={signal.ensemble} />
 
@@ -44,13 +45,18 @@ export function SignalsShell({ initialSignal }: Props) {
       <ModelGrid models={signal.models} />
 
       {/* Row 3: Explanation + History */}
-      <div className="flex gap-4 flex-1 min-h-0">
+      <div className="flex gap-4 min-h-0 h-[40vh]">
         <div className="flex-[3] min-h-0">
           <ExplanationPanel explanation={signal.explanation} safety={signal.safety} />
         </div>
         <div className="flex-[2] min-h-0">
           <HistoryTable symbol="NG" />
         </div>
+      </div>
+
+      {/* Row 4: Supporting news feed */}
+      <div className="min-h-0 h-[32vh]">
+        <NewsFeedPanel />
       </div>
     </div>
   );

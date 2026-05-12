@@ -20,6 +20,19 @@ export async function getDashboardSummary(symbol = "NG"): Promise<unknown> {
   return apiFetch(`/v1/dashboard/summary?symbol=${encodeURIComponent(symbol)}`);
 }
 
+// ── News ───────────────────────────────────────────────────────────────────
+export async function getRecentNews(params: {
+  symbol?: string;
+  limit?: number;
+  category?: string;
+}): Promise<unknown> {
+  const q = new URLSearchParams();
+  if (params.symbol) q.set("symbol", params.symbol);
+  if (params.limit !== undefined) q.set("limit", String(params.limit));
+  if (params.category) q.set("category", params.category);
+  return apiFetch(`/v1/news/recent?${q.toString()}`);
+}
+
 // ── Chart ──────────────────────────────────────────────────────────────────
 export async function getChartBars(params: {
   contract_code?: string;

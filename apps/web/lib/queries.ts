@@ -10,6 +10,7 @@ import {
   getDataHealth,
   getJournalEntry,
   getPaperEquityCurve,
+  getRecentNews,
   getScenarioRuns,
   getScenarioTemplates,
   getSignalHistory,
@@ -144,5 +145,16 @@ export function useChartCurve(symbol: string, asOf: string) {
     queryKey: queryKeys.chartCurve(symbol, asOf),
     queryFn: () => getChartCurve(symbol, asOf),
     staleTime: 300_000,
+  });
+}
+
+export function useRecentNews(symbol = "NG", limit = 15) {
+  return useQuery({
+    queryKey: ["news", "recent", symbol, limit],
+    queryFn: () => getRecentNews({ symbol, limit }),
+    // RSS sources update every few hours at most; 5 min staleTime is plenty
+    // and the backend caches for 10 min anyway.
+    staleTime: 5 * 60_000,
+    refetchInterval: 5 * 60_000,
   });
 }

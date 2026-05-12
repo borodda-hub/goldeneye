@@ -48,6 +48,9 @@ def get_positioning():
 
 @lru_cache(maxsize=None)
 def get_news():
+    if settings.adapter_news == "rss":
+        from apps.api.adapters.news.rss import RssNewsAdapter
+        return RssNewsAdapter()
     if settings.adapter_news == "mock":
         from apps.api.adapters.news.mock_news import MockNewsAdapter
         return MockNewsAdapter()
