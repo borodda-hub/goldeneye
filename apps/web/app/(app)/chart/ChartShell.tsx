@@ -20,7 +20,11 @@ const PriceChart = dynamic(
 interface Props {
   initialBars: ChartBarsResponse | null;
   initialCurve: CurvePoint[] | null;
+  /** Front-month contract resolved server-side from the curve endpoint. */
+  contractCode?: string;
 }
+
+const DEFAULT_CONTRACT = "NGM26";
 
 function LoadingPlaceholder() {
   return (
@@ -30,7 +34,10 @@ function LoadingPlaceholder() {
   );
 }
 
-export function ChartShell({ initialBars }: Props) {
+export function ChartShell({
+  initialBars,
+  contractCode = DEFAULT_CONTRACT,
+}: Props) {
   const [resolution, setResolution] = useState<Resolution>("1d");
   const [showSMA20, setShowSMA20] = useState(true);
   const [showEMA50, setShowEMA50] = useState(false);
@@ -42,7 +49,7 @@ export function ChartShell({ initialBars }: Props) {
     .split("T")[0];
 
   const { data: fetchedBars } = useChartBars(
-    "NGF26",
+    contractCode,
     resolution,
     twoYearsAgo,
     today,
@@ -62,7 +69,7 @@ export function ChartShell({ initialBars }: Props) {
         showEMA50={showEMA50}
         onToggleSMA20={() => setShowSMA20((v) => !v)}
         onToggleEMA50={() => setShowEMA50((v) => !v)}
-        contractCode="NGF26"
+        contractCode={contractCode}
       />
       <div className="flex flex-1 min-h-0 gap-0">
         <div className="flex-1 min-w-0">
@@ -85,7 +92,7 @@ export function ChartShell({ initialBars }: Props) {
         />
       </div>
       <ChartFooter
-        contract={barsData?.contract ?? { code: "NGF26", expiry: "—" }}
+        contract={barsData?.contract ?? { code: contractCode, expiry: "—" }}
         resolution={resolution}
         asOf={barsData?.bars.at(-1)?.ts ?? today}
       />
