@@ -490,3 +490,86 @@ async def run_backtest(
         cur += timedelta(days=1)
 
     return (rows, _summarize(rows))
+
+
+# Marker written to model_forecasts.inputs_hash so backtest-produced rows
+# can be distinguished from the synthetic example_forecasts seed (which
+# writes inputs_hash=None) and from any future live-persist flow.
+BACKTEST_SOURCE_MARKER = "backtest:v1"
+
+
+async def persist_backtest_rows(
+    session: AsyncSession,
+    *,
+    instrument_id: Any,
+    rows: list[BacktestRow],
+    config: BacktestConfig,
+) -> int:
+    """Upsert rows into model_forecasts and remove the synthetic seed for
+    this (instrument, model, horizon) window.
+
+    Idempotency: there's no unique index on
+    (instrument_id, model_name, horizon, generated_at), so we use a
+    delete-then-insert in the date range covered by `rows`. Re-running the
+    same backtest replaces — not duplicates — the previous output.
+
+    Also deletes the synthetic example_forecasts seed (inputs_hash IS NULL)
+    for the same (instrument, model, horizon) — keeps the Signal Lab
+    history table reading a single coherent source per model.
+
+    Returns the count of rows inserted.
+    """
+    if not rows:
+        return 0
+
+    from sqlalchemy import delete, insert
+    from apps.api.models.orm.forecasts import ModelForecast
+
+    ts_min = min(r.generated_at for r in rows)
+    ts_max = max(r.generated_at for r in rows)
+
+    # 1) Wipe any prior backtest rows in this window for the same model+horizon.
+    await session.execute(
+        delete(ModelForecast).where(
+            ModelForecast.instrument_id == instrument_id,
+            ModelForecast.model_name == config.model_name,
+            ModelForecast.horizon == config.horizon,
+            ModelForecast.generated_at >= ts_min,
+            ModelForecast.generated_at <= ts_max,
+        )
+    )
+
+    # 2) Also clear stale synthetic-seed rows for this model+horizon so the
+    #    Signal Lab history table doesn't mix fake + real outcomes.
+    await session.execute(
+        delete(ModelForecast).where(
+            ModelForecast.instrument_id == instrument_id,
+            ModelForecast.model_name == config.model_name,
+            ModelForecast.horizon == config.horizon,
+            ModelForecast.inputs_hash.is_(None),
+        )
+    )
+
+    # 3) Bulk-insert the fresh backtest rows.
+    payload = [
+        {
+            "generated_at": r.generated_at,
+            "instrument_id": instrument_id,
+            "model_name": r.model_name,
+            "horizon": r.horizon,
+            "direction": r.direction,
+            "confidence": r.confidence,
+            "expected_pct": r.expected_pct,
+            "range_low_pct": None,
+            "range_high_pct": None,
+            "vol_regime": r.vol_regime,
+            "supporting": r.supporting,
+            "contradicting": r.contradicting,
+            "features": {},
+            "inputs_hash": BACKTEST_SOURCE_MARKER,
+            "caveats": None,
+        }
+        for r in rows
+    ]
+    await session.execute(insert(ModelForecast).values(payload))
+    return len(payload)

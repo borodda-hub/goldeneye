@@ -17,6 +17,7 @@ from apps.api.routers import (
     admin,
     explain,
     news,
+    backtest,
     realtime,
 )
 from apps.api.realtime.ticker import start_ticker
@@ -66,6 +67,7 @@ app.include_router(paper.router)
 app.include_router(admin.router)
 app.include_router(explain.router)
 app.include_router(news.router)
+app.include_router(backtest.router)
 app.include_router(realtime.router)
 
 
