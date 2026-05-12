@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     adapter_positioning: str = "mock"
     adapter_news: str = "mock"
     anthropic_api_key: str = ""
+    eia_api_key: str = ""
     redis_ttl_market_summary: int = 1800   # 30 min
     redis_ttl_scenario: int = 86400         # 24h
 

@@ -19,7 +19,9 @@ def get_market():
 
 @lru_cache(maxsize=None)
 def get_energy():
-    if settings.adapter_energy == "mock":
+    # Silent fallback to mock when the real adapter is selected but EIA_API_KEY
+    # is missing — keeps demo bootable on a fresh clone.
+    if settings.adapter_energy == "mock" or not settings.eia_api_key:
         from apps.api.adapters.energy.mock_eia import MockEIAAdapter
         return MockEIAAdapter()
     from apps.api.adapters.energy.eia import EIAAdapter
