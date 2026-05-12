@@ -46,9 +46,12 @@ async def main(fresh: bool = False) -> None:
     import apps.api.models.orm.eia           # noqa: F401
     import apps.api.models.orm.cot           # noqa: F401
     import apps.api.models.orm.weather       # noqa: F401
+    import apps.api.models.orm.journal       # noqa: F401
+    import apps.api.models.orm.paper         # noqa: F401
 
     from apps.api.seeds import load_fixtures, price_generator, storage_generator
     from apps.api.seeds import cot_generator, weather_generator, validate
+    from apps.api.seeds import example_journal_and_trades
 
     meta = Base.metadata
     price_bars_t          = meta.tables["price_bars"]
@@ -182,13 +185,21 @@ async def main(fresh: bool = False) -> None:
                 await session.execute(insert(weather_fcast_t).values(fcast_rows[i:i + _CHUNK]))
             print(f"  inserted {len(fcast_rows)} weather forecasts")
 
-        # ── Step 6: Validate ────────────────────────────────────────────────
-        print("step 6: running validation checks …")
+            # ── Step 6: Example journal entries + paper trades ──────────────
+            print("step 6: seeding example journal entries + paper trades …")
+            j_count, t_count = await example_journal_and_trades.seed_examples(session)
+            if j_count == 0 and t_count == 0:
+                print("  examples already present — skipped")
+            else:
+                print(f"  inserted {j_count} journal entries, {t_count} paper trades")
+
+        # ── Step 7: Validate ────────────────────────────────────────────────
+        print("step 7: running validation checks …")
         try:
             await validate.run_checks_async(session)
-            print("step 6: all checks passed")
+            print("step 7: all checks passed")
         except AssertionError as e:
-            print(f"step 6: FAILED — {e}", file=sys.stderr)
+            print(f"step 7: FAILED — {e}", file=sys.stderr)
             sys.exit(1)
 
     print("demo seed complete")
