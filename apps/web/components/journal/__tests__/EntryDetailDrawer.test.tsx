@@ -62,4 +62,32 @@ describe("EntryDetailDrawer", () => {
     fireEvent.click(screen.getByLabelText(/Close detail/i));
     expect(onClose).toHaveBeenCalled();
   });
+
+  it("does not crash on legacy structured llm_review without a text field", () => {
+    const legacyEntry = {
+      ...baseEntry,
+      llm_review: {
+        implicit_assumption: "Storage draw will materialize as forecast.",
+        missing_risk: "LNG export surprise not weighted.",
+        confidence_assessment: "65% is consistent with the evidence.",
+        invalidation_quality: "Time-bound and testable.",
+        process_improvement: "Add a re-evaluation trigger date.",
+        strengthening_evidence: "Basis differentials at NE hubs.",
+      },
+    } as unknown as JournalEntry;
+    render(<EntryDetailDrawer entry={legacyEntry} onClose={() => {}} />);
+    const bullets = screen.getByTestId("llm-review-bullets");
+    expect(bullets.querySelectorAll("li").length).toBe(6);
+    expect(bullets.textContent).toMatch(/Implicit assumption/);
+    expect(bullets.textContent).toMatch(/Missing risk/);
+  });
+
+  it("does not crash when llm_review is a non-string non-null garbage value", () => {
+    const broken = {
+      ...baseEntry,
+      llm_review: 12345 as unknown,
+    } as unknown as JournalEntry;
+    render(<EntryDetailDrawer entry={broken} onClose={() => {}} />);
+    expect(screen.getByText(/Review pending/)).toBeInTheDocument();
+  });
 });

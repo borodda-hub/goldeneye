@@ -22,6 +22,38 @@ function splitToBullets(text: string): string[] {
     .filter((line) => line.length > 0);
 }
 
+/** Pretty-print "missing_risk" → "Missing risk". */
+function humanizeKey(key: string): string {
+  const spaced = key.replace(/_/g, " ").toLowerCase();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+/**
+ * Normalize whatever shape `llm_review` happens to be on disk into a flat
+ * list of bullet strings.
+ *
+ * Two known shapes exist in the wild:
+ *   1. { text, safety } — current shape produced by services/llm_explainer.
+ *   2. { implicit_assumption, missing_risk, … } — older structured shape
+ *      kept around in some seeded fixtures.
+ *
+ * Defensive: returns [] for anything we can't read.
+ */
+function reviewToBullets(review: unknown): string[] {
+  if (review == null || typeof review !== "object") return [];
+  const r = review as Record<string, unknown>;
+  if (typeof r.text === "string") return splitToBullets(r.text);
+  // Fall back: synthesize bullets from named fields (skip "safety").
+  const bullets: string[] = [];
+  for (const [key, value] of Object.entries(r)) {
+    if (key === "safety") continue;
+    if (typeof value === "string" && value.trim().length > 0) {
+      bullets.push(`${humanizeKey(key)}: ${value.trim()}`);
+    }
+  }
+  return bullets;
+}
+
 function Section({
   label,
   children,
@@ -40,9 +72,11 @@ function Section({
 }
 
 export function EntryDetailDrawer({ entry, onClose }: Props) {
-  const bullets = entry.llm_review
-    ? splitToBullets(entry.llm_review.text)
-    : [];
+  const bullets = reviewToBullets(entry.llm_review);
+  const safety =
+    entry.llm_review && typeof entry.llm_review === "object"
+      ? (entry.llm_review as { safety?: unknown }).safety
+      : undefined;
 
   return (
     <div
@@ -131,7 +165,7 @@ export function EntryDetailDrawer({ entry, onClose }: Props) {
         <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
           LLM Review
         </span>
-        {entry.llm_review ? (
+        {bullets.length > 0 ? (
           <>
             <ul
               className="list-disc list-inside space-y-1 text-xs text-ink-2 leading-relaxed"
@@ -141,10 +175,12 @@ export function EntryDetailDrawer({ entry, onClose }: Props) {
                 <li key={i}>{b}</li>
               ))}
             </ul>
-            <SafetyEnvelopeNote
-              envelope={entry.llm_review.safety}
-              defaultOpen={true}
-            />
+            {safety ? (
+              <SafetyEnvelopeNote
+                envelope={safety as React.ComponentProps<typeof SafetyEnvelopeNote>["envelope"]}
+                defaultOpen={true}
+              />
+            ) : null}
           </>
         ) : (
           <p className="text-xs text-ink-4 font-mono italic">
