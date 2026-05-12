@@ -23,13 +23,15 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 from statistics import pstdev
 from typing import Any, Callable
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from apps.api.models.orm.cot import COTReport
+from apps.api.models.orm.eia import EIAStorageReport
 from apps.api.models.orm.prices import PriceBar
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
@@ -153,20 +155,37 @@ def _start_of_day(d: date) -> datetime:
     return datetime.combine(d, time.min)
 
 
+def _to_naive_utc(dt: datetime | None) -> datetime | None:
+    """Normalize a datetime to naive UTC for cross-tz comparison.
+
+    PriceBar.ts is TIMESTAMPTZ in the migration even though the ORM Mapped
+    type doesn't say so; asyncpg returns tz-aware datetimes from those
+    columns. The engine's internal as_of values are naive UTC, so the
+    Python-side defensive checks need to normalize before comparing.
+    """
+    if dt is None:
+        return None
+    if dt.tzinfo is not None:
+        return dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
+
+
 async def _closes_as_of(
     session: AsyncSession,
     contract_id: Any,
     as_of: datetime,
     n: int = _LOOKBACK_CLOSES,
 ) -> list[float]:
-    """Return up to `n` daily closes with ts strictly less than as_of.
+    """Return up to `n` daily closes with ts strictly less than `as_of`.
 
-    Single chokepoint for "no future data leaks into the context." Step 2
-    adds property-based tests around this; this is the only place that
-    queries the price-bars table during a backtest.
+    The single chokepoint for "no future price data leaks into the context."
+    `ts < as_of` is strict so a bar timestamped exactly at `as_of` is treated
+    as future. EOD-of-day timestamps (23:59:59.999999) almost never match
+    bar timestamps in practice, but strict-less-than keeps the invariant
+    unambiguous regardless of clock skew.
     """
     result = await session.execute(
-        select(PriceBar.close)
+        select(PriceBar.ts, PriceBar.close)
         .where(
             PriceBar.contract_id == contract_id,
             PriceBar.resolution == "1d",
@@ -175,8 +194,108 @@ async def _closes_as_of(
         .order_by(PriceBar.ts.desc())
         .limit(n)
     )
-    closes = [float(r) for r in result.scalars().all()]
+    rows = list(result.all())
+    # Defensive: make double-sure no row leaked through with ts >= as_of.
+    # Catches a future regression where someone relaxes the WHERE clause.
+    # PriceBar.ts is TIMESTAMPTZ in the migration → asyncpg returns it
+    # tz-aware; normalize both sides to naive UTC before comparing.
+    as_of_naive = _to_naive_utc(as_of)
+    for ts, _close in rows:
+        ts_naive = _to_naive_utc(ts)
+        if ts_naive is not None and ts_naive >= as_of_naive:
+            raise RuntimeError(
+                f"backtest look-ahead detected: bar ts={ts!r} >= as_of={as_of!r}"
+            )
+    closes = [float(close) for _ts, close in rows]
     return list(reversed(closes))
+
+
+async def _storage_as_of(
+    session: AsyncSession,
+    as_of: datetime,
+) -> dict[str, Any] | None:
+    """Most-recent EIA storage report whose report_date is on or before
+    as_of's calendar date. EIA releases Thursdays 10:30 ET — by EOD that
+    Thursday the report IS public, so `report_date <= as_of.date()` is correct.
+
+    Returns the dict shape xgboost_placeholder reads (delta_vs_consensus +
+    actual_bcf), or None if no qualifying report exists.
+    """
+    as_of_date = as_of.date()
+    result = await session.execute(
+        select(EIAStorageReport)
+        .where(EIAStorageReport.report_date <= as_of_date)
+        .order_by(EIAStorageReport.report_date.desc())
+        .limit(1)
+    )
+    row = result.scalar_one_or_none()
+    if row is None:
+        return None
+    if row.report_date is not None and row.report_date > as_of_date:
+        raise RuntimeError(
+            f"backtest look-ahead detected: EIA report_date={row.report_date!r} > as_of_date={as_of_date!r}"
+        )
+    return {
+        "delta_vs_consensus": float(row.surprise_bcf)
+        if row.surprise_bcf is not None
+        else None,
+        "actual_bcf": float(row.net_change_bcf)
+        if row.net_change_bcf is not None
+        else None,
+    }
+
+
+async def _cot_as_of(
+    session: AsyncSession,
+    as_of: datetime,
+) -> dict[str, Any] | None:
+    """Compute mm_net_delta = managed_money_net WoW change from the two
+    most-recent COT reports whose release_date is on or before as_of's date.
+
+    CFTC releases Fridays 15:30 ET — by EOD Friday the data is public, so
+    `release_date <= as_of.date()` is correct.
+    """
+    as_of_date = as_of.date()
+    result = await session.execute(
+        select(COTReport)
+        .where(COTReport.release_date <= as_of_date)
+        .order_by(COTReport.release_date.desc())
+        .limit(2)
+    )
+    rows = list(result.scalars().all())
+    if len(rows) < 2:
+        return None
+    for r in rows:
+        if r.release_date is not None and r.release_date > as_of_date:
+            raise RuntimeError(
+                f"backtest look-ahead detected: COT release_date={r.release_date!r} > as_of_date={as_of_date!r}"
+            )
+    curr_net = rows[0].managed_money_net
+    prev_net = rows[1].managed_money_net
+    if curr_net is None or prev_net is None:
+        return None
+    return {"mm_net_delta": float(curr_net - prev_net)}
+
+
+async def _context_as_of(
+    session: AsyncSession,
+    symbol: str,
+    contract_id: Any,
+    as_of: datetime,
+) -> ForecastContext:
+    """Build a complete ForecastContext snapshot strictly from data known
+    at `as_of`. The ONLY place in the engine that constructs a context;
+    every leg goes through a chokepoint helper above.
+    """
+    closes = await _closes_as_of(session, contract_id, as_of)
+    storage = await _storage_as_of(session, as_of)
+    cot = await _cot_as_of(session, as_of)
+    return ForecastContext(
+        symbol=symbol,
+        closes=closes,
+        latest_storage=storage,
+        latest_cot=cot,
+    )
 
 
 async def _close_on_or_after(
@@ -342,12 +461,11 @@ async def run_backtest(
     cur = config.from_date
     while cur <= config.to_date:
         as_of = _eod(cur)
-        closes = await _closes_as_of(session, contract_id, as_of)
-        if len(closes) < _MIN_CLOSES:
+        ctx = await _context_as_of(session, config.symbol, contract_id, as_of)
+        if len(ctx.closes) < _MIN_CLOSES:
             cur += timedelta(days=1)
             continue
 
-        ctx = ForecastContext(symbol=config.symbol, closes=closes)
         result = predict(config.model_name, ctx, config.horizon)
 
         # Realized pct: (end / start) - 1, where start is the last close
