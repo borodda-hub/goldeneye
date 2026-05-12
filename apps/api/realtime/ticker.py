@@ -91,9 +91,22 @@ async def _signal_loop(rng: random.Random) -> None:
 
 
 async def start_ticker() -> None:
-    """Launch all background ticker tasks. Call from app lifespan."""
+    """Launch the WS feed appropriate for the configured market adapter.
+
+    - ADAPTER_MARKET=yahoo_delayed (or any non-mock real adapter) → polled
+      delayed-quote loop in delayed_quote_poller.py.
+    - Otherwise → the synthetic tick/bar/signal loops in this module.
+    """
+    from apps.api.src.settings import settings
+
+    if settings.adapter_market != "mock":
+        from apps.api.realtime.delayed_quote_poller import start_delayed_poller
+
+        await start_delayed_poller()
+        return
+
     rng = random.Random(42)
     asyncio.create_task(_tick_loop(rng))
     asyncio.create_task(_bar_loop(rng))
     asyncio.create_task(_signal_loop(rng))
-    logger.info("Ticker background tasks started")
+    logger.info("Synthetic ticker background tasks started (mock adapter)")
