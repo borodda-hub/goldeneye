@@ -84,4 +84,21 @@ describe("ResultPanel", () => {
     );
     expect(screen.getByText(/Narrative unavailable/)).toBeInTheDocument();
   });
+
+  it("does not render the Export PDF link when no runId is provided", () => {
+    render(<ResultPanel result={mockResult} name="Test" />);
+    expect(screen.queryByTestId("export-pdf-link")).toBeNull();
+  });
+
+  it("renders the Export PDF link with the correct download URL when runId is provided", () => {
+    const runId = "abc-123-def";
+    render(<ResultPanel result={mockResult} name="Test" runId={runId} />);
+    const link = screen.getByTestId("export-pdf-link") as HTMLAnchorElement;
+    expect(link).toBeInTheDocument();
+    expect(link.href).toContain(
+      `/v1/scenarios/runs/${encodeURIComponent(runId)}/export.pdf`,
+    );
+    expect(link.target).toBe("_blank");
+    expect(link.rel).toContain("noopener");
+  });
 });

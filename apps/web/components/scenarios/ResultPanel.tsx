@@ -6,6 +6,14 @@ import type { ScenarioResult } from "@/app/(app)/scenarios/types";
 interface Props {
   result: ScenarioResult;
   name: string;
+  /** Persisted run_id — required to enable PDF export. */
+  runId?: string | null;
+}
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
+
+function pdfDownloadUrl(runId: string): string {
+  return `${API_BASE}/v1/scenarios/runs/${encodeURIComponent(runId)}/export.pdf`;
 }
 
 function NumberedList({
@@ -30,10 +38,10 @@ function NumberedList({
   );
 }
 
-export function ResultPanel({ result, name }: Props) {
+export function ResultPanel({ result, name, runId }: Props) {
   return (
     <div className="border border-line-1 bg-surface-1 p-4 flex flex-col gap-4">
-      {/* Header: name + direction + confidence + timeframe */}
+      {/* Header: name + direction + confidence + timeframe + export */}
       <div className="flex items-start gap-6 flex-wrap">
         <div className="flex flex-col gap-1 min-w-0">
           <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
@@ -65,6 +73,19 @@ export function ResultPanel({ result, name }: Props) {
             {(result.expected_pct_range.high * 100).toFixed(2)}%
           </span>
         </div>
+
+        {runId ? (
+          <a
+            href={pdfDownloadUrl(runId)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-[10px] uppercase tracking-widest border border-line-1 px-2 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1 self-start"
+            data-testid="export-pdf-link"
+            aria-label="Export this scenario as a PDF report"
+          >
+            ↓ Export PDF
+          </a>
+        ) : null}
       </div>
 
       {/* Three columns: assumptions, counterarguments, data needed */}

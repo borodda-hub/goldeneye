@@ -104,6 +104,7 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
           <ResultPanel
             result={lastResponse.result}
             name={lastResponse.name}
+            runId={lastResponse.run_id}
           />
         </section>
       )}

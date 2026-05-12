@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Annotated, Literal, Union
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +17,7 @@ from apps.api.repos import price_bars as price_repo
 from apps.api.repos import scenarios as scenario_repo
 from apps.api.services.model_registry import ForecastContext
 from apps.api.services.scenario_engine import run_scenario
+from apps.api.services.scenario_pdf import render_scenario_pdf
 
 router = APIRouter(prefix="/v1/scenarios", tags=["scenarios"])
 
@@ -152,3 +154,40 @@ async def get_run(
         "shocks": run.shocks,
         "result": run.result,
     }
+
+
+@router.get("/runs/{run_id}/export.pdf")
+async def export_run_pdf(
+    run_id: str,
+    session: AsyncSession = Depends(get_db),
+) -> Response:
+    """Render a scenario run as an executive PDF report (download)."""
+    try:
+        run_uuid = uuid.UUID(run_id)
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid run_id format") from exc
+
+    run = await scenario_repo.get_by_id(session, run_uuid)
+    if run is None:
+        raise HTTPException(status_code=404, detail=f"Scenario run {run_id!r} not found")
+
+    pdf_bytes = render_scenario_pdf(
+        {
+            "run_id": str(run.id),
+            "created_at": run.created_at.isoformat(),
+            "name": run.name,
+            "shocks": run.shocks or [],
+            "result": run.result or {},
+        }
+    )
+
+    # Filename: stable per-run, lower-case slug fragment + short UUID prefix.
+    slug = "".join(c if c.isalnum() else "-" for c in (run.name or "scenario").lower())
+    slug = "-".join(filter(None, slug.split("-")))[:50] or "scenario"
+    filename = f"ngti-scenario-{slug}-{str(run.id)[:8]}.pdf"
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
