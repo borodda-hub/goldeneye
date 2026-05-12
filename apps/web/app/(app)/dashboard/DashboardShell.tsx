@@ -26,9 +26,12 @@ export function DashboardShell({ initialData }: Props) {
   const { data: fetchedData } = useDashboardSummary("NG");
   const summary = (fetchedData as DashboardSummary | undefined) ?? initialData;
 
-  const { data: tick, status } = useChannel<{ ts: string; price: number }>(
-    "price.NG.front",
-  );
+  const { data: tick, status } = useChannel<{
+    ts: string;
+    price: number;
+    delayed?: boolean;
+  }>("price.NG.front");
+  const feedMode: "live" | "delayed" = tick?.delayed ? "delayed" : "live";
 
   if (!summary) {
     return (
@@ -60,6 +63,7 @@ export function DashboardShell({ initialData }: Props) {
         volRegime={summary.vol_regime}
         livePrice={tick?.price}
         wsStatus={status}
+        feedMode={feedMode}
       />
 
       {/* Row 2: Chart + Bias */}

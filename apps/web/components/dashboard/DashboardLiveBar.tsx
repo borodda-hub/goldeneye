@@ -6,7 +6,9 @@ import { LiveDot } from "@/components/LiveDot";
 interface TickData {
   ts: string;
   price: number;
-  size: number;
+  size?: number;
+  delayed?: boolean;
+  source?: string;
 }
 
 function formatTickTime(isoString: string): string {
@@ -23,6 +25,8 @@ function formatTickTime(isoString: string): string {
 
 export function DashboardLiveBar() {
   const { data: tick, status } = useChannel<TickData>("price.NG.front");
+  const isDelayed = Boolean(tick?.delayed);
+  const mode = isDelayed ? "delayed" : "live";
 
   const statusLabel =
     status === "connected"
@@ -34,18 +38,23 @@ export function DashboardLiveBar() {
   return (
     <div className="flex items-center gap-3 text-xs font-mono text-ink-3 pt-2 border-t border-line-1">
       <div className="flex items-center gap-1.5">
-        <LiveDot connected={status === "connected"} />
+        <LiveDot connected={status === "connected"} mode={mode} />
         <span>{statusLabel}</span>
       </div>
 
       {tick && (
         <span>
-          NGF26 · {tick.price.toFixed(3)} · {formatTickTime(tick.ts)}
+          NGM26 · {tick.price.toFixed(3)} · {formatTickTime(tick.ts)}
         </span>
       )}
 
       {status === "connected" && (
-        <span className="ml-auto text-accent">LIVE</span>
+        <span
+          className={`ml-auto ${isDelayed ? "text-conf-medium" : "text-accent"}`}
+          aria-label={isDelayed ? "Delayed feed (15-minute delay)" : "Live feed"}
+        >
+          {isDelayed ? "DELAYED 15m" : "LIVE"}
+        </span>
       )}
     </div>
   );

@@ -177,3 +177,13 @@ These run with frozen seed inputs in `packages/fixtures/llm_eval/` so they are r
 ## §user_facing_strings_governance
 
 Any UI string that says something on the model's behalf (placeholder text, empty states, loading messages) goes in `apps/web/lib/strings.ts` and must be reviewed against `§forbidden_phrases`. The `/contract-check` slash command grep-checks this file.
+
+## §delayed_data_labeling
+
+Any UI element that implies "real-time" must reflect the actual freshness of the underlying feed.
+
+- When the configured market adapter is not real-time (e.g., `ADAPTER_MARKET=yahoo_delayed` delivers ~15-minute-delayed quotes), the dashboard's status indicator must render `"DELAYED 15m"` (or the appropriate interval) in amber rather than `"LIVE"` in green.
+- The `LiveDot` component accepts a `mode: "live" | "delayed"` prop. In `delayed` mode the dot is amber and does not pulse — the heartbeat animation is reserved for real-time feeds.
+- The WS payload from the poller carries `delayed: true` so consumers can detect the feed mode without an out-of-band config check.
+
+Calling delayed data "live" is not a forbidden phrase in the LLM-output sense (no model generated it), but it is a user-trust violation and counts as a `docs/AI_BEHAVIOR.md` breach. The dashboard tests in `apps/web/components/dashboard/__tests__/` enforce the label.

@@ -9,6 +9,7 @@ interface Props {
   volRegime: VolRegime;
   livePrice?: number;
   wsStatus: ConnectionStatus;
+  feedMode?: "live" | "delayed";
 }
 
 const REGIME_STYLES: Record<VolRegime, string> = {
@@ -45,6 +46,7 @@ export function HeaderRow({
   volRegime,
   livePrice,
   wsStatus,
+  feedMode = "live",
 }: Props) {
   const displayPrice = livePrice ?? frontMonth.last_price;
   const isUp = frontMonth.change_abs > 0;
@@ -83,7 +85,7 @@ export function HeaderRow({
       {/* Right: vol regime, status, time */}
       <div className="flex items-center gap-3">
         <VolRegimeChip regime={volRegime} />
-        <LiveDot connected={wsStatus === "connected"} />
+        <LiveDot connected={wsStatus === "connected"} mode={feedMode} />
         <span className="font-mono text-xs text-ink-3">
           {formatTime(frontMonth.as_of)}
         </span>
