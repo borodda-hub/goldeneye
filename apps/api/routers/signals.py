@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -153,11 +153,21 @@ async def get_signal_history(
         session, instrument.id, from_dt, to_dt, model=model, limit=limit * 4
     )
 
+    # model_forecasts.generated_at is a TIMESTAMPTZ column → asyncpg returns
+    # tz-aware datetimes. PriceBar.ts is a naive TIMESTAMP column. To avoid
+    # mixed-tz comparisons (and the asyncpg-bind error on the bars query),
+    # normalize every datetime in this function to naive UTC.
+    def _naive_utc(dt: datetime) -> datetime:
+        if dt.tzinfo is not None:
+            return dt.astimezone(timezone.utc).replace(tzinfo=None)
+        return dt
+
     now = datetime.utcnow()
     rows = []
     for f in history:
         horizon_days = _HORIZON_DAYS.get(f.horizon, 1)
-        horizon_end = f.generated_at + timedelta(days=horizon_days)
+        generated_at_naive = _naive_utc(f.generated_at)
+        horizon_end = generated_at_naive + timedelta(days=horizon_days)
         horizon_elapsed = horizon_end <= now
 
         # Look up realized price
@@ -166,8 +176,8 @@ async def get_signal_history(
             # Get close at generated_at and at horizon_end
             start_bars = await price_repo.get_bars(
                 session, contract_id, "1d",
-                f.generated_at - timedelta(days=1),
-                f.generated_at + timedelta(days=1),
+                generated_at_naive - timedelta(days=1),
+                generated_at_naive + timedelta(days=1),
                 limit=2,
             )
             end_bars = await price_repo.get_bars(

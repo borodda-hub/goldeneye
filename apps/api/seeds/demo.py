@@ -51,7 +51,7 @@ async def main(fresh: bool = False) -> None:
 
     from apps.api.seeds import load_fixtures, price_generator, storage_generator
     from apps.api.seeds import cot_generator, weather_generator, validate
-    from apps.api.seeds import example_journal_and_trades
+    from apps.api.seeds import example_journal_and_trades, example_forecasts
 
     meta = Base.metadata
     price_bars_t          = meta.tables["price_bars"]
@@ -192,6 +192,14 @@ async def main(fresh: bool = False) -> None:
                 print("  examples already present — skipped")
             else:
                 print(f"  inserted {j_count} journal entries, {t_count} paper trades")
+
+            # ── Step 6b: Example model_forecasts for signal-lab history ─────
+            print("step 6b: seeding model_forecasts for the signal lab history …")
+            f_count = await example_forecasts.seed_forecasts(session)
+            if f_count == 0:
+                print("  forecasts already present — skipped")
+            else:
+                print(f"  inserted {f_count} forecast rows")
 
         # ── Step 7: Validate ────────────────────────────────────────────────
         print("step 7: running validation checks …")
