@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { ColorType, CrosshairMode, createChart } from "lightweight-charts";
+import type { UTCTimestamp } from "lightweight-charts";
 import type {
   Bar,
   EventMarkerData,
@@ -14,6 +15,31 @@ interface Props {
   eventMarkers: EventMarkerData[];
   showSMA20: boolean;
   showEMA50: boolean;
+}
+
+/** Convert an ISO timestamp to UTC epoch seconds. Lightweight Charts accepts
+ *  UTCTimestamp uniformly across daily and intraday resolutions, so we always
+ *  use it. (The old "split-on-T" trick collapsed all intraday bars on the same
+ *  day to identical time values, which Lightweight rejects as non-ascending.)
+ */
+function toUtcEpoch(iso: string): UTCTimestamp {
+  return Math.floor(new Date(iso).getTime() / 1000) as UTCTimestamp;
+}
+
+/** Sort by time ascending and drop any duplicates that share a timestamp.
+ *  Lightweight Charts panics on either. Defensive — the API should not be
+ *  producing dupes, but a single bad bar shouldn't whitescreen the chart. */
+function sortedUnique<T extends { time: UTCTimestamp }>(rows: T[]): T[] {
+  const sorted = [...rows].sort((a, b) => a.time - b.time);
+  const out: T[] = [];
+  let prev: number | null = null;
+  for (const r of sorted) {
+    if (r.time !== prev) {
+      out.push(r);
+      prev = r.time;
+    }
+  }
+  return out;
 }
 
 export function PriceChart({
@@ -64,13 +90,15 @@ export function PriceChart({
       wickDownColor: "#f87171",
     });
 
-    const candleData = bars.map((b) => ({
-      time: b.ts.split("T")[0],
-      open: b.o,
-      high: b.h,
-      low: b.l,
-      close: b.c,
-    }));
+    const candleData = sortedUnique(
+      bars.map((b) => ({
+        time: toUtcEpoch(b.ts),
+        open: b.o,
+        high: b.h,
+        low: b.l,
+        close: b.c,
+      })),
+    );
     candleSeries.setData(
       candleData as Parameters<typeof candleSeries.setData>[0],
     );
@@ -84,11 +112,13 @@ export function PriceChart({
     chart.priceScale("volume").applyOptions({
       scaleMargins: { top: 0.85, bottom: 0 },
     });
-    const volumeData = bars.map((b) => ({
-      time: b.ts.split("T")[0],
-      value: b.v,
-      color: b.c >= b.o ? "#0d2820" : "#2c1416",
-    }));
+    const volumeData = sortedUnique(
+      bars.map((b) => ({
+        time: toUtcEpoch(b.ts),
+        value: b.v,
+        color: b.c >= b.o ? "#0d2820" : "#2c1416",
+      })),
+    );
     volumeSeries.setData(
       volumeData as Parameters<typeof volumeSeries.setData>[0],
     );
@@ -102,10 +132,12 @@ export function PriceChart({
         lastValueVisible: false,
       });
       smaSeries.setData(
-        overlays.sma_20.map((p) => ({
-          time: p.ts.split("T")[0],
-          value: p.v,
-        })) as Parameters<typeof smaSeries.setData>[0],
+        sortedUnique(
+          overlays.sma_20.map((p) => ({
+            time: toUtcEpoch(p.ts),
+            value: p.v,
+          })),
+        ) as Parameters<typeof smaSeries.setData>[0],
       );
     }
 
@@ -118,28 +150,29 @@ export function PriceChart({
         lastValueVisible: false,
       });
       emaSeries.setData(
-        overlays.ema_50.map((p) => ({
-          time: p.ts.split("T")[0],
-          value: p.v,
-        })) as Parameters<typeof emaSeries.setData>[0],
+        sortedUnique(
+          overlays.ema_50.map((p) => ({
+            time: toUtcEpoch(p.ts),
+            value: p.v,
+          })),
+        ) as Parameters<typeof emaSeries.setData>[0],
       );
     }
 
     // Event markers
     if (eventMarkers.length > 0) {
-      const markers = eventMarkers.map((m) => ({
-        time: m.ts.split("T")[0],
-        position: "aboveBar" as const,
-        color: "#7dd3fc",
-        shape: "circle" as const,
-        text:
-          m.kind === "eia_storage"
-            ? "EIA"
-            : m.label.substring(0, 3).toUpperCase(),
-        size: 1,
-      }));
-      markers.sort((a, b) =>
-        a.time < b.time ? -1 : a.time > b.time ? 1 : 0,
+      const markers = sortedUnique(
+        eventMarkers.map((m) => ({
+          time: toUtcEpoch(m.ts),
+          position: "aboveBar" as const,
+          color: "#7dd3fc",
+          shape: "circle" as const,
+          text:
+            m.kind === "eia_storage"
+              ? "EIA"
+              : m.label.substring(0, 3).toUpperCase(),
+          size: 1,
+        })),
       );
       candleSeries.setMarkers(
         markers as Parameters<typeof candleSeries.setMarkers>[0],
