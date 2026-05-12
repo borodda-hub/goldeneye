@@ -125,7 +125,7 @@ async def get_current_signal(
         },
         "models": models_out,
         "explanation": explanation,
-        "safety": safety_env.model_dump(),
+        "safety": safety_env.model_dump(mode="json"),
     }
 
 

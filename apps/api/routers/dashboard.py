@@ -107,5 +107,5 @@ async def get_summary(
         ],
         "recent_events": recent_events,
         "ai_summary": ai_text,
-        "safety": safety_env.model_dump(),
+        "safety": safety_env.model_dump(mode="json"),
     }

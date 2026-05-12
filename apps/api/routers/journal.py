@@ -67,7 +67,10 @@ async def create_entry(
     }
     try:
         review_text, safety_env = await review_journal_entry(entry_dict)
-        llm_review = {"text": review_text, "safety": safety_env.model_dump()}
+        # mode="json" so the datetime in as_of becomes an ISO string —
+        # llm_review is persisted to the user_decision_journals.llm_review
+        # JSONB column.
+        llm_review = {"text": review_text, "safety": safety_env.model_dump(mode="json")}
         entry = await journal_repo.update(session, entry, {"llm_review": llm_review})
     except Exception:
         pass  # review is best-effort

@@ -174,7 +174,10 @@ async def run_scenario(
         "counterarguments": counterarguments,
         "data_needed_to_validate": data_needed,
         "narrative": narrative_text,
-        "safety": safety_envelope.model_dump(),
+        # mode="json" ISO-formats datetimes — required because the caller
+        # persists this dict into the scenario_runs.result JSONB column, and
+        # asyncpg's default JSON serializer can't handle raw datetimes.
+        "safety": safety_envelope.model_dump(mode="json"),
     }
 
 
