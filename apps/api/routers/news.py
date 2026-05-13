@@ -28,8 +28,7 @@ async def get_recent_news(
     items from EIA + Yahoo Finance and filters by NG keywords. Either way,
     the response shape is identical.
     """
-    _ = symbol  # reserved for future multi-instrument routing
-    adapter = get_news()
+    adapter = get_news(symbol)
     if category:
         events = await adapter.get_events_by_category(category, limit=limit)
     else:

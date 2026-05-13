@@ -72,10 +72,17 @@ def get_positioning(symbol: str = "NG"):
 
 
 @lru_cache(maxsize=None)
-def get_news():
+def get_news(symbol: str = "NG"):
+    """Return the news adapter for the given instrument.
+
+    RSS adapter spins up per-symbol instances so the per-instrument feeds
+    + keyword filter are honored (NG keywords + NWS alerts vs CL keywords
+    + OilPrice). Mock and NewsAPI fall through symbol-agnostic.
+    """
+    upper = symbol.upper() if symbol else "NG"
     if settings.adapter_news == "rss":
         from apps.api.adapters.news.rss import RssNewsAdapter
-        return RssNewsAdapter()
+        return RssNewsAdapter(upper)
     if settings.adapter_news == "mock":
         from apps.api.adapters.news.mock_news import MockNewsAdapter
         return MockNewsAdapter()
