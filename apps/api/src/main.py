@@ -20,6 +20,7 @@ from apps.api.routers import (
     backtest,
     realtime,
     thesis,
+    signal_quality,
 )
 from apps.api.realtime.ticker import start_ticker
 from apps.api.services.safety import SafetyViolation
@@ -71,6 +72,7 @@ app.include_router(news.router)
 app.include_router(backtest.router)
 app.include_router(realtime.router)
 app.include_router(thesis.router)
+app.include_router(signal_quality.router)
 
 
 @app.get("/v1/health")
