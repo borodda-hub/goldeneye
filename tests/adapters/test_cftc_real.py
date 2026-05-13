@@ -31,7 +31,7 @@ def _socrata_row(report_date: str = "2026-05-05T00:00:00.000") -> dict:
 
 
 def test_map_extracts_canonical_columns():
-    records = CFTCAdapter._map([_socrata_row()])
+    records = CFTCAdapter()._map([_socrata_row()])
     assert len(records) == 1
     rec = records[0]
     assert rec["report_date"] == date(2026, 5, 5)
@@ -61,7 +61,7 @@ def test_map_falls_back_to_legacy_short_columns():
     }
     for canonical, legacy in legacy_subs.items():
         row[legacy] = row.pop(canonical)
-    records = CFTCAdapter._map([row])
+    records = CFTCAdapter()._map([row])
     rec = records[0]
     assert rec["managed_money_short"] == 130000
     assert rec["producer_short"] == 420000
@@ -77,7 +77,7 @@ def test_map_returns_none_for_missing_columns():
         "m_money_positions_long_all": "180000",
         # Everything else missing.
     }
-    rec = CFTCAdapter._map([sparse])[0]
+    rec = CFTCAdapter()._map([sparse])[0]
     assert rec["managed_money_long"] == 180000
     assert rec["producer_long"] is None
     assert rec["swap_short"] is None
@@ -86,14 +86,14 @@ def test_map_returns_none_for_missing_columns():
 
 def test_map_skips_rows_with_no_report_date():
     rows = [_socrata_row(), {"some": "garbage"}, _socrata_row("2026-04-28T00:00:00.000")]
-    records = CFTCAdapter._map(rows)
+    records = CFTCAdapter()._map(rows)
     assert len(records) == 2
     assert [r["report_date"] for r in records] == [date(2026, 5, 5), date(2026, 4, 28)]
 
 
 def test_map_orders_newest_first():
     rows = [_socrata_row("2026-04-28"), _socrata_row("2026-05-05"), _socrata_row("2026-04-21")]
-    records = CFTCAdapter._map(rows)
+    records = CFTCAdapter()._map(rows)
     assert [r["report_date"] for r in records] == [
         date(2026, 5, 5),
         date(2026, 4, 28),
@@ -104,7 +104,7 @@ def test_map_orders_newest_first():
 def test_map_tolerates_non_numeric_values():
     row = _socrata_row()
     row["open_interest_all"] = "not-a-number"
-    rec = CFTCAdapter._map([row])[0]
+    rec = CFTCAdapter()._map([row])[0]
     assert rec["open_interest_total"] is None
     # Other fields still parse.
     assert rec["managed_money_long"] == 180000
@@ -138,3 +138,61 @@ def test_cache_hits_avoid_second_http_call():
         asyncio.run(adapter.get_cot_reports(limit=10))
         asyncio.run(adapter.get_cot_reports(limit=10))
     assert mock_get.await_count == 1
+
+
+# ── Phase 14: per-instrument generalization ────────────────────────────────
+
+
+def test_adapter_init_rejects_unknown_symbol():
+    with pytest.raises(ValueError, match="No CFTC market registered"):
+        CFTCAdapter("UNKNOWN")
+
+
+def test_cl_adapter_uses_wti_market_code_in_fetch_filter():
+    """CL adapter must filter on the WTI market code, not NG's."""
+    from apps.api.adapters.positioning.cftc import MARKETS
+
+    adapter = CFTCAdapter("CL")
+    captured: dict[str, list[tuple[str, str]]] = {}
+
+    class _FakeResponse:
+        def json(self):
+            return []
+
+    async def fake_get(url: str, **kwargs):  # type: ignore[no-untyped-def]
+        captured["params"] = kwargs.get("params", [])
+        return _FakeResponse()
+
+    with patch.object(adapter._client, "get", new=fake_get):
+        asyncio.run(adapter._fetch_all())
+
+    params = captured["params"]
+    where = next(v for (k, v) in params if k == "$where")
+    assert MARKETS["CL"].contract_code in where
+    assert "CRUDE OIL" in where
+    # NG's market code must NOT appear in the CL filter.
+    assert MARKETS["NG"].contract_code not in where
+
+
+def test_cl_adapter_map_uses_cl_default_market_name():
+    """When Socrata omits contract_market_name, CL fills in the WTI default."""
+    adapter = CFTCAdapter("CL")
+    row = {
+        "report_date_as_yyyy_mm_dd": "2026-05-05",
+        # contract_market_name + cftc_contract_market_code intentionally
+        # omitted to exercise the per-instrument fallback.
+        "m_money_positions_long_all": "200000",
+        "m_money_positions_short_all": "150000",
+    }
+    rec = adapter._map([row])[0]
+    assert "CRUDE OIL" in rec["contract_market_name"]
+    assert rec["cftc_contract_market_code"] == "067651"
+
+
+def test_ng_and_cl_adapters_use_separate_caches():
+    """The 24h cache is per-instance; running NG shouldn't poison CL."""
+    ng = CFTCAdapter("NG")
+    cl = CFTCAdapter("CL")
+    assert ng._cache is None and cl._cache is None
+    ng._cache = (0.0, [])  # type: ignore[assignment]
+    assert cl._cache is None

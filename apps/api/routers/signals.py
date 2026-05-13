@@ -58,7 +58,16 @@ async def get_current_signal(
                 else None,
             }
 
-        cot_recent = await cot_repo.get_recent(session, limit=2)
+        # Phase 14: filter COT reports to the active instrument's market code.
+        # The instrument's metadata carries cftc_market_code (seeded in
+        # instruments.json); fall back to no filter for pre-Phase-14 instruments.
+        market_code = None
+        if isinstance(instrument.metadata_, dict):
+            market_code = instrument.metadata_.get("cftc_market_code") or None
+
+        cot_recent = await cot_repo.get_recent(
+            session, limit=2, cftc_contract_market_code=market_code
+        )
         if len(cot_recent) >= 2:
             curr_net = cot_recent[0].managed_money_net
             prev_net = cot_recent[1].managed_money_net

@@ -19,8 +19,42 @@ from apps.api.adapters._http import AdapterHTTPClient
 
 CFTC_BASE_URL = "https://publicreporting.cftc.gov/resource/"
 DISAGGREGATED_RESOURCE = "kh3c-gbw2"
-NG_MARKET_NAME = "NATURAL GAS - NEW YORK MERCANTILE EXCHANGE"
-NG_CONTRACT_CODE = "023651"
+
+
+class CftcMarket:
+    """Per-instrument CFTC contract metadata."""
+
+    __slots__ = ("contract_code", "name_prefix", "default_market_name")
+
+    def __init__(self, contract_code: str, name_prefix: str, default_market_name: str):
+        self.contract_code = contract_code
+        self.name_prefix = name_prefix
+        self.default_market_name = default_market_name
+
+
+# CFTC market-code lookup. Source of truth: CFTC PRE disaggregated docs.
+# Each entry pairs:
+#   contract_code     — the exact 6-digit market code Socrata indexes
+#   name_prefix       — used in the `like` filter to defend against codename
+#                       collisions (NG futures vs the LAST-DAY FINANCIAL row)
+#   default_market_name — fallback contract_market_name when Socrata omits it
+MARKETS: dict[str, CftcMarket] = {
+    "NG": CftcMarket(
+        contract_code="023651",
+        name_prefix="NATURAL GAS",
+        default_market_name="NATURAL GAS - NEW YORK MERCANTILE EXCHANGE",
+    ),
+    "CL": CftcMarket(
+        contract_code="067651",
+        name_prefix="CRUDE OIL",
+        default_market_name="CRUDE OIL, LIGHT SWEET - NEW YORK MERCANTILE EXCHANGE",
+    ),
+}
+
+# Backwards-compat exports — pre-Phase-14 callers used these as module-level
+# constants. New code should look them up via `MARKETS[symbol]`.
+NG_CONTRACT_CODE = MARKETS["NG"].contract_code
+NG_MARKET_NAME = MARKETS["NG"].default_market_name
 
 # Socrata column → our dict field. The PRE schema has occasionally renamed
 # columns (`_short` vs `_short_all`); we try both via _SHORT_FALLBACKS below.
@@ -74,10 +108,25 @@ def _column_value(row: dict[str, Any], col: str) -> int | None:
 
 
 class CFTCAdapter:
-    """Real PositioningDataAdapter implementation reading CFTC PRE."""
+    """Real PositioningDataAdapter implementation reading CFTC PRE.
 
-    def __init__(self) -> None:
-        self._client = AdapterHTTPClient(adapter_name="positioning.cftc.cot")
+    Configured per-instrument: `CFTCAdapter("NG")` queries natural gas,
+    `CFTCAdapter("CL")` queries WTI crude. Each instance maintains its own
+    24h response cache so a 2-instrument app does at most two daily fetches.
+    """
+
+    def __init__(self, symbol: str = "NG") -> None:
+        try:
+            self._market = MARKETS[symbol.upper()]
+        except KeyError as exc:
+            raise ValueError(
+                f"No CFTC market registered for symbol {symbol!r}. "
+                f"Known symbols: {sorted(MARKETS)}"
+            ) from exc
+        self._symbol = symbol.upper()
+        self._client = AdapterHTTPClient(
+            adapter_name=f"positioning.cftc.cot.{self._symbol.lower()}"
+        )
         self._cache: tuple[float, list[dict[str, Any]]] | None = None
 
     async def get_cot_reports(self, limit: int = 52) -> list[dict[str, Any]]:
@@ -101,13 +150,14 @@ class CFTCAdapter:
 
     async def _fetch_all(self) -> list[dict[str, Any]]:
         # Filter by both name (defensive) and contract code (precise — avoids
-        # NG-adjacent markets like "NATURAL GAS LAST DAY FINANCIAL").
+        # codename-adjacent markets like "NATURAL GAS LAST DAY FINANCIAL"
+        # for NG, or financially-settled crude variants for CL).
         url = CFTC_BASE_URL + DISAGGREGATED_RESOURCE + ".json"
         params: list[tuple[str, str]] = [
             (
                 "$where",
-                f"cftc_contract_market_code = '{NG_CONTRACT_CODE}' "
-                f"AND contract_market_name like 'NATURAL GAS%'",
+                f"cftc_contract_market_code = '{self._market.contract_code}' "
+                f"AND contract_market_name like '{self._market.name_prefix}%'",
             ),
             ("$order", "report_date_as_yyyy_mm_dd DESC"),
             ("$limit", "200"),
@@ -116,8 +166,7 @@ class CFTCAdapter:
         body = response.json()
         return body if isinstance(body, list) else []
 
-    @staticmethod
-    def _map(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _map(self, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Map CFTC PRE rows into our internal cot_report dict shape."""
         records: list[dict[str, Any]] = []
         for row in rows:
@@ -132,9 +181,13 @@ class CFTCAdapter:
             record: dict[str, Any] = {
                 "report_date": report_date,
                 "release_date": release_date,
-                "contract_market_name": row.get("contract_market_name") or NG_MARKET_NAME,
-                "cftc_contract_market_code": row.get("cftc_contract_market_code")
-                or NG_CONTRACT_CODE,
+                "contract_market_name": (
+                    row.get("contract_market_name") or self._market.default_market_name
+                ),
+                "cftc_contract_market_code": (
+                    row.get("cftc_contract_market_code")
+                    or self._market.contract_code
+                ),
                 "source": "cftc",
             }
             for src_col, dest_field in _COLUMN_MAP.items():
