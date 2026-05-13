@@ -1,5 +1,5 @@
 import { getCurrentSignal } from "../../../lib/api";
-import { readActiveSymbolFromSearchParams } from "../../../lib/useActiveInstrument";
+import { readActiveSymbolFromSearchParams } from "../../../lib/activeInstrument";
 import { SignalsShell } from "./SignalsShell";
 import type { CurrentSignal } from "./types";
 

@@ -1,5 +1,5 @@
 import { getDashboardSummary } from "@/lib/api";
-import { readActiveSymbolFromSearchParams } from "@/lib/useActiveInstrument";
+import { readActiveSymbolFromSearchParams } from "@/lib/activeInstrument";
 import { DashboardShell } from "./DashboardShell";
 import type { DashboardSummary } from "./types";
 

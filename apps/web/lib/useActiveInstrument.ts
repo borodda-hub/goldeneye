@@ -2,9 +2,10 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-
-const STORAGE_KEY = "goldeneye:active-instrument";
-const DEFAULT_SYMBOL = "NG";
+import {
+  ACTIVE_INSTRUMENT_STORAGE_KEY,
+  DEFAULT_SYMBOL,
+} from "./activeInstrument";
 
 /**
  * Active-instrument state: URL `?symbol=` is primary, localStorage is the
@@ -36,7 +37,7 @@ export function useActiveInstrument(): {
   useEffect(() => {
     if (urlSymbol) return; // URL wins — no need to consult localStorage.
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(ACTIVE_INSTRUMENT_STORAGE_KEY);
       if (stored && stored !== DEFAULT_SYMBOL) {
         setHydratedSymbol(stored);
       }
@@ -48,7 +49,7 @@ export function useActiveInstrument(): {
   // Cross-tab sync.
   useEffect(() => {
     function onStorage(e: StorageEvent) {
-      if (e.key !== STORAGE_KEY) return;
+      if (e.key !== ACTIVE_INSTRUMENT_STORAGE_KEY) return;
       if (urlSymbol) return; // URL still wins.
       setHydratedSymbol(e.newValue || null);
     }
@@ -62,7 +63,7 @@ export function useActiveInstrument(): {
     (next: string) => {
       const upper = next.toUpperCase();
       try {
-        localStorage.setItem(STORAGE_KEY, upper);
+        localStorage.setItem(ACTIVE_INSTRUMENT_STORAGE_KEY, upper);
       } catch {
         // ignore — UI still updates via URL push below.
       }
@@ -77,20 +78,11 @@ export function useActiveInstrument(): {
   return { activeSymbol, setActiveSymbol };
 }
 
-/**
- * Server-side helper for `page.tsx` server components. Reads `?symbol=` from
- * the searchParams object Next.js passes to the page; falls back to default.
- * Server components can't read localStorage — that's the cost of SSR.
- */
-export function readActiveSymbolFromSearchParams(
-  searchParams: Record<string, string | string[] | undefined> | undefined,
-): string {
-  if (!searchParams) return DEFAULT_SYMBOL;
-  const raw = searchParams.symbol;
-  if (typeof raw === "string" && raw.length > 0) {
-    return raw.toUpperCase();
-  }
-  return DEFAULT_SYMBOL;
-}
-
-export { STORAGE_KEY as ACTIVE_INSTRUMENT_STORAGE_KEY, DEFAULT_SYMBOL };
+// Re-export pure helpers so existing client-side imports keep working.
+// Server components must import from `./activeInstrument` directly to avoid
+// pulling the "use client" boundary across module lines.
+export {
+  ACTIVE_INSTRUMENT_STORAGE_KEY,
+  DEFAULT_SYMBOL,
+  readActiveSymbolFromSearchParams,
+} from "./activeInstrument";

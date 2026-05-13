@@ -1,5 +1,5 @@
 import { getChartBars, getChartCurve } from "@/lib/api";
-import { readActiveSymbolFromSearchParams } from "@/lib/useActiveInstrument";
+import { readActiveSymbolFromSearchParams } from "@/lib/activeInstrument";
 import { ChartShell } from "./ChartShell";
 import type { ChartBarsResponse, CurvePoint } from "./types";
 
