@@ -77,7 +77,16 @@ async def load_all() -> None:
                     )
                     .on_conflict_do_update(
                         index_elements=["symbol"],
-                        set_={"name": row["name"]},
+                        set_={
+                            "name": row["name"],
+                            "exchange": row["exchange"],
+                            "asset_class": row.get("asset_class", "commodity"),
+                            "currency": row.get("currency", "USD"),
+                            "unit": row["unit"],
+                            "contract_size": row["contract_size"],
+                            "tick_size": row["tick_size"],
+                            "metadata": row.get("metadata", {}),
+                        },
                     )
                     .returning(instruments_t.c.id)
                 )
