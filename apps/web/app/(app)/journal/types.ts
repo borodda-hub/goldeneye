@@ -16,6 +16,8 @@ export interface LlmReview {
   safety: SafetyEnvelope;
 }
 
+export type ResolvedDirection = "hit" | "miss" | "neutral" | "unresolved";
+
 export interface JournalEntry {
   id: string;
   created_at: string;
@@ -29,6 +31,9 @@ export interface JournalEntry {
   outcome: string | null;
   reflection: string | null;
   llm_review: LlmReview | null;
+  resolved_direction: ResolvedDirection | null;
+  thesis_id_at_write: string | null;
+  thesis_conviction_at_write: number | null;
 }
 
 export interface JournalEntriesResponse {

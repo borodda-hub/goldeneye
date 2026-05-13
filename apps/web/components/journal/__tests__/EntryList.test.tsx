@@ -25,6 +25,9 @@ const entries: JournalEntry[] = [
         disclaimer: "research",
       },
     },
+    resolved_direction: null,
+    thesis_id_at_write: null,
+    thesis_conviction_at_write: null,
   },
   {
     id: "entry-2",
@@ -39,6 +42,9 @@ const entries: JournalEntry[] = [
     outcome: null,
     reflection: null,
     llm_review: null,
+    resolved_direction: null,
+    thesis_id_at_write: null,
+    thesis_conviction_at_write: null,
   },
 ];
 

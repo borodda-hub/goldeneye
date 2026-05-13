@@ -2,6 +2,7 @@
 
 import { ConfidenceBar } from "../ConfidenceBar";
 import { SafetyEnvelopeNote } from "../SafetyEnvelopeNote";
+import { ResolutionPicker } from "./ResolutionPicker";
 import type { JournalEntry } from "../../app/(app)/journal/types";
 
 interface Props {
@@ -109,7 +110,19 @@ export function EntryDetailDrawer({ entry, onClose }: Props) {
           <span className="font-mono text-xs text-ink-2 tabular-nums">
             {entry.confidence_pct}%
           </span>
+          {entry.thesis_conviction_at_write !== null ? (
+            <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4 ml-2">
+              Thesis at write · {entry.thesis_conviction_at_write}%
+            </span>
+          ) : null}
         </div>
+      </Section>
+
+      <Section label="Resolution">
+        <ResolutionPicker
+          entryId={entry.id}
+          value={entry.resolved_direction}
+        />
       </Section>
 
       {entry.evidence.length > 0 && (

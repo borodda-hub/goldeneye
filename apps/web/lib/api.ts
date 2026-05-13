@@ -167,7 +167,11 @@ export async function getJournalEntry(id: string): Promise<unknown> {
 
 export async function patchJournalEntry(
   id: string,
-  body: Partial<{ outcome: string; reflection: string }>,
+  body: Partial<{
+    outcome: string | null;
+    reflection: string | null;
+    resolved_direction: "hit" | "miss" | "neutral" | "unresolved" | null;
+  }>,
 ): Promise<unknown> {
   return apiFetch(`/v1/journal/${encodeURIComponent(id)}`, {
     method: "PATCH",

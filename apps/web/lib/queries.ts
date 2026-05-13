@@ -24,6 +24,7 @@ import {
   getThesisSeed,
   listJournalEntries,
   listPaperTrades,
+  patchJournalEntry,
   patchThesis,
   runBacktest,
   type ThesisCreateBody,
@@ -262,5 +263,25 @@ export function useCalibration(instrumentCode = "NG", bucketCount = 5) {
     queryKey: ["calibration", instrumentCode, bucketCount],
     queryFn: () => getCalibration(instrumentCode, bucketCount),
     staleTime: 30_000,
+  });
+}
+
+export function usePatchJournalEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: Parameters<typeof patchJournalEntry>[1];
+    }) => patchJournalEntry(id, body),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: queryKeys.journalEntry(vars.id) });
+      qc.invalidateQueries({ queryKey: queryKeys.journalEntries() });
+      // Updating a resolution shifts a bucket in the calibration page,
+      // so invalidate that too.
+      qc.invalidateQueries({ queryKey: ["calibration"] });
+    },
   });
 }

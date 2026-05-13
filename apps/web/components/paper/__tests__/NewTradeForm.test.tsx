@@ -58,6 +58,9 @@ describe("NewTradeForm", () => {
         outcome: null,
         reflection: null,
         llm_review: null,
+        resolved_direction: null,
+        thesis_id_at_write: null,
+        thesis_conviction_at_write: null,
       },
     ];
     render(<NewTradeForm journalEntries={entries} />);

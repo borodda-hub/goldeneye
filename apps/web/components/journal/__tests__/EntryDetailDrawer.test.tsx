@@ -1,5 +1,12 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
+
+// Stub the patch hook used by the embedded ResolutionPicker so tests render
+// without a QueryClientProvider.
+vi.mock("@/lib/queries", () => ({
+  usePatchJournalEntry: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
 import { EntryDetailDrawer } from "../EntryDetailDrawer";
 import type { JournalEntry } from "../../../app/(app)/journal/types";
 
@@ -26,6 +33,9 @@ const baseEntry: JournalEntry = {
       disclaimer: "research prototype",
     },
   },
+  resolved_direction: null,
+  thesis_id_at_write: null,
+  thesis_conviction_at_write: null,
 };
 
 describe("EntryDetailDrawer", () => {
