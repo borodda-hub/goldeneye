@@ -5,7 +5,7 @@ counterarguments / data-to-monitor → narrative → caveats → disclaimer foot
 on every page.
 
 Light-on-white printable aesthetic — the dashboard is dark-themed for screens,
-but PDFs need to print and read on paper. Brand chrome (NGTI banner + footer)
+but PDFs need to print and read on paper. Brand chrome (Goldeneye banner + footer)
 applied via the canvas-level onPage hook.
 """
 from __future__ import annotations
@@ -234,7 +234,7 @@ def _on_page(canvas: Any, doc: Any) -> None:
     canvas.drawString(
         0.75 * inch,
         0.45 * inch,
-        "NGTI · Research and decision-support prototype. Not financial advice.",
+        "Goldeneye · Research and decision-support terminal. Not financial advice.",
     )
     canvas.drawRightString(
         letter[0] - 0.75 * inch,
@@ -265,8 +265,8 @@ def render_scenario_pdf(run: dict[str, Any]) -> bytes:
         rightMargin=0.75 * inch,
         topMargin=0.7 * inch,
         bottomMargin=0.85 * inch,
-        title=f"NGTI Scenario: {run.get('name', 'Untitled')}",
-        author="NGTI",
+        title=f"Goldeneye Scenario: {run.get('name', 'Untitled')}",
+        author="Goldeneye",
     )
     styles = _styles()
     story: list[Any] = []
@@ -274,7 +274,7 @@ def render_scenario_pdf(run: dict[str, Any]) -> bytes:
     # ── Header band ──────────────────────────────────────────────────────
     name = run.get("name") or "Untitled Scenario"
     created_at = run.get("created_at") or datetime.utcnow().isoformat()
-    story.append(Paragraph("NGTI · NATURAL GAS TRADING INTELLIGENCE", styles["brand"]))
+    story.append(Paragraph("GOLDENEYE · RESEARCH TERMINAL", styles["brand"]))
     story.append(Paragraph("SCENARIO REPORT", styles["brand"]))
     story.append(Paragraph(_esc(name), styles["title"]))
     instrument_text = f"Instrument: NG · Henry Hub Natural Gas &nbsp;&nbsp;|&nbsp;&nbsp; Generated: {_esc(created_at)}"

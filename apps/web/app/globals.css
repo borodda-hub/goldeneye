@@ -1,22 +1,84 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=Hanken+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --bg: #0a0a09;
+  --bg-2: #0e0e0c;
+  --surface: #131311;
+  --surface-2: #1a1a17;
+  --surface-3: #222220;
+  --border: #2a2a26;
+  --border-bright: #3a3a34;
+  --text: #efece3;
+  --text-dim: #88857c;
+  --text-faint: #55514a;
+  --gold: #c9a35c;
+  --gold-bright: #e8c074;
+  --gold-deep: #8a6f3a;
+  --amber: #f0b429;
+  --up: #6dd58c;
+  --down: #e87575;
+  --cyan: #7dd3e0;
+  --violet: #a89cdb;
+}
 
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  background: #0a0d12;
-  color: #e6ebf2;
-  font-family: Inter, sans-serif;
+  background:
+    radial-gradient(ellipse 1200px 700px at 50% -10%, rgba(201, 163, 92, 0.05), transparent),
+    radial-gradient(ellipse 800px 500px at 90% 110%, rgba(125, 211, 224, 0.025), transparent),
+    var(--bg);
+  color: var(--text);
+  font-family: "Hanken Grotesk", system-ui, -apple-system, sans-serif;
   font-size: 14px;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "ss02";
+}
+
+/* Film grain overlay — fixed, pointer-events:none, sits above content but below modals */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    display: none;
+  }
+  body {
+    background: var(--bg);
+  }
 }
 
 *:focus-visible {
-  outline: 2px solid #7dd3fc;
+  outline: 1px solid var(--gold);
   outline-offset: 2px;
+}
+
+/* Goldeneye type utilities — used by Eyebrow/DisplayHeading/GoldItalic components */
+.font-display {
+  font-family: "Fraunces", ui-serif, Georgia, serif;
+  font-variation-settings: "opsz" 144, "SOFT" 30;
+  font-weight: 300;
+  letter-spacing: -0.025em;
+}
+.font-gold-italic {
+  font-family: "Fraunces", ui-serif, Georgia, serif;
+  font-style: italic;
+  font-variation-settings: "opsz" 72, "SOFT" 80;
+  font-weight: 300;
+  color: var(--gold-bright);
 }

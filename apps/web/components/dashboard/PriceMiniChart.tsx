@@ -10,11 +10,12 @@ import {
   YAxis,
 } from "recharts";
 import { useChartBars } from "@/lib/queries";
-import type { VolRegime } from "@/app/(app)/dashboard/types";
 import type { ChartBarsResponse } from "@/app/(app)/chart/types";
+import { colors } from "@/lib/colors";
+import { useChartColor } from "@/lib/useChartColor";
+import { ChartColorSwatch } from "./ChartColorSwatch";
 
 interface Props {
-  volRegime: VolRegime;
   contractCode: string;
 }
 
@@ -60,8 +61,9 @@ function formatTooltipTs(iso: string, showTime: boolean): string {
   }
 }
 
-export function PriceMiniChart({ volRegime, contractCode }: Props) {
+export function PriceMiniChart({ contractCode }: Props) {
   const [timeframe, setTimeframe] = useState<TimeframeKey>("1M");
+  const [chartColor, setChartColor] = useChartColor();
   const spec = TIMEFRAMES[timeframe];
 
   const today = toISODate(new Date());
@@ -70,39 +72,38 @@ export function PriceMiniChart({ volRegime, contractCode }: Props) {
   const { data, isLoading } = useChartBars(contractCode, spec.resolution, from, today);
   const chartData = (data as ChartBarsResponse | undefined)?.bars ?? [];
 
-  const isHot = volRegime === "elevated" || volRegime === "crisis";
-  const strokeColor = isHot ? "#f87171" : "#34d399";
-  const fillColor = isHot ? "#2c1416" : "#0d2820";
-
   return (
     <div
       className="border border-line-1 rounded-md bg-surface-1 flex flex-col h-full"
       data-testid="price-mini-chart"
     >
-      <div className="flex items-center justify-between px-3 pt-2 pb-1">
+      <div className="flex items-center justify-between gap-3 px-3 pt-2 pb-1">
         <span className="text-xs text-ink-3 uppercase tracking-widest">
           NG · {spec.label}
         </span>
-        <div className="flex items-center gap-1" role="tablist" aria-label="Timeframe">
-          {TIMEFRAME_ORDER.map((key) => {
-            const active = key === timeframe;
-            return (
-              <button
-                key={key}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => setTimeframe(key)}
-                className={`font-mono text-[10px] px-1.5 py-0.5 rounded-sm transition-colors ${
-                  active
-                    ? "bg-surface-2 text-ink-1"
-                    : "text-ink-4 hover:text-ink-2 hover:bg-surface-2/50"
-                }`}
-              >
-                {key}
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-3">
+          <ChartColorSwatch value={chartColor.key} onChange={setChartColor} />
+          <div className="flex items-center gap-1" role="tablist" aria-label="Timeframe">
+            {TIMEFRAME_ORDER.map((key) => {
+              const active = key === timeframe;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setTimeframe(key)}
+                  className={`font-mono text-[10px] px-1.5 py-0.5 rounded-sm transition-colors ${
+                    active
+                      ? "bg-surface-2 text-ink-1"
+                      : "text-ink-4 hover:text-ink-2 hover:bg-surface-2/50"
+                  }`}
+                >
+                  {key}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -118,10 +119,10 @@ export function PriceMiniChart({ volRegime, contractCode }: Props) {
               <YAxis domain={["auto", "auto"]} hide />
               <Tooltip
                 contentStyle={{
-                  background: "#0f1319",
-                  border: "1px solid #2a313e",
+                  background: colors.surface1,
+                  border: `1px solid ${colors.line1}`,
                   fontSize: "11px",
-                  color: "#e6ebf2",
+                  color: colors.ink1,
                 }}
                 labelFormatter={(label: string) => formatTooltipTs(label, spec.showTime)}
                 formatter={(v: number) => [v.toFixed(3), "Close"]}
@@ -129,9 +130,9 @@ export function PriceMiniChart({ volRegime, contractCode }: Props) {
               <Area
                 dataKey="c"
                 type="monotone"
-                stroke={strokeColor}
+                stroke={chartColor.stroke}
                 strokeWidth={1.5}
-                fill={fillColor}
+                fill={chartColor.fill}
                 dot={false}
               />
             </AreaChart>

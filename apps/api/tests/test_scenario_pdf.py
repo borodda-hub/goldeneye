@@ -121,11 +121,11 @@ def test_render_scenario_pdf_returns_pdf_bytes():
 
 def test_pdf_contains_scenario_name_metadata():
     pdf = render_scenario_pdf(_sample_run())
-    # /Title (NGTI Scenario: Cold Snap...) appears in the PDF /Info dict.
+    # /Title (Goldeneye Scenario: Cold Snap...) appears in the PDF /Info dict.
     # reportlab writes hex-encoded UTF-16 for non-ASCII chars; just check the
     # ASCII prefix and the /Title key exist.
     assert b"/Title" in pdf
-    assert b"NGTI" in pdf
+    assert b"Goldeneye" in pdf
 
 
 def test_pdf_handles_run_with_minimal_fields():

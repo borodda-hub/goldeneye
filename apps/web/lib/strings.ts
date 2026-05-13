@@ -1,5 +1,5 @@
 export const DISCLAIMER =
-  "NGTI is a research and decision-support prototype. It does not provide personalized financial advice, does not execute trades against real brokers, and does not guarantee any forecast or scenario. Paper trading is simulated. For research, education, and decision-quality practice only.";
+  "Goldeneye is a research and decision-support terminal. It does not provide personalized financial advice, does not execute trades against real brokers, and does not guarantee any forecast or scenario. Paper trading is simulated. For research, education, and decision-quality practice only.";
 
 export const EMPTY_STATE = {
   dashboard: "No data available.",

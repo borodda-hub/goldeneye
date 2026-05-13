@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NGTI — Natural Gas Trading Intelligence",
-  description: "Research and paper-trading terminal for natural gas markets.",
+  title: "Goldeneye — Research Terminal",
+  description:
+    "Decision-support and paper-trading terminal for commodity markets — research, scenario analysis, and explainable forecasting.",
 };
 
 export default function RootLayout({

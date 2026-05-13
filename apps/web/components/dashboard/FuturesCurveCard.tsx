@@ -9,6 +9,7 @@ import {
   YAxis,
 } from "recharts";
 import type { FuturesCurvePoint } from "@/app/(app)/dashboard/types";
+import { colors } from "@/lib/colors";
 
 interface Props {
   curve: FuturesCurvePoint[];
@@ -28,29 +29,29 @@ export function FuturesCurveCard({ curve }: Props) {
             <LineChart data={curve} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
               <XAxis
                 dataKey="contract_code"
-                tick={{ fontSize: 10, fill: "#6b7589" }}
+                tick={{ fontSize: 10, fill: colors.ink3 }}
               />
               <YAxis
                 domain={["auto", "auto"]}
-                tick={{ fontSize: 10, fill: "#6b7589" }}
+                tick={{ fontSize: 10, fill: colors.ink3 }}
                 width={40}
                 tickFormatter={(v: number) => v.toFixed(3)}
               />
               <Tooltip
                 contentStyle={{
-                  background: "#0f1319",
-                  border: "1px solid #2a313e",
+                  background: colors.surface1,
+                  border: `1px solid ${colors.line1}`,
                   fontSize: "11px",
-                  color: "#e6ebf2",
+                  color: colors.ink1,
                 }}
                 formatter={(v: number) => [v.toFixed(3), "Mid"]}
               />
               <Line
                 type="monotone"
                 dataKey="mid"
-                stroke="#7dd3fc"
+                stroke={colors.accent}
                 strokeWidth={1.5}
-                dot={{ fill: "#7dd3fc", r: 2 }}
+                dot={{ fill: colors.accent, r: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>

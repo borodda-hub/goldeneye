@@ -23,7 +23,7 @@ const mockResult = {
     confidence: "medium",
     caveats: ["Scenario outputs are hypothetical."],
     as_of: "2026-05-11T12:00:00Z",
-    disclaimer: "NGTI is a research prototype.",
+    disclaimer: "Goldeneye is a research terminal.",
   },
 };
 

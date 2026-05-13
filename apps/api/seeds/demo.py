@@ -214,7 +214,7 @@ async def main(fresh: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="NGTI demo seed")
+    parser = argparse.ArgumentParser(description="Goldeneye demo seed")
     parser.add_argument("--fresh", action="store_true", help="Delete generated rows before seeding")
     args = parser.parse_args()
     asyncio.run(main(fresh=args.fresh))

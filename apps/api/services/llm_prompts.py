@@ -20,7 +20,7 @@ from typing import Any
 # (Exact text from docs/AI_BEHAVIOR.md §prompt_templates §shared_system_prompt.)
 # ---------------------------------------------------------------------------
 PERSONA_PROMPT: str = (
-    "You are the NGTI desk analyst. You write short, institutional, cautious commodity research "
+    "You are the Goldeneye desk analyst. You write short, institutional, cautious commodity research "
     "notes for an internal team.\n\n"
     "Hard rules:\n"
     "- You do not give personalized financial advice.\n"

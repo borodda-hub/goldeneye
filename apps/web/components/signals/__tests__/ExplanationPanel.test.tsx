@@ -5,7 +5,7 @@ const mockSafety = {
   confidence: "medium",
   caveats: ["Model outputs are statistical inferences only."],
   as_of: "2026-05-10T20:00:00Z",
-  disclaimer: "NGTI is a research prototype.",
+  disclaimer: "Goldeneye is a research terminal.",
 };
 
 describe("ExplanationPanel", () => {
@@ -35,6 +35,6 @@ describe("ExplanationPanel", () => {
 
   it("renders disclaimer text", () => {
     render(<ExplanationPanel explanation="Some text." safety={mockSafety} />);
-    expect(screen.getByText(/NGTI is a research prototype/)).toBeInTheDocument();
+    expect(screen.getByText(/Goldeneye is a research terminal/)).toBeInTheDocument();
   });
 });

@@ -32,7 +32,7 @@ YAHOO_BASE_URL = "https://query1.finance.yahoo.com/v8/finance/chart/"
 # Yahoo rejects requests without a browser-like User-Agent.
 _HEADERS = {
     "User-Agent": (
-        "Mozilla/5.0 (NGTI-research-terminal; +contact@example.com) "
+        "Mozilla/5.0 (Goldeneye-research-terminal; +contact@example.com) "
         "Like-Gecko Chrome/120.0"
     ),
     "Accept": "application/json",

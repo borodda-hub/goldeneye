@@ -321,7 +321,7 @@ class RssNewsAdapter:
         try:
             response = await self._client.get(
                 url,
-                headers={"User-Agent": "NGTI-research-terminal/0.1 (+contact@example.com)"},
+                headers={"User-Agent": "Goldeneye-research-terminal/0.1 (+contact@example.com)"},
             )
         except Exception as exc:
             logger.warning("Feed fetch failed for source=%s: %s", source_id, exc)

@@ -37,7 +37,7 @@ test.describe("Signals page", () => {
   test("SafetyEnvelopeNote or disclaimer is present", async ({ page }) => {
     await page.goto("/signals");
     await expect(
-      page.locator("text=/NGTI is a research/i").first(),
+      page.locator("text=/Goldeneye is a research/i").first(),
     ).toBeVisible();
   });
 

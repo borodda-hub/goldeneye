@@ -8,6 +8,7 @@ import type {
   EventMarkerData,
   OverlayPoint,
 } from "@/app/(app)/chart/types";
+import { colors } from "@/lib/colors";
 
 interface Props {
   bars: Bar[];
@@ -56,20 +57,20 @@ export function PriceChart({
 
     const chart = createChart(containerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: "#0a0d12" },
-        textColor: "#a7b0bf",
+        background: { type: ColorType.Solid, color: colors.bg },
+        textColor: colors.ink2,
         fontFamily: "'JetBrains Mono', monospace",
         fontSize: 11,
       },
       grid: {
-        vertLines: { color: "#2a313e" },
-        horzLines: { color: "#2a313e" },
+        vertLines: { color: colors.line1 },
+        horzLines: { color: colors.line1 },
       },
       rightPriceScale: {
-        borderColor: "#2a313e",
+        borderColor: colors.line1,
       },
       timeScale: {
-        borderColor: "#2a313e",
+        borderColor: colors.line1,
         timeVisible: true,
         secondsVisible: false,
       },
@@ -82,12 +83,12 @@ export function PriceChart({
 
     // Candle series
     const candleSeries = chart.addCandlestickSeries({
-      upColor: "#34d399",
-      downColor: "#f87171",
-      borderUpColor: "#34d399",
-      borderDownColor: "#f87171",
-      wickUpColor: "#34d399",
-      wickDownColor: "#f87171",
+      upColor: colors.up,
+      downColor: colors.down,
+      borderUpColor: colors.up,
+      borderDownColor: colors.down,
+      wickUpColor: colors.up,
+      wickDownColor: colors.down,
     });
 
     const candleData = sortedUnique(
@@ -105,7 +106,7 @@ export function PriceChart({
 
     // Volume series
     const volumeSeries = chart.addHistogramSeries({
-      color: "#2a313e",
+      color: colors.line1,
       priceFormat: { type: "volume" },
       priceScaleId: "volume",
     });
@@ -116,7 +117,7 @@ export function PriceChart({
       bars.map((b) => ({
         time: toUtcEpoch(b.ts),
         value: b.v,
-        color: b.c >= b.o ? "#0d2820" : "#2c1416",
+        color: b.c >= b.o ? colors.upSoft : colors.downSoft,
       })),
     );
     volumeSeries.setData(
@@ -126,7 +127,7 @@ export function PriceChart({
     // SMA20 overlay
     if (showSMA20 && overlays.sma_20.length > 0) {
       const smaSeries = chart.addLineSeries({
-        color: "#7dd3fc",
+        color: colors.accent,
         lineWidth: 1,
         priceLineVisible: false,
         lastValueVisible: false,
@@ -144,7 +145,7 @@ export function PriceChart({
     // EMA50 overlay
     if (showEMA50 && overlays.ema_50.length > 0) {
       const emaSeries = chart.addLineSeries({
-        color: "#fbbf24",
+        color: colors.amber,
         lineWidth: 1,
         priceLineVisible: false,
         lastValueVisible: false,
@@ -165,7 +166,7 @@ export function PriceChart({
         eventMarkers.map((m) => ({
           time: toUtcEpoch(m.ts),
           position: "aboveBar" as const,
-          color: "#7dd3fc",
+          color: colors.accent,
           shape: "circle" as const,
           text:
             m.kind === "eia_storage"

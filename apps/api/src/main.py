@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
 
 
-app = FastAPI(title="NGTI API", version="0.2.0", lifespan=lifespan)
+app = FastAPI(title="Goldeneye API", version="0.2.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

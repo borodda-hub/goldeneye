@@ -15,8 +15,7 @@ class _StubResizeObserver {
   unobserve() {}
   disconnect() {}
 }
-// @ts-expect-error  shim global
-globalThis.ResizeObserver = _StubResizeObserver;
+globalThis.ResizeObserver = _StubResizeObserver as unknown as typeof ResizeObserver;
 
 function _sampleBars() {
   return {
@@ -38,14 +37,14 @@ beforeEach(() => {
 
 describe("PriceMiniChart timeframe controls", () => {
   it("renders the five timeframe buttons", () => {
-    render(<PriceMiniChart volRegime="normal" contractCode="NGM26" />);
+    render(<PriceMiniChart contractCode="NGM26" />);
     for (const key of ["1Y", "1M", "5D", "1D", "1H"]) {
       expect(screen.getByRole("tab", { name: key })).toBeInTheDocument();
     }
   });
 
   it("defaults to 1M selected", () => {
-    render(<PriceMiniChart volRegime="normal" contractCode="NGM26" />);
+    render(<PriceMiniChart contractCode="NGM26" />);
     expect(screen.getByRole("tab", { name: "1M" })).toHaveAttribute(
       "aria-selected",
       "true",
@@ -54,14 +53,14 @@ describe("PriceMiniChart timeframe controls", () => {
   });
 
   it("requests 1d resolution by default", () => {
-    render(<PriceMiniChart volRegime="normal" contractCode="NGM26" />);
+    render(<PriceMiniChart contractCode="NGM26" />);
     const [contract, resolution] = useChartBarsMock.mock.calls.at(-1) as unknown[];
     expect(contract).toBe("NGM26");
     expect(resolution).toBe("1d");
   });
 
   it("switches to 1H → 1m resolution", () => {
-    render(<PriceMiniChart volRegime="normal" contractCode="NGM26" />);
+    render(<PriceMiniChart contractCode="NGM26" />);
     fireEvent.click(screen.getByRole("tab", { name: "1H" }));
     const [_contract, resolution] = useChartBarsMock.mock.calls.at(-1) as unknown[];
     expect(resolution).toBe("1m");
@@ -73,7 +72,7 @@ describe("PriceMiniChart timeframe controls", () => {
   });
 
   it("switches to 5D → 15m resolution", () => {
-    render(<PriceMiniChart volRegime="normal" contractCode="NGM26" />);
+    render(<PriceMiniChart contractCode="NGM26" />);
     fireEvent.click(screen.getByRole("tab", { name: "5D" }));
     const [_contract, resolution] = useChartBarsMock.mock.calls.at(-1) as unknown[];
     expect(resolution).toBe("15m");
@@ -81,14 +80,14 @@ describe("PriceMiniChart timeframe controls", () => {
   });
 
   it("switches to 1D → 5m resolution", () => {
-    render(<PriceMiniChart volRegime="normal" contractCode="NGM26" />);
+    render(<PriceMiniChart contractCode="NGM26" />);
     fireEvent.click(screen.getByRole("tab", { name: "1D" }));
     const [_contract, resolution] = useChartBarsMock.mock.calls.at(-1) as unknown[];
     expect(resolution).toBe("5m");
   });
 
   it("switches to 1Y → 1d resolution, larger range", () => {
-    render(<PriceMiniChart volRegime="normal" contractCode="NGM26" />);
+    render(<PriceMiniChart contractCode="NGM26" />);
     fireEvent.click(screen.getByRole("tab", { name: "1Y" }));
     const [_contract, resolution, from, to] = useChartBarsMock.mock.calls.at(
       -1,
@@ -107,13 +106,13 @@ describe("PriceMiniChart timeframe controls", () => {
       data: { bars: [], overlays: { sma_20: [], ema_50: [] }, event_markers: [] },
       isLoading: false,
     });
-    render(<PriceMiniChart volRegime="normal" contractCode="NGM26" />);
+    render(<PriceMiniChart contractCode="NGM26" />);
     expect(screen.getByText(/No data for this range/)).toBeInTheDocument();
   });
 
   it("shows loading state while the query is pending", () => {
     useChartBarsMock.mockReturnValue({ data: undefined, isLoading: true });
-    render(<PriceMiniChart volRegime="normal" contractCode="NGM26" />);
+    render(<PriceMiniChart contractCode="NGM26" />);
     expect(screen.getByText(/Loading/)).toBeInTheDocument();
   });
 });

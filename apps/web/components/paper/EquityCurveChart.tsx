@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import type { EquityPoint } from "../../app/(app)/paper/types";
+import { colors } from "@/lib/colors";
 
 interface Props {
   series: EquityPoint[];
@@ -21,7 +22,7 @@ const STARTING_EQUITY = 100_000;
 export function EquityCurveChart({ series }: Props) {
   const last = series.length > 0 ? series[series.length - 1].equity : STARTING_EQUITY;
   const isUp = last >= STARTING_EQUITY;
-  const stroke = isUp ? "#34d399" : "#f87171";
+  const stroke = isUp ? colors.up : colors.down;
 
   return (
     <div className="border border-line-1 bg-surface-1 flex flex-col h-full">
@@ -49,36 +50,36 @@ export function EquityCurveChart({ series }: Props) {
               margin={{ top: 8, right: 16, bottom: 4, left: 8 }}
             >
               <CartesianGrid
-                stroke="#1f242c"
+                stroke={colors.line1}
                 strokeDasharray="2 2"
                 vertical={false}
               />
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 10, fill: "#7a8090" }}
-                axisLine={{ stroke: "#2a313e" }}
+                tick={{ fontSize: 10, fill: colors.ink3 }}
+                axisLine={{ stroke: colors.line1 }}
                 tickLine={false}
               />
               <YAxis
                 domain={["auto", "auto"]}
-                tick={{ fontSize: 10, fill: "#7a8090" }}
-                axisLine={{ stroke: "#2a313e" }}
+                tick={{ fontSize: 10, fill: colors.ink3 }}
+                axisLine={{ stroke: colors.line1 }}
                 tickLine={false}
                 width={60}
                 tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
               />
               <Tooltip
                 contentStyle={{
-                  background: "#0f1319",
-                  border: "1px solid #2a313e",
+                  background: colors.surface1,
+                  border: `1px solid ${colors.line1}`,
                   fontSize: "11px",
-                  color: "#e6ebf2",
+                  color: colors.ink1,
                 }}
                 formatter={(v: number) => [`$${v.toFixed(0)}`, "Equity"]}
               />
               <ReferenceLine
                 y={STARTING_EQUITY}
-                stroke="#7a8090"
+                stroke={colors.ink3}
                 strokeDasharray="3 3"
                 ifOverflow="extendDomain"
               />

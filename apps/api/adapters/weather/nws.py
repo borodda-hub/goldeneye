@@ -24,7 +24,7 @@ from apps.api.seeds.weather_generator import _seasonal_mean
 logger = logging.getLogger(__name__)
 
 NWS_BASE_URL = "https://api.weather.gov/"
-NWS_USER_AGENT = "NGTI-research-terminal contact@example.com"
+NWS_USER_AGENT = "Goldeneye-research-terminal contact@example.com"
 
 # Population-weighted HDD aggregation across regions (matches mock).
 HDD_POP_WEIGHTS: dict[str, float] = {

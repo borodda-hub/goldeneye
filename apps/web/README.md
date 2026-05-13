@@ -1,6 +1,6 @@
-# NGTI Web
+# Goldeneye Web
 
-Next.js 14 App Router frontend for the NGTI research terminal.
+Next.js 14 App Router frontend for the Goldeneye research terminal.
 
 ## Dev loop
 
