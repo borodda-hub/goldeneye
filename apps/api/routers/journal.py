@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from apps.api.db.session import get_db
 from apps.api.repos import instruments as instr_repo
 from apps.api.repos import journal as journal_repo
+from apps.api.repos import theses as theses_repo
 from apps.api.services.llm_explainer import review_journal_entry
 
 router = APIRouter(prefix="/v1/journal", tags=["journal"])
@@ -34,6 +35,7 @@ class JournalCreateRequest(BaseModel):
 class JournalPatchRequest(BaseModel):
     outcome: str | None = None
     reflection: str | None = None
+    resolved_direction: Literal["hit", "miss", "neutral", "unresolved"] | None = None
 
 
 @router.post("")
@@ -45,6 +47,14 @@ async def create_entry(
     if instrument is None:
         raise HTTPException(status_code=404, detail=f"Instrument {req.instrument!r} not found")
 
+    # Phase 13: snapshot the active thesis at write time so calibration can
+    # attribute outcomes back to the conviction-at-decision. Both columns
+    # stay NULL when no active thesis exists for the instrument; the entry
+    # falls back to its own confidence_pct in calibration.
+    active_thesis = await theses_repo.get_active(
+        session, instrument_code=req.instrument
+    )
+
     data: dict[str, Any] = {
         "hypothesis": req.hypothesis,
         "evidence": [e.model_dump() for e in req.evidence],
@@ -53,6 +63,9 @@ async def create_entry(
         "risk_factors": req.risk_factors or None,
         "invalidation_criteria": req.invalidation_criteria,
     }
+    if active_thesis is not None:
+        data["thesis_id_at_write"] = active_thesis.id
+        data["thesis_conviction_at_write"] = active_thesis.conviction_pct
 
     entry = await journal_repo.create(session, instrument.id, data)
 
@@ -108,8 +121,13 @@ async def patch_entry(
     entry = await journal_repo.get_by_id(session, entry_id)
     if entry is None:
         raise HTTPException(status_code=404, detail="Journal entry not found")
-    patch = {k: v for k, v in req.model_dump().items() if v is not None}
-    entry = await journal_repo.update(session, entry, patch)
+    # Only include fields the client actually set — exclude_unset distinguishes
+    # `{"resolved_direction": null}` (clear) from omitting the field entirely.
+    patch = req.model_dump(exclude_unset=True)
+    try:
+        entry = await journal_repo.update(session, entry, patch)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     await session.commit()
     return _serialize(entry)
 
@@ -128,4 +146,9 @@ def _serialize(entry) -> dict:  # type: ignore[type-arg]
         "outcome": entry.outcome,
         "reflection": entry.reflection,
         "llm_review": entry.llm_review,
+        "resolved_direction": entry.resolved_direction,
+        "thesis_id_at_write": (
+            str(entry.thesis_id_at_write) if entry.thesis_id_at_write else None
+        ),
+        "thesis_conviction_at_write": entry.thesis_conviction_at_write,
     }
