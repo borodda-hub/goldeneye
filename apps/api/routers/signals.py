@@ -41,22 +41,38 @@ async def get_current_signal(
     latest_storage: dict | None = None
     latest_cot: dict | None = None
     try:
+        from apps.api.adapters.registry import get_energy
         from apps.api.repos import eia as eia_repo
         from apps.api.repos import cot as cot_repo
 
-        storage_row = await eia_repo.get_latest(session)
-        if storage_row is not None and storage_row.surprise_bcf is not None:
-            # surprise_bcf = actual net_change - consensus → matches the
-            # xgboost placeholder's "delta_vs_consensus" semantics. When
-            # surprise is None (e.g. real EIA path, which doesn't publish
-            # analyst consensus), we leave latest_storage as None so the
-            # placeholder reports "Missing alt-data" honestly.
-            latest_storage = {
-                "delta_vs_consensus": float(storage_row.surprise_bcf),
-                "actual_bcf": float(storage_row.net_change_bcf)
-                if storage_row.net_change_bcf is not None
-                else None,
-            }
+        # Energy / storage alt-data path. NG has years of backfilled rows in
+        # eia_storage_reports so we read from the table. CL has no backfill —
+        # call EIAPetroleumAdapter live (24h-cached) for the latest weekly
+        # Cushing stock report. Both paths emit the same {delta_vs_consensus,
+        # actual_bcf} shape that xgboost consumes.
+        if symbol.upper() == "CL":
+            petroleum = get_energy("CL")
+            live_storage = await petroleum.get_latest_storage()
+            if live_storage and live_storage.get("surprise_bcf") is not None:
+                latest_storage = {
+                    "delta_vs_consensus": float(live_storage["surprise_bcf"]),
+                    "actual_bcf": (
+                        float(live_storage.get("actual_bcf"))
+                        if live_storage.get("actual_bcf") is not None
+                        else None
+                    ),
+                }
+        else:
+            storage_row = await eia_repo.get_latest(session)
+            if storage_row is not None and storage_row.surprise_bcf is not None:
+                # surprise_bcf = actual net_change - consensus → matches the
+                # xgboost placeholder's "delta_vs_consensus" semantics.
+                latest_storage = {
+                    "delta_vs_consensus": float(storage_row.surprise_bcf),
+                    "actual_bcf": float(storage_row.net_change_bcf)
+                    if storage_row.net_change_bcf is not None
+                    else None,
+                }
 
         # Phase 14: filter COT reports to the active instrument's market code.
         # The instrument's metadata carries cftc_market_code (seeded in
