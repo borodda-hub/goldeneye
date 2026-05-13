@@ -12,6 +12,16 @@ class UserDecisionJournal(Base):
     __tablename__ = "user_decision_journals"
     __table_args__ = (
         CheckConstraint("confidence_pct BETWEEN 0 AND 100", name="ck_journal_confidence_pct"),
+        CheckConstraint(
+            "resolved_direction IS NULL OR "
+            "resolved_direction IN ('hit', 'miss', 'neutral', 'unresolved')",
+            name="ck_journal_resolved_direction",
+        ),
+        CheckConstraint(
+            "thesis_conviction_at_write IS NULL OR "
+            "thesis_conviction_at_write BETWEEN 0 AND 100",
+            name="ck_journal_thesis_conviction_at_write",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -27,3 +37,9 @@ class UserDecisionJournal(Base):
     outcome: Mapped[str | None] = mapped_column(Text)
     reflection: Mapped[str | None] = mapped_column(Text)
     llm_review: Mapped[dict | None] = mapped_column(JSONB)
+    # Phase 13 — decision quality columns.
+    resolved_direction: Mapped[str | None] = mapped_column(Text)
+    thesis_id_at_write: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("theses.id", ondelete="SET NULL")
+    )
+    thesis_conviction_at_write: Mapped[int | None] = mapped_column(Integer)
