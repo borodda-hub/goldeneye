@@ -92,7 +92,7 @@ describe("WalkthroughButton + Provider", () => {
     for (let i = 0; i < DASHBOARD_TOUR.length - 1; i++) {
       fireEvent.click(screen.getByRole("button", { name: /Next/i }));
     }
-    expect(screen.getByText("You're set")).toBeInTheDocument();
+    expect(screen.getByText("You're ready")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Done/i }));
     expect(screen.queryByTestId("walkthrough-tooltip")).not.toBeInTheDocument();
   });

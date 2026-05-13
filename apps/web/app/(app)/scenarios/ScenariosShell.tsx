@@ -49,7 +49,7 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
   const canRun = shocks.length > 0 && !mutation.isPending;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4" data-tour="scenario-shell">
       {/* Header */}
       <div className="flex items-baseline gap-3">
         <h1 className="text-xl font-semibold text-ink-1">Scenario Lab</h1>

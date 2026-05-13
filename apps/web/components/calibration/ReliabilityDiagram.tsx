@@ -69,6 +69,7 @@ export function ReliabilityDiagram({ buckets }: Props) {
   return (
     <section
       aria-label="Reliability diagram"
+      data-tour="reliability-diagram"
       className="border border-line-1 bg-surface-1 p-5 flex flex-col gap-3"
     >
       <div className="flex items-baseline justify-between">

@@ -23,7 +23,7 @@ export function JournalShell({ initialEntries }: Props) {
   const selected = entries.find((e) => e.id === selectedId) ?? null;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4" data-tour="journal-shell">
       {/* Header */}
       <div className="flex items-baseline gap-3">
         <h1 className="text-xl font-semibold text-ink-1">Decision Journal</h1>

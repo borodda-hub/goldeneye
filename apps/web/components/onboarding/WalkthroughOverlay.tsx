@@ -103,19 +103,44 @@ export function WalkthroughOverlay({
     h: typeof window !== "undefined" ? window.innerHeight : 900,
   });
 
-  // Re-measure on step change, scroll, or resize.
+  // Re-measure on step change, scroll, or resize.  When a step is on a
+  // different route from the previous one the target won't exist yet —
+  // poll every 100 ms for up to ~4 s so the spotlight catches up after
+  // the new page mounts.
   useEffect(() => {
+    let cancelled = false;
     const recompute = () => {
+      if (cancelled) return;
       setRect(getTargetRect(step.targetSelector));
       setViewport({ w: window.innerWidth, h: window.innerHeight });
     };
     recompute();
-    // Run again after one frame in case the target just mounted.
     const raf = requestAnimationFrame(recompute);
+
+    // Poll until target appears or we hit the timeout.
+    let pollId: number | undefined;
+    if (step.targetSelector) {
+      let elapsed = 0;
+      pollId = window.setInterval(() => {
+        if (cancelled) return;
+        elapsed += 100;
+        const next = getTargetRect(step.targetSelector);
+        if (next) {
+          setRect(next);
+          if (pollId !== undefined) window.clearInterval(pollId);
+        }
+        if (elapsed >= 4000 && pollId !== undefined) {
+          window.clearInterval(pollId);
+        }
+      }, 100);
+    }
+
     window.addEventListener("resize", recompute);
     window.addEventListener("scroll", recompute, true);
     return () => {
+      cancelled = true;
       cancelAnimationFrame(raf);
+      if (pollId !== undefined) window.clearInterval(pollId);
       window.removeEventListener("resize", recompute);
       window.removeEventListener("scroll", recompute, true);
     };

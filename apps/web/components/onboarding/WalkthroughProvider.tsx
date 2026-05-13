@@ -70,6 +70,19 @@ export function WalkthroughProvider({ children }: { children: React.ReactNode })
     setStepIndex((i) => Math.max(0, i - 1));
   }, []);
 
+  // Push the router whenever the active step demands a different route.
+  // Runs on every stepIndex change while the tour is open.
+  useEffect(() => {
+    if (!open) return;
+    const step = steps[stepIndex];
+    if (!step?.routeRequired) return;
+    if (pathname === step.routeRequired) return;
+    router.push(step.routeRequired);
+    // pathname is intentionally NOT in deps — the next render with the
+    // new pathname will short-circuit on the equality check above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, stepIndex, router]);
+
   // Auto-trigger on first visit ever (any page).  Only fires once because
   // start() persists the completed flag on stop().
   useEffect(() => {

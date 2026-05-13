@@ -22,7 +22,10 @@ export function ChartToolbar({
   contractCode,
 }: Props) {
   return (
-    <div className="flex items-center gap-4 px-0 py-2 border-b border-line-1 bg-surface-0 shrink-0">
+    <div
+      className="flex items-center gap-4 px-0 py-2 border-b border-line-1 bg-surface-0 shrink-0"
+      data-tour="chart-toolbar"
+    >
       {/* Resolution segmented control */}
       <div className="flex rounded border border-line-2 overflow-hidden">
         {RESOLUTIONS.map((r, i) => (

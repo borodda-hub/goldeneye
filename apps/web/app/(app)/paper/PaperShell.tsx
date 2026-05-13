@@ -51,7 +51,7 @@ export function PaperShell({
     initialEquity;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4" data-tour="paper-shell">
       <div className="flex items-baseline gap-3">
         <h1 className="text-xl font-semibold text-ink-1">Paper Trading</h1>
         <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">
