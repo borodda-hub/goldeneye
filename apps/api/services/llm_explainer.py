@@ -15,6 +15,7 @@ from typing import Any
 from apps.api.services.llm_client import call_llm
 from apps.api.services.llm_prompts import (
     PromptParts,
+    critique_thesis_messages,
     explain_signal_messages,
     extract_event_messages,
     narrate_scenario_messages,
@@ -183,6 +184,58 @@ async def review_journal_entry(entry: dict[str, Any]) -> tuple[str, SafetyEnvelo
         as_of=datetime.utcnow(),
     )
     return (text, envelope)
+
+
+async def critique_thesis(
+    thesis: dict[str, Any],
+) -> tuple[dict[str, list[str]], SafetyEnvelope]:
+    """Critique a Working Thesis. Returns (parsed_json, envelope).
+
+    Output is structured as {"missed_risks": [...], "blind_spots": [...],
+    "questions": [...]}. If the LLM returns malformed JSON, we degrade to
+    empty lists rather than 500'ing — the UI can still render the safety
+    envelope.
+
+    Not cached: critique is requested intentionally by the user and the
+    expected value is the fresh probe, not the deterministic replay.
+    """
+    prompt = critique_thesis_messages(thesis)
+    routing_ctx = {"conviction_pct": thesis.get("conviction_pct") or 0}
+    model = select_model("critique_thesis", routing_ctx)
+    text = await _call_with_safety_check("critique_thesis", prompt, model=model)
+
+    parsed = _parse_critique_json(text)
+    envelope = wrap_with_uncertainty(
+        {},
+        confidence="medium",
+        caveats=[
+            "Critique assesses decision quality only, not the merits of the directional view.",
+            "Model outputs are statistical inferences only, not financial advice.",
+        ],
+        as_of=datetime.utcnow(),
+    )
+    return (parsed, envelope)
+
+
+def _parse_critique_json(text: str) -> dict[str, list[str]]:
+    """Parse JSON critique; degrade to empty lists on failure."""
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        lines = stripped.splitlines()
+        inner_lines = lines[1:-1] if lines[-1].strip().startswith("```") else lines[1:]
+        stripped = "\n".join(inner_lines)
+    try:
+        data = json.loads(stripped)
+        return {
+            "missed_risks": [str(s) for s in (data.get("missed_risks") or [])][:5],
+            "blind_spots": [str(s) for s in (data.get("blind_spots") or [])][:4],
+            "questions": [str(s) for s in (data.get("questions") or [])][:4],
+        }
+    except (json.JSONDecodeError, ValueError, TypeError) as exc:
+        logger.warning(
+            "Failed to parse critique_thesis JSON: %s. Text: %r", exc, text[:200]
+        )
+        return {"missed_risks": [], "blind_spots": [], "questions": []}
 
 
 async def extract_event(article: dict[str, Any]) -> dict[str, Any]:

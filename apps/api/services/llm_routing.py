@@ -23,6 +23,7 @@ _FAST_TASKS: frozenset[str] = frozenset({"summarize_market", "extract_event"})
 # Thresholds for escalating to the premium model.
 _NARRATE_SCENARIO_OPUS_MIN_SHOCKS: int = 4
 _REVIEW_JOURNAL_OPUS_MIN_CONFIDENCE_PCT: float = 80.0
+_CRITIQUE_THESIS_OPUS_MIN_CONVICTION_PCT: float = 80.0
 
 
 def _override_for(task: str) -> str:
@@ -64,6 +65,11 @@ def select_model(task: str, ctx: dict[str, Any] | None = None) -> str:
     if task == "review_journal_entry":
         confidence_pct = float(ctx.get("confidence_pct") or 0.0)
         if confidence_pct >= _REVIEW_JOURNAL_OPUS_MIN_CONFIDENCE_PCT:
+            return settings.llm_model_premium
+
+    if task == "critique_thesis":
+        conviction_pct = float(ctx.get("conviction_pct") or 0.0)
+        if conviction_pct >= _CRITIQUE_THESIS_OPUS_MIN_CONVICTION_PCT:
             return settings.llm_model_premium
 
     return settings.llm_model_smart

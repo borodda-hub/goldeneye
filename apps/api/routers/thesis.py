@@ -22,6 +22,7 @@ from apps.api.repos import forecasts as forecasts_repo
 from apps.api.repos import instruments as instruments_repo
 from apps.api.repos import scenarios as scenarios_repo
 from apps.api.repos import theses as theses_repo
+from apps.api.services.llm_explainer import critique_thesis as llm_critique_thesis
 
 router = APIRouter(prefix="/v1/thesis", tags=["thesis"])
 
@@ -150,6 +151,33 @@ async def create_thesis(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     await session.commit()
     return _serialize(fresh)
+
+
+@router.post("/{thesis_id}/critique")
+async def critique_thesis(
+    thesis_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Run an LLM critique on the named thesis. Returns structured pushback
+    plus a safety envelope. The thesis itself is not modified."""
+    thesis = await theses_repo.get_by_id(session, thesis_id)
+    if thesis is None:
+        raise HTTPException(status_code=404, detail="Thesis not found")
+
+    payload = {
+        "statement": thesis.statement,
+        "supporting_evidence": thesis.supporting_evidence,
+        "contradicting_evidence": thesis.contradicting_evidence,
+        "missing_data": thesis.missing_data,
+        "conviction_pct": thesis.conviction_pct,
+    }
+    critique, safety = await llm_critique_thesis(payload)
+    return {
+        "missed_risks": critique["missed_risks"],
+        "blind_spots": critique["blind_spots"],
+        "questions": critique["questions"],
+        "safety": safety.model_dump(mode="json"),
+    }
 
 
 @router.patch("/{thesis_id}")

@@ -274,6 +274,64 @@ def review_journal_entry_messages(entry: dict) -> PromptParts:  # type: ignore[t
     )
 
 
+def critique_thesis_messages(thesis: dict) -> PromptParts:  # type: ignore[type-arg]
+    """Build messages for critique_thesis.
+
+    The model is asked to push back on the user's view — surfacing
+    blind spots, risks the thesis underweights, and clarifying
+    questions — without endorsing the directional call. Returns
+    JSON with three string-list fields. Output schema is fixed so the
+    frontend can render without ad-hoc parsing.
+    """
+    statement = thesis.get("statement", "")
+    supporting = thesis.get("supporting_evidence") or []
+    contradicting = thesis.get("contradicting_evidence") or []
+    missing_data = thesis.get("missing_data") or []
+    conviction_pct = thesis.get("conviction_pct", "N/A")
+
+    def _factors(items: list[dict]) -> str:
+        capped = items[:5]
+        parts = []
+        for it in capped:
+            factor = str(it.get("factor", "")).strip()
+            note = str(it.get("note", "")).strip()
+            if note:
+                parts.append(f"{factor} — {note}")
+            else:
+                parts.append(factor)
+        return "; ".join(p for p in parts if p) or "none"
+
+    supporting_text = _factors(supporting)
+    contradicting_text = _factors(contradicting)
+    missing_text = "; ".join(missing_data[:5]) if missing_data else "none"
+
+    task_instructions = (
+        "Task: critique_thesis. Push back on this thesis to test its decision quality. "
+        "Identify what the analyst may be missing. Do not say whether the thesis is right "
+        "or wrong. Return ONLY a valid JSON object with no markdown fences or commentary, "
+        "matching this exact schema:\n"
+        '{\n'
+        '  "missed_risks": [<3-5 short strings: risks the thesis underweights>],\n'
+        '  "blind_spots": [<2-4 short strings: assumptions worth examining>],\n'
+        '  "questions": [<2-4 short strings: clarifying questions the analyst should answer>]\n'
+        '}\n'
+        "Each string ≤ 140 chars. Be specific to the inputs; do not produce generic boilerplate."
+    )
+    user_content = (
+        "Thesis under review:\n"
+        f'- Statement: "{statement}"\n'
+        f"- Conviction: {conviction_pct}%\n"
+        f"- Supporting evidence: {supporting_text}\n"
+        f"- Contradicting evidence: {contradicting_text}\n"
+        f"- Data analyst still needs: {missing_text}"
+    )
+
+    return PromptParts(
+        system_blocks=[_persona_block(), _task_block(task_instructions)],
+        user_messages=[{"role": "user", "content": user_content}],
+    )
+
+
 def extract_event_messages(article: dict) -> PromptParts:  # type: ignore[type-arg]
     """Build messages for extract_event."""
     title = article.get("title", "N/A")
