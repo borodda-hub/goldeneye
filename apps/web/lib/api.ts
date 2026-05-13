@@ -356,6 +356,31 @@ export async function critiqueThesis(id: string): Promise<ThesisCritique> {
   );
 }
 
+// ── Instruments ────────────────────────────────────────────────────────────
+export interface InstrumentQuote {
+  last_price: number | null;
+  change_abs: number | null;
+  change_pct: number | null;
+  front_month_code: string | null;
+  as_of: string | null;
+}
+
+export interface InstrumentRow {
+  symbol: string;
+  name: string;
+  asset_class: string;
+  currency: string;
+  unit: string;
+  metadata: Record<string, unknown>;
+  quote: InstrumentQuote;
+}
+
+export async function getInstruments(): Promise<{
+  instruments: InstrumentRow[];
+}> {
+  return apiFetch("/v1/instruments");
+}
+
 // ── Signal Quality ─────────────────────────────────────────────────────────
 export type SignalQualityGrade = "A+" | "A" | "B" | "C" | "D";
 

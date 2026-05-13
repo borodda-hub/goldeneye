@@ -9,6 +9,7 @@ import {
   getBacktestSummary,
   getCalibration,
   getDqCoaching,
+  getInstruments,
   getChartBars,
   getChartCurve,
   getCurrentSignal,
@@ -264,6 +265,17 @@ export function useCalibration(instrumentCode = "NG", bucketCount = 5) {
     queryKey: ["calibration", instrumentCode, bucketCount],
     queryFn: () => getCalibration(instrumentCode, bucketCount),
     staleTime: 30_000,
+  });
+}
+
+export function useInstruments() {
+  return useQuery({
+    queryKey: ["instruments"],
+    queryFn: () => getInstruments(),
+    // Quotes change with each minute but the list barely moves. 30s lets the
+    // sidebar prices update without thrashing the cache.
+    staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 }
 
