@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import uuid
 from datetime import datetime, timedelta
 
@@ -18,6 +19,32 @@ from apps.api.services.data_health import (
 from apps.api.src.settings import settings
 
 router = APIRouter(prefix="/v1/admin", tags=["admin"])
+
+# Env vars whose PRESENCE (never value — per docs/AI_BEHAVIOR.md
+# §user_facing_strings_governance) we surface to /admin. The web Admin
+# page used to read these via `process.env` in the Next.js server process,
+# which never sees the API's .env file. Sourcing them here gives an
+# honest answer regardless of where the web bundle runs.
+_ENV_VARS_TO_SURFACE: tuple[str, ...] = (
+    "DATABASE_URL",
+    "REDIS_URL",
+    "ANTHROPIC_API_KEY",
+    "EIA_API_KEY",
+    "LLM_MODE",
+    "LLM_MODEL_FAST",
+    "LLM_MODEL_SMART",
+    "LLM_MODEL_PREMIUM",
+    "ADAPTER_MARKET",
+    "ADAPTER_ENERGY",
+    "ADAPTER_WEATHER",
+    "ADAPTER_POSITIONING",
+    "ADAPTER_NEWS",
+)
+
+
+def _env_flags() -> dict[str, bool]:
+    """Server-side presence check. Empty string counts as unset."""
+    return {name: bool(os.environ.get(name)) for name in _ENV_VARS_TO_SURFACE}
 
 
 @router.get("/data-health")
@@ -64,7 +91,11 @@ async def data_health(session: AsyncSession = Depends(get_db)) -> dict:
         for row in model_rows
     ]
 
-    return {"adapters": adapters, "models": models}
+    return {
+        "adapters": adapters,
+        "models": models,
+        "env_flags": _env_flags(),
+    }
 
 
 @router.get("/alerts")

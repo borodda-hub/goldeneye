@@ -17,6 +17,12 @@ export interface ModelRollup {
 export interface DataHealth {
   adapters: AdapterRollup[];
   models: ModelRollup[];
+  /**
+   * Server-side env-var presence flags. Values are never returned — only
+   * whether the var is set in the FastAPI process's environment.
+   * Optional for backwards compat with older snapshots.
+   */
+  env_flags?: Record<string, boolean>;
 }
 
 export interface Alert {
