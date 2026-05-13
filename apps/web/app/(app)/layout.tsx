@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Providers } from "../providers";
 import { DISCLAIMER } from "../../lib/strings";
 import { InstrumentSwitcher } from "@/components/instruments/InstrumentSwitcher";
+import { WalkthroughButton } from "@/components/onboarding/WalkthroughButton";
+import { WalkthroughProvider } from "@/components/onboarding/WalkthroughProvider";
 
 const NAV_ITEMS = [
 	{ href: "/dashboard", label: "Dashboard" },
@@ -48,6 +50,7 @@ function TopBar() {
 		<header className="flex h-12 items-center justify-between border-b border-line-1 bg-surface-1 px-6 gap-4">
 			<Wordmark />
 			<InstrumentSwitcher className="ml-auto" />
+			<WalkthroughButton />
 			<button
 				type="button"
 				className="text-ink-3 hover:text-accent transition-colors"
@@ -102,14 +105,16 @@ function DisclaimerFooter() {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<Providers>
-			<div className="flex h-screen flex-col bg-surface-0 text-ink-1">
-				<TopBar />
-				<div className="flex flex-1 overflow-hidden">
-					<SideNav />
-					<main className="flex-1 overflow-auto p-6">{children}</main>
+			<WalkthroughProvider>
+				<div className="flex h-screen flex-col bg-surface-0 text-ink-1">
+					<TopBar />
+					<div className="flex flex-1 overflow-hidden">
+						<SideNav />
+						<main className="flex-1 overflow-auto p-6">{children}</main>
+					</div>
+					<DisclaimerFooter />
 				</div>
-				<DisclaimerFooter />
-			</div>
+			</WalkthroughProvider>
 		</Providers>
 	);
 }

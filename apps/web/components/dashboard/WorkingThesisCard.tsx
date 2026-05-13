@@ -234,7 +234,10 @@ export function WorkingThesisCard({
   const saveError = (createMut.error || patchMut.error) as Error | null;
 
   return (
-    <div className="border border-line-1 bg-surface-1 px-5 py-4 flex flex-col gap-3">
+    <div
+      className="border border-line-1 bg-surface-1 px-5 py-4 flex flex-col gap-3"
+      data-tour="working-thesis"
+    >
       <div className="flex items-center justify-between">
         <span className="inline-flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
           <span aria-hidden="true" className="inline-block w-[18px] h-px bg-accent" />
