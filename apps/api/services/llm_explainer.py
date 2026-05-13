@@ -9,8 +9,20 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 from datetime import datetime
 from typing import Any
+
+_TRAILING_COMMA_RE = re.compile(r",(\s*[}\]])")
+
+
+def _lenient_json_load(text: str) -> Any:
+    """json.loads with one fallback that strips trailing commas before }/].
+    Some Anthropic responses include them; valid JS, invalid JSON."""
+    try:
+        return json.loads(text)
+    except (json.JSONDecodeError, ValueError):
+        return json.loads(_TRAILING_COMMA_RE.sub(r"\1", text))
 
 from apps.api.services.llm_client import call_llm
 from apps.api.services.llm_prompts import (
@@ -225,7 +237,7 @@ def _parse_critique_json(text: str) -> dict[str, list[str]]:
         inner_lines = lines[1:-1] if lines[-1].strip().startswith("```") else lines[1:]
         stripped = "\n".join(inner_lines)
     try:
-        data = json.loads(stripped)
+        data = _lenient_json_load(stripped)
         return {
             "missed_risks": [str(s) for s in (data.get("missed_risks") or [])][:5],
             "blind_spots": [str(s) for s in (data.get("blind_spots") or [])][:4],
@@ -233,7 +245,9 @@ def _parse_critique_json(text: str) -> dict[str, list[str]]:
         }
     except (json.JSONDecodeError, ValueError, TypeError) as exc:
         logger.warning(
-            "Failed to parse critique_thesis JSON: %s. Text: %r", exc, text[:200]
+            "Failed to parse critique_thesis JSON: %s. Text (first 500 chars): %r",
+            exc,
+            stripped[:500],
         )
         return {"missed_risks": [], "blind_spots": [], "questions": []}
 

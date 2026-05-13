@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from datetime import datetime
 from typing import Any
 
@@ -63,6 +64,23 @@ def _entry_to_prompt_dict(entry: Any) -> dict[str, Any]:
     }
 
 
+_TRAILING_COMMA_RE = re.compile(r",(\s*[}\]])")
+
+
+def _try_json_load(text: str) -> Any:
+    """json.loads with a fallback that strips trailing commas before }/].
+
+    Anthropic models occasionally emit `{"a": 1,}` or `["x",]` which is valid
+    JS but invalid JSON. We retry once with those commas removed before
+    declaring failure — cheaper than a full json5 dependency.
+    """
+    try:
+        return json.loads(text)
+    except (json.JSONDecodeError, ValueError):
+        cleaned = _TRAILING_COMMA_RE.sub(r"\1", text)
+        return json.loads(cleaned)
+
+
 def _parse_coaching_json(text: str) -> dict[str, Any]:
     """Parse the LLM's JSON output; degrade to an empty result on failure."""
     stripped = text.strip()
@@ -71,10 +89,12 @@ def _parse_coaching_json(text: str) -> dict[str, Any]:
         inner_lines = lines[1:-1] if lines[-1].strip().startswith("```") else lines[1:]
         stripped = "\n".join(inner_lines)
     try:
-        data = json.loads(stripped)
+        data = _try_json_load(stripped)
     except (json.JSONDecodeError, ValueError, TypeError) as exc:
         logger.warning(
-            "Failed to parse coach_dq JSON: %s. Text: %r", exc, text[:200]
+            "Failed to parse coach_dq JSON: %s. Text (first 500 chars): %r",
+            exc,
+            stripped[:500],
         )
         return {
             "buckets": [],
@@ -163,7 +183,11 @@ async def coach_decision_quality(
 
     prompt = coach_dq_messages(_calibration_to_dict(calibration), entries_dicts)
     model = select_model("coach_dq", {"resolved_count": resolved_count})
-    text = await _call_with_safety_check("coach_dq", prompt, model=model)
+    # Coaching produces a multi-bucket JSON object — the default 400 tokens
+    # truncates mid-string. 2000 tokens gives ~5-7 buckets of room.
+    text = await _call_with_safety_check(
+        "coach_dq", prompt, model=model, max_tokens=2000
+    )
     parsed = _parse_coaching_json(text)
 
     envelope = wrap_with_uncertainty(

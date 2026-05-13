@@ -1,10 +1,17 @@
+from pathlib import Path
 from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Resolve .env relative to this file so settings load identically regardless
+# of CWD (uvicorn launched from project root vs apps/api both work).
+_ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=str(_ENV_FILE), env_file_encoding="utf-8", extra="ignore"
+    )
 
     database_url: str = "postgresql+asyncpg://ngti:ngti@localhost:5432/ngti"
     redis_url: str = "redis://localhost:6379/0"
