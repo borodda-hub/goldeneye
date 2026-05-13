@@ -58,6 +58,35 @@ _CANNED: dict[str, str] = {
         '{"category": "demand", "sentiment": 0.2, "impact_score": 0.4, '
         '"affected_regions": [], "entities": []}'
     ),
+    "critique_thesis": (
+        '{"missed_risks": ['
+        '"LNG export tail-risk if a major terminal trips during peak demand",'
+        '"Production response if WTI strength pulls associated-gas volumes higher"'
+        '],"blind_spots": ['
+        '"Weather forecast skill drops sharply past day 7",'
+        '"Storage absolute level matters less than the trajectory"'
+        '],"questions": ['
+        '"What single data point in the next 7 days would invalidate this?",'
+        '"How does the conviction compare to past similar setups that resolved?"'
+        ']}'
+    ),
+    "coach_dq": (
+        '{"buckets": ['
+        '{"label": "60-80",'
+        '"effective_patterns": ['
+        '"Weather-driven theses with named NWS products in evidence",'
+        '"Theses with explicit storage-trajectory comparisons"'
+        '],'
+        '"failure_patterns": ['
+        '"LNG-export hypotheses that under-weight ramp-up timing risk"'
+        '],'
+        '"recommendation": "Require a named NWS product or storage cite before sizing past 60% conviction."}'
+        '],'
+        '"overall": {'
+        '"synthesis": "Decisions in the 60-80% band read as well-supported when weather and storage cites carry the thesis; LNG-driven setups appear to drift wider on actual outcomes.",'
+        '"top_recommendation": "Tighten invalidation criteria on LNG-driven theses to a feed-gas-nomination figure rather than a price level."'
+        '}}'
+    ),
 }
 
 
