@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Providers } from "../providers";
 import { DISCLAIMER } from "../../lib/strings";
+import { InstrumentSwitcher } from "@/components/instruments/InstrumentSwitcher";
 
 const NAV_ITEMS = [
 	{ href: "/dashboard", label: "Dashboard" },
@@ -44,11 +45,9 @@ function Wordmark() {
 
 function TopBar() {
 	return (
-		<header className="flex h-12 items-center justify-between border-b border-line-1 bg-surface-1 px-6">
+		<header className="flex h-12 items-center justify-between border-b border-line-1 bg-surface-1 px-6 gap-4">
 			<Wordmark />
-			<span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
-				NG · Henry Hub
-			</span>
+			<InstrumentSwitcher className="ml-auto" />
 			<button
 				type="button"
 				className="text-ink-3 hover:text-accent transition-colors"

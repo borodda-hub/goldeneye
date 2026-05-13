@@ -1,17 +1,23 @@
 import { getCalibration } from "../../../lib/api";
 import type { CalibrationResponse } from "../../../lib/api";
+import { readActiveSymbolFromSearchParams } from "../../../lib/useActiveInstrument";
 import { CalibrationShell } from "./CalibrationShell";
 
-export default async function CalibrationPage() {
+interface Props {
+  searchParams?: Record<string, string | string[] | undefined>;
+}
+
+export default async function CalibrationPage({ searchParams }: Props) {
+  const symbol = readActiveSymbolFromSearchParams(searchParams);
   let initial: CalibrationResponse | null = null;
   try {
-    initial = await getCalibration("NG", 5);
+    initial = await getCalibration(symbol, 5);
   } catch {
     // Server-side prefetch failed; client will refetch via TanStack Query.
   }
   return (
     <div className="flex flex-col h-full">
-      <CalibrationShell initialData={initial} />
+      <CalibrationShell initialData={initial} initialSymbol={symbol} />
     </div>
   );
 }

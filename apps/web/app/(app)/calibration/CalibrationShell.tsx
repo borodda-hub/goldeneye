@@ -2,6 +2,7 @@
 
 import type { CalibrationResponse } from "@/lib/api";
 import { useCalibration } from "@/lib/queries";
+import { useActiveInstrument } from "@/lib/useActiveInstrument";
 import { CalibrationSummary } from "@/components/calibration/CalibrationSummary";
 import { ReliabilityDiagram } from "@/components/calibration/ReliabilityDiagram";
 import { BucketTable } from "@/components/calibration/BucketTable";
@@ -9,11 +10,18 @@ import { DQCoachPanel } from "@/components/calibration/DQCoachPanel";
 
 interface Props {
   initialData: CalibrationResponse | null;
+  initialSymbol?: string;
 }
 
-export function CalibrationShell({ initialData }: Props) {
-  const { data: fetched, isLoading } = useCalibration("NG", 5);
-  const data = (fetched as CalibrationResponse | undefined) ?? initialData;
+export function CalibrationShell({
+  initialData,
+  initialSymbol = "NG",
+}: Props) {
+  const { activeSymbol } = useActiveInstrument();
+  const { data: fetched, isLoading } = useCalibration(activeSymbol, 5);
+  const fromQuery = fetched as CalibrationResponse | undefined;
+  const data =
+    fromQuery ?? (activeSymbol === initialSymbol ? initialData : null);
 
   if (isLoading && !data) {
     return (

@@ -2,6 +2,7 @@
 
 import { useCurrentSignal } from "@/lib/queries";
 import { useChannel } from "@/lib/realtime";
+import { useActiveInstrument } from "@/lib/useActiveInstrument";
 import { EnsembleHeader } from "@/components/signals/EnsembleHeader";
 import { ModelGrid } from "@/components/signals/ModelGrid";
 import { ExplanationPanel } from "@/components/signals/ExplanationPanel";
@@ -12,13 +13,17 @@ import type { CurrentSignal } from "./types";
 
 interface Props {
   initialSignal: CurrentSignal | null;
+  initialSymbol?: string;
 }
 
-export function SignalsShell({ initialSignal }: Props) {
-  const { data: fetchedData } = useCurrentSignal("NG");
-  const signal = (fetchedData as CurrentSignal | undefined) ?? initialSignal;
+export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
+  const { activeSymbol } = useActiveInstrument();
+  const { data: fetchedData } = useCurrentSignal(activeSymbol);
+  const fromQuery = fetchedData as CurrentSignal | undefined;
+  const signal =
+    fromQuery ?? (activeSymbol === initialSymbol ? initialSignal : null);
 
-  useChannel<{ direction: string; confidence: string }>("signal.NG");
+  useChannel<{ direction: string; confidence: string }>(`signal.${activeSymbol}`);
 
   if (!signal) {
     return (
@@ -49,7 +54,7 @@ export function SignalsShell({ initialSignal }: Props) {
           backtest forecasts. Sits above explanation+history because it sets
           the credibility frame ("these are the hit rates against real
           historical prices") before the live explanation prose. */}
-      <BacktestCard />
+      <BacktestCard symbol={activeSymbol} />
 
       {/* Row 3: Explanation + History */}
       <div className="flex gap-4 min-h-0 h-[40vh]">
@@ -57,13 +62,13 @@ export function SignalsShell({ initialSignal }: Props) {
           <ExplanationPanel explanation={signal.explanation} safety={signal.safety} />
         </div>
         <div className="flex-[2] min-h-0">
-          <HistoryTable symbol="NG" />
+          <HistoryTable symbol={activeSymbol} />
         </div>
       </div>
 
       {/* Row 4: Supporting news feed */}
       <div className="min-h-0 h-[32vh]">
-        <NewsFeedPanel />
+        <NewsFeedPanel symbol={activeSymbol} />
       </div>
     </div>
   );

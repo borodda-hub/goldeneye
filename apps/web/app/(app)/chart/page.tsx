@@ -1,4 +1,5 @@
 import { getChartBars, getChartCurve } from "@/lib/api";
+import { readActiveSymbolFromSearchParams } from "@/lib/useActiveInstrument";
 import { ChartShell } from "./ChartShell";
 import type { ChartBarsResponse, CurvePoint } from "./types";
 
@@ -8,9 +9,17 @@ interface CurveResponse {
   curve: Array<{ contract_code: string; expiry: string; mid_price?: number; mid?: number }>;
 }
 
-const FRONT_MONTH_FALLBACK = "NGM26";
+const FRONT_MONTH_FALLBACK_BY_SYMBOL: Record<string, string> = {
+  NG: "NGM26",
+  CL: "CLN26",
+};
 
-export default async function ChartPage() {
+interface Props {
+  searchParams?: Record<string, string | string[] | undefined>;
+}
+
+export default async function ChartPage({ searchParams }: Props) {
+  const symbol = readActiveSymbolFromSearchParams(searchParams);
   const today = new Date().toISOString().split("T")[0];
   const twoYearsAgo = new Date(Date.now() - 730 * 86400_000)
     .toISOString()
@@ -18,13 +27,12 @@ export default async function ChartPage() {
 
   let initialBars: ChartBarsResponse | null = null;
   let initialCurve: CurvePoint[] | null = null;
-  let contractCode = FRONT_MONTH_FALLBACK;
+  let contractCode = FRONT_MONTH_FALLBACK_BY_SYMBOL[symbol] ?? "NGM26";
 
   // Step 1: resolve the current front-month via the curve endpoint. The
-  // backend already sorts by expiry, so curve[0] IS the front month. The
-  // old code hardcoded "NGF26" which expired in January 2026.
+  // backend already sorts by expiry, so curve[0] IS the front month.
   try {
-    const curveResp = (await getChartCurve("NG", today)) as CurveResponse;
+    const curveResp = (await getChartCurve(symbol, today)) as CurveResponse;
     const items = curveResp?.curve ?? [];
     if (items.length > 0) {
       contractCode = items[0].contract_code;
@@ -55,6 +63,7 @@ export default async function ChartPage() {
       initialBars={initialBars}
       initialCurve={initialCurve}
       contractCode={contractCode}
+      initialSymbol={symbol}
     />
   );
 }

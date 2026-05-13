@@ -119,9 +119,13 @@ function ModelRow({
   );
 }
 
-export function BacktestCard() {
-  const { data, isLoading, isError } = useBacktestSummary("NG", "1d");
-  const mutation = useRunBacktest("NG", "1d");
+interface BacktestCardProps {
+  symbol?: string;
+}
+
+export function BacktestCard({ symbol = "NG" }: BacktestCardProps = {}) {
+  const { data, isLoading, isError } = useBacktestSummary(symbol, "1d");
+  const mutation = useRunBacktest(symbol, "1d");
   const resp = data as SummaryResponse | undefined;
   const modelsByName = new Map<string, ModelSummary>(
     (resp?.models ?? []).map((m) => [m.name, m]),

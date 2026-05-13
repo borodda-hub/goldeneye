@@ -2,6 +2,7 @@
 
 import { useDashboardSummary } from "@/lib/queries";
 import { useChannel } from "@/lib/realtime";
+import { useActiveInstrument } from "@/lib/useActiveInstrument";
 import { HeaderRow } from "@/components/dashboard/HeaderRow";
 import { DirectionalBiasCard } from "@/components/dashboard/DirectionalBiasCard";
 import { PriceMiniChart } from "@/components/dashboard/PriceMiniChart";
@@ -9,10 +10,12 @@ import { FuturesCurveCard } from "@/components/dashboard/FuturesCurveCard";
 import { RecentEventsList } from "@/components/dashboard/RecentEventsList";
 import { DashboardLiveBar } from "@/components/dashboard/DashboardLiveBar";
 import { WorkingThesisCard } from "@/components/dashboard/WorkingThesisCard";
+import { WatchlistSidebar } from "@/components/instruments/WatchlistSidebar";
 import type { DashboardSummary } from "./types";
 
 interface Props {
   initialData: DashboardSummary | null;
+  initialSymbol: string;
 }
 
 function SkeletonCard({ className = "" }: { className?: string }) {
@@ -23,81 +26,92 @@ function SkeletonCard({ className = "" }: { className?: string }) {
   );
 }
 
-export function DashboardShell({ initialData }: Props) {
-  const { data: fetchedData } = useDashboardSummary("NG");
-  const summary = (fetchedData as DashboardSummary | undefined) ?? initialData;
+export function DashboardShell({ initialData, initialSymbol }: Props) {
+  const { activeSymbol } = useActiveInstrument();
+  // Use the URL-derived symbol if it matches the server-prefetched one;
+  // otherwise the client-side query refetches with the new symbol.
+  const symbol = activeSymbol;
+  const { data: fetchedData } = useDashboardSummary(symbol);
+  const fromQuery = fetchedData as DashboardSummary | undefined;
+  // Initial SSR payload is for initialSymbol; only use it when nothing newer
+  // has come back from the client-side hook.
+  const summary =
+    fromQuery ?? (symbol === initialSymbol ? initialData : null);
 
   const { data: tick, status } = useChannel<{
     ts: string;
     price: number;
     delayed?: boolean;
-  }>("price.NG.front");
+  }>(`price.${symbol}.front`);
   const feedMode: "live" | "delayed" = tick?.delayed ? "delayed" : "live";
 
-  if (!summary) {
-    return (
-      <div className="flex flex-col gap-4 h-full">
-        {/* Header skeleton */}
-        <SkeletonCard className="h-10" />
-        {/* Main area skeleton */}
-        <div className="flex gap-4 flex-1 min-h-0">
-          <SkeletonCard className="flex-1 min-h-0" />
-          <SkeletonCard className="w-72 shrink-0" />
-        </div>
-        {/* Bottom row skeleton */}
-        <div className="flex gap-4 h-44">
-          <SkeletonCard className="flex-1" />
-          <SkeletonCard className="flex-1" />
-        </div>
-        {/* Live bar skeleton */}
-        <SkeletonCard className="h-8" />
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col gap-4">
-      {/* Row 1: Header */}
-      <HeaderRow
-        instrument={summary.instrument}
-        frontMonth={summary.front_month}
-        volRegime={summary.vol_regime}
-        livePrice={tick?.price}
-        wsStatus={status}
-        feedMode={feedMode}
-      />
+    <div className="flex gap-4 items-start">
+      {/* Left rail: watchlist (sticky on tall screens) */}
+      <WatchlistSidebar className="w-52 shrink-0 sticky top-0 self-start" />
 
-      {/* Row 2: Working Thesis */}
-      <WorkingThesisCard instrumentCode={summary.instrument.symbol} />
+      {/* Main column */}
+      <div className="flex-1 min-w-0 flex flex-col gap-4">
+        {!summary ? (
+          <>
+            <SkeletonCard className="h-10" />
+            <SkeletonCard className="h-32" />
+            <div className="flex gap-4 h-[420px] min-h-0">
+              <SkeletonCard className="flex-1 min-h-0" />
+              <SkeletonCard className="w-72 shrink-0" />
+            </div>
+            <div className="flex gap-4 h-44">
+              <SkeletonCard className="flex-1" />
+              <SkeletonCard className="flex-1" />
+            </div>
+            <SkeletonCard className="h-8" />
+          </>
+        ) : (
+          <>
+            {/* Row 1: Header */}
+            <HeaderRow
+              instrument={summary.instrument}
+              frontMonth={summary.front_month}
+              volRegime={summary.vol_regime}
+              livePrice={tick?.price}
+              wsStatus={status}
+              feedMode={feedMode}
+            />
 
-      {/* Row 3: Chart + Bias */}
-      <div className="flex gap-4 h-[420px] min-h-0">
-        <div className="flex-1 min-h-0">
-          <PriceMiniChart
-            contractCode={summary.front_month.contract_code}
-          />
-        </div>
-        <div className="w-72 shrink-0">
-          <DirectionalBiasCard
-            bias={summary.directional_bias}
-            aiSummary={summary.ai_summary}
-            safety={summary.safety}
-          />
-        </div>
+            {/* Row 2: Working Thesis */}
+            <WorkingThesisCard instrumentCode={summary.instrument.symbol} />
+
+            {/* Row 3: Chart + Bias */}
+            <div className="flex gap-4 h-[420px] min-h-0">
+              <div className="flex-1 min-h-0">
+                <PriceMiniChart
+                  contractCode={summary.front_month.contract_code}
+                />
+              </div>
+              <div className="w-72 shrink-0">
+                <DirectionalBiasCard
+                  bias={summary.directional_bias}
+                  aiSummary={summary.ai_summary}
+                  safety={summary.safety}
+                />
+              </div>
+            </div>
+
+            {/* Row 4: Curve + Events */}
+            <div className="flex gap-4 h-44">
+              <div className="flex-1">
+                <FuturesCurveCard curve={summary.futures_curve} />
+              </div>
+              <div className="flex-1">
+                <RecentEventsList events={summary.recent_events} />
+              </div>
+            </div>
+
+            {/* Row 5: Live bar */}
+            <DashboardLiveBar />
+          </>
+        )}
       </div>
-
-      {/* Row 4: Curve + Events */}
-      <div className="flex gap-4 h-44">
-        <div className="flex-1">
-          <FuturesCurveCard curve={summary.futures_curve} />
-        </div>
-        <div className="flex-1">
-          <RecentEventsList events={summary.recent_events} />
-        </div>
-      </div>
-
-      {/* Row 5: Live bar */}
-      <DashboardLiveBar />
     </div>
   );
 }

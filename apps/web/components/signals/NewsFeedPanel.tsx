@@ -84,8 +84,12 @@ function NewsRow({ event }: { event: NewsEvent }) {
   );
 }
 
-export function NewsFeedPanel() {
-  const { data, isLoading, isError } = useRecentNews("NG", 15);
+interface NewsFeedPanelProps {
+  symbol?: string;
+}
+
+export function NewsFeedPanel({ symbol = "NG" }: NewsFeedPanelProps = {}) {
+  const { data, isLoading, isError } = useRecentNews(symbol, 15);
   const resp = data as NewsResponse | undefined;
   const events = resp?.events ?? [];
 

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { useChartBars } from "@/lib/queries";
+import { useChartBars, useChartCurve } from "@/lib/queries";
 import { useChannel } from "@/lib/realtime";
+import { useActiveInstrument } from "@/lib/useActiveInstrument";
 import { ChartToolbar } from "@/components/chart/ChartToolbar";
 import { EventDrawer } from "@/components/chart/EventDrawer";
 import { ChartFooter } from "@/components/chart/ChartFooter";
@@ -22,9 +23,14 @@ interface Props {
   initialCurve: CurvePoint[] | null;
   /** Front-month contract resolved server-side from the curve endpoint. */
   contractCode?: string;
+  initialSymbol?: string;
 }
 
 const DEFAULT_CONTRACT = "NGM26";
+const FRONT_MONTH_FALLBACK_BY_SYMBOL: Record<string, string> = {
+  NG: "NGM26",
+  CL: "CLN26",
+};
 
 function LoadingPlaceholder() {
   return (
@@ -36,8 +42,10 @@ function LoadingPlaceholder() {
 
 export function ChartShell({
   initialBars,
-  contractCode = DEFAULT_CONTRACT,
+  contractCode: initialContractCode = DEFAULT_CONTRACT,
+  initialSymbol = "NG",
 }: Props) {
+  const { activeSymbol } = useActiveInstrument();
   const [resolution, setResolution] = useState<Resolution>("1d");
   const [showSMA20, setShowSMA20] = useState(true);
   const [showEMA50, setShowEMA50] = useState(false);
@@ -48,6 +56,20 @@ export function ChartShell({
     .toISOString()
     .split("T")[0];
 
+  // Resolve front-month contract live whenever activeSymbol changes. Falls
+  // back to the SSR-provided initialContractCode (when it's for the active
+  // symbol) and then to a symbol-specific default.
+  const { data: curve } = useChartCurve(activeSymbol, today);
+  type CurveItem = { contract_code: string };
+  type CurveData = { curve?: CurveItem[] };
+  const curveItems = ((curve as CurveData | undefined)?.curve) ?? [];
+  const liveFrontCode = curveItems[0]?.contract_code;
+  const contractCode =
+    liveFrontCode ??
+    (activeSymbol === initialSymbol
+      ? initialContractCode
+      : FRONT_MONTH_FALLBACK_BY_SYMBOL[activeSymbol] ?? DEFAULT_CONTRACT);
+
   const { data: fetchedBars } = useChartBars(
     contractCode,
     resolution,
@@ -55,7 +77,9 @@ export function ChartShell({
     today,
   );
 
-  const { data: livebar } = useChannel<Bar>("price.NG.front.1m");
+  const { data: livebar } = useChannel<Bar>(
+    `price.${activeSymbol}.front.1m`,
+  );
   void livebar; // live bar appending reserved for future enhancement
 
   const barsData = (fetchedBars as ChartBarsResponse | undefined) ?? initialBars;
