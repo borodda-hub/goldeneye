@@ -10,7 +10,26 @@
     "tick_size": 0.001,
     "metadata": {
       "bloomberg_ticker": "NG1 Comdty",
+      "yahoo_ticker": "NG=F",
+      "cftc_market_code": "023651",
       "description": "NYMEX Henry Hub Natural Gas Futures",
+      "trading_hours": "Sunday–Friday 18:00–17:00 ET"
+    }
+  },
+  {
+    "symbol": "CL",
+    "name": "WTI Crude Oil",
+    "exchange": "NYMEX",
+    "asset_class": "commodity",
+    "currency": "USD",
+    "unit": "barrel",
+    "contract_size": 1000,
+    "tick_size": 0.01,
+    "metadata": {
+      "bloomberg_ticker": "CL1 Comdty",
+      "yahoo_ticker": "CL=F",
+      "cftc_market_code": "067651",
+      "description": "NYMEX WTI Crude Oil Futures (Light Sweet)",
       "trading_hours": "Sunday–Friday 18:00–17:00 ET"
     }
   }
