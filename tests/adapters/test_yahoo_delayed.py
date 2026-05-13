@@ -35,6 +35,17 @@ def test_contract_to_yahoo_symbol_honors_alternate_symbol():
     assert contract_to_yahoo_symbol(None, symbol="CL") == "CL=F"
 
 
+def test_contract_to_yahoo_symbol_maps_cl_contracts():
+    """WTI Crude monthly contract codes route to .NYM same as NG."""
+    assert contract_to_yahoo_symbol("CLN26") == "CLN26.NYM"
+    assert contract_to_yahoo_symbol("CLZ27") == "CLZ27.NYM"
+
+
+def test_front_month_codes_for_cl_uses_cl_prefix():
+    codes = front_month_codes(symbol="CL", start=date(2026, 5, 12), count=4)
+    assert codes == ["CLK26", "CLM26", "CLN26", "CLQ26"]
+
+
 def test_front_month_codes_enumerates_12_consecutive_months():
     codes = front_month_codes(start=date(2026, 5, 12), count=12)
     assert len(codes) == 12
