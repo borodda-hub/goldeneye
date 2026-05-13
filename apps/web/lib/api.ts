@@ -356,6 +356,21 @@ export async function critiqueThesis(id: string): Promise<ThesisCritique> {
   );
 }
 
+// ── Ticker (dashboard chyron) ──────────────────────────────────────────────
+export interface TickerItem {
+  symbol: string;
+  label: string;
+  last_price: number | null;
+  change_pct: number | null;
+}
+
+export async function getTickerQuotes(): Promise<{
+  items: TickerItem[];
+  cached: boolean;
+}> {
+  return apiFetch("/v1/ticker/quotes");
+}
+
 // ── Instruments ────────────────────────────────────────────────────────────
 export interface InstrumentQuote {
   last_price: number | null;

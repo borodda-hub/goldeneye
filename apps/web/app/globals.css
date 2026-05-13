@@ -68,6 +68,28 @@ body::before {
   outline-offset: 2px;
 }
 
+/* Dashboard chyron ticker — looped marquee. Two copies of the row run inside
+   the viewport so the translate(-50%) animation seamlessly wraps. Hover the
+   container to pause. */
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll 90s linear infinite;
+  will-change: transform;
+}
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+}
+
 /* Goldeneye type utilities — used by Eyebrow/DisplayHeading/GoldItalic components */
 .font-display {
   font-family: "Fraunces", ui-serif, Georgia, serif;

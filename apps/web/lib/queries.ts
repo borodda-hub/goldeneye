@@ -10,6 +10,7 @@ import {
   getCalibration,
   getDqCoaching,
   getInstruments,
+  getTickerQuotes,
   getChartBars,
   getChartCurve,
   getCurrentSignal,
@@ -276,6 +277,17 @@ export function useInstruments() {
     // sidebar prices update without thrashing the cache.
     staleTime: 30_000,
     refetchInterval: 60_000,
+  });
+}
+
+export function useTickerQuotes() {
+  return useQuery({
+    queryKey: ["ticker", "quotes"],
+    queryFn: () => getTickerQuotes(),
+    // Backend caches Yahoo for 5 min — the chyron is decorative, not a
+    // trading feed, so 5 min between client refetches is plenty.
+    staleTime: 5 * 60_000,
+    refetchInterval: 5 * 60_000,
   });
 }
 

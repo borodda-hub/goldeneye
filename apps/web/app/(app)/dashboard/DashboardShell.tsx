@@ -9,6 +9,7 @@ import { PriceMiniChart } from "@/components/dashboard/PriceMiniChart";
 import { FuturesCurveCard } from "@/components/dashboard/FuturesCurveCard";
 import { RecentEventsList } from "@/components/dashboard/RecentEventsList";
 import { DashboardLiveBar } from "@/components/dashboard/DashboardLiveBar";
+import { DashboardTicker } from "@/components/dashboard/DashboardTicker";
 import { WorkingThesisCard } from "@/components/dashboard/WorkingThesisCard";
 import { WatchlistSidebar } from "@/components/instruments/WatchlistSidebar";
 import type { DashboardSummary } from "./types";
@@ -109,6 +110,9 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
 
             {/* Row 5: Live bar */}
             <DashboardLiveBar />
+
+            {/* Row 6: Macro chyron — indices + commodities + macro pairs */}
+            <DashboardTicker />
           </>
         )}
       </div>
