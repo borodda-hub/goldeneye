@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useJournalEntries } from "../../../lib/queries";
+import { useActiveInstrument } from "../../../lib/useActiveInstrument";
 import { EntryList } from "../../../components/journal/EntryList";
 import { NewEntryForm } from "../../../components/journal/NewEntryForm";
 import { EntryDetailDrawer } from "../../../components/journal/EntryDetailDrawer";
@@ -13,8 +14,9 @@ interface Props {
 
 export function JournalShell({ initialEntries }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { activeSymbol } = useActiveInstrument();
 
-  const { data } = useJournalEntries(20);
+  const { data } = useJournalEntries(20, activeSymbol);
   const entries =
     (data as JournalEntriesResponse | undefined)?.entries ?? initialEntries;
 

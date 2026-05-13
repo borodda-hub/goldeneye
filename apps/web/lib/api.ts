@@ -156,9 +156,15 @@ export async function createJournalEntry(
   });
 }
 
-export async function listJournalEntries(limit?: number): Promise<unknown> {
-  const q = limit !== undefined ? `?limit=${limit}` : "";
-  return apiFetch(`/v1/journal${q}`);
+export async function listJournalEntries(
+  limit?: number,
+  symbol?: string,
+): Promise<unknown> {
+  const params = new URLSearchParams();
+  if (limit !== undefined) params.set("limit", String(limit));
+  if (symbol) params.set("symbol", symbol);
+  const qs = params.toString();
+  return apiFetch(`/v1/journal${qs ? `?${qs}` : ""}`);
 }
 
 export async function getJournalEntry(id: string): Promise<unknown> {
@@ -214,10 +220,12 @@ export async function closePaperTrade(
 export async function listPaperTrades(params?: {
   status?: string;
   limit?: number;
+  symbol?: string;
 }): Promise<unknown> {
   const q = new URLSearchParams();
   if (params?.status) q.set("status", params.status);
   if (params?.limit !== undefined) q.set("limit", String(params.limit));
+  if (params?.symbol) q.set("symbol", params.symbol);
   const qs = q.toString();
   return apiFetch(`/v1/paper-trades${qs ? `?${qs}` : ""}`);
 }

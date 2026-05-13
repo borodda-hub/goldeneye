@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -95,9 +95,23 @@ async def create_entry(
 @router.get("")
 async def list_entries(
     limit: int = 20,
+    symbol: str | None = Query(default=None),
     session: AsyncSession = Depends(get_db),
 ) -> dict:
-    entries = await journal_repo.get_recent(session, limit=limit)
+    """List recent entries. When ?symbol= is supplied, filter to that
+    instrument; otherwise return entries across all instruments (legacy
+    behavior preserved for callers that don't pass the param)."""
+    instrument_id = None
+    if symbol:
+        instrument = await instr_repo.get_by_symbol(session, symbol)
+        if instrument is None:
+            raise HTTPException(
+                status_code=404, detail=f"Instrument {symbol!r} not found"
+            )
+        instrument_id = instrument.id
+    entries = await journal_repo.get_recent(
+        session, limit=limit, instrument_id=instrument_id
+    )
     return {"entries": [_serialize(e) for e in entries]}
 
 

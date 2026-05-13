@@ -80,10 +80,10 @@ export function useScenarioTemplates() {
   });
 }
 
-export function useJournalEntries(limit?: number) {
+export function useJournalEntries(limit?: number, symbol?: string) {
   return useQuery({
-    queryKey: queryKeys.journalEntries(),
-    queryFn: () => listJournalEntries(limit),
+    queryKey: [...queryKeys.journalEntries(), symbol ?? "all"],
+    queryFn: () => listJournalEntries(limit, symbol),
     staleTime: 30_000,
   });
 }
@@ -97,10 +97,13 @@ export function useJournalEntry(id: string | null | undefined) {
   });
 }
 
-export function usePaperTrades(status?: string) {
+export function usePaperTrades(status?: string, symbol?: string) {
   return useQuery({
-    queryKey: queryKeys.paperTrades(status),
-    queryFn: () => listPaperTrades(status ? { status } : undefined),
+    queryKey: [...queryKeys.paperTrades(status), symbol ?? "all"],
+    queryFn: () =>
+      listPaperTrades(
+        status || symbol ? { status, symbol } : undefined,
+      ),
     staleTime: 30_000,
   });
 }

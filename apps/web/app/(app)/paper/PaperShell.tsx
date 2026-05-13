@@ -4,6 +4,7 @@ import {
   usePaperEquityCurve,
   usePaperTrades,
 } from "../../../lib/queries";
+import { useActiveInstrument } from "../../../lib/useActiveInstrument";
 import { EquityCurveChart } from "../../../components/paper/EquityCurveChart";
 import { OpenPositionsTable } from "../../../components/paper/OpenPositionsTable";
 import { ClosedTradesTable } from "../../../components/paper/ClosedTradesTable";
@@ -35,9 +36,10 @@ export function PaperShell({
   journalEntries,
 }: Props) {
   const since = isoDaysAgo(90);
+  const { activeSymbol } = useActiveInstrument();
 
-  const openQuery = usePaperTrades("open");
-  const closedQuery = usePaperTrades("closed");
+  const openQuery = usePaperTrades("open", activeSymbol);
+  const closedQuery = usePaperTrades("closed", activeSymbol);
   const equityQuery = usePaperEquityCurve(since);
 
   const openTrades =

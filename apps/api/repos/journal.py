@@ -23,10 +23,19 @@ async def create(
     return entry
 
 
-async def get_recent(session: AsyncSession, limit: int = 20) -> list[UserDecisionJournal]:
-    result = await session.execute(
-        select(UserDecisionJournal).order_by(UserDecisionJournal.created_at.desc()).limit(limit)
+async def get_recent(
+    session: AsyncSession,
+    limit: int = 20,
+    instrument_id: uuid.UUID | None = None,
+) -> list[UserDecisionJournal]:
+    stmt = (
+        select(UserDecisionJournal)
+        .order_by(UserDecisionJournal.created_at.desc())
+        .limit(limit)
     )
+    if instrument_id is not None:
+        stmt = stmt.where(UserDecisionJournal.instrument_id == instrument_id)
+    result = await session.execute(stmt)
     return list(result.scalars().all())
 
 

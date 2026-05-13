@@ -92,9 +92,20 @@ async def get_equity_curve(
 async def list_trades(
     status: str | None = Query(default=None),
     limit: int = Query(default=50, le=500),
+    symbol: str | None = Query(default=None),
     session: AsyncSession = Depends(get_db),
 ) -> dict:
-    trades = await trade_repo.list_trades(session, status=status, limit=limit)
+    instrument_id = None
+    if symbol:
+        instrument = await instr_repo.get_by_symbol(session, symbol)
+        if instrument is None:
+            raise HTTPException(
+                status_code=404, detail=f"Instrument {symbol!r} not found"
+            )
+        instrument_id = instrument.id
+    trades = await trade_repo.list_trades(
+        session, status=status, limit=limit, instrument_id=instrument_id
+    )
     return {"trades": [_serialize(t) for t in trades]}
 
 

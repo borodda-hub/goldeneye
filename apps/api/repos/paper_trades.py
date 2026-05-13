@@ -17,10 +17,17 @@ async def create(session: AsyncSession, instrument_id: uuid.UUID, data: dict[str
     return trade
 
 
-async def list_trades(session: AsyncSession, status: str | None = None, limit: int = 50) -> list[PaperTrade]:
+async def list_trades(
+    session: AsyncSession,
+    status: str | None = None,
+    limit: int = 50,
+    instrument_id: uuid.UUID | None = None,
+) -> list[PaperTrade]:
     q = select(PaperTrade).order_by(PaperTrade.opened_at.desc()).limit(limit)
     if status:
         q = q.where(PaperTrade.status == status)
+    if instrument_id is not None:
+        q = q.where(PaperTrade.instrument_id == instrument_id)
     result = await session.execute(q)
     return list(result.scalars().all())
 
