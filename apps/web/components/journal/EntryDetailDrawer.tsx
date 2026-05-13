@@ -3,6 +3,10 @@
 import { ConfidenceBar } from "../ConfidenceBar";
 import { SafetyEnvelopeNote } from "../SafetyEnvelopeNote";
 import { ResolutionPicker } from "./ResolutionPicker";
+import {
+  resolutionLabel,
+  resolutionStripeClass,
+} from "./resolutionStyles";
 import type { JournalEntry } from "../../app/(app)/journal/types";
 
 interface Props {
@@ -79,10 +83,13 @@ export function EntryDetailDrawer({ entry, onClose }: Props) {
       ? (entry.llm_review as { safety?: unknown }).safety
       : undefined;
 
+  const stripe = resolutionStripeClass(entry.resolved_direction);
   return (
     <div
-      className="border border-line-1 bg-surface-1 p-3 flex flex-col gap-3 max-h-[80vh] overflow-auto"
+      className={`border border-line-1 bg-surface-1 p-3 flex flex-col gap-3 max-h-[80vh] overflow-auto ${stripe}`}
       data-testid="entry-detail-drawer"
+      data-resolved={entry.resolved_direction ?? "null"}
+      aria-label={`Journal entry — ${resolutionLabel(entry.resolved_direction)}`}
     >
       <div className="flex items-start justify-between gap-3">
         <h2 className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">

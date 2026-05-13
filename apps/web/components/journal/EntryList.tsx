@@ -1,6 +1,10 @@
 "use client";
 
 import { ConfidenceBar } from "../ConfidenceBar";
+import {
+  resolutionLabel,
+  resolutionStripeClass,
+} from "./resolutionStyles";
 import type { JournalEntry } from "../../app/(app)/journal/types";
 
 interface Props {
@@ -33,6 +37,7 @@ export function EntryList({ entries, selectedId, onSelect }: Props) {
       {entries.map((entry) => {
         const selected = selectedId === entry.id;
         const hasReview = entry.llm_review !== null;
+        const stripe = resolutionStripeClass(entry.resolved_direction);
         return (
           <button
             key={entry.id}
@@ -40,8 +45,10 @@ export function EntryList({ entries, selectedId, onSelect }: Props) {
             onClick={() => onSelect(entry.id)}
             className={`text-left border bg-surface-1 p-3 flex flex-col gap-2 transition-colors hover:bg-surface-2 ${
               selected ? "border-accent" : "border-line-1"
-            }`}
+            } ${stripe}`}
             data-testid="journal-entry-card"
+            data-resolved={entry.resolved_direction ?? "null"}
+            aria-label={`Journal entry — ${resolutionLabel(entry.resolved_direction)}`}
           >
             <p className="text-sm text-ink-1 line-clamp-2 leading-relaxed">
               {entry.hypothesis}
