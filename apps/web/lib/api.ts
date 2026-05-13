@@ -247,6 +247,111 @@ export async function acknowledgeAlert(id: string): Promise<unknown> {
   });
 }
 
+// ── Thesis ─────────────────────────────────────────────────────────────────
+export interface EvidenceEntry {
+  factor: string;
+  weight: number | null;
+  note: string;
+  source: string | null;
+}
+
+export interface Thesis {
+  id: string;
+  instrument_code: string;
+  statement: string;
+  supporting_evidence: EvidenceEntry[];
+  contradicting_evidence: EvidenceEntry[];
+  missing_data: string[];
+  conviction_pct: number;
+  created_at: string;
+  updated_at: string;
+  active: boolean;
+}
+
+export interface ThesisSeed {
+  instrument_code: string;
+  statement: string;
+  supporting_evidence: EvidenceEntry[];
+  contradicting_evidence: EvidenceEntry[];
+  missing_data: string[];
+  conviction_pct: number;
+}
+
+export interface ThesisCritique {
+  missed_risks: string[];
+  blind_spots: string[];
+  questions: string[];
+  safety: {
+    confidence: "low" | "medium" | "high";
+    caveats: string[];
+    as_of: string;
+    disclaimer: string;
+  };
+}
+
+export interface ThesisCreateBody {
+  instrument_code?: string;
+  statement: string;
+  supporting_evidence: EvidenceEntry[];
+  contradicting_evidence: EvidenceEntry[];
+  missing_data: string[];
+  conviction_pct: number;
+}
+
+export interface ThesisPatchBody {
+  statement?: string;
+  supporting_evidence?: EvidenceEntry[];
+  contradicting_evidence?: EvidenceEntry[];
+  missing_data?: string[];
+  conviction_pct?: number;
+}
+
+export async function getCurrentThesis(
+  instrumentCode = "NG",
+): Promise<Thesis | null> {
+  const res = await fetch(
+    `${BASE_URL}/v1/thesis/current?instrument_code=${encodeURIComponent(instrumentCode)}`,
+    { headers: { "Content-Type": "application/json" } },
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    throw new Error(`API error ${res.status}: ${res.statusText}`);
+  }
+  return (await res.json()) as Thesis;
+}
+
+export async function getThesisSeed(
+  instrumentCode = "NG",
+): Promise<ThesisSeed> {
+  return apiFetch<ThesisSeed>(
+    `/v1/thesis/seed?instrument_code=${encodeURIComponent(instrumentCode)}`,
+  );
+}
+
+export async function createThesis(body: ThesisCreateBody): Promise<Thesis> {
+  return apiFetch<Thesis>("/v1/thesis", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function patchThesis(
+  id: string,
+  body: ThesisPatchBody,
+): Promise<Thesis> {
+  return apiFetch<Thesis>(`/v1/thesis/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function critiqueThesis(id: string): Promise<ThesisCritique> {
+  return apiFetch<ThesisCritique>(
+    `/v1/thesis/${encodeURIComponent(id)}/critique`,
+    { method: "POST" },
+  );
+}
+
 // ── LLM / Explain ──────────────────────────────────────────────────────────
 export async function explainMarket(
   ctx?: Record<string, unknown>,

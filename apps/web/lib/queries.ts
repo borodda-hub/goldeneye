@@ -3,11 +3,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  createThesis,
+  critiqueThesis,
   getAlerts,
   getBacktestSummary,
   getChartBars,
   getChartCurve,
   getCurrentSignal,
+  getCurrentThesis,
   getDashboardSummary,
   getDataHealth,
   getJournalEntry,
@@ -16,9 +19,13 @@ import {
   getScenarioRuns,
   getScenarioTemplates,
   getSignalHistory,
+  getThesisSeed,
   listJournalEntries,
   listPaperTrades,
+  patchThesis,
   runBacktest,
+  type ThesisCreateBody,
+  type ThesisPatchBody,
 } from "./api";
 
 export const queryKeys = {
@@ -39,6 +46,8 @@ export const queryKeys = {
     to: string,
   ) => ["chart", "bars", contractCode, resolution, from, to],
   chartCurve: (symbol: string, asOf: string) => ["chart", "curve", symbol, asOf],
+  thesisCurrent: (instrument: string) => ["thesis", "current", instrument],
+  thesisSeed: (instrument: string) => ["thesis", "seed", instrument],
 } as const;
 
 export function useDashboardSummary(symbol = "NG") {
@@ -183,5 +192,54 @@ export function useRunBacktest(symbol = "NG", horizon = "1d") {
       qc.invalidateQueries({ queryKey: ["backtest", "summary", symbol, horizon] });
       qc.invalidateQueries({ queryKey: ["signal", "history"] });
     },
+  });
+}
+
+// ── Thesis ────────────────────────────────────────────────────────────────
+
+export function useCurrentThesis(instrumentCode = "NG") {
+  return useQuery({
+    queryKey: queryKeys.thesisCurrent(instrumentCode),
+    queryFn: () => getCurrentThesis(instrumentCode),
+    staleTime: 30_000,
+  });
+}
+
+export function useThesisSeed(
+  instrumentCode = "NG",
+  enabled = false,
+) {
+  return useQuery({
+    queryKey: queryKeys.thesisSeed(instrumentCode),
+    queryFn: () => getThesisSeed(instrumentCode),
+    staleTime: 60_000,
+    enabled,
+  });
+}
+
+export function useCreateThesis(instrumentCode = "NG") {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: ThesisCreateBody) => createThesis(body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.thesisCurrent(instrumentCode) });
+    },
+  });
+}
+
+export function usePatchThesis(instrumentCode = "NG") {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: ThesisPatchBody }) =>
+      patchThesis(id, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.thesisCurrent(instrumentCode) });
+    },
+  });
+}
+
+export function useCritiqueThesis() {
+  return useMutation({
+    mutationFn: (id: string) => critiqueThesis(id),
   });
 }
