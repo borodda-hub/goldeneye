@@ -82,7 +82,7 @@ export function ReliabilityDiagram({ buckets }: Props) {
         ) : null}
       </div>
 
-      <div className="h-[360px]">
+      <div className="h-[48vh] min-h-[300px]">
         {!hasPoints ? (
           <div className="h-full flex items-center justify-center text-sm text-ink-4 font-mono">
             No buckets have ≥ 3 resolved entries yet. Log + resolve more

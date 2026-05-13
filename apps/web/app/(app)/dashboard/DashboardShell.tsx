@@ -57,11 +57,11 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
           <>
             <SkeletonCard className="h-10" />
             <SkeletonCard className="h-32" />
-            <div className="flex gap-4 h-[420px] min-h-0">
+            <div className="flex gap-4 h-[42vh] min-h-[320px]">
               <SkeletonCard className="flex-1 min-h-0" />
               <SkeletonCard className="w-72 shrink-0" />
             </div>
-            <div className="flex gap-4 h-44">
+            <div className="flex gap-4 h-[20vh] min-h-[160px]">
               <SkeletonCard className="flex-1" />
               <SkeletonCard className="flex-1" />
             </div>
@@ -82,8 +82,8 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
             {/* Row 2: Working Thesis */}
             <WorkingThesisCard instrumentCode={summary.instrument.symbol} />
 
-            {/* Row 3: Chart + Bias */}
-            <div className="flex gap-4 h-[420px] min-h-0">
+            {/* Row 3: Chart + Bias — scales with viewport, floored at 320px */}
+            <div className="flex gap-4 h-[42vh] min-h-[320px]">
               <div className="flex-1 min-h-0">
                 <PriceMiniChart
                   contractCode={summary.front_month.contract_code}
@@ -98,8 +98,8 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
               </div>
             </div>
 
-            {/* Row 4: Curve + Events */}
-            <div className="flex gap-4 h-44">
+            {/* Row 4: Curve + Events — scales with viewport, floored at 160px */}
+            <div className="flex gap-4 h-[20vh] min-h-[160px]">
               <div className="flex-1">
                 <FuturesCurveCard curve={summary.futures_curve} />
               </div>
