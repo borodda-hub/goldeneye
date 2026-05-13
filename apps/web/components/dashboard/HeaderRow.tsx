@@ -2,6 +2,7 @@ import type { ConnectionStatus } from "@/lib/realtime";
 import type { FrontMonth, Instrument, VolRegime } from "@/app/(app)/dashboard/types";
 import { NumberCell } from "@/components/NumberCell";
 import { LiveDot } from "@/components/LiveDot";
+import { SignalQualityChip } from "@/components/dashboard/SignalQualityChip";
 
 interface Props {
   instrument: Instrument;
@@ -82,8 +83,9 @@ export function HeaderRow({
         </span>
       </div>
 
-      {/* Right: vol regime, status, time */}
+      {/* Right: signal quality, vol regime, status, time */}
       <div className="flex items-center gap-3">
+        <SignalQualityChip symbol={instrument.symbol} />
         <VolRegimeChip regime={volRegime} />
         <LiveDot connected={wsStatus === "connected"} mode={feedMode} />
         <span className="font-mono text-xs text-ink-3">

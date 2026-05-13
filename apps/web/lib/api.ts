@@ -352,6 +352,75 @@ export async function critiqueThesis(id: string): Promise<ThesisCritique> {
   );
 }
 
+// ── Signal Quality ─────────────────────────────────────────────────────────
+export type SignalQualityGrade = "A+" | "A" | "B" | "C" | "D";
+
+export interface SignalQualityResponse {
+  symbol: string;
+  grade: SignalQualityGrade;
+  total_score: number;
+  sub_scores: {
+    input_diversity: number;
+    model_agreement: number;
+    regime_stability: number;
+    time_to_decision: number;
+  };
+  sub_score_max: {
+    input_diversity: number;
+    model_agreement: number;
+    regime_stability: number;
+    time_to_decision: number;
+  };
+  detail: {
+    input_diversity: string;
+    model_agreement_total: number;
+    model_agreement_max: number;
+    regime_stability: string;
+    distinct_regimes_14d: number;
+    time_to_decision_bucket: string;
+    minutes_since_freshness_adapter: number | null;
+  };
+}
+
+export async function getSignalQuality(
+  symbol = "NG",
+): Promise<SignalQualityResponse> {
+  return apiFetch<SignalQualityResponse>(
+    `/v1/signal-quality?symbol=${encodeURIComponent(symbol)}`,
+  );
+}
+
+// ── Calibration ────────────────────────────────────────────────────────────
+export interface CalibrationBucket {
+  label: string;
+  lower_pct: number;
+  upper_pct: number;
+  claimed_mean: number | null;
+  total_count: number;
+  resolved_count: number;
+  hit_count: number;
+  hit_rate: number | null;
+}
+
+export interface CalibrationResponse {
+  instrument_code: string;
+  buckets: CalibrationBucket[];
+  total_entries: number;
+  resolved_entries: number;
+  unresolved_entries: number;
+  summary: string | null;
+}
+
+export async function getCalibration(
+  instrumentCode = "NG",
+  bucketCount = 5,
+): Promise<CalibrationResponse> {
+  return apiFetch<CalibrationResponse>(
+    `/v1/calibration?instrument_code=${encodeURIComponent(instrumentCode)}` +
+      `&bucket_count=${bucketCount}`,
+  );
+}
+
 // ── LLM / Explain ──────────────────────────────────────────────────────────
 export async function explainMarket(
   ctx?: Record<string, unknown>,

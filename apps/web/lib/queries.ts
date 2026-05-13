@@ -7,6 +7,7 @@ import {
   critiqueThesis,
   getAlerts,
   getBacktestSummary,
+  getCalibration,
   getChartBars,
   getChartCurve,
   getCurrentSignal,
@@ -19,6 +20,7 @@ import {
   getScenarioRuns,
   getScenarioTemplates,
   getSignalHistory,
+  getSignalQuality,
   getThesisSeed,
   listJournalEntries,
   listPaperTrades,
@@ -241,5 +243,24 @@ export function usePatchThesis(instrumentCode = "NG") {
 export function useCritiqueThesis() {
   return useMutation({
     mutationFn: (id: string) => critiqueThesis(id),
+  });
+}
+
+// ── Signal Quality + Calibration (Phase 13) ───────────────────────────────
+
+export function useSignalQuality(symbol = "NG") {
+  return useQuery({
+    queryKey: ["signal-quality", symbol],
+    queryFn: () => getSignalQuality(symbol),
+    staleTime: 60_000,
+    refetchInterval: 5 * 60_000,
+  });
+}
+
+export function useCalibration(instrumentCode = "NG", bucketCount = 5) {
+  return useQuery({
+    queryKey: ["calibration", instrumentCode, bucketCount],
+    queryFn: () => getCalibration(instrumentCode, bucketCount),
+    staleTime: 30_000,
   });
 }
