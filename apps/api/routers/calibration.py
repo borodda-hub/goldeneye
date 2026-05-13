@@ -11,6 +11,7 @@ from apps.api.services.calibration import (
     CalibrationResult,
     compute_calibration,
 )
+from apps.api.services.dq_coach import coach_decision_quality
 
 router = APIRouter(prefix="/v1/calibration", tags=["calibration"])
 
@@ -62,3 +63,33 @@ async def get_calibration(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return _serialize(result)
+
+
+@router.get("/coaching")
+async def get_coaching(
+    instrument_code: str = Query(default="NG"),
+    bucket_count: int = Query(default=5, ge=2, le=10),
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    """LLM-synthesized Decision Quality coaching per bucket + overall."""
+    instrument = await instr_repo.get_by_symbol(session, instrument_code)
+    if instrument is None:
+        raise HTTPException(
+            status_code=404, detail=f"Instrument {instrument_code!r} not found"
+        )
+    try:
+        coaching, safety = await coach_decision_quality(
+            session,
+            instrument_id=instrument.id,
+            instrument_code=instrument_code,
+            bucket_count=bucket_count,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "instrument_code": instrument_code,
+        "buckets": coaching["buckets"],
+        "overall": coaching["overall"],
+        "safety": safety.model_dump(mode="json"),
+    }

@@ -5,6 +5,7 @@ import { useCalibration } from "@/lib/queries";
 import { CalibrationSummary } from "@/components/calibration/CalibrationSummary";
 import { ReliabilityDiagram } from "@/components/calibration/ReliabilityDiagram";
 import { BucketTable } from "@/components/calibration/BucketTable";
+import { DQCoachPanel } from "@/components/calibration/DQCoachPanel";
 
 interface Props {
   initialData: CalibrationResponse | null;
@@ -38,7 +39,7 @@ export function CalibrationShell({ initialData }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-8 max-w-5xl">
+    <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-3 border-b border-line-1 pb-4">
         <span className="inline-flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
           <span aria-hidden="true" className="inline-block w-[18px] h-px bg-accent" />
@@ -62,11 +63,19 @@ export function CalibrationShell({ initialData }: Props) {
         </p>
       </header>
 
-      <CalibrationSummary data={data} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Left column: the existing data view (summary + diagram + table) */}
+        <div className="lg:col-span-2 flex flex-col gap-6 min-w-0">
+          <CalibrationSummary data={data} />
+          <ReliabilityDiagram buckets={data.buckets} />
+          <BucketTable buckets={data.buckets} />
+        </div>
 
-      <ReliabilityDiagram buckets={data.buckets} />
-
-      <BucketTable buckets={data.buckets} />
+        {/* Right column: LLM-synthesized DQ coaching */}
+        <aside className="lg:col-span-1 min-w-0">
+          <DQCoachPanel instrumentCode={data.instrument_code} />
+        </aside>
+      </div>
     </div>
   );
 }

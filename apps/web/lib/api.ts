@@ -425,6 +425,38 @@ export async function getCalibration(
   );
 }
 
+export interface DqCoachingBucket {
+  label: string;
+  effective_patterns: string[];
+  failure_patterns: string[];
+  recommendation: string;
+}
+
+export interface DqCoachingResponse {
+  instrument_code: string;
+  buckets: DqCoachingBucket[];
+  overall: {
+    synthesis: string;
+    top_recommendation: string;
+  };
+  safety: {
+    confidence: "low" | "medium" | "high";
+    caveats: string[];
+    as_of: string;
+    disclaimer: string;
+  };
+}
+
+export async function getDqCoaching(
+  instrumentCode = "NG",
+  bucketCount = 5,
+): Promise<DqCoachingResponse> {
+  return apiFetch<DqCoachingResponse>(
+    `/v1/calibration/coaching?instrument_code=${encodeURIComponent(instrumentCode)}` +
+      `&bucket_count=${bucketCount}`,
+  );
+}
+
 // ── LLM / Explain ──────────────────────────────────────────────────────────
 export async function explainMarket(
   ctx?: Record<string, unknown>,

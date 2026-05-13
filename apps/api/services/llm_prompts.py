@@ -274,6 +274,94 @@ def review_journal_entry_messages(entry: dict) -> PromptParts:  # type: ignore[t
     )
 
 
+def coach_dq_messages(calibration: dict, entries: list[dict]) -> PromptParts:  # type: ignore[type-arg]
+    """Build messages for coach_decision_quality.
+
+    Synthesizes per-bucket coaching from calibration metrics + each journal
+    entry's hypothesis and resolution. The model returns JSON with one
+    entry per bucket (effective_patterns / failure_patterns / recommendation)
+    plus an overall synthesis + a single top recommendation.
+    """
+    buckets = calibration.get("buckets") or []
+
+    def _format_bucket(b: dict) -> str:
+        label = b.get("label", "?")
+        claimed = b.get("claimed_mean")
+        claimed_text = f"{claimed:.0f}%" if isinstance(claimed, (int, float)) else "—"
+        total = b.get("total_count", 0)
+        resolved = b.get("resolved_count", 0)
+        hits = b.get("hit_count", 0)
+        hit_rate = b.get("hit_rate")
+        rate_text = (
+            f"{hit_rate * 100:.0f}%" if isinstance(hit_rate, (int, float)) else "n/a"
+        )
+        return (
+            f"  Bucket {label}%: claimed_mean={claimed_text}, total={total}, "
+            f"resolved={resolved}, hits={hits}, hit_rate={rate_text}"
+        )
+
+    buckets_text = "\n".join(_format_bucket(b) for b in buckets) or "  (no data)"
+
+    # Cap entries to keep tokens bounded — pick the most recent 30. Each entry
+    # is summarized to its critical fields only.
+    entries_for_prompt = entries[:30]
+
+    def _format_entry(e: dict) -> str:
+        conviction = e.get("thesis_conviction_at_write") or e.get(
+            "confidence_pct", "?"
+        )
+        resolved = e.get("resolved_direction") or "unresolved"
+        hypothesis = (e.get("hypothesis") or "").strip()
+        # Trim hypothesis to keep the user block compact.
+        if len(hypothesis) > 220:
+            hypothesis = hypothesis[:217] + "..."
+        return f"  [{resolved}, conviction={conviction}%] {hypothesis}"
+
+    entries_text = (
+        "\n".join(_format_entry(e) for e in entries_for_prompt)
+        if entries_for_prompt
+        else "  (no journal entries)"
+    )
+
+    task_instructions = (
+        "Task: coach_decision_quality. Review this analyst's recent decision "
+        "journal against their calibration buckets and produce structured "
+        "coaching. Identify what hypothesis or evidence patterns appear in "
+        "winning vs losing entries. Be specific to what you read — do not "
+        "produce generic platitudes. Return ONLY a valid JSON object with no "
+        "markdown fences or commentary, matching this exact schema:\n"
+        '{\n'
+        '  "buckets": [\n'
+        '    {\n'
+        '      "label": "<bucket label like 60-80>",\n'
+        '      "effective_patterns": [<0-3 short strings: what hits had in common>],\n'
+        '      "failure_patterns": [<0-3 short strings: what misses had in common>],\n'
+        '      "recommendation": "<one actionable suggestion, ≤140 chars>"\n'
+        '    }, ...\n'
+        '  ],\n'
+        '  "overall": {\n'
+        '    "synthesis": "<2-3 sentence overview of decision quality trends>",\n'
+        '    "top_recommendation": "<single most actionable next step, ≤180 chars>"\n'
+        '  }\n'
+        '}\n'
+        "Each string ≤ 140 chars (recommendations may go to 180). Include a "
+        "bucket entry for every bucket with ≥ 3 resolved entries; omit "
+        "buckets with too little data rather than emitting empty arrays. "
+        "Do NOT recommend specific trades, positions, or directions."
+    )
+    user_content = (
+        "Calibration buckets:\n"
+        f"{buckets_text}\n\n"
+        f"Recent journal entries (showing {len(entries_for_prompt)} of "
+        f"{len(entries)}):\n{entries_text}"
+    )
+
+    return PromptParts(
+        system_blocks=[_persona_block(), _task_block(task_instructions)],
+        user_messages=[{"role": "user", "content": user_content}],
+    )
+
+
 def critique_thesis_messages(thesis: dict) -> PromptParts:  # type: ignore[type-arg]
     """Build messages for critique_thesis.
 

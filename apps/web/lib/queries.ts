@@ -8,6 +8,7 @@ import {
   getAlerts,
   getBacktestSummary,
   getCalibration,
+  getDqCoaching,
   getChartBars,
   getChartCurve,
   getCurrentSignal,
@@ -263,6 +264,18 @@ export function useCalibration(instrumentCode = "NG", bucketCount = 5) {
     queryKey: ["calibration", instrumentCode, bucketCount],
     queryFn: () => getCalibration(instrumentCode, bucketCount),
     staleTime: 30_000,
+  });
+}
+
+export function useDqCoaching(instrumentCode = "NG", bucketCount = 5) {
+  return useQuery({
+    queryKey: ["calibration", "coaching", instrumentCode, bucketCount],
+    queryFn: () => getDqCoaching(instrumentCode, bucketCount),
+    // Coaching is an LLM call — keep it fresh for 10 minutes to avoid
+    // bouncing it on every dashboard re-mount.
+    staleTime: 10 * 60_000,
+    // Don't auto-refetch on focus/interval — manual re-run only.
+    refetchOnWindowFocus: false,
   });
 }
 
