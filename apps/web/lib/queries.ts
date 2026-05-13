@@ -1,8 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getAlerts,
+  getBacktestSummary,
   getChartBars,
   getChartCurve,
   getCurrentSignal,
@@ -16,6 +18,7 @@ import {
   getSignalHistory,
   listJournalEntries,
   listPaperTrades,
+  runBacktest,
 } from "./api";
 
 export const queryKeys = {
@@ -156,5 +159,29 @@ export function useRecentNews(symbol = "NG", limit = 15) {
     // and the backend caches for 10 min anyway.
     staleTime: 5 * 60_000,
     refetchInterval: 5 * 60_000,
+  });
+}
+
+export function useBacktestSummary(symbol = "NG", horizon = "1d") {
+  return useQuery({
+    queryKey: ["backtest", "summary", symbol, horizon],
+    queryFn: () => getBacktestSummary({ symbol, horizon }),
+    // Aggregate is cheap; refresh every minute so re-runs reflect quickly.
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+}
+
+export function useRunBacktest(symbol = "NG", horizon = "1d") {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (model: string) =>
+      runBacktest({ model, symbol, horizon, persist: true }),
+    onSuccess: () => {
+      // Refresh the summary card + the Signal Lab history table — both
+      // read from model_forecasts and will reflect the new persisted rows.
+      qc.invalidateQueries({ queryKey: ["backtest", "summary", symbol, horizon] });
+      qc.invalidateQueries({ queryKey: ["signal", "history"] });
+    },
   });
 }

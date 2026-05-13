@@ -550,7 +550,9 @@ async def persist_backtest_rows(
         )
     )
 
-    # 3) Bulk-insert the fresh backtest rows.
+    # 3) Bulk-insert the fresh backtest rows. The `features` JSONB column
+    #    carries the scored outcome so /v1/backtest/summary can compute
+    #    aggregate hit-rate as a single SQL query — no re-scoring needed.
     payload = [
         {
             "generated_at": r.generated_at,
@@ -565,7 +567,11 @@ async def persist_backtest_rows(
             "vol_regime": r.vol_regime,
             "supporting": r.supporting,
             "contradicting": r.contradicting,
-            "features": {},
+            "features": {
+                "realized_pct": r.realized_pct,
+                "outcome": r.outcome,
+                "delta_from_expected_pct": r.delta_from_expected_pct,
+            },
             "inputs_hash": BACKTEST_SOURCE_MARKER,
             "caveats": None,
         }

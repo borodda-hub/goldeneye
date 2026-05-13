@@ -13,11 +13,14 @@ from datetime import date, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.db.session import get_db
+from apps.api.models.orm.forecasts import ModelForecast
 from apps.api.repos import instruments as instr_repo
 from apps.api.services.backtest import (
+    BACKTEST_SOURCE_MARKER,
     BacktestConfig,
     SUPPORTED_MODELS,
     persist_backtest_rows,
@@ -124,3 +127,99 @@ async def run_backtest_endpoint(
         "summary": asdict(summary),
         "rows": [_row_to_json(r) for r in rows],
     }
+
+
+@router.get("/summary")
+async def backtest_summary(
+    symbol: str = Query("NG"),
+    horizon: str = Query("1d"),
+    session: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Per-model aggregate over persisted backtest rows.
+
+    Pure SQL aggregate against model_forecasts where inputs_hash =
+    BACKTEST_SOURCE_MARKER. Reads the `features` JSONB column for the
+    `outcome` field that persist_backtest_rows wrote at backtest time —
+    no re-scoring, no model loop, no price-bar lookups.
+
+    Response shape mirrors what the Signal Lab Backtest card renders:
+      {
+        "models": [
+          {"name": "...", "scored": int, "n": int, "hit_rate": float,
+           "last_generated_at": iso | null, "from_date": iso | null,
+           "to_date": iso | null},
+          ...
+        ]
+      }
+    """
+    if horizon not in _SUPPORTED_HORIZONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported horizon {horizon!r}; supported: {sorted(_SUPPORTED_HORIZONS)}",
+        )
+
+    instrument = await instr_repo.get_by_symbol(session, symbol)
+    if instrument is None:
+        raise HTTPException(status_code=404, detail=f"Instrument {symbol!r} not found")
+
+    # The features column carries {"realized_pct", "outcome", ...}. Cast the
+    # outcome key to text and aggregate hits + scored counts per model.
+    outcome_expr = ModelForecast.features["outcome"].astext
+    hit_count = func.count(outcome_expr).filter(outcome_expr == "hit")
+    miss_count = func.count(outcome_expr).filter(outcome_expr == "miss")
+    indet_count = func.count(outcome_expr).filter(outcome_expr == "indeterminate")
+    pending_count = func.count(outcome_expr).filter(outcome_expr == "pending")
+    neutral_count = func.count(outcome_expr).filter(outcome_expr == "neutral")
+    total = func.count(ModelForecast.id)
+    last_generated = func.max(ModelForecast.generated_at)
+    first_generated = func.min(ModelForecast.generated_at)
+
+    stmt = (
+        select(
+            ModelForecast.model_name,
+            total.label("n"),
+            hit_count.label("hits"),
+            miss_count.label("misses"),
+            indet_count.label("indeterminate"),
+            pending_count.label("pending"),
+            neutral_count.label("neutral"),
+            last_generated.label("last_generated"),
+            first_generated.label("first_generated"),
+        )
+        .where(
+            ModelForecast.instrument_id == instrument.id,
+            ModelForecast.horizon == horizon,
+            ModelForecast.inputs_hash == BACKTEST_SOURCE_MARKER,
+        )
+        .group_by(ModelForecast.model_name)
+        .order_by(ModelForecast.model_name)
+    )
+    result = await session.execute(stmt)
+    models: list[dict[str, Any]] = []
+    for row in result.all():
+        scored = (row.hits or 0) + (row.misses or 0) + (row.indeterminate or 0)
+        hit_rate = (row.hits / scored) if scored > 0 else 0.0
+        models.append(
+            {
+                "name": row.model_name,
+                "n": int(row.n or 0),
+                "scored": int(scored),
+                "hits": int(row.hits or 0),
+                "misses": int(row.misses or 0),
+                "indeterminate": int(row.indeterminate or 0),
+                "pending": int(row.pending or 0),
+                "neutral": int(row.neutral or 0),
+                "hit_rate": round(hit_rate, 4),
+                "last_generated_at": row.last_generated.isoformat()
+                if row.last_generated is not None
+                else None,
+                "from_date": row.first_generated.date().isoformat()
+                if row.first_generated is not None
+                else None,
+                "to_date": row.last_generated.date().isoformat()
+                if row.last_generated is not None
+                else None,
+            }
+        )
+
+    return {"models": models, "horizon": horizon, "symbol": symbol}

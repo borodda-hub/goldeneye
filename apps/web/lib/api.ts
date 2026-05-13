@@ -20,6 +20,35 @@ export async function getDashboardSummary(symbol = "NG"): Promise<unknown> {
   return apiFetch(`/v1/dashboard/summary?symbol=${encodeURIComponent(symbol)}`);
 }
 
+// ── Backtest ───────────────────────────────────────────────────────────────
+export async function getBacktestSummary(params: {
+  symbol?: string;
+  horizon?: string;
+}): Promise<unknown> {
+  const q = new URLSearchParams();
+  if (params.symbol) q.set("symbol", params.symbol);
+  if (params.horizon) q.set("horizon", params.horizon);
+  return apiFetch(`/v1/backtest/summary?${q.toString()}`);
+}
+
+export async function runBacktest(params: {
+  model: string;
+  symbol?: string;
+  from?: string;
+  to?: string;
+  horizon?: string;
+  persist?: boolean;
+}): Promise<unknown> {
+  const q = new URLSearchParams();
+  q.set("model", params.model);
+  if (params.symbol) q.set("symbol", params.symbol);
+  if (params.from) q.set("from", params.from);
+  if (params.to) q.set("to", params.to);
+  if (params.horizon) q.set("horizon", params.horizon);
+  if (params.persist !== undefined) q.set("persist", String(params.persist));
+  return apiFetch(`/v1/backtest?${q.toString()}`);
+}
+
 // ── News ───────────────────────────────────────────────────────────────────
 export async function getRecentNews(params: {
   symbol?: string;

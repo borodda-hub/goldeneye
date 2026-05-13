@@ -7,6 +7,7 @@ import { ModelGrid } from "@/components/signals/ModelGrid";
 import { ExplanationPanel } from "@/components/signals/ExplanationPanel";
 import { HistoryTable } from "@/components/signals/HistoryTable";
 import { NewsFeedPanel } from "@/components/signals/NewsFeedPanel";
+import { BacktestCard } from "@/components/signals/BacktestCard";
 import type { CurrentSignal } from "./types";
 
 interface Props {
@@ -43,6 +44,12 @@ export function SignalsShell({ initialSignal }: Props) {
 
       {/* Row 2: Model cards */}
       <ModelGrid models={signal.models} />
+
+      {/* Row 2.5: Backtest performance — per-model hit rates from persisted
+          backtest forecasts. Sits above explanation+history because it sets
+          the credibility frame ("these are the hit rates against real
+          historical prices") before the live explanation prose. */}
+      <BacktestCard />
 
       {/* Row 3: Explanation + History */}
       <div className="flex gap-4 min-h-0 h-[40vh]">
