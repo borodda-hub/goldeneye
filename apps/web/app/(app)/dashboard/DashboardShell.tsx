@@ -8,6 +8,7 @@ import { PriceMiniChart } from "@/components/dashboard/PriceMiniChart";
 import { FuturesCurveCard } from "@/components/dashboard/FuturesCurveCard";
 import { RecentEventsList } from "@/components/dashboard/RecentEventsList";
 import { DashboardLiveBar } from "@/components/dashboard/DashboardLiveBar";
+import { WorkingThesisCard } from "@/components/dashboard/WorkingThesisCard";
 import type { DashboardSummary } from "./types";
 
 interface Props {
@@ -55,7 +56,7 @@ export function DashboardShell({ initialData }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex flex-col gap-4">
       {/* Row 1: Header */}
       <HeaderRow
         instrument={summary.instrument}
@@ -66,8 +67,11 @@ export function DashboardShell({ initialData }: Props) {
         feedMode={feedMode}
       />
 
-      {/* Row 2: Chart + Bias */}
-      <div className="flex gap-4 flex-1 min-h-0">
+      {/* Row 2: Working Thesis */}
+      <WorkingThesisCard instrumentCode={summary.instrument.symbol} />
+
+      {/* Row 3: Chart + Bias */}
+      <div className="flex gap-4 h-[420px] min-h-0">
         <div className="flex-1 min-h-0">
           <PriceMiniChart
             contractCode={summary.front_month.contract_code}
@@ -82,7 +86,7 @@ export function DashboardShell({ initialData }: Props) {
         </div>
       </div>
 
-      {/* Row 3: Curve + Events */}
+      {/* Row 4: Curve + Events */}
       <div className="flex gap-4 h-44">
         <div className="flex-1">
           <FuturesCurveCard curve={summary.futures_curve} />
@@ -92,7 +96,7 @@ export function DashboardShell({ initialData }: Props) {
         </div>
       </div>
 
-      {/* Row 4: Live bar */}
+      {/* Row 5: Live bar */}
       <DashboardLiveBar />
     </div>
   );
