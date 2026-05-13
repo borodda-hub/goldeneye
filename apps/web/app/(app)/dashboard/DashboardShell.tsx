@@ -12,6 +12,7 @@ import { DashboardLiveBar } from "@/components/dashboard/DashboardLiveBar";
 import { DashboardTicker } from "@/components/dashboard/DashboardTicker";
 import { WorkingThesisCard } from "@/components/dashboard/WorkingThesisCard";
 import { WatchlistSidebar } from "@/components/instruments/WatchlistSidebar";
+import { ResizableSplit } from "@/components/ResizableSplit";
 import type { DashboardSummary } from "./types";
 
 interface Props {
@@ -82,21 +83,31 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
             {/* Row 2: Working Thesis */}
             <WorkingThesisCard instrumentCode={summary.instrument.symbol} />
 
-            {/* Row 3: Chart + Bias — scales with viewport, floored at 320px */}
-            <div className="flex gap-4 h-[42vh] min-h-[320px]">
-              <div className="flex-1 min-h-0">
-                <PriceMiniChart
-                  contractCode={summary.front_month.contract_code}
-                />
-              </div>
-              <div className="w-72 shrink-0">
-                <DirectionalBiasCard
-                  bias={summary.directional_bias}
-                  aiSummary={summary.ai_summary}
-                  safety={summary.safety}
-                />
-              </div>
-            </div>
+            {/* Row 3: Chart + Bias — drag the divider to resize. Width
+                persists per-user via localStorage. */}
+            <ResizableSplit
+              className="h-[42vh] min-h-[320px]"
+              storageKey="goldeneye:dashboard:bias-width"
+              defaultRightWidth={288}
+              rightMinWidth={240}
+              leftMinWidth={320}
+              left={
+                <div className="h-full min-h-0 pr-2">
+                  <PriceMiniChart
+                    contractCode={summary.front_month.contract_code}
+                  />
+                </div>
+              }
+              right={
+                <div className="h-full pl-2">
+                  <DirectionalBiasCard
+                    bias={summary.directional_bias}
+                    aiSummary={summary.ai_summary}
+                    safety={summary.safety}
+                  />
+                </div>
+              }
+            />
 
             {/* Row 4: Curve + Events — scales with viewport, floored at 160px */}
             <div className="flex gap-4 h-[20vh] min-h-[160px]">
