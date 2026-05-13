@@ -183,7 +183,36 @@ async def _closes_by_date(
     )
     out: dict[datetime, float] = {}
     for ts, close in rows.all():
-        # Normalize to a date key.
+        if isinstance(ts, datetime):
+            key = datetime.combine(ts.date(), time(12, 0))
+            out[key] = float(close)
+    return out
+
+
+async def _closes_from_live_market(
+    front_contract_code: str, lookback_days: int = 90
+) -> dict[datetime, float]:
+    """Fallback: pull recent daily closes from the live market adapter.
+
+    Used when the instrument has no rows in price_bars yet (e.g. CL — Yahoo
+    bars are pulled on-demand by the chart endpoint, never persisted).
+    """
+    from apps.api.adapters.registry import get_market
+
+    market = get_market()
+    now = datetime.utcnow()
+    bars = await market.get_bars(
+        front_contract_code,
+        "1d",
+        now - timedelta(days=lookback_days),
+        now,
+    )
+    out: dict[datetime, float] = {}
+    for bar in bars:
+        ts = bar.get("ts")
+        close = bar.get("close")
+        if ts is None or close is None:
+            continue
         if isinstance(ts, datetime):
             key = datetime.combine(ts.date(), time(12, 0))
             out[key] = float(close)
@@ -211,22 +240,34 @@ def _direction_from_returns(
     return "bullish" if ret > 0 else "bearish"
 
 
-async def seed_forecasts(session: AsyncSession) -> int:
-    """Insert ~_HISTORY_DAYS × 4 forecast rows. Returns count inserted."""
+async def seed_forecasts(
+    session: AsyncSession, symbol: str = "NG"
+) -> int:
+    """Insert ~_HISTORY_DAYS × 4 forecast rows for `symbol`. Returns count inserted.
+
+    Phase 14: takes a symbol so CL can be seeded alongside NG. When the
+    instrument has no price_bars (CL is live-only via Yahoo), falls back to
+    pulling 90 days of closes from the configured market adapter.
+    """
     from apps.api.db.base import Base
 
     meta = Base.metadata
     instruments_t = meta.tables["instruments"]
+    contracts_t = meta.tables["contracts"]
     forecasts_t = meta.tables["model_forecasts"]
 
-    ng_row = (
-        await session.execute(select(instruments_t).where(instruments_t.c.symbol == "NG"))
+    inst_row = (
+        await session.execute(
+            select(instruments_t).where(instruments_t.c.symbol == symbol)
+        )
     ).first()
-    if ng_row is None:
-        raise RuntimeError("seed_forecasts: NG instrument not found — load fixtures first")
-    instrument_id = ng_row.id
+    if inst_row is None:
+        raise RuntimeError(
+            f"seed_forecasts: {symbol!r} instrument not found — load fixtures first"
+        )
+    instrument_id = inst_row.id
 
-    # Idempotency: bail if we've already seeded.
+    # Idempotency: bail if we've already seeded forecasts for this instrument.
     existing = await session.execute(
         select(forecasts_t.c.id)
         .where(forecasts_t.c.instrument_id == instrument_id)
@@ -236,7 +277,28 @@ async def seed_forecasts(session: AsyncSession) -> int:
         return 0
 
     # Pre-load realized prices so each forecast can know the "right" answer.
+    # Tries DB first; falls back to a live market-adapter fetch when no rows
+    # are seeded (CL path — Yahoo bars are pulled on demand by the chart
+    # endpoint and never written to price_bars).
     closes = await _closes_by_date(session, instrument_id)
+    if not closes:
+        front_row = (
+            await session.execute(
+                select(contracts_t.c.contract_code).where(
+                    contracts_t.c.instrument_id == instrument_id,
+                    contracts_t.c.is_front_month.is_(True),
+                )
+            )
+        ).first()
+        if front_row is not None:
+            try:
+                closes = await _closes_from_live_market(
+                    front_row.contract_code, lookback_days=_HISTORY_DAYS + 30
+                )
+            except Exception:
+                # Stay defensive — synthetic forecasts can still seed with
+                # all-random directions if live market is unreachable.
+                closes = {}
 
     today = datetime.utcnow()
     rows: list[dict[str, Any]] = []
