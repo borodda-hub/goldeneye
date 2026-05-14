@@ -48,6 +48,7 @@ async def main(fresh: bool = False) -> None:
     import apps.api.models.orm.weather       # noqa: F401
     import apps.api.models.orm.journal       # noqa: F401
     import apps.api.models.orm.paper         # noqa: F401
+    import apps.api.models.orm.forecasts     # noqa: F401
 
     from apps.api.seeds import load_fixtures, price_generator, storage_generator
     from apps.api.seeds import cot_generator, weather_generator, validate
