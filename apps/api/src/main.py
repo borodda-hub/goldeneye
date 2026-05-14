@@ -24,6 +24,7 @@ from apps.api.routers import (
     calibration,
     instruments,
     ticker,
+    indicators,
 )
 from apps.api.realtime.ticker import start_ticker
 from apps.api.services.safety import SafetyViolation
@@ -79,6 +80,7 @@ app.include_router(signal_quality.router)
 app.include_router(calibration.router)
 app.include_router(instruments.router)
 app.include_router(ticker.router)
+app.include_router(indicators.router)
 
 
 @app.get("/v1/health")
