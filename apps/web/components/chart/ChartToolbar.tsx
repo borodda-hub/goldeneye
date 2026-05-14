@@ -5,20 +5,16 @@ const RESOLUTIONS: Resolution[] = ["1m", "5m", "15m", "1h", "1d"];
 interface Props {
   resolution: Resolution;
   onResolutionChange: (r: Resolution) => void;
-  showSMA20: boolean;
-  showEMA50: boolean;
-  onToggleSMA20: () => void;
-  onToggleEMA50: () => void;
+  indicatorCount: number;
+  onOpenIndicators: () => void;
   contractCode: string;
 }
 
 export function ChartToolbar({
   resolution,
   onResolutionChange,
-  showSMA20,
-  showEMA50,
-  onToggleSMA20,
-  onToggleEMA50,
+  indicatorCount,
+  onOpenIndicators,
   contractCode,
 }: Props) {
   return (
@@ -47,34 +43,23 @@ export function ChartToolbar({
         ))}
       </div>
 
-      {/* SMA 20 toggle */}
+      {/* Indicators button */}
       <button
         type="button"
-        onClick={onToggleSMA20}
-        className="flex items-center gap-1.5 text-xs font-mono"
-        aria-pressed={showSMA20}
+        onClick={onOpenIndicators}
+        className="flex items-center gap-2 px-3 py-1 text-xs font-mono border border-line-2 bg-surface-1 text-ink-2 hover:text-ink-1 hover:bg-surface-2"
+        aria-label="Open indicators picker"
       >
-        <span
-          className={`w-3 h-0.5 rounded-full ${showSMA20 ? "bg-accent" : "bg-line-2"}`}
-        />
-        <span className={showSMA20 ? "text-ink-3" : "text-ink-4"}>SMA 20</span>
-      </button>
-
-      {/* EMA 50 toggle */}
-      <button
-        type="button"
-        onClick={onToggleEMA50}
-        className="flex items-center gap-1.5 text-xs font-mono"
-        aria-pressed={showEMA50}
-      >
-        <span
-          className={`w-3 h-0.5 rounded-full ${showEMA50 ? "bg-accent" : "bg-line-2"}`}
-        />
-        <span className={showEMA50 ? "text-ink-3" : "text-ink-4"}>EMA 50</span>
+        <span>Indicators</span>
+        {indicatorCount > 0 ? (
+          <span className="text-accent tabular-nums">({indicatorCount})</span>
+        ) : null}
       </button>
 
       {/* Contract code */}
-      <span className="font-mono text-xs text-ink-3 ml-auto">{contractCode}</span>
+      <span className="font-mono text-xs text-ink-3 ml-auto">
+        {contractCode}
+      </span>
     </div>
   );
 }

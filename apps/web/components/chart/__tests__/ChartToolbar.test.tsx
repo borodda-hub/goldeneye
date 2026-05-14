@@ -1,13 +1,11 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { ChartToolbar } from "../ChartToolbar";
 
 const defaultProps = {
   resolution: "1d" as const,
   onResolutionChange: vi.fn(),
-  showSMA20: true,
-  showEMA50: false,
-  onToggleSMA20: vi.fn(),
-  onToggleEMA50: vi.fn(),
+  indicatorCount: 0,
+  onOpenIndicators: vi.fn(),
   contractCode: "NGF26",
 };
 
@@ -30,16 +28,32 @@ describe("ChartToolbar", () => {
   it("clicking a different resolution calls onResolutionChange", () => {
     const onResolutionChange = vi.fn();
     render(
-      <ChartToolbar {...defaultProps} onResolutionChange={onResolutionChange} />,
+      <ChartToolbar
+        {...defaultProps}
+        onResolutionChange={onResolutionChange}
+      />,
     );
     fireEvent.click(screen.getByText("1h"));
     expect(onResolutionChange).toHaveBeenCalledWith("1h");
   });
 
-  it("overlay toggles are visible", () => {
-    render(<ChartToolbar {...defaultProps} />);
-    expect(screen.getByText("SMA 20")).toBeInTheDocument();
-    expect(screen.getByText("EMA 50")).toBeInTheDocument();
+  it("clicking Indicators opens the picker", () => {
+    const onOpenIndicators = vi.fn();
+    render(
+      <ChartToolbar {...defaultProps} onOpenIndicators={onOpenIndicators} />,
+    );
+    fireEvent.click(screen.getByLabelText(/open indicators picker/i));
+    expect(onOpenIndicators).toHaveBeenCalled();
+  });
+
+  it("indicator count is shown when > 0", () => {
+    render(<ChartToolbar {...defaultProps} indicatorCount={3} />);
+    expect(screen.getByText("(3)")).toBeInTheDocument();
+  });
+
+  it("indicator count is hidden when 0", () => {
+    render(<ChartToolbar {...defaultProps} indicatorCount={0} />);
+    expect(screen.queryByText(/^\(0\)$/)).not.toBeInTheDocument();
   });
 
   it("contract code is displayed", () => {

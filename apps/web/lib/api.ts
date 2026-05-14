@@ -1,10 +1,6 @@
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
 
-async function apiFetch<T>(
-  path: string,
-  options?: RequestInit,
-): Promise<T> {
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     headers: { "Content-Type": "application/json" },
     ...options,
@@ -85,6 +81,38 @@ export async function getChartCurve(
 ): Promise<unknown> {
   return apiFetch(
     `/v1/chart/curve?symbol=${encodeURIComponent(symbol)}&as_of=${encodeURIComponent(asOf)}`,
+  );
+}
+
+export interface IndicatorPointDTO {
+  t: string;
+  v: number | null;
+}
+
+export interface IndicatorSeriesDTO {
+  type: string;
+  params: Record<string, unknown>;
+  points: IndicatorPointDTO[];
+}
+
+export interface GetIndicatorsResponseDTO {
+  symbol: string;
+  indicators: IndicatorSeriesDTO[];
+}
+
+export async function getChartIndicators(params: {
+  symbol: string;
+  spec: string;
+  from?: string;
+  to?: string;
+}): Promise<GetIndicatorsResponseDTO> {
+  const q = new URLSearchParams();
+  q.set("symbol", params.symbol);
+  q.set("spec", params.spec);
+  if (params.from) q.set("from", params.from);
+  if (params.to) q.set("to", params.to);
+  return apiFetch<GetIndicatorsResponseDTO>(
+    `/v1/chart/indicators?${q.toString()}`,
   );
 }
 

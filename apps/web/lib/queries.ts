@@ -3,20 +3,22 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  type ThesisCreateBody,
+  type ThesisPatchBody,
   createThesis,
   critiqueThesis,
   getAlerts,
   getBacktestSummary,
   getCalibration,
-  getDqCoaching,
-  getInstruments,
-  getTickerQuotes,
   getChartBars,
   getChartCurve,
+  getChartIndicators,
   getCurrentSignal,
   getCurrentThesis,
   getDashboardSummary,
   getDataHealth,
+  getDqCoaching,
+  getInstruments,
   getJournalEntry,
   getPaperEquityCurve,
   getRecentNews,
@@ -25,13 +27,12 @@ import {
   getSignalHistory,
   getSignalQuality,
   getThesisSeed,
+  getTickerQuotes,
   listJournalEntries,
   listPaperTrades,
   patchJournalEntry,
   patchThesis,
   runBacktest,
-  type ThesisCreateBody,
-  type ThesisPatchBody,
 } from "./api";
 
 export const queryKeys = {
@@ -51,7 +52,12 @@ export const queryKeys = {
     from: string,
     to: string,
   ) => ["chart", "bars", contractCode, resolution, from, to],
-  chartCurve: (symbol: string, asOf: string) => ["chart", "curve", symbol, asOf],
+  chartCurve: (symbol: string, asOf: string) => [
+    "chart",
+    "curve",
+    symbol,
+    asOf,
+  ],
   thesisCurrent: (instrument: string) => ["thesis", "current", instrument],
   thesisSeed: (instrument: string) => ["thesis", "seed", instrument],
 } as const;
@@ -101,9 +107,7 @@ export function usePaperTrades(status?: string, symbol?: string) {
   return useQuery({
     queryKey: [...queryKeys.paperTrades(status), symbol ?? "all"],
     queryFn: () =>
-      listPaperTrades(
-        status || symbol ? { status, symbol } : undefined,
-      ),
+      listPaperTrades(status || symbol ? { status, symbol } : undefined),
     staleTime: 30_000,
   });
 }
@@ -140,7 +144,8 @@ export function useChartBars(
 ) {
   return useQuery({
     queryKey: queryKeys.chartBars(contractCode, resolution, from, to),
-    queryFn: () => getChartBars({ contract_code: contractCode, resolution, from, to }),
+    queryFn: () =>
+      getChartBars({ contract_code: contractCode, resolution, from, to }),
     staleTime: resolution === "1m" ? 0 : 60_000,
   });
 }
@@ -166,6 +171,19 @@ export function useChartCurve(symbol: string, asOf: string) {
     queryKey: queryKeys.chartCurve(symbol, asOf),
     queryFn: () => getChartCurve(symbol, asOf),
     staleTime: 300_000,
+  });
+}
+
+export function useChartIndicators(symbol: string, specQuery: string) {
+  return useQuery({
+    queryKey: ["chart", "indicators", symbol, specQuery],
+    queryFn: () => getChartIndicators({ symbol, spec: specQuery }),
+    // Disabled when no specs are active so we never hit the API with an
+    // empty `spec=` (which would 422).
+    enabled: Boolean(specQuery),
+    // Backend Redis TTL is 5 min; match it on the client so a chart that
+    // sits open doesn't keep re-fetching.
+    staleTime: 5 * 60_000,
   });
 }
 
@@ -198,7 +216,9 @@ export function useRunBacktest(symbol = "NG", horizon = "1d") {
     onSuccess: () => {
       // Refresh the summary card + the Signal Lab history table — both
       // read from model_forecasts and will reflect the new persisted rows.
-      qc.invalidateQueries({ queryKey: ["backtest", "summary", symbol, horizon] });
+      qc.invalidateQueries({
+        queryKey: ["backtest", "summary", symbol, horizon],
+      });
       qc.invalidateQueries({ queryKey: ["signal", "history"] });
     },
   });
@@ -214,10 +234,7 @@ export function useCurrentThesis(instrumentCode = "NG") {
   });
 }
 
-export function useThesisSeed(
-  instrumentCode = "NG",
-  enabled = false,
-) {
+export function useThesisSeed(instrumentCode = "NG", enabled = false) {
   return useQuery({
     queryKey: queryKeys.thesisSeed(instrumentCode),
     queryFn: () => getThesisSeed(instrumentCode),
@@ -231,7 +248,9 @@ export function useCreateThesis(instrumentCode = "NG") {
   return useMutation({
     mutationFn: (body: ThesisCreateBody) => createThesis(body),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.thesisCurrent(instrumentCode) });
+      qc.invalidateQueries({
+        queryKey: queryKeys.thesisCurrent(instrumentCode),
+      });
     },
   });
 }
@@ -242,7 +261,9 @@ export function usePatchThesis(instrumentCode = "NG") {
     mutationFn: ({ id, body }: { id: string; body: ThesisPatchBody }) =>
       patchThesis(id, body),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.thesisCurrent(instrumentCode) });
+      qc.invalidateQueries({
+        queryKey: queryKeys.thesisCurrent(instrumentCode),
+      });
     },
   });
 }

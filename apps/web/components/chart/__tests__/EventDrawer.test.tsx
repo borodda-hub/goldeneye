@@ -1,10 +1,20 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import { EventDrawer } from "../EventDrawer";
 import type { EventMarkerData } from "@/app/(app)/chart/types";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { EventDrawer } from "../EventDrawer";
 
 const events: EventMarkerData[] = [
-  { ts: "2026-05-01T10:00:00Z", kind: "eia_storage", label: "EIA Storage Report", delta: 82 },
-  { ts: "2026-05-08T10:00:00Z", kind: "weather", label: "Cold snap alert", delta: -45 },
+  {
+    ts: "2026-05-01T10:00:00Z",
+    kind: "eia_storage",
+    label: "EIA Storage Report",
+    delta: 82,
+  },
+  {
+    ts: "2026-05-08T10:00:00Z",
+    kind: "weather",
+    label: "Cold snap alert",
+    delta: -45,
+  },
 ];
 
 describe("EventDrawer", () => {
@@ -15,9 +25,7 @@ describe("EventDrawer", () => {
   });
 
   it("when open, shows events list header", () => {
-    render(
-      <EventDrawer events={events} open={true} onToggle={vi.fn()} />,
-    );
+    render(<EventDrawer events={events} open={true} onToggle={vi.fn()} />);
     expect(screen.getByText(/^events$/i)).toBeInTheDocument();
   });
 

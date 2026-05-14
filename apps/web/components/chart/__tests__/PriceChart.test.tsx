@@ -1,6 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import type { Bar } from "@/app/(app)/chart/types";
+import type { IndicatorSeriesDTO } from "@/lib/api";
+import { newSpec } from "@/lib/chart/indicatorRegistry";
+import { render } from "@testing-library/react";
 import { PriceChart } from "../PriceChart";
-import type { Bar, OverlayPoint } from "@/app/(app)/chart/types";
+
+const addLineSeries = vi.fn(() => ({ setData: vi.fn() }));
 
 vi.mock("lightweight-charts", () => ({
   createChart: vi.fn(() => ({
@@ -9,7 +13,7 @@ vi.mock("lightweight-charts", () => ({
       setMarkers: vi.fn(),
     })),
     addHistogramSeries: vi.fn(() => ({ setData: vi.fn() })),
-    addLineSeries: vi.fn(() => ({ setData: vi.fn() })),
+    addLineSeries,
     priceScale: vi.fn(() => ({ applyOptions: vi.fn() })),
     timeScale: vi.fn(() => ({ fitContent: vi.fn(), borderColor: "" })),
     resize: vi.fn(),
@@ -24,23 +28,18 @@ const bars: Bar[] = [
   { ts: "2026-05-02T00:00:00Z", o: 3.45, h: 3.55, l: 3.4, c: 3.5, v: 12000 },
 ];
 
-const overlays: { sma_20: OverlayPoint[]; ema_50: OverlayPoint[] } = {
-  sma_20: [
-    { ts: "2026-05-01T00:00:00Z", v: 3.42 },
-    { ts: "2026-05-02T00:00:00Z", v: 3.44 },
-  ],
-  ema_50: [],
-};
-
 describe("PriceChart", () => {
+  beforeEach(() => {
+    addLineSeries.mockClear();
+  });
+
   it("renders without crashing with valid bar data", () => {
     const { container } = render(
       <PriceChart
         bars={bars}
-        overlays={overlays}
         eventMarkers={[]}
-        showSMA20={true}
-        showEMA50={false}
+        indicators={[]}
+        indicatorSeries={[]}
       />,
     );
     expect(container.firstChild).toBeInTheDocument();
@@ -50,12 +49,88 @@ describe("PriceChart", () => {
     const { container } = render(
       <PriceChart
         bars={[]}
-        overlays={{ sma_20: [], ema_50: [] }}
         eventMarkers={[]}
-        showSMA20={false}
-        showEMA50={false}
+        indicators={[]}
+        indicatorSeries={[]}
       />,
     );
     expect(container.firstChild).toBeInTheDocument();
+  });
+
+  it("adds one line series per paired visible indicator", () => {
+    const ema = newSpec("ema", { period: 21 });
+    const sma = newSpec("sma", { period: 50 });
+    const series: IndicatorSeriesDTO[] = [
+      {
+        type: "ema",
+        params: { period: 21, source: "close" },
+        points: [
+          { t: "2026-05-01T00:00:00Z", v: 3.4 },
+          { t: "2026-05-02T00:00:00Z", v: 3.42 },
+        ],
+      },
+      {
+        type: "sma",
+        params: { period: 50, source: "close" },
+        points: [
+          { t: "2026-05-01T00:00:00Z", v: 3.41 },
+          { t: "2026-05-02T00:00:00Z", v: 3.43 },
+        ],
+      },
+    ];
+    render(
+      <PriceChart
+        bars={bars}
+        eventMarkers={[]}
+        indicators={[ema, sma]}
+        indicatorSeries={series}
+      />,
+    );
+    expect(addLineSeries).toHaveBeenCalledTimes(2);
+    // First spec is EMA → its color was passed to addLineSeries
+    expect(addLineSeries).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ color: ema.color, lineWidth: ema.weight }),
+    );
+  });
+
+  it("skips hidden indicators", () => {
+    const ema = newSpec("ema", { period: 21 });
+    const hidden = { ...newSpec("sma", { period: 50 }), visible: false };
+    const series: IndicatorSeriesDTO[] = [
+      {
+        type: "ema",
+        params: { period: 21, source: "close" },
+        points: [{ t: "2026-05-01T00:00:00Z", v: 3.4 }],
+      },
+      {
+        type: "sma",
+        params: { period: 50, source: "close" },
+        points: [{ t: "2026-05-01T00:00:00Z", v: 3.41 }],
+      },
+    ];
+    render(
+      <PriceChart
+        bars={bars}
+        eventMarkers={[]}
+        indicators={[ema, hidden]}
+        indicatorSeries={series}
+      />,
+    );
+    expect(addLineSeries).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not crash if the API hasn't returned a series for a spec yet", () => {
+    const ema = newSpec("ema", { period: 21 });
+    const { container } = render(
+      <PriceChart
+        bars={bars}
+        eventMarkers={[]}
+        indicators={[ema]}
+        indicatorSeries={[]}
+      />,
+    );
+    expect(container.firstChild).toBeInTheDocument();
+    expect(addLineSeries).not.toHaveBeenCalled();
   });
 });

@@ -1,21 +1,20 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import type { Bar, EventMarkerData } from "@/app/(app)/chart/types";
+import type { IndicatorSeriesDTO } from "@/lib/api";
+import type { IndicatorSpec } from "@/lib/chart/indicatorRegistry";
+import { colors } from "@/lib/colors";
 import { ColorType, CrosshairMode, createChart } from "lightweight-charts";
 import type { UTCTimestamp } from "lightweight-charts";
-import type {
-  Bar,
-  EventMarkerData,
-  OverlayPoint,
-} from "@/app/(app)/chart/types";
-import { colors } from "@/lib/colors";
+import { useEffect, useRef } from "react";
 
 interface Props {
   bars: Bar[];
-  overlays: { sma_20: OverlayPoint[]; ema_50: OverlayPoint[] };
   eventMarkers: EventMarkerData[];
-  showSMA20: boolean;
-  showEMA50: boolean;
+  /** Active indicator specs — drives color / weight per series. */
+  indicators: IndicatorSpec[];
+  /** Computed series from /v1/chart/indicators, indexed by `type` order in `indicators`. */
+  indicatorSeries: IndicatorSeriesDTO[];
 }
 
 /** Convert an ISO timestamp to UTC epoch seconds. Lightweight Charts accepts
@@ -43,12 +42,37 @@ function sortedUnique<T extends { time: UTCTimestamp }>(rows: T[]): T[] {
   return out;
 }
 
+/** Match server-returned series to a frontend spec. Server returns one
+ *  series per request item in order; the response carries `type` + `params`
+ *  so we can pair on (type, period, source) even if order drifts. */
+function pairSeriesToSpec(
+  specs: IndicatorSpec[],
+  series: IndicatorSeriesDTO[],
+): { spec: IndicatorSpec; series: IndicatorSeriesDTO }[] {
+  const out: { spec: IndicatorSpec; series: IndicatorSeriesDTO }[] = [];
+  const used = new Set<number>();
+  for (const spec of specs) {
+    if (!spec.visible) continue;
+    const idx = series.findIndex((s, i) => {
+      if (used.has(i)) return false;
+      const period = (s.params as { period?: number }).period;
+      const source = (s.params as { source?: string }).source;
+      return (
+        s.type === spec.type && period === spec.period && source === spec.source
+      );
+    });
+    if (idx === -1) continue;
+    used.add(idx);
+    out.push({ spec, series: series[idx] });
+  }
+  return out;
+}
+
 export function PriceChart({
   bars,
-  overlays,
   eventMarkers,
-  showSMA20,
-  showEMA50,
+  indicators,
+  indicatorSeries,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -124,40 +148,24 @@ export function PriceChart({
       volumeData as Parameters<typeof volumeSeries.setData>[0],
     );
 
-    // SMA20 overlay
-    if (showSMA20 && overlays.sma_20.length > 0) {
-      const smaSeries = chart.addLineSeries({
-        color: colors.accent,
-        lineWidth: 1,
+    // Indicator overlays — one LineSeries per visible spec
+    for (const { spec, series } of pairSeriesToSpec(
+      indicators,
+      indicatorSeries,
+    )) {
+      const line = chart.addLineSeries({
+        color: spec.color,
+        lineWidth: spec.weight,
         priceLineVisible: false,
         lastValueVisible: false,
       });
-      smaSeries.setData(
-        sortedUnique(
-          overlays.sma_20.map((p) => ({
-            time: toUtcEpoch(p.ts),
-            value: p.v,
-          })),
-        ) as Parameters<typeof smaSeries.setData>[0],
-      );
-    }
-
-    // EMA50 overlay
-    if (showEMA50 && overlays.ema_50.length > 0) {
-      const emaSeries = chart.addLineSeries({
-        color: colors.amber,
-        lineWidth: 1,
-        priceLineVisible: false,
-        lastValueVisible: false,
-      });
-      emaSeries.setData(
-        sortedUnique(
-          overlays.ema_50.map((p) => ({
-            time: toUtcEpoch(p.ts),
-            value: p.v,
-          })),
-        ) as Parameters<typeof emaSeries.setData>[0],
-      );
+      const points = series.points
+        .filter((p) => p.v !== null)
+        .map((p) => ({
+          time: toUtcEpoch(p.t),
+          value: p.v as number,
+        }));
+      line.setData(sortedUnique(points) as Parameters<typeof line.setData>[0]);
     }
 
     // Event markers
@@ -194,7 +202,7 @@ export function PriceChart({
       ro.disconnect();
       chart.remove();
     };
-  }, [bars, overlays, eventMarkers, showSMA20, showEMA50]);
+  }, [bars, eventMarkers, indicators, indicatorSeries]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 }
