@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     eia_api_key: str = ""
     redis_ttl_market_summary: int = 1800   # 30 min
     redis_ttl_scenario: int = 86400         # 24h
+    redis_ttl_chart_indicator: int = 300    # 5 min
 
 
 settings = Settings()
