@@ -17,6 +17,7 @@ from typing import Any
 
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.db.session import get_db
@@ -24,12 +25,18 @@ from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
 from apps.api.repos import price_bars as price_bars_repo
 from apps.api.services.indicators import (
+    IndicatorSeries,
     IndicatorSpec,
     UnknownIndicatorError,
     VolumeRequiredError,
     registered_types,
 )
 from apps.api.services.indicators.cache import cached_compute
+
+
+class GetIndicatorsResponse(BaseModel):
+    symbol: str
+    indicators: list[IndicatorSeries]
 
 router = APIRouter(prefix="/v1/chart", tags=["chart"])
 
@@ -78,7 +85,7 @@ def _parse_spec(spec: str) -> list[IndicatorSpec]:
     return out
 
 
-@router.get("/indicators")
+@router.get("/indicators", response_model=GetIndicatorsResponse)
 async def get_indicators(
     symbol: str = Query(..., description="Instrument symbol, e.g. NG or CL"),
     spec: str = Query(

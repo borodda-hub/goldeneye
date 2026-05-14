@@ -157,6 +157,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/scenarios/runs/{run_id}/export.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Run Pdf
+         * @description Render a scenario run as an executive PDF report (download).
+         */
+        get: operations["export_run_pdf_v1_scenarios_runs__run_id__export_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/journal": {
         parameters: {
             query?: never;
@@ -164,7 +184,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Entries */
+        /**
+         * List Entries
+         * @description List recent entries. When ?symbol= is supplied, filter to that
+         *     instrument; otherwise return entries across all instruments (legacy
+         *     behavior preserved for callers that don't pass the param).
+         */
         get: operations["list_entries_v1_journal_get"];
         put?: never;
         /** Create Entry */
@@ -400,6 +425,310 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/news/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Recent News
+         * @description Return recent NG-relevant news items via the configured adapter.
+         *
+         *     The mock adapter serves curated fixtures; the rss adapter pulls live
+         *     items from EIA + Yahoo Finance and filters by NG keywords. Either way,
+         *     the response shape is identical.
+         */
+        get: operations["get_recent_news_v1_news_recent_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/backtest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Run Backtest Endpoint
+         * @description Run a backtest and (optionally) persist forecasts to model_forecasts.
+         *
+         *     Validation:
+         *       400 — unknown model, unsupported horizon, or reversed date range.
+         *       404 — symbol not found in `instruments`.
+         *
+         *     Persistence:
+         *       When `persist=true` (default), backtest rows replace any existing
+         *       rows for the same (instrument, model, horizon) that fall inside the
+         *       backtest's `generated_at` range. They also clear synthetic seed rows
+         *       (inputs_hash IS NULL) for the same model so the Signal Lab history
+         *       doesn't mix fake + real outcomes.
+         */
+        get: operations["run_backtest_endpoint_v1_backtest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/backtest/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Backtest Summary
+         * @description Per-model aggregate over persisted backtest rows.
+         *
+         *     Pure SQL aggregate against model_forecasts where inputs_hash =
+         *     BACKTEST_SOURCE_MARKER. Reads the `features` JSONB column for the
+         *     `outcome` field that persist_backtest_rows wrote at backtest time —
+         *     no re-scoring, no model loop, no price-bar lookups.
+         *
+         *     Response shape mirrors what the Signal Lab Backtest card renders:
+         *       {
+         *         "models": [
+         *           {"name": "...", "scored": int, "n": int, "hit_rate": float,
+         *            "last_generated_at": iso | null, "from_date": iso | null,
+         *            "to_date": iso | null},
+         *           ...
+         *         ]
+         *       }
+         */
+        get: operations["backtest_summary_v1_backtest_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/thesis/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Current */
+        get: operations["get_current_v1_thesis_current_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/thesis/seed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Seed Draft
+         * @description Draft a fresh thesis from the latest forecast and scenario run.
+         *
+         *     Not persisted — the caller submits a POST /v1/thesis once edited. If no
+         *     forecasts or scenarios exist, returns a minimal scaffold so the form is
+         *     still usable.
+         */
+        get: operations["get_seed_draft_v1_thesis_seed_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/thesis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Thesis */
+        post: operations["create_thesis_v1_thesis_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/thesis/{thesis_id}/critique": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Critique Thesis
+         * @description Run an LLM critique on the named thesis. Returns structured pushback
+         *     plus a safety envelope. The thesis itself is not modified.
+         */
+        post: operations["critique_thesis_v1_thesis__thesis_id__critique_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/thesis/{thesis_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Thesis */
+        patch: operations["patch_thesis_v1_thesis__thesis_id__patch"];
+        trace?: never;
+    };
+    "/v1/signal-quality": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Signal Quality */
+        get: operations["get_signal_quality_v1_signal_quality_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/calibration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Calibration */
+        get: operations["get_calibration_v1_calibration_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/calibration/coaching": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Coaching
+         * @description LLM-synthesized Decision Quality coaching per bucket + overall.
+         */
+        get: operations["get_coaching_v1_calibration_coaching_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/instruments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Instruments
+         * @description Return every seeded instrument with a thin quote attached.
+         *
+         *     Quote derivation:
+         *       last_price  ← front month's latest 1d bar close
+         *       change_abs  ← close - previous close
+         *       change_pct  ← change_abs / previous close
+         *     Falls back to nulls when the contract has no bars yet — UI renders
+         *     a placeholder rather than crashing.
+         */
+        get: operations["list_instruments_v1_instruments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/ticker/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ticker Quotes
+         * @description Return the curated basket with last + change_pct for each symbol.
+         */
+        get: operations["get_ticker_quotes_v1_ticker_quotes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chart/indicators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Indicators */
+        get: operations["get_indicators_v1_chart_indicators_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/health": {
         parameters: {
             query?: never;
@@ -428,6 +757,20 @@ export interface components {
             /** Reflection */
             reflection?: string | null;
         };
+        /** EvidenceEntry */
+        EvidenceEntry: {
+            /** Factor */
+            factor: string;
+            /** Weight */
+            weight?: number | null;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Source */
+            source?: string | null;
+        };
         /** EvidenceItem */
         EvidenceItem: {
             /** Source */
@@ -440,10 +783,38 @@ export interface components {
              */
             weight: number;
         };
+        /** GetIndicatorsResponse */
+        GetIndicatorsResponse: {
+            /** Symbol */
+            symbol: string;
+            /** Indicators */
+            indicators: components["schemas"]["IndicatorSeries"][];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** IndicatorPoint */
+        IndicatorPoint: {
+            /**
+             * T
+             * Format: date-time
+             */
+            t: string;
+            /** V */
+            v: number | null;
+        };
+        /** IndicatorSeries */
+        IndicatorSeries: {
+            /** Type */
+            type: string;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Points */
+            points: components["schemas"]["IndicatorPoint"][];
         };
         /** JournalCreateRequest */
         JournalCreateRequest: {
@@ -479,6 +850,8 @@ export interface components {
             outcome?: string | null;
             /** Reflection */
             reflection?: string | null;
+            /** Resolved Direction */
+            resolved_direction?: ("hit" | "miss" | "neutral" | "unresolved") | null;
         };
         /** LngExportShock */
         LngExportShock: {
@@ -579,6 +952,37 @@ export interface components {
             delta_bcf: number;
             /** Days */
             days: number;
+        };
+        /** ThesisCreateRequest */
+        ThesisCreateRequest: {
+            /**
+             * Instrument Code
+             * @default NG
+             */
+            instrument_code: string;
+            /** Statement */
+            statement: string;
+            /** Supporting Evidence */
+            supporting_evidence?: components["schemas"]["EvidenceEntry"][];
+            /** Contradicting Evidence */
+            contradicting_evidence?: components["schemas"]["EvidenceEntry"][];
+            /** Missing Data */
+            missing_data?: string[];
+            /** Conviction Pct */
+            conviction_pct: number;
+        };
+        /** ThesisPatchRequest */
+        ThesisPatchRequest: {
+            /** Statement */
+            statement?: string | null;
+            /** Supporting Evidence */
+            supporting_evidence?: components["schemas"]["EvidenceEntry"][] | null;
+            /** Contradicting Evidence */
+            contradicting_evidence?: components["schemas"]["EvidenceEntry"][] | null;
+            /** Missing Data */
+            missing_data?: string[] | null;
+            /** Conviction Pct */
+            conviction_pct?: number | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -913,10 +1317,42 @@ export interface operations {
             };
         };
     };
+    export_run_pdf_v1_scenarios_runs__run_id__export_pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_entries_v1_journal_get: {
         parameters: {
             query?: {
                 limit?: number;
+                symbol?: string | null;
             };
             header?: never;
             path?: never;
@@ -1161,6 +1597,7 @@ export interface operations {
             query?: {
                 status?: string | null;
                 limit?: number;
+                symbol?: string | null;
             };
             header?: never;
             path?: never;
@@ -1439,6 +1876,468 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_recent_news_v1_news_recent_get: {
+        parameters: {
+            query?: {
+                symbol?: string;
+                limit?: number;
+                category?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_backtest_endpoint_v1_backtest_get: {
+        parameters: {
+            query: {
+                /** @description Forecasting model name */
+                model: string;
+                symbol?: string;
+                from?: string | null;
+                to?: string | null;
+                horizon?: string;
+                retrain_days?: number | null;
+                /** @description Write results to model_forecasts */
+                persist?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    backtest_summary_v1_backtest_summary_get: {
+        parameters: {
+            query?: {
+                symbol?: string;
+                horizon?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_current_v1_thesis_current_get: {
+        parameters: {
+            query?: {
+                instrument_code?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_seed_draft_v1_thesis_seed_get: {
+        parameters: {
+            query?: {
+                instrument_code?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_thesis_v1_thesis_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThesisCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    critique_thesis_v1_thesis__thesis_id__critique_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thesis_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_thesis_v1_thesis__thesis_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thesis_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThesisPatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_signal_quality_v1_signal_quality_get: {
+        parameters: {
+            query?: {
+                symbol?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_calibration_v1_calibration_get: {
+        parameters: {
+            query?: {
+                instrument_code?: string;
+                bucket_count?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_coaching_v1_calibration_coaching_get: {
+        parameters: {
+            query?: {
+                instrument_code?: string;
+                bucket_count?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_instruments_v1_instruments_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_ticker_quotes_v1_ticker_quotes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_indicators_v1_chart_indicators_get: {
+        parameters: {
+            query: {
+                /** @description Instrument symbol, e.g. NG or CL */
+                symbol: string;
+                /** @description Comma-separated `type:period[:source]` items, e.g. ema:21,sma:50 */
+                spec: string;
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetIndicatorsResponse"];
                 };
             };
             /** @description Validation Error */
