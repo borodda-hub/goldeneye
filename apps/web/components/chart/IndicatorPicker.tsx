@@ -10,8 +10,10 @@ import {
   PERIOD_MIN,
   PRICE_SOURCES,
   type PriceSource,
+  hasRibbon,
   isValidPeriod,
   newSpec,
+  ribbonSpecs,
   specToLabel,
 } from "@/lib/chart/indicatorRegistry";
 import { colors } from "@/lib/colors";
@@ -25,6 +27,8 @@ interface Props {
   onUpdate: (spec: IndicatorSpec) => void;
   onDelete: (id: string) => void;
   onToggleVisible: (id: string) => void;
+  /** Replace the active list — used by the Ribbon preset to bulk-add or bulk-remove. */
+  onReplaceAll: (specs: IndicatorSpec[]) => void;
 }
 
 /** Palette of token-derived swatches the picker offers — no raw hex elsewhere. */
@@ -81,6 +85,7 @@ export function IndicatorPicker({
   onUpdate,
   onDelete,
   onToggleVisible,
+  onReplaceAll,
 }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(freshForm);
@@ -172,6 +177,37 @@ export function IndicatorPicker({
           >
             ×
           </button>
+        </div>
+
+        {/* Presets */}
+        <div className="flex items-center gap-3 border-b border-line-1 pb-3">
+          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+            Presets
+          </span>
+          {hasRibbon(indicators) ? (
+            <button
+              type="button"
+              onClick={() =>
+                onReplaceAll(indicators.filter((i) => i.tag !== "ribbon"))
+              }
+              className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-3 py-1.5 text-ink-2 hover:bg-surface-2 hover:text-ink-1"
+              aria-label="Remove ribbon preset"
+            >
+              Remove Ribbon
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onReplaceAll([...indicators, ...ribbonSpecs()])}
+              className="font-mono text-[10px] uppercase tracking-eyebrow border border-accent bg-accent-soft px-3 py-1.5 text-accent-bright hover:bg-accent hover:text-bg"
+              aria-label="Add ribbon preset"
+            >
+              Add Ribbon (12 EMAs)
+            </button>
+          )}
+          <span className="font-mono text-[10px] text-ink-4 ml-auto">
+            5 · 8 · 13 · 21 · 34 · 55 · 89 · 100 · 144 · 200 · 233 · 377
+          </span>
         </div>
 
         {/* Form */}

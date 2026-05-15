@@ -190,6 +190,7 @@ export function ChartShell({
         onUpdate={handleUpdate}
         onDelete={handleDelete}
         onToggleVisible={handleToggleVisible}
+        onReplaceAll={persistAndSet}
       />
     </div>
   );

@@ -14,6 +14,7 @@ function baseProps(
     onUpdate: vi.fn(),
     onDelete: vi.fn(),
     onToggleVisible: vi.fn(),
+    onReplaceAll: vi.fn(),
     ...overrides,
   };
 }
@@ -150,5 +151,39 @@ describe("IndicatorPicker", () => {
     render(<IndicatorPicker {...baseProps({ onClose })} />);
     fireEvent.keyDown(window, { key: "Escape" });
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("Add Ribbon appends 12 EMA specs tagged 'ribbon'", () => {
+    const onReplaceAll = vi.fn();
+    render(<IndicatorPicker {...baseProps({ onReplaceAll })} />);
+    fireEvent.click(screen.getByLabelText(/add ribbon preset/i));
+    expect(onReplaceAll).toHaveBeenCalledTimes(1);
+    const next = onReplaceAll.mock.calls[0][0];
+    expect(next).toHaveLength(12);
+    expect(next.every((s: { type: string }) => s.type === "ema")).toBe(true);
+    expect(next.every((s: { tag?: string }) => s.tag === "ribbon")).toBe(true);
+    const periods = next.map((s: { period: number }) => s.period);
+    expect(periods).toEqual([
+      5, 8, 13, 21, 34, 55, 89, 100, 144, 200, 233, 377,
+    ]);
+  });
+
+  it("Remove Ribbon clears all ribbon-tagged specs only", () => {
+    const onReplaceAll = vi.fn();
+    const ribbonOne = { ...newSpec("ema", { period: 21 }), tag: "ribbon" };
+    const userSpec = newSpec("sma", { period: 50 });
+    render(
+      <IndicatorPicker
+        {...baseProps({
+          indicators: [ribbonOne, userSpec],
+          onReplaceAll,
+        })}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText(/remove ribbon preset/i));
+    expect(onReplaceAll).toHaveBeenCalledTimes(1);
+    const next = onReplaceAll.mock.calls[0][0];
+    expect(next).toHaveLength(1);
+    expect(next[0].id).toBe(userSpec.id);
   });
 });

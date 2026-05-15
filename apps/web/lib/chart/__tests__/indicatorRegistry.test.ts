@@ -2,12 +2,18 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULTS,
   MA_TYPES,
+  RIBBON_PALETTE,
+  RIBBON_PERIODS,
+  RIBBON_TAG,
+  hasRibbon,
   isValidPeriod,
   newSpec,
+  ribbonSpecs,
   specToLabel,
   specToQueryFragment,
   specsToQueryParam,
   storageKey,
+  withoutRibbon,
 } from "../indicatorRegistry";
 
 describe("indicatorRegistry", () => {
@@ -66,5 +72,33 @@ describe("indicatorRegistry", () => {
   it("storageKey is per-symbol and upper-cased", () => {
     expect(storageKey("ng")).toBe("ngti.chart.indicators.NG");
     expect(storageKey("CL")).toBe("ngti.chart.indicators.CL");
+  });
+
+  it("ribbon: 12 periods, palette length matches", () => {
+    expect(RIBBON_PERIODS).toHaveLength(12);
+    expect(RIBBON_PALETTE).toHaveLength(12);
+  });
+
+  it("ribbonSpecs returns 12 EMA specs tagged 'ribbon' with the palette", () => {
+    const specs = ribbonSpecs();
+    expect(specs).toHaveLength(12);
+    expect(specs.every((s) => s.type === "ema")).toBe(true);
+    expect(specs.every((s) => s.tag === RIBBON_TAG)).toBe(true);
+    expect(specs.map((s) => s.period)).toEqual(RIBBON_PERIODS);
+    expect(specs.map((s) => s.color)).toEqual(RIBBON_PALETTE);
+  });
+
+  it("hasRibbon detects ribbon presence", () => {
+    expect(hasRibbon([])).toBe(false);
+    expect(hasRibbon([newSpec("sma")])).toBe(false);
+    expect(hasRibbon(ribbonSpecs())).toBe(true);
+  });
+
+  it("withoutRibbon strips ribbon specs only", () => {
+    const user = newSpec("sma", { period: 50 });
+    const mixed = [user, ...ribbonSpecs()];
+    const stripped = withoutRibbon(mixed);
+    expect(stripped).toHaveLength(1);
+    expect(stripped[0].id).toBe(user.id);
   });
 });

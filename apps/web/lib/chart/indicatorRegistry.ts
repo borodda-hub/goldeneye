@@ -47,6 +47,8 @@ export interface IndicatorSpec {
   weight: LineWeight;
   /** When false, the series is hidden but kept in storage so toggle is cheap. */
   visible: boolean;
+  /** Optional group tag — currently used by the Ribbon preset for bulk remove. */
+  tag?: string;
 }
 
 interface Defaults {
@@ -118,7 +120,51 @@ export function newSpec(
     color: overrides.color ?? d.color,
     weight: overrides.weight ?? d.weight,
     visible: overrides.visible ?? true,
+    tag: overrides.tag,
   };
+}
+
+/** Ribbon preset: 12 EMAs at Fibonacci-ish periods with a gold→amber ramp.
+ *  Tagged `"ribbon"` so the picker can offer a single-click bulk-remove. */
+export const RIBBON_TAG = "ribbon";
+export const RIBBON_PERIODS = [
+  5, 8, 13, 21, 34, 55, 89, 100, 144, 200, 233, 377,
+];
+/** 12-step interpolation between colors.accentDeep (#8a6f3a) and colors.amber (#f0b429). */
+export const RIBBON_PALETTE = [
+  "#8a6f3a",
+  "#937538",
+  "#9c7c37",
+  "#a58235",
+  "#af8934",
+  "#b88f32",
+  "#c19531",
+  "#ca9c2f",
+  "#d4a22e",
+  "#dda82c",
+  "#e6af2b",
+  "#f0b429",
+];
+
+/** Build the 12 ribbon specs. Stable enough that two consecutive calls
+ *  produce different ids (so the React keys stay unique). */
+export function ribbonSpecs(): IndicatorSpec[] {
+  return RIBBON_PERIODS.map((period, i) =>
+    newSpec("ema", {
+      period,
+      color: RIBBON_PALETTE[i],
+      weight: 1,
+      tag: RIBBON_TAG,
+    }),
+  );
+}
+
+export function hasRibbon(specs: IndicatorSpec[]): boolean {
+  return specs.some((s) => s.tag === RIBBON_TAG);
+}
+
+export function withoutRibbon(specs: IndicatorSpec[]): IndicatorSpec[] {
+  return specs.filter((s) => s.tag !== RIBBON_TAG);
 }
 
 /** Per-symbol localStorage key for the active indicator set. */
