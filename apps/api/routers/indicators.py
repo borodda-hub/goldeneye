@@ -6,9 +6,11 @@ Spec syntax: comma-separated `type:period[:source]` items, e.g.
 `ema:21:close`. Unknown types and unknown sources yield 400. VWMA on an
 instrument without volume data yields 400.
 
-OHLCV is pulled via repos/price_bars from the front-month contract for the
-given symbol. Each indicator is dispatched through the Redis-cached compute
-wrapper from services/indicators/cache so repeat requests serve from cache.
+OHLCV is pulled through the registered market adapter (same source the
+`/v1/chart/bars` endpoint uses), so indicator lines stay aligned to the
+candlesticks the chart actually renders — for any contract, with or
+without seeded historical data. Each indicator dispatches through the
+Redis-cached compute wrapper in services/indicators/cache.
 """
 from __future__ import annotations
 
@@ -20,10 +22,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from apps.api.adapters.registry import get_market
 from apps.api.db.session import get_db
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
-from apps.api.repos import price_bars as price_bars_repo
 from apps.api.services.indicators import (
     IndicatorSeries,
     IndicatorSpec,
@@ -116,23 +118,25 @@ async def get_indicators(
             status_code=404, detail=f"no front-month contract for {symbol!r}"
         )
 
-    bars = await price_bars_repo.get_bars(
-        session, contract.id, _RESOLUTION, from_dt, to_dt, limit=10000
+    market = get_market()
+    bars = await market.get_bars(
+        contract.contract_code, _RESOLUTION, from_dt=from_dt, to_dt=to_dt
     )
     if not bars:
         return {"symbol": symbol, "indicators": []}
 
     df = pd.DataFrame(
         {
-            "open": [float(b.open) for b in bars],
-            "high": [float(b.high) for b in bars],
-            "low": [float(b.low) for b in bars],
-            "close": [float(b.close) for b in bars],
+            "open": [float(b["open"]) for b in bars],
+            "high": [float(b["high"]) for b in bars],
+            "low": [float(b["low"]) for b in bars],
+            "close": [float(b["close"]) for b in bars],
             "volume": [
-                float(b.volume) if b.volume is not None else None for b in bars
+                float(b["volume"]) if b.get("volume") is not None else None
+                for b in bars
             ],
         },
-        index=pd.DatetimeIndex([b.ts for b in bars]),
+        index=pd.DatetimeIndex([b["ts"] for b in bars]),
     )
 
     indicators_payload: list[dict[str, Any]] = []

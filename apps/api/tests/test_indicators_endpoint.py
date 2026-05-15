@@ -25,25 +25,31 @@ def _contract(code: str) -> Any:
     return type("C", (), {"id": uuid.uuid4(), "contract_code": code})()
 
 
-def _bars(n: int = 60, with_volume: bool = True) -> list[Any]:
+def _bars(n: int = 60, with_volume: bool = True) -> list[dict[str, Any]]:
     start = datetime(2026, 1, 1)
-    out = []
+    out: list[dict[str, Any]] = []
     for i in range(n):
         out.append(
-            type(
-                "B",
-                (),
-                {
-                    "ts": start + timedelta(days=i),
-                    "open": 3.0 + i * 0.01,
-                    "high": 3.1 + i * 0.01,
-                    "low": 2.9 + i * 0.01,
-                    "close": 3.0 + i * 0.01,
-                    "volume": (1000 + i) if with_volume else None,
-                },
-            )()
+            {
+                "ts": start + timedelta(days=i),
+                "contract_code": "TST",
+                "resolution": "1d",
+                "open": 3.0 + i * 0.01,
+                "high": 3.1 + i * 0.01,
+                "low": 2.9 + i * 0.01,
+                "close": 3.0 + i * 0.01,
+                "volume": (1000 + i) if with_volume else None,
+                "source": "mock",
+            }
         )
     return out
+
+
+def _market_mock(bars: list[dict[str, Any]]) -> Any:
+    """A market adapter stand-in whose get_bars returns the supplied list."""
+    m = type("MarketStub", (), {})()
+    m.get_bars = AsyncMock(return_value=bars)
+    return m
 
 
 # ---------- happy path ----------
@@ -58,8 +64,8 @@ def test_happy_path_multi_indicator(client: TestClient):
         "apps.api.routers.indicators.contract_repo.get_front_month",
         new=AsyncMock(return_value=_contract("NGM26")),
     ), patch(
-        "apps.api.routers.indicators.price_bars_repo.get_bars",
-        new=AsyncMock(return_value=_bars(60)),
+        "apps.api.routers.indicators.get_market",
+        return_value=_market_mock(_bars(60)),
     ), patch(
         "apps.api.services.indicators.cache._get_default_client", return_value=None
     ):
@@ -90,8 +96,8 @@ def test_default_source_is_close(client: TestClient):
         "apps.api.routers.indicators.contract_repo.get_front_month",
         new=AsyncMock(return_value=_contract("NGM26")),
     ), patch(
-        "apps.api.routers.indicators.price_bars_repo.get_bars",
-        new=AsyncMock(return_value=_bars(20)),
+        "apps.api.routers.indicators.get_market",
+        return_value=_market_mock(_bars(20)),
     ), patch(
         "apps.api.services.indicators.cache._get_default_client", return_value=None
     ):
@@ -109,8 +115,8 @@ def test_explicit_source_passes_through(client: TestClient):
         "apps.api.routers.indicators.contract_repo.get_front_month",
         new=AsyncMock(return_value=_contract("NGM26")),
     ), patch(
-        "apps.api.routers.indicators.price_bars_repo.get_bars",
-        new=AsyncMock(return_value=_bars(20)),
+        "apps.api.routers.indicators.get_market",
+        return_value=_market_mock(_bars(20)),
     ), patch(
         "apps.api.services.indicators.cache._get_default_client", return_value=None
     ):
@@ -128,8 +134,8 @@ def test_empty_bars_returns_empty_indicators(client: TestClient):
         "apps.api.routers.indicators.contract_repo.get_front_month",
         new=AsyncMock(return_value=_contract("NGM26")),
     ), patch(
-        "apps.api.routers.indicators.price_bars_repo.get_bars",
-        new=AsyncMock(return_value=[]),
+        "apps.api.routers.indicators.get_market",
+        return_value=_market_mock([]),
     ):
         resp = client.get("/v1/chart/indicators?symbol=NG&spec=ema:21")
     assert resp.status_code == 200
@@ -188,8 +194,8 @@ def test_vwma_without_volume_400(client: TestClient):
         "apps.api.routers.indicators.contract_repo.get_front_month",
         new=AsyncMock(return_value=_contract("NGM26")),
     ), patch(
-        "apps.api.routers.indicators.price_bars_repo.get_bars",
-        new=AsyncMock(return_value=_bars(20, with_volume=False)),
+        "apps.api.routers.indicators.get_market",
+        return_value=_market_mock(_bars(20, with_volume=False)),
     ), patch(
         "apps.api.services.indicators.cache._get_default_client", return_value=None
     ):
@@ -235,8 +241,8 @@ def test_second_call_serves_from_cache(client: TestClient):
         "apps.api.routers.indicators.contract_repo.get_front_month",
         new=AsyncMock(return_value=_contract("NGM26")),
     ), patch(
-        "apps.api.routers.indicators.price_bars_repo.get_bars",
-        new=AsyncMock(return_value=bars),
+        "apps.api.routers.indicators.get_market",
+        return_value=_market_mock(bars),
     ), patch(
         "apps.api.services.indicators.cache._get_default_client", return_value=fake
     ):
