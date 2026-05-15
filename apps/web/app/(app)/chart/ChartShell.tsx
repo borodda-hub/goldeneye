@@ -156,6 +156,7 @@ export function ChartShell({
         onResolutionChange={setResolution}
         indicatorCount={indicators.filter((i) => i.visible).length}
         onOpenIndicators={() => setPickerOpen(true)}
+        onClearIndicators={() => persistAndSet([])}
         contractCode={contractCode}
       />
       <div className="flex flex-1 min-h-0 gap-0">

@@ -6,6 +6,7 @@ const defaultProps = {
   onResolutionChange: vi.fn(),
   indicatorCount: 0,
   onOpenIndicators: vi.fn(),
+  onClearIndicators: vi.fn(),
   contractCode: "NGF26",
 };
 
@@ -59,5 +60,30 @@ describe("ChartToolbar", () => {
   it("contract code is displayed", () => {
     render(<ChartToolbar {...defaultProps} />);
     expect(screen.getByText("NGF26")).toBeInTheDocument();
+  });
+
+  it("clear button appears only when indicatorCount > 0", () => {
+    const { rerender } = render(
+      <ChartToolbar {...defaultProps} indicatorCount={0} />,
+    );
+    expect(
+      screen.queryByLabelText(/clear all indicators/i),
+    ).not.toBeInTheDocument();
+
+    rerender(<ChartToolbar {...defaultProps} indicatorCount={3} />);
+    expect(screen.getByLabelText(/clear all indicators/i)).toBeInTheDocument();
+  });
+
+  it("clicking clear calls onClearIndicators", () => {
+    const onClearIndicators = vi.fn();
+    render(
+      <ChartToolbar
+        {...defaultProps}
+        indicatorCount={2}
+        onClearIndicators={onClearIndicators}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText(/clear all indicators/i));
+    expect(onClearIndicators).toHaveBeenCalled();
   });
 });

@@ -7,6 +7,7 @@ interface Props {
   onResolutionChange: (r: Resolution) => void;
   indicatorCount: number;
   onOpenIndicators: () => void;
+  onClearIndicators: () => void;
   contractCode: string;
 }
 
@@ -15,6 +16,7 @@ export function ChartToolbar({
   onResolutionChange,
   indicatorCount,
   onOpenIndicators,
+  onClearIndicators,
   contractCode,
 }: Props) {
   return (
@@ -43,18 +45,31 @@ export function ChartToolbar({
         ))}
       </div>
 
-      {/* Indicators button */}
-      <button
-        type="button"
-        onClick={onOpenIndicators}
-        className="flex items-center gap-2 px-3 py-1 text-xs font-mono border border-line-2 bg-surface-1 text-ink-2 hover:text-ink-1 hover:bg-surface-2"
-        aria-label="Open indicators picker"
-      >
-        <span>Indicators</span>
+      {/* Indicators button group */}
+      <div className="flex rounded border border-line-2 overflow-hidden">
+        <button
+          type="button"
+          onClick={onOpenIndicators}
+          className="flex items-center gap-2 px-3 py-1 text-xs font-mono bg-surface-1 text-ink-2 hover:text-ink-1 hover:bg-surface-2"
+          aria-label="Open indicators picker"
+        >
+          <span>Indicators</span>
+          {indicatorCount > 0 ? (
+            <span className="text-accent tabular-nums">({indicatorCount})</span>
+          ) : null}
+        </button>
         {indicatorCount > 0 ? (
-          <span className="text-accent tabular-nums">({indicatorCount})</span>
+          <button
+            type="button"
+            onClick={onClearIndicators}
+            className="px-2 py-1 text-xs font-mono border-l border-line-2 bg-surface-1 text-ink-3 hover:text-down hover:bg-surface-2"
+            aria-label="Clear all indicators"
+            title="Clear all indicators"
+          >
+            ×
+          </button>
         ) : null}
-      </button>
+      </div>
 
       {/* Contract code */}
       <span className="font-mono text-xs text-ink-3 ml-auto">
