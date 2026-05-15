@@ -1,8 +1,12 @@
-import type { ConnectionStatus } from "@/lib/realtime";
-import type { FrontMonth, Instrument, VolRegime } from "@/app/(app)/dashboard/types";
-import { NumberCell } from "@/components/NumberCell";
+import type {
+  FrontMonth,
+  Instrument,
+  VolRegime,
+} from "@/app/(app)/dashboard/types";
 import { LiveDot } from "@/components/LiveDot";
+import { NumberCell } from "@/components/NumberCell";
 import { SignalQualityChip } from "@/components/dashboard/SignalQualityChip";
+import type { ConnectionStatus } from "@/lib/realtime";
 
 interface Props {
   instrument: Instrument;
@@ -50,11 +54,14 @@ export function HeaderRow({
   feedMode = "live",
 }: Props) {
   const displayPrice = livePrice ?? frontMonth.last_price;
-  const isUp = frontMonth.change_abs > 0;
-  const isDown = frontMonth.change_abs < 0;
+  const changeAbs = frontMonth.change_abs;
+  const changePct = frontMonth.change_pct;
+  const hasChange = changeAbs !== null && changePct !== null;
+  const isUp = hasChange && (changeAbs as number) > 0;
+  const isDown = hasChange && (changeAbs as number) < 0;
   const changeColor = isUp ? "text-up" : isDown ? "text-down" : "text-flat";
   const changeSign = isUp ? "▲" : isDown ? "▼" : "";
-  const pctSign = frontMonth.change_pct > 0 ? "+" : "";
+  const pctSign = hasChange && (changePct as number) > 0 ? "+" : "";
 
   return (
     <div className="flex items-center justify-between gap-6 pb-3 border-b border-line-1">
@@ -74,13 +81,19 @@ export function HeaderRow({
       {/* Center: price */}
       <div className="flex items-center gap-3">
         <NumberCell value={displayPrice} precision={3} />
-        <span className={`font-mono text-sm tabular-nums ${changeColor}`}>
-          {changeSign} {Math.abs(frontMonth.change_abs).toFixed(3)}
-        </span>
-        <span className={`font-mono text-sm tabular-nums ${changeColor}`}>
-          ({pctSign}
-          {(frontMonth.change_pct * 100).toFixed(2)}%)
-        </span>
+        {hasChange ? (
+          <>
+            <span className={`font-mono text-sm tabular-nums ${changeColor}`}>
+              {changeSign} {Math.abs(changeAbs as number).toFixed(3)}
+            </span>
+            <span className={`font-mono text-sm tabular-nums ${changeColor}`}>
+              ({pctSign}
+              {((changePct as number) * 100).toFixed(2)}%)
+            </span>
+          </>
+        ) : (
+          <span className="font-mono text-sm tabular-nums text-ink-4">—</span>
+        )}
       </div>
 
       {/* Right: signal quality, vol regime, status, time */}

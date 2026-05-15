@@ -1,15 +1,22 @@
 interface Props {
-  value: number;
+  value: number | null | undefined;
   unit?: string;
-  delta?: number;
+  delta?: number | null;
   precision?: number;
 }
 
+/**
+ * Renders a numeric value with optional unit and signed delta. Null / undefined
+ * inputs render as an em-dash placeholder so a missing price (e.g. Yahoo hasn't
+ * warmed up for a newly-listed contract) doesn't throw a TypeError on
+ * `null.toFixed()` and crash the whole page.
+ */
 export function NumberCell({ value, unit, delta, precision = 3 }: Props) {
-  const formatted = value.toFixed(precision);
+  const formatted =
+    value === null || value === undefined ? "—" : value.toFixed(precision);
 
   let deltaEl: React.ReactNode = null;
-  if (delta !== undefined) {
+  if (delta !== undefined && delta !== null) {
     if (delta > 0) {
       deltaEl = (
         <span className="text-up ml-1">

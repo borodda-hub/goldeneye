@@ -7,9 +7,12 @@ export interface Instrument {
 
 export interface FrontMonth {
   contract_code: string;
-  last_price: number;
-  change_abs: number;
-  change_pct: number;
+  // The backend serializer can return null for any of these when the market
+  // adapter has no live data yet (e.g. Yahoo cache hasn't warmed up for a
+  // newly-listed contract). Renderers must guard.
+  last_price: number | null;
+  change_abs: number | null;
+  change_pct: number | null;
   as_of: string;
 }
 

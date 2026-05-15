@@ -1,5 +1,9 @@
 "use client";
 
+import type { ChartBarsResponse } from "@/app/(app)/chart/types";
+import { colors } from "@/lib/colors";
+import { useChartBars } from "@/lib/queries";
+import { useChartColor } from "@/lib/useChartColor";
 import { useState } from "react";
 import {
   Area,
@@ -9,14 +13,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useChartBars } from "@/lib/queries";
-import type { ChartBarsResponse } from "@/app/(app)/chart/types";
-import { colors } from "@/lib/colors";
-import { useChartColor } from "@/lib/useChartColor";
 import { ChartColorSwatch } from "./ChartColorSwatch";
 
 interface Props {
   contractCode: string;
+  /** Used in the card header so the title isn't always "NG". */
+  symbol?: string;
 }
 
 type TimeframeKey = "1Y" | "1M" | "5D" | "1D" | "1H";
@@ -33,7 +35,12 @@ interface TimeframeSpec {
 }
 
 const TIMEFRAMES: Record<TimeframeKey, TimeframeSpec> = {
-  "1Y": { resolution: "1d", rangeDays: 365, showTime: false, label: "1Y Daily" },
+  "1Y": {
+    resolution: "1d",
+    rangeDays: 365,
+    showTime: false,
+    label: "1Y Daily",
+  },
   "1M": { resolution: "1d", rangeDays: 30, showTime: false, label: "1M Daily" },
   "5D": { resolution: "15m", rangeDays: 5, showTime: true, label: "5D 15m" },
   "1D": { resolution: "5m", rangeDays: 0, showTime: true, label: "1D 5m" },
@@ -61,7 +68,7 @@ function formatTooltipTs(iso: string, showTime: boolean): string {
   }
 }
 
-export function PriceMiniChart({ contractCode }: Props) {
+export function PriceMiniChart({ contractCode, symbol = "NG" }: Props) {
   const [timeframe, setTimeframe] = useState<TimeframeKey>("1M");
   const [chartColor, setChartColor] = useChartColor();
   const spec = TIMEFRAMES[timeframe];
@@ -69,7 +76,12 @@ export function PriceMiniChart({ contractCode }: Props) {
   const today = toISODate(new Date());
   const from = toISODate(new Date(Date.now() - spec.rangeDays * 86400_000));
 
-  const { data, isLoading } = useChartBars(contractCode, spec.resolution, from, today);
+  const { data, isLoading } = useChartBars(
+    contractCode,
+    spec.resolution,
+    from,
+    today,
+  );
   const chartData = (data as ChartBarsResponse | undefined)?.bars ?? [];
 
   return (
@@ -79,11 +91,15 @@ export function PriceMiniChart({ contractCode }: Props) {
     >
       <div className="flex items-center justify-between gap-3 px-3 pt-2 pb-1">
         <span className="text-xs text-ink-3 uppercase tracking-widest">
-          NG · {spec.label}
+          {symbol} · {spec.label}
         </span>
         <div className="flex items-center gap-3">
           <ChartColorSwatch value={chartColor.key} onChange={setChartColor} />
-          <div className="flex items-center gap-1" role="tablist" aria-label="Timeframe">
+          <div
+            className="flex items-center gap-1"
+            role="tablist"
+            aria-label="Timeframe"
+          >
             {TIMEFRAME_ORDER.map((key) => {
               const active = key === timeframe;
               return (
@@ -114,7 +130,10 @@ export function PriceMiniChart({ contractCode }: Props) {
       ) : (
         <div className="flex-1 min-h-0">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
+            <AreaChart
+              data={chartData}
+              margin={{ top: 4, right: 8, bottom: 4, left: 0 }}
+            >
               <XAxis dataKey="ts" hide />
               <YAxis domain={["auto", "auto"]} hide />
               <Tooltip
@@ -124,7 +143,9 @@ export function PriceMiniChart({ contractCode }: Props) {
                   fontSize: "11px",
                   color: colors.ink1,
                 }}
-                labelFormatter={(label: string) => formatTooltipTs(label, spec.showTime)}
+                labelFormatter={(label: string) =>
+                  formatTooltipTs(label, spec.showTime)
+                }
                 formatter={(v: number) => [v.toFixed(3), "Close"]}
               />
               <Area

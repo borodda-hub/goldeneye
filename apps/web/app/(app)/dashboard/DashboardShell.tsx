@@ -1,18 +1,18 @@
 "use client";
 
+import { ResizableSplit } from "@/components/ResizableSplit";
+import { DashboardLiveBar } from "@/components/dashboard/DashboardLiveBar";
+import { DashboardTicker } from "@/components/dashboard/DashboardTicker";
+import { DirectionalBiasCard } from "@/components/dashboard/DirectionalBiasCard";
+import { FuturesCurveCard } from "@/components/dashboard/FuturesCurveCard";
+import { HeaderRow } from "@/components/dashboard/HeaderRow";
+import { PriceMiniChart } from "@/components/dashboard/PriceMiniChart";
+import { RecentEventsList } from "@/components/dashboard/RecentEventsList";
+import { WorkingThesisCard } from "@/components/dashboard/WorkingThesisCard";
+import { WatchlistSidebar } from "@/components/instruments/WatchlistSidebar";
 import { useDashboardSummary } from "@/lib/queries";
 import { useChannel } from "@/lib/realtime";
 import { useActiveInstrument } from "@/lib/useActiveInstrument";
-import { HeaderRow } from "@/components/dashboard/HeaderRow";
-import { DirectionalBiasCard } from "@/components/dashboard/DirectionalBiasCard";
-import { PriceMiniChart } from "@/components/dashboard/PriceMiniChart";
-import { FuturesCurveCard } from "@/components/dashboard/FuturesCurveCard";
-import { RecentEventsList } from "@/components/dashboard/RecentEventsList";
-import { DashboardLiveBar } from "@/components/dashboard/DashboardLiveBar";
-import { DashboardTicker } from "@/components/dashboard/DashboardTicker";
-import { WorkingThesisCard } from "@/components/dashboard/WorkingThesisCard";
-import { WatchlistSidebar } from "@/components/instruments/WatchlistSidebar";
-import { ResizableSplit } from "@/components/ResizableSplit";
 import type { DashboardSummary } from "./types";
 
 interface Props {
@@ -37,8 +37,7 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
   const fromQuery = fetchedData as DashboardSummary | undefined;
   // Initial SSR payload is for initialSymbol; only use it when nothing newer
   // has come back from the client-side hook.
-  const summary =
-    fromQuery ?? (symbol === initialSymbol ? initialData : null);
+  const summary = fromQuery ?? (symbol === initialSymbol ? initialData : null);
 
   const { data: tick, status } = useChannel<{
     ts: string;
@@ -95,6 +94,7 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
                 <div className="h-full min-h-0 pr-2">
                   <PriceMiniChart
                     contractCode={summary.front_month.contract_code}
+                    symbol={summary.instrument.symbol}
                   />
                 </div>
               }
