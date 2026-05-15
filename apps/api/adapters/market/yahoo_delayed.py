@@ -167,7 +167,14 @@ class YahooDelayedMarketAdapter:
         return bars[-1] if bars else None
 
     async def get_curve_snapshot(self, symbol: str, as_of: datetime) -> list[dict[str, Any]]:
-        codes = front_month_codes(symbol=symbol, start=as_of.date(), count=12)
+        as_of_date = as_of.date()
+        codes = front_month_codes(symbol=symbol, start=as_of_date, count=12)
+        # Drop any codes whose computed expiry is already in the past — Yahoo
+        # will sometimes still return stale prices for expired tickers (or
+        # silently fall back to the continuous front-month), which would put
+        # an already-rolled contract at curve[0] and mislead any consumer
+        # that treats curve[0] as "the current front month".
+        codes = [c for c in codes if _expiry_for_code(c) and _expiry_for_code(c) >= as_of_date]  # type: ignore[operator]
         # Pull latest 1d closes for each contract in parallel.
         results = await asyncio.gather(
             *(self._get_bars_cached(code, "1d") for code in codes),

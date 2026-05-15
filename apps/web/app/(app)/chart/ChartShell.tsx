@@ -4,12 +4,18 @@ import { ChartFooter } from "@/components/chart/ChartFooter";
 import { ChartToolbar } from "@/components/chart/ChartToolbar";
 import { EventDrawer } from "@/components/chart/EventDrawer";
 import { IndicatorPicker } from "@/components/chart/IndicatorPicker";
+import type { InstrumentRow } from "@/lib/api";
 import {
   type IndicatorSpec,
   specsToQueryParam,
   storageKey,
 } from "@/lib/chart/indicatorRegistry";
-import { useChartBars, useChartCurve, useChartIndicators } from "@/lib/queries";
+import {
+  useChartBars,
+  useChartCurve,
+  useChartIndicators,
+  useInstruments,
+} from "@/lib/queries";
 import { useChannel } from "@/lib/realtime";
 import { useActiveInstrument } from "@/lib/useActiveInstrument";
 import dynamic from "next/dynamic";
@@ -88,15 +94,28 @@ export function ChartShell({
     .toISOString()
     .split("T")[0];
 
-  // Resolve front-month contract live whenever activeSymbol changes. Falls
-  // back to the SSR-provided initialContractCode (when it's for the active
-  // symbol) and then to a symbol-specific default.
+  // Resolve front-month contract. Primary source is /v1/instruments which
+  // returns the DB-flagged front month per symbol — that's the only path
+  // guaranteed to point at a contract that actually exists in our chain.
+  // The curve endpoint (useChartCurve) is fed by the market adapter and
+  // generates contiguous monthly codes, which include past-expiry and
+  // non-existent contracts for symbols on irregular cycles (gold, silver).
+  // The curve fallback below keeps the behavior for NG/CL alive while
+  // instruments is still loading.
+  const { data: instruments } = useInstruments();
+  type InstrumentsResp = { instruments?: InstrumentRow[] };
+  const dbFrontCode = (
+    instruments as InstrumentsResp | undefined
+  )?.instruments?.find((i) => i.symbol === activeSymbol)?.quote
+    ?.front_month_code;
+
   const { data: curve } = useChartCurve(activeSymbol, today);
   type CurveItem = { contract_code: string };
   type CurveData = { curve?: CurveItem[] };
   const curveItems = (curve as CurveData | undefined)?.curve ?? [];
   const liveFrontCode = curveItems[0]?.contract_code;
   const contractCode =
+    dbFrontCode ??
     liveFrontCode ??
     (activeSymbol === initialSymbol
       ? initialContractCode
