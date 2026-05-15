@@ -32,5 +32,65 @@
       "description": "NYMEX WTI Crude Oil Futures (Light Sweet)",
       "trading_hours": "Sunday–Friday 18:00–17:00 ET"
     }
+  },
+  {
+    "symbol": "HO",
+    "name": "NY Harbor ULSD (Heating Oil)",
+    "exchange": "NYMEX",
+    "asset_class": "commodity",
+    "currency": "USD",
+    "unit": "gallon",
+    "contract_size": 42000,
+    "tick_size": 0.0001,
+    "metadata": {
+      "yahoo_ticker": "HO=F",
+      "description": "NYMEX New York Harbor ULSD Futures",
+      "trading_hours": "Sunday–Friday 18:00–17:00 ET"
+    }
+  },
+  {
+    "symbol": "RB",
+    "name": "RBOB Gasoline",
+    "exchange": "NYMEX",
+    "asset_class": "commodity",
+    "currency": "USD",
+    "unit": "gallon",
+    "contract_size": 42000,
+    "tick_size": 0.0001,
+    "metadata": {
+      "yahoo_ticker": "RB=F",
+      "description": "NYMEX RBOB Gasoline Futures",
+      "trading_hours": "Sunday–Friday 18:00–17:00 ET"
+    }
+  },
+  {
+    "symbol": "GC",
+    "name": "Gold",
+    "exchange": "COMEX",
+    "asset_class": "metal",
+    "currency": "USD",
+    "unit": "troy ounce",
+    "contract_size": 100,
+    "tick_size": 0.10,
+    "metadata": {
+      "yahoo_ticker": "GC=F",
+      "description": "COMEX Gold Futures",
+      "trading_hours": "Sunday–Friday 18:00–17:00 ET"
+    }
+  },
+  {
+    "symbol": "SI",
+    "name": "Silver",
+    "exchange": "COMEX",
+    "asset_class": "metal",
+    "currency": "USD",
+    "unit": "troy ounce",
+    "contract_size": 5000,
+    "tick_size": 0.005,
+    "metadata": {
+      "yahoo_ticker": "SI=F",
+      "description": "COMEX Silver Futures",
+      "trading_hours": "Sunday–Friday 18:00–17:00 ET"
+    }
   }
 ]

@@ -142,5 +142,149 @@
     "contract_code": "CLM27",
     "expiry_date": "2027-05-20",
     "is_front_month": false
+  },
+  {
+    "instrument_symbol": "HO",
+    "contract_code": "HOM26",
+    "expiry_date": "2026-05-29",
+    "is_front_month": true
+  },
+  {
+    "instrument_symbol": "HO",
+    "contract_code": "HON26",
+    "expiry_date": "2026-06-30",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "HO",
+    "contract_code": "HOQ26",
+    "expiry_date": "2026-07-31",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "HO",
+    "contract_code": "HOU26",
+    "expiry_date": "2026-08-31",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "HO",
+    "contract_code": "HOV26",
+    "expiry_date": "2026-09-30",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "HO",
+    "contract_code": "HOX26",
+    "expiry_date": "2026-10-30",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "RB",
+    "contract_code": "RBM26",
+    "expiry_date": "2026-05-29",
+    "is_front_month": true
+  },
+  {
+    "instrument_symbol": "RB",
+    "contract_code": "RBN26",
+    "expiry_date": "2026-06-30",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "RB",
+    "contract_code": "RBQ26",
+    "expiry_date": "2026-07-31",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "RB",
+    "contract_code": "RBU26",
+    "expiry_date": "2026-08-31",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "RB",
+    "contract_code": "RBV26",
+    "expiry_date": "2026-09-30",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "RB",
+    "contract_code": "RBX26",
+    "expiry_date": "2026-10-30",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "GC",
+    "contract_code": "GCM26",
+    "expiry_date": "2026-06-26",
+    "is_front_month": true
+  },
+  {
+    "instrument_symbol": "GC",
+    "contract_code": "GCQ26",
+    "expiry_date": "2026-08-27",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "GC",
+    "contract_code": "GCV26",
+    "expiry_date": "2026-10-28",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "GC",
+    "contract_code": "GCZ26",
+    "expiry_date": "2026-12-29",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "GC",
+    "contract_code": "GCG27",
+    "expiry_date": "2027-02-25",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "GC",
+    "contract_code": "GCJ27",
+    "expiry_date": "2027-04-28",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "SI",
+    "contract_code": "SIN26",
+    "expiry_date": "2026-06-26",
+    "is_front_month": true
+  },
+  {
+    "instrument_symbol": "SI",
+    "contract_code": "SIU26",
+    "expiry_date": "2026-08-27",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "SI",
+    "contract_code": "SIZ26",
+    "expiry_date": "2026-12-29",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "SI",
+    "contract_code": "SIH27",
+    "expiry_date": "2027-02-25",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "SI",
+    "contract_code": "SIK27",
+    "expiry_date": "2027-04-28",
+    "is_front_month": false
+  },
+  {
+    "instrument_symbol": "SI",
+    "contract_code": "SIN27",
+    "expiry_date": "2027-06-26",
+    "is_front_month": false
   }
 ]

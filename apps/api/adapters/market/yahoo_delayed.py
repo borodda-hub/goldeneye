@@ -9,7 +9,11 @@ dashboard never breaks even when Yahoo is unreachable.
 
 Yahoo symbol convention:
     - "NG=F"             — continuous front-month NG futures
-    - "NG{M}{YY}.NYM"    — a specific contract, e.g. "NGM26.NYM" = Jun 2026
+    - "NG{M}{YY}.NYM"    — a NYMEX-listed contract, e.g. "NGM26.NYM" = Jun 2026
+    - "GC{M}{YY}.CMX"    — a COMEX-listed contract (metals: GC, SI)
+
+When adding a new asset class, register its exchange suffix in
+`_EXCHANGE_SUFFIX_BY_PREFIX` below.
 
 Returns the same dict shape as MockMarketAdapter so the rest of the stack
 (routers/dashboard.py, paper engine, ensemble) doesn't care which adapter
@@ -57,9 +61,30 @@ _MONTH_LETTERS = "FGHJKMNQUVXZ"  # Jan, Feb, ..., Dec
 # Per-(contract, resolution) bar cache; 5 min TTL (Yahoo is 15-min delayed).
 _CACHE_TTL_SECONDS = 5 * 60
 
+# Yahoo's exchange-suffix convention varies by listing venue. Energy futures
+# (NG, CL, HO, RB) are NYMEX; metals (GC, SI, HG) are COMEX. Adding a new
+# commodity = adding one row here (or rely on the .NYM default if you don't
+# know the listing yet — Yahoo will return empty for a wrong-suffix request,
+# which surfaces as "no data" rather than a crash).
+_EXCHANGE_SUFFIX_BY_PREFIX: dict[str, str] = {
+    "NG": ".NYM",
+    "CL": ".NYM",
+    "HO": ".NYM",
+    "RB": ".NYM",
+    "GC": ".CMX",
+    "SI": ".CMX",
+    "HG": ".CMX",
+}
+_DEFAULT_EXCHANGE_SUFFIX = ".NYM"
+
 
 def contract_to_yahoo_symbol(contract_code: str | None, symbol: str = "NG") -> str:
     """Map our contract_code to a Yahoo Finance ticker.
+
+    Resolves the exchange suffix from the contract prefix (e.g. GCM26 → COMEX
+    .CMX, NGM26 → NYMEX .NYM). Unknown prefixes fall back to .NYM — Yahoo
+    will return an empty body for a wrong-listing request, which surfaces
+    upstream as a quiet "no data" rather than a crash.
 
     Falls back to the continuous front-month "{SYMBOL}=F" when contract_code is
     empty or doesn't match our expected pattern.
@@ -67,9 +92,11 @@ def contract_to_yahoo_symbol(contract_code: str | None, symbol: str = "NG") -> s
     if not contract_code:
         return f"{symbol}=F"
     code = contract_code.upper().strip()
-    # Expected pattern: <prefix><month-letter><2-digit-year> e.g. NGM26
+    # Expected pattern: <prefix><month-letter><2-digit-year> e.g. NGM26 or GCM26
     if len(code) >= 4 and code[-3] in _MONTH_LETTERS and code[-2:].isdigit():
-        return f"{code}.NYM"
+        prefix = code[:-3]
+        suffix = _EXCHANGE_SUFFIX_BY_PREFIX.get(prefix, _DEFAULT_EXCHANGE_SUFFIX)
+        return f"{code}{suffix}"
     # Fallback — treat as continuous front-month.
     return f"{symbol}=F"
 
