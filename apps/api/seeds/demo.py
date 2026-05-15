@@ -196,11 +196,14 @@ async def main(fresh: bool = False) -> None:
 
             # ── Step 6b: Example model_forecasts for signal-lab history ─────
             print("step 6b: seeding model_forecasts for the signal lab history …")
-            f_count = await example_forecasts.seed_forecasts(session)
-            if f_count == 0:
+            total = 0
+            for sym in ("NG", "CL", "HO", "RB", "GC", "SI"):
+                n = await example_forecasts.seed_forecasts(session, symbol=sym)
+                total += n
+                if n:
+                    print(f"  {sym}: inserted {n} forecast rows")
+            if total == 0:
                 print("  forecasts already present — skipped")
-            else:
-                print(f"  inserted {f_count} forecast rows")
 
         # ── Step 7: Validate ────────────────────────────────────────────────
         print("step 7: running validation checks …")

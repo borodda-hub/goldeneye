@@ -6,6 +6,7 @@ from datetime import datetime, date, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from apps.api.adapters.registry import get_market
 from apps.api.db.session import get_db
 from apps.api.repos import instruments as instr_repo
 from apps.api.repos import contracts as contract_repo
@@ -169,7 +170,6 @@ async def get_signal_history(
         raise HTTPException(status_code=404, detail=f"Instrument {symbol!r} not found")
 
     front = await contract_repo.get_front_month(session, instrument.id)
-    contract_id = front.id if front else instrument.id
 
     from_dt = datetime(from_.year, from_.month, from_.day)
     to_dt = datetime(to.year, to.month, to.day, 23, 59, 59)
@@ -187,6 +187,46 @@ async def get_signal_history(
             return dt.astimezone(timezone.utc).replace(tzinfo=None)
         return dt
 
+    # Pre-load daily closes once for the realized-pct lookup. Pulls from the
+    # market adapter (same source /v1/chart/bars uses) so every symbol scores
+    # regardless of whether its price_bars table is populated — only NGM26 is
+    # seeded today, but the adapter has all front-months live from Yahoo.
+    closes_by_date: dict[date, float] = {}
+    if history and front is not None:
+        oldest = min(_naive_utc(f.generated_at) for f in history)
+        newest_horizon = max(
+            _naive_utc(f.generated_at)
+            + timedelta(days=_HORIZON_DAYS.get(f.horizon, 1))
+            for f in history
+        )
+        try:
+            market = get_market()
+            adapter_bars = await market.get_bars(
+                front.contract_code,
+                "1d",
+                from_dt=oldest - timedelta(days=2),
+                to_dt=newest_horizon + timedelta(days=2),
+            )
+            for b in adapter_bars:
+                ts = b.get("ts")
+                close = b.get("close")
+                if isinstance(ts, datetime) and close is not None:
+                    closes_by_date[ts.date()] = float(close)
+        except Exception:
+            # Adapter unreachable — every row will fall back to "pending"
+            # but the history still renders.
+            closes_by_date = {}
+
+    def _close_on_or_before(target: date) -> float | None:
+        """Return the close for `target`, or the closest prior date (handles
+        weekends + holidays). Bounded to a week-back search to avoid pulling
+        in a price from a previous month."""
+        for delta in range(0, 7):
+            c = closes_by_date.get(target - timedelta(days=delta))
+            if c is not None:
+                return c
+        return None
+
     now = datetime.utcnow()
     rows = []
     for f in history:
@@ -195,27 +235,13 @@ async def get_signal_history(
         horizon_end = generated_at_naive + timedelta(days=horizon_days)
         horizon_elapsed = horizon_end <= now
 
-        # Look up realized price
+        # Look up realized price from the pre-loaded close-by-date map.
         realized_pct: float | None = None
         if horizon_elapsed:
-            # Get close at generated_at and at horizon_end
-            start_bars = await price_repo.get_bars(
-                session, contract_id, "1d",
-                generated_at_naive - timedelta(days=1),
-                generated_at_naive + timedelta(days=1),
-                limit=2,
-            )
-            end_bars = await price_repo.get_bars(
-                session, contract_id, "1d",
-                horizon_end - timedelta(days=1),
-                horizon_end + timedelta(days=1),
-                limit=2,
-            )
-            if start_bars and end_bars:
-                start_close = float(start_bars[-1].close)
-                end_close = float(end_bars[-1].close)
-                if start_close > 0:
-                    realized_pct = (end_close / start_close) - 1.0
+            start_close = _close_on_or_before(generated_at_naive.date())
+            end_close = _close_on_or_before(horizon_end.date())
+            if start_close is not None and end_close is not None and start_close > 0:
+                realized_pct = (end_close / start_close) - 1.0
 
         score = score_forecast(
             direction=f.direction,
