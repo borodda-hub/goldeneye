@@ -48,9 +48,9 @@ def test_lists_two_instruments_with_quotes(client: TestClient):
             return _contract("NGM26")
         return _contract("CLN26")
 
-    async def fake_closes(session, contract_id, n=2):
-        # Mock 2 closes so quote computes change_abs/change_pct.
-        return [3.20, 3.15] if contract_id else []
+    async def fake_closes(session, *, contract_id, contract_code, n=2):
+        # Helper returns oldest→newest. So prev=3.15, last=3.20.
+        return [3.15, 3.20] if contract_id else []
 
     with patch(
         "apps.api.routers.instruments.instr_repo.get_all",
@@ -59,7 +59,7 @@ def test_lists_two_instruments_with_quotes(client: TestClient):
         "apps.api.routers.instruments.contract_repo.get_front_month",
         new=AsyncMock(side_effect=fake_front),
     ), patch(
-        "apps.api.routers.instruments.price_repo.get_latest_n_closes",
+        "apps.api.routers.instruments.get_latest_closes",
         new=AsyncMock(side_effect=fake_closes),
     ):
         resp = client.get("/v1/instruments")
@@ -103,7 +103,7 @@ def test_quote_partial_when_only_one_close(client: TestClient):
         "apps.api.routers.instruments.contract_repo.get_front_month",
         new=AsyncMock(return_value=_contract("NGM26")),
     ), patch(
-        "apps.api.routers.instruments.price_repo.get_latest_n_closes",
+        "apps.api.routers.instruments.get_latest_closes",
         new=AsyncMock(return_value=[3.20]),
     ):
         resp = client.get("/v1/instruments")
@@ -122,8 +122,10 @@ def test_price_lookup_failure_doesnt_break_response(client: TestClient):
         "apps.api.routers.instruments.contract_repo.get_front_month",
         new=AsyncMock(return_value=_contract("NGM26")),
     ), patch(
-        "apps.api.routers.instruments.price_repo.get_latest_n_closes",
-        new=AsyncMock(side_effect=RuntimeError("price layer crashed")),
+        # Helper swallows internal failures and returns [] — verify the
+        # router degrades gracefully when the lookup yields nothing.
+        "apps.api.routers.instruments.get_latest_closes",
+        new=AsyncMock(return_value=[]),
     ):
         resp = client.get("/v1/instruments")
     assert resp.status_code == 200

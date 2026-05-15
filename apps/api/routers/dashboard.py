@@ -9,6 +9,7 @@ from apps.api.db.session import get_db
 from apps.api.repos import instruments as instr_repo
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import price_bars as price_repo
+from apps.api.services.price_lookup import get_latest_closes
 from apps.api.repos import news as news_repo
 from apps.api.adapters.registry import get_market
 from apps.api.services.model_registry import ForecastContext, run_all
@@ -68,7 +69,12 @@ async def get_summary(
     ]
 
     # Ensemble signal
-    closes = await price_repo.get_latest_n_closes(session, front.id if front else instrument.id, n=100)
+    closes = await get_latest_closes(
+        session,
+        contract_id=front.id if front else None,
+        contract_code=front.contract_code if front else None,
+        n=100,
+    )
     ctx = ForecastContext(symbol=symbol, closes=closes)
     results = await run_all(ctx)
     ensemble = compute_ensemble(results)

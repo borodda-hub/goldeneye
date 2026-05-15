@@ -12,6 +12,7 @@ from apps.api.repos import instruments as instr_repo
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import price_bars as price_repo
 from apps.api.repos import forecasts as forecast_repo
+from apps.api.services.price_lookup import get_latest_closes
 from apps.api.services.model_registry import ForecastContext, run_all
 from apps.api.services.ensemble import compute_ensemble
 from apps.api.services.llm_explainer import explain_signal
@@ -32,8 +33,11 @@ async def get_current_signal(
         raise HTTPException(status_code=404, detail=f"Instrument {symbol!r} not found")
 
     front = await contract_repo.get_front_month(session, instrument.id)
-    closes = await price_repo.get_latest_n_closes(
-        session, front.id if front else instrument.id, n=100
+    closes = await get_latest_closes(
+        session,
+        contract_id=front.id if front else None,
+        contract_code=front.contract_code if front else None,
+        n=100,
     )
 
     # Fetch alt-data for xgboost from the eia + cot repos. The xgboost

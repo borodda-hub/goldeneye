@@ -10,6 +10,7 @@ from apps.api.db.session import get_db
 from apps.api.repos import instruments as instr_repo
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import price_bars as price_repo
+from apps.api.services.price_lookup import get_latest_closes
 from apps.api.repos import scenarios as scenario_repo
 from apps.api.repos import journal as journal_repo
 from apps.api.services.model_registry import ForecastContext, run_all
@@ -60,8 +61,11 @@ async def explain_signal_endpoint(
         raise HTTPException(status_code=404, detail=f"Instrument {req.symbol!r} not found")
 
     front = await contract_repo.get_front_month(session, instrument.id)
-    closes = await price_repo.get_latest_n_closes(
-        session, front.id if front else instrument.id, n=100
+    closes = await get_latest_closes(
+        session,
+        contract_id=front.id if front else None,
+        contract_code=front.contract_code if front else None,
+        n=100,
     )
     ctx = ForecastContext(symbol=req.symbol, closes=closes)
     results = await run_all(ctx)

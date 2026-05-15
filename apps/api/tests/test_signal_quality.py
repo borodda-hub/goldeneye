@@ -206,7 +206,7 @@ def test_endpoint_404_when_symbol_unknown(client: TestClient):
 
 def test_endpoint_happy_path_returns_grade_and_subscores(client: TestClient):
     instrument = type("I", (), {"id": uuid.uuid4()})()
-    front = type("C", (), {"id": uuid.uuid4()})()
+    front = type("C", (), {"id": uuid.uuid4(), "contract_code": "NGM26"})()
     fake_result = sq.SignalQualityResult(
         grade="A",
         total_score=82,
@@ -232,7 +232,7 @@ def test_endpoint_happy_path_returns_grade_and_subscores(client: TestClient):
         "apps.api.routers.signal_quality.contract_repo.get_front_month",
         new=AsyncMock(return_value=front),
     ), patch(
-        "apps.api.routers.signal_quality.price_repo.get_latest_n_closes",
+        "apps.api.routers.signal_quality.get_latest_closes",
         new=AsyncMock(return_value=[3.0] * 100),
     ), patch(
         "apps.api.routers.signal_quality.run_all",

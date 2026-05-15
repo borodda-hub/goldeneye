@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from apps.api.db.session import get_db
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
-from apps.api.repos import price_bars as price_repo
+from apps.api.services.price_lookup import get_latest_closes
 
 router = APIRouter(prefix="/v1/instruments", tags=["instruments"])
 
@@ -48,21 +48,21 @@ async def list_instruments(
             "as_of": None,
         }
         if front is not None:
-            try:
-                closes = await price_repo.get_latest_n_closes(
-                    session, front.id, n=2
-                )
-            except Exception as exc:  # defensive — never break the list
-                logger.warning("price lookup failed for %s: %s", instrument.symbol, exc)
-                closes = []
+            closes = await get_latest_closes(
+                session,
+                contract_id=front.id,
+                contract_code=front.contract_code,
+                n=2,
+            )
+            # closes is oldest-first; "last" close is the most recent.
             if len(closes) >= 1:
-                quote["last_price"] = float(closes[0])
-            if len(closes) >= 2 and closes[1]:
-                delta = float(closes[0]) - float(closes[1])
+                quote["last_price"] = float(closes[-1])
+            if len(closes) >= 2 and closes[-2]:
+                prev = float(closes[-2])
+                last = float(closes[-1])
+                delta = last - prev
                 quote["change_abs"] = delta
-                quote["change_pct"] = (
-                    delta / float(closes[1]) if float(closes[1]) else None
-                )
+                quote["change_pct"] = delta / prev if prev else None
 
         out.append(
             {
