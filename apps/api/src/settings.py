@@ -17,6 +17,14 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     debug: bool = False
 
+    # Comma-separated browser origins permitted to call this API. Defaults
+    # cover the local dev URLs; in prod, set CORS_ALLOWED_ORIGINS to the
+    # deployed web origin (e.g. "https://app.example.com").
+    cors_allowed_origins: str = (
+        "http://localhost:3000,http://127.0.0.1:3000,"
+        "http://localhost:3001,http://127.0.0.1:3001"
+    )
+
     llm_mode: Literal["fake", "real"] = "fake"
     llm_model_fast: str = "claude-haiku-4-5-20251001"
     llm_model_smart: str = "claude-sonnet-4-6"

@@ -5,6 +5,12 @@ import { InstrumentSwitcher } from "@/components/instruments/InstrumentSwitcher"
 import { WalkthroughButton } from "@/components/onboarding/WalkthroughButton";
 import { WalkthroughProvider } from "@/components/onboarding/WalkthroughProvider";
 
+// The (app) routes all fetch live data on render; static prerender at build
+// time would either fail (no API reachable) or freeze API responses into HTML.
+// Force per-request server rendering so deploys don't need the API alive at
+// build time and pages always serve fresh data.
+export const dynamic = "force-dynamic";
+
 const NAV_ITEMS = [
 	{ href: "/dashboard", label: "Dashboard" },
 	{ href: "/chart", label: "Chart" },

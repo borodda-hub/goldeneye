@@ -62,6 +62,7 @@ docker compose -f infra/docker-compose.yml exec api python -m apps.api.seeds.dem
 |---|---|---|---|
 | `DATABASE_URL` | api | yes | `postgresql+asyncpg://user:pass@host:5432/db` |
 | `REDIS_URL` | api | yes | `redis://host:6379/0` |
+| `CORS_ALLOWED_ORIGINS` | api | yes in prod | Comma-separated browser origins. **Must include the deployed web URL** or every fetch will fail CORS. Defaults cover local dev (`localhost:3000` + `:3001`). Example: `https://goldeneye.example.com` |
 | `LLM_MODE` | api | yes | `fake` for demo; `anthropic` / `openai` if you wire real LLM |
 | `LLM_MODEL_FAST` | api | if real LLM | e.g. `claude-haiku-4-5-20251001` |
 | `LLM_MODEL_SMART` | api | if real LLM | e.g. `claude-sonnet-4-6` |
@@ -90,11 +91,35 @@ Higher reliability, ~$25-40/month for a low-traffic demo.
 
 | Component | Provider | Notes |
 |---|---|---|
-| Frontend (Next.js) | **Vercel** | Auto-deploys from GitHub. Set `NEXT_PUBLIC_API_BASE` and `NEXT_PUBLIC_WS_URL` in project env. |
-| Backend (FastAPI) | **Railway** | Dockerfile build; auto-deploy from main. `$5/mo` starter plan. |
+| Frontend (Next.js) | **Vercel** | Auto-deploys from GitHub. Set `NEXT_PUBLIC_API_BASE` and `NEXT_PUBLIC_WS_URL` in project env. No Dockerfile needed — Vercel builds Next.js natively. |
+| Backend (FastAPI) | **Railway** | Builds `apps/api/Dockerfile`. **Set the build context to the repo root, not `apps/api/`** — the Dockerfile copies `apps/__init__.py` + `infra/migrations/` which live above. The CMD runs `alembic upgrade head` then `uvicorn` on `$PORT`. |
 | Postgres + TimescaleDB | **Neon** (or Railway Postgres) | Neon free tier covers the demo. Enable `timescaledb` extension via SQL. |
 | Redis | **Upstash** | Free tier sufficient. Use the `redis://default:<pass>@<host>:6379` URL. |
 | Worker | Railway second service | Same image as api; different command. |
+
+### Build the api image locally first (sanity check)
+
+```bash
+# Must run from the repo root — context is the repo root
+docker build -f apps/api/Dockerfile -t ngti-api .
+
+# Smoke-test against your local compose postgres+redis
+docker run --rm -p 8001:8000 \
+  --network infra_default \
+  -e DATABASE_URL=postgresql+asyncpg://ngti:ngti@postgres:5432/ngti \
+  -e REDIS_URL=redis://redis:6379/0 \
+  -e CORS_ALLOWED_ORIGINS=http://localhost:3000 \
+  ngti-api
+# In another shell:
+curl http://localhost:8001/v1/health   # → {"ok": true}
+```
+
+### Web build is API-free
+
+The `(app)/*` routes are marked `force-dynamic` in `app/(app)/layout.tsx`, so
+the Vercel build never tries to prerender them — meaning the build doesn't
+need the API alive or `NEXT_PUBLIC_API_BASE` pointing at a working host.
+Only the landing page `/` is statically generated.
 
 ### Vercel env vars
 
@@ -109,7 +134,14 @@ NEXT_PUBLIC_WS_URL=wss://ngti-api.up.railway.app
 DATABASE_URL=postgresql+asyncpg://...@ep-xxx.us-east-2.aws.neon.tech/ngti
 REDIS_URL=rediss://default:...@usw1-something.upstash.io:6379
 LLM_MODE=fake
+CORS_ALLOWED_ORIGINS=https://goldeneye.example.com
 ```
+
+If `CORS_ALLOWED_ORIGINS` is missing or wrong, the deployed Next.js app
+will get every fetch blocked by the browser and the chart / dashboard
+will appear empty. The api logs won't show a clear failure either —
+CORS is a browser-side reject. If you see "no data" in the UI but the
+api endpoints return 200 in your shell, this is almost always the cause.
 
 ### Cost expectations (low-traffic demo, monthly)
 
