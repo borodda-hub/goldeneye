@@ -1,13 +1,26 @@
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+# Project-root bootstrap: ensure `apps.api.*` resolves regardless of how
+# uvicorn was launched (with --directory apps/api, from the repo root, or
+# directly via `python -m`). Without this, `uvicorn src.main:app` started
+# inside apps/api/ would crash with ModuleNotFoundError: No module named
+# 'apps' because the cwd entry on sys.path points at apps/api/, not the
+# project root.
+import sys as _sys
+from pathlib import Path as _Path
 
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+_PROJECT_ROOT = _Path(__file__).resolve().parents[3]
+if str(_PROJECT_ROOT) not in _sys.path:
+    _sys.path.insert(0, str(_PROJECT_ROOT))
 
-from apps.api.routers import (
+from contextlib import asynccontextmanager  # noqa: E402
+from typing import AsyncGenerator  # noqa: E402
+
+from fastapi import FastAPI, Request  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.responses import JSONResponse  # noqa: E402
+
+from apps.api.routers import (  # noqa: E402
     dashboard,
     chart,
     signals,
@@ -26,8 +39,8 @@ from apps.api.routers import (
     ticker,
     indicators,
 )
-from apps.api.realtime.ticker import start_ticker
-from apps.api.services.safety import SafetyViolation
+from apps.api.realtime.ticker import start_ticker  # noqa: E402
+from apps.api.services.safety import SafetyViolation  # noqa: E402
 
 
 @asynccontextmanager
