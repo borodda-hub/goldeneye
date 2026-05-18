@@ -99,15 +99,42 @@ Spot-check after seed:
 
 ## Acceptance criteria
 
-- [ ] `GET /v1/instruments` returns 6 rows (was 2)
-- [ ] All 4 new symbols have non-empty live quotes from Yahoo
-- [ ] Chart page loads candlesticks for each at the 1d resolution
-- [ ] Indicators endpoint works for each (proves the front-month resolution
+- [x] `GET /v1/instruments` returns 6 rows (was 2) — `instruments.json` seeds
+      NG, CL, HO, RB, GC, SI
+- [x] All 4 new symbols have non-empty live quotes from Yahoo — verified in
+      step 16d smoke-test
+- [x] Chart page loads candlesticks for each at the 1d resolution
+- [x] Indicators endpoint works for each (proves the front-month resolution
       + market-adapter pull from the indicators fix still applies)
-- [ ] Backend tests stay green
-- [ ] No new frontend code; web tests stay green
-- [ ] Yahoo's `=F` and `<contract>.CMX` mappings verified live (one curl
+- [x] Backend tests stay green — 664 passed (2026-05-18)
+- [~] ~~No new frontend code~~; web tests stay green — 316 passed. **Criterion
+      missed:** the thin tier exposed null-front-month crashes, so `58a2615`
+      did touch 5 web files. See closeout note.
+- [x] Yahoo's `=F` and `<contract>.CMX` mappings verified live (one curl
       per symbol)
+
+## Closeout note (2026-05-18)
+
+Phase 16 shipped, but the "no architectural change / no frontend code, ~90 min"
+estimate was wrong. The thin-tier expansion exposed that six read paths assumed
+seeded `price_bars` rows existed for every instrument — true for NG/CL, false
+for the new four. Closing the gap took four follow-up commits beyond the
+feature commit `9cf5bdc`:
+
+| Commit | Fix |
+|---|---|
+| `58a2615` | Dashboard crashed on a null front-month price (5 web files) |
+| `8dc9054` | Silver/gold chart loaded the wrong front-month contract |
+| `2a8415e` | Signals score-history read stale DB instead of the market adapter |
+| `17009cd` | New `services/price_lookup.py` — market-adapter fallback for all 6 stale-DB read paths (`dashboard`, `explain`, `instruments`, `scenarios`, `signal_quality`, `signals`) |
+
+`17009cd` is the durable win: `price_lookup.py` is now the single source for
+"price for a symbol that may not have seeded bars." Any future thin-tier
+instrument inherits it for free.
+
+One ruff regression (`I001` in `test_yahoo_symbol_mapping.py`) was introduced
+and fixed at closeout. Pre-existing ruff debt (~37 errors in `tests/*` +
+`src/main.py`) still blocks `pnpm health` — see follow-ups.
 
 ## Steps (commit-shaped)
 

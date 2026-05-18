@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from apps.api.adapters.market.yahoo_delayed import contract_to_yahoo_symbol
 
-
 # ── energy: NYMEX ".NYM" suffix ─────────────────────────────────────────────
 
 
