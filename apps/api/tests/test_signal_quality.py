@@ -6,9 +6,8 @@ compute_grade async path (with mocked DB), and the HTTP endpoint.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import AsyncMock, patch
-from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient

@@ -9,7 +9,7 @@ Covers:
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -52,7 +52,7 @@ def mock_narrate_scenario(monkeypatch: pytest.MonkeyPatch, stub_narrative: str) 
         envelope = SafetyEnvelope(
             confidence="medium",
             caveats=["test"],
-            as_of=datetime.now(timezone.utc),
+            as_of=datetime.now(UTC),
         )
         return stub_narrative, envelope
 

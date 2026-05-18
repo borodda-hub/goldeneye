@@ -7,7 +7,7 @@ look-ahead by test_backtest_lookahead.py.
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import datetime
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
@@ -15,9 +15,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from apps.api.services.backtest import (
+    SUPPORTED_MODELS,
     BacktestRow,
     BacktestSummary,
-    SUPPORTED_MODELS,
 )
 from apps.api.src.main import app
 

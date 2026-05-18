@@ -1,5 +1,5 @@
-import math
 import pytest
+
 from apps.api.services.signal_scoring import score_forecast
 
 

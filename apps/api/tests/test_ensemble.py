@@ -1,6 +1,5 @@
-import pytest
-from apps.api.services.models.moving_average_directional import ForecastResult
 from apps.api.services.ensemble import compute_ensemble
+from apps.api.services.models.moving_average_directional import ForecastResult
 
 
 def _make_result(direction="bullish", confidence="medium", model_name="test", inputs_used=None):

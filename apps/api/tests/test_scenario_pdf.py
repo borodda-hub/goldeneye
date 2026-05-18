@@ -7,10 +7,6 @@ counterarguments, narrative, disclaimer).
 """
 from __future__ import annotations
 
-import re
-
-import pytest
-
 from apps.api.services.safety import DISCLAIMER
 from apps.api.services.scenario_pdf import (
     _esc,
@@ -78,7 +74,9 @@ def test_fmt_range_returns_em_dash_for_missing():
 
 def test_fmt_shock_magnitude_weather():
     assert (
-        _fmt_shock_magnitude({"type": "weather", "region": "midwest", "delta_temp_f": -12, "days": 7})
+        _fmt_shock_magnitude(
+            {"type": "weather", "region": "midwest", "delta_temp_f": -12, "days": 7}
+        )
         == "midwest: -12.0°F"
     )
 
@@ -130,7 +128,12 @@ def test_pdf_contains_scenario_name_metadata():
 
 def test_pdf_handles_run_with_minimal_fields():
     """No shocks, no narrative, empty result — should still produce a PDF."""
-    minimal = {"name": "Sparse run", "created_at": "2026-05-12T00:00:00Z", "shocks": [], "result": {}}
+    minimal = {
+        "name": "Sparse run",
+        "created_at": "2026-05-12T00:00:00Z",
+        "shocks": [],
+        "result": {},
+    }
     pdf = render_scenario_pdf(minimal)
     assert pdf.startswith(b"%PDF-")
 

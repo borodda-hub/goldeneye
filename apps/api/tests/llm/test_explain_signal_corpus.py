@@ -6,10 +6,9 @@ LLM eval corpus test — runs 50 explain_signal calls and checks:
 from __future__ import annotations
 
 import re
-import pytest
-from unittest.mock import AsyncMock, patch
 
-from apps.api.services.llm_prompts import explain_signal_messages
+import pytest
+
 from apps.api.services.safety import scan_for_forbidden
 
 INFERENCE_RE = re.compile(
@@ -38,14 +37,17 @@ SAMPLE_MODELS = [
      "contradicting": [{"factor": "RSI overbought", "weight": 0.3, "note": "RSI at 72"}]},
     {"model_name": "volatility_regime", "direction": "neutral",
      "supporting": [{"factor": "Regime normal", "weight": 0.6, "note": "Ann vol at 0.35"}],
-     "contradicting": [{"factor": "Regime uncertainty", "weight": 0.4, "note": "Boundaries heuristic"}]},
+     "contradicting": [
+         {"factor": "Regime uncertainty", "weight": 0.4, "note": "Boundaries heuristic"}
+     ]},
 ]
 
 SAMPLE_RESPONSES = [
     "The ensemble appears consistent with a bullish bias, though the evidence is not conclusive. "
     "The strongest supporting factor is the SMA-20/50 cross, which suggests upward momentum. "
     "However, the RSI reading at 72 reads as a contradicting signal. "
-    "Confidence is moderate, with the caveat that regime transitions could invalidate this view quickly.",
+    "Confidence is moderate, with the caveat that regime transitions "
+    "could invalidate this view quickly.",
     "This reads as a moderately bearish signal based on the available model inputs. "
     "The storage delta versus consensus appears to be the dominant bearish driver. "
     "However, managed-money positioning is neutral, which is less convincingly bearish. "

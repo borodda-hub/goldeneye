@@ -10,17 +10,16 @@ from datetime import date, datetime
 import pytest
 
 from apps.api.services.backtest import (
+    SUPPORTED_MODELS,
     BacktestConfig,
     BacktestRow,
     BacktestSummary,
-    SUPPORTED_MODELS,
     _build_row,
     _eod,
     _summarize,
     run_backtest,
 )
 from apps.api.services.models.moving_average_directional import ForecastResult
-
 
 # ── Pure helpers ──────────────────────────────────────────────────────────
 

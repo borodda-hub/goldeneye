@@ -13,33 +13,33 @@ _PROJECT_ROOT = _Path(__file__).resolve().parents[3]
 if str(_PROJECT_ROOT) not in _sys.path:
     _sys.path.insert(0, str(_PROJECT_ROOT))
 
+from collections.abc import AsyncGenerator  # noqa: E402
 from contextlib import asynccontextmanager  # noqa: E402
-from typing import AsyncGenerator  # noqa: E402
 
 from fastapi import FastAPI, Request  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import JSONResponse  # noqa: E402
 
-from apps.api.routers import (  # noqa: E402
-    dashboard,
-    chart,
-    signals,
-    scenarios,
-    journal,
-    paper,
-    admin,
-    explain,
-    news,
-    backtest,
-    realtime,
-    thesis,
-    signal_quality,
-    calibration,
-    instruments,
-    ticker,
-    indicators,
-)
 from apps.api.realtime.ticker import start_ticker  # noqa: E402
+from apps.api.routers import (  # noqa: E402
+    admin,
+    backtest,
+    calibration,
+    chart,
+    dashboard,
+    explain,
+    indicators,
+    instruments,
+    journal,
+    news,
+    paper,
+    realtime,
+    scenarios,
+    signal_quality,
+    signals,
+    thesis,
+    ticker,
+)
 from apps.api.services.safety import SafetyViolation  # noqa: E402
 
 

@@ -13,7 +13,7 @@ self-contained (no Postgres/Timescale container needed).
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -429,7 +429,7 @@ async def test_equity_curve_empty_returns_starting_balance_per_day() -> None:
     exec_result = SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: []))
     session.execute = AsyncMock(return_value=exec_result)
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     since = today - timedelta(days=5)
     series = await paper_engine.equity_curve(session, since=since)
 
@@ -444,7 +444,7 @@ async def test_equity_curve_since_in_future_returns_empty() -> None:
     session = AsyncMock()
     exec_result = SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: []))
     session.execute = AsyncMock(return_value=exec_result)
-    future = datetime.now(timezone.utc).date() + timedelta(days=10)
+    future = datetime.now(UTC).date() + timedelta(days=10)
     series = await paper_engine.equity_curve(session, since=future)
     assert series == []
 

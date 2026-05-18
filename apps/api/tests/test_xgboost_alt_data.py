@@ -1,6 +1,4 @@
-import pytest
 from apps.api.services.models.xgboost_placeholder import predict
-
 
 CLOSES = [3.0 + i * 0.01 for i in range(20)]  # upward trending
 

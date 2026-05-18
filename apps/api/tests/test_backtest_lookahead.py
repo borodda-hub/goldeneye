@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import math
+import re
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -30,15 +31,14 @@ import pytest
 
 from apps.api.services.backtest import (
     BacktestConfig,
-    _cot_as_of,
     _closes_as_of,
     _context_as_of,
+    _cot_as_of,
     _eod,
     _storage_as_of,
     run_backtest,
 )
 from apps.api.services.models.moving_average_directional import ForecastResult
-
 
 # ── Fake DB session ───────────────────────────────────────────────────────
 
@@ -71,7 +71,7 @@ class _FakeResult:
     def scalar_one_or_none(self) -> Any:
         return self._rows[0] if self._rows else None
 
-    def scalars(self) -> "_FakeScalars":
+    def scalars(self) -> _FakeScalars:
         return _FakeScalars(self._rows)
 
     def all(self) -> list[Any]:
@@ -174,8 +174,6 @@ class FakeSession:
 # Tiny SQL-string extractors. Not robust against arbitrary SQL, but
 # adequate for the tightly-shaped statements our chokepoint helpers
 # produce.
-import re
-
 _TS_RE = re.compile(
     r"'(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?)'"
 )
@@ -244,8 +242,6 @@ def test_closes_as_of_returns_only_past_bars():
 
 def test_closes_as_of_uses_strict_less_than_in_sql():
     """Direct SQL inspection: the WHERE clause must use < and not <=."""
-    from sqlalchemy import select
-    from apps.api.models.orm.prices import PriceBar
 
     session = FakeSession(bars=[])
     as_of = _eod(date(2026, 4, 1))
@@ -446,8 +442,9 @@ def test_cheating_model_does_not_score_100_percent():
     # We need _resolve_contract_id to return something; monkey-patch it
     # for the test by also defining a dummy session.execute path for the
     # instruments + contracts queries. Easier: patch the resolver.
-    import apps.api.services.backtest as backtest_mod
     from unittest.mock import patch
+
+    import apps.api.services.backtest as backtest_mod
 
     async def _fake_resolve(_session, _symbol):
         return uuid.UUID("00000000-0000-0000-0000-000000000001")

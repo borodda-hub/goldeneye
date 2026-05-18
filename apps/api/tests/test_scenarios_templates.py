@@ -8,8 +8,6 @@ therefore had no template gallery to render.
 """
 from __future__ import annotations
 
-from pathlib import Path
-
 from apps.api.routers.scenarios import _FIXTURES_DIR
 
 
