@@ -69,16 +69,16 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
       </ResizableColumn>
 
       {/* Main column */}
-      <div className="flex-1 min-w-0 flex flex-col gap-4 px-4">
+      <div className="flex-1 min-w-0 flex flex-col gap-3 px-4">
         {!summary ? (
           <>
             <SkeletonCard className="h-10" />
             <SkeletonCard className="h-32" />
-            <div className="flex gap-4 h-[42vh] min-h-[320px]">
+            <div className="flex gap-4 h-[34vh] min-h-[260px]">
               <SkeletonCard className="flex-1 min-h-0" />
               <SkeletonCard className="w-72 shrink-0" />
             </div>
-            <div className="flex gap-4 h-[20vh] min-h-[160px]">
+            <div className="flex gap-4 h-[16vh] min-h-[140px]">
               <SkeletonCard className="flex-1" />
               <SkeletonCard className="flex-1" />
             </div>
@@ -111,7 +111,7 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
             {/* Row 3: Chart + Bias — drag the divider to resize. Width
                 persists per-user via localStorage. */}
             <ResizableSplit
-              className="h-[42vh] min-h-[320px]"
+              className="h-[34vh] min-h-[260px]"
               storageKey="goldeneye:dashboard:bias-width"
               defaultRightWidth={288}
               rightMinWidth={240}
@@ -137,7 +137,7 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
 
             {/* Row 4: Curve + Events — resizable divider, scales with viewport */}
             <ResizableSplit
-              className="h-[20vh] min-h-[160px]"
+              className="h-[16vh] min-h-[140px]"
               storageKey="goldeneye:dashboard:curve-events-width"
               defaultRightWidth={420}
               rightMinWidth={240}
