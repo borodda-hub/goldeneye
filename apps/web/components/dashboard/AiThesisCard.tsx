@@ -22,6 +22,7 @@ export function AiThesisCard({ instrument, thesis }: Props) {
   const hasLists = thesis.drivers.length > 0 || thesis.watch.length > 0;
   const { collapsed, toggle } = useCollapsed(
     "goldeneye:dashboard:ai-thesis-collapsed",
+    true, // default collapsed so a fresh dashboard fits on one screen
   );
   return (
     <section

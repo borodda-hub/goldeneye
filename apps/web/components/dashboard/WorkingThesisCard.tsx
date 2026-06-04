@@ -175,6 +175,7 @@ export function WorkingThesisCard({
   const [seedFetching, setSeedFetching] = useState(false);
   const { collapsed, toggle } = useCollapsed(
     "goldeneye:dashboard:working-thesis-collapsed",
+    true, // default collapsed so a fresh dashboard fits on one screen
   );
   const seedQ = useThesisSeed(instrumentCode, seedFetching);
   const createMut = useCreateThesis(instrumentCode);

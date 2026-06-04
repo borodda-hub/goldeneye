@@ -55,6 +55,10 @@ function _sampleThesis() {
 }
 
 beforeEach(() => {
+  // The card now defaults collapsed (Phase 19, fits a fresh dashboard on one
+  // screen). These tests assert body content, so render it expanded.
+  localStorage.setItem("goldeneye:dashboard:working-thesis-collapsed", "0");
+
   useCurrentThesisMock.mockReset();
   useThesisSeedMock.mockReset();
   useCreateThesisMock.mockReset();
