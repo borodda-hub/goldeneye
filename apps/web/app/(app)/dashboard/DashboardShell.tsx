@@ -156,7 +156,7 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
 
             {/* Row 4b: Fundamentals + Positioning — per-symbol inventory + COT */}
             <ResizableSplit
-              className="h-[20vh] min-h-[160px]"
+              className="h-[150px]"
               storageKey="goldeneye:dashboard:fundamentals-positioning-width"
               defaultRightWidth={420}
               rightMinWidth={240}
