@@ -60,6 +60,29 @@ Returns OHLCV bars plus event markers in the range.
 `GET /v1/chart/curve?symbol=NG&as_of=2026-05-10`
 Returns the futures curve at a moment.
 
+`GET /v1/chart/patterns?contract_code=NGM26&resolution=1d&from=&to=&limit=120`
+
+Candlestick-pattern detections (Phase 21) — **descriptive observations, not
+signals**. Deterministic geometry on OHLC bars (`services/patterns/`). Carries
+the safety envelope; `meaning` strings are in the cautious desk-analyst voice.
+
+```jsonc
+{
+  "contract_code": "NGM26",
+  "resolution": "1d",
+  "patterns": [
+    { "ts": "2026-02-12T00:00:00", "code": "BEN", "name": "Bullish Engulfing",
+      "direction": "bullish", "strength": 0.7,
+      "meaning": "An up-bar fully covers the prior down-bar — suggests buyers seized control; …" }
+  ],
+  "safety": { "confidence": "low", "caveats": ["…"], "as_of": "…", "disclaimer": "…" }
+}
+```
+`direction` ∈ `bullish | bearish | neutral`; `strength` ∈ [0,1]. 404 on unknown
+contract. ~19 patterns: doji family, hammer/hanging-man, inverted-hammer/shooting
+-star, marubozu, spinning top, bullish/bearish engulfing & harami, piercing line,
+dark cloud cover, morning/evening star, three white soldiers/black crows.
+
 ### Signals
 
 `GET /v1/signals/current?symbol=NG`

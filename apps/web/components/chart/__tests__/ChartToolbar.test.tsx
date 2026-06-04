@@ -12,6 +12,9 @@ const defaultProps = {
   onToggleLog: vi.fn(),
   showCurve: false,
   onToggleCurve: vi.fn(),
+  showPatterns: false,
+  onTogglePatterns: vi.fn(),
+  patternCount: 0,
   indicatorCount: 0,
   onOpenIndicators: vi.fn(),
   onClearIndicators: vi.fn(),
@@ -137,5 +140,19 @@ describe("ChartToolbar", () => {
     expect(onToggleCurve).toHaveBeenCalled();
     expect(onScreenshot).toHaveBeenCalled();
     expect(onFullscreen).toHaveBeenCalled();
+  });
+
+  it("toggles patterns and shows the count when active", () => {
+    const onTogglePatterns = vi.fn();
+    const { rerender } = render(
+      <ChartToolbar {...defaultProps} onTogglePatterns={onTogglePatterns} />,
+    );
+    fireEvent.click(screen.getByText("Patterns"));
+    expect(onTogglePatterns).toHaveBeenCalled();
+    // Count shows only when active.
+    rerender(
+      <ChartToolbar {...defaultProps} showPatterns={true} patternCount={5} />,
+    );
+    expect(screen.getByText("(5)")).toBeInTheDocument();
   });
 });

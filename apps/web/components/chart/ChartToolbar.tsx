@@ -26,6 +26,9 @@ interface Props {
   onToggleLog: () => void;
   showCurve: boolean;
   onToggleCurve: () => void;
+  showPatterns: boolean;
+  onTogglePatterns: () => void;
+  patternCount: number;
   indicatorCount: number;
   onOpenIndicators: () => void;
   onClearIndicators: () => void;
@@ -82,6 +85,9 @@ export function ChartToolbar({
   onToggleLog,
   showCurve,
   onToggleCurve,
+  showPatterns,
+  onTogglePatterns,
+  patternCount,
   indicatorCount,
   onOpenIndicators,
   onClearIndicators,
@@ -145,6 +151,22 @@ export function ChartToolbar({
         }`}
       >
         Curve
+      </button>
+
+      {/* Candlestick patterns */}
+      <button
+        type="button"
+        onClick={onTogglePatterns}
+        aria-pressed={showPatterns}
+        title="Detect candlestick patterns (descriptive, not signals)"
+        className={`flex items-center gap-1.5 rounded border border-line-2 ${SEG_BASE} ${
+          showPatterns ? SEG_ON : SEG_OFF
+        }`}
+      >
+        <span>Patterns</span>
+        {showPatterns && patternCount > 0 ? (
+          <span className="text-accent tabular-nums">({patternCount})</span>
+        ) : null}
       </button>
 
       {/* Indicators */}

@@ -34,6 +34,7 @@ from apps.api.routers import (  # noqa: E402
     journal,
     news,
     paper,
+    patterns,
     positioning,
     realtime,
     scenarios,
@@ -104,6 +105,7 @@ app.include_router(ticker.router)
 app.include_router(indicators.router)
 app.include_router(fundamentals.router)
 app.include_router(positioning.router)
+app.include_router(patterns.router)
 
 
 @app.get("/v1/health")

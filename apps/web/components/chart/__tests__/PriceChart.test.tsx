@@ -42,6 +42,7 @@ const base = {
   logScale: false,
   showCurve: false,
   curve: [],
+  patterns: [],
   livePrice: null,
 };
 

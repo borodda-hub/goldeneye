@@ -86,6 +86,18 @@ The highest-value pattern feature, and it's mostly backend math + marker render.
 - Acceptance: 30+ patterns detect on seeded NG bars; markers + legend; safety
   envelope present; contract regen + tests.
 
+**SHIPPED 2026-06-04.** Deviation from the plan: **hand-coded ~19 high-value
+patterns** in pure Python (`services/patterns/candlestick.py`) rather than adding
+`pandas-ta-classic` — avoids numpy/pandas version-compat risk, keeps detection
+deterministic + trivially unit-testable (mock-first), and gives full control over
+the bullish/bearish classification and the forbidden-phrase-safe `meaning`
+strings. `GET /v1/chart/patterns` carries the safety envelope (confidence "low").
+Frontend: a **Patterns** toggle on the chart renders direction-colored markers
+below the bars (green ▲ bullish / red ▼ bearish / neutral ○), merged with the
+event markers. Verified live on NG (engulfing/star/soldiers/doji detected). The
+plain-English `meaning` per detection is returned but not yet surfaced on hover —
+a small follow-up (legend/tooltip).
+
 ## Phase 22 — Lightweight Charts v4 → v5 migration (enabler) · ~2–3 days
 
 - Migrate `PriceChart.tsx` to v5 (panes + primitives API). Regression-test

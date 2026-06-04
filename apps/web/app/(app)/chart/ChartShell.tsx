@@ -4,7 +4,7 @@ import { ChartFooter } from "@/components/chart/ChartFooter";
 import { ChartToolbar } from "@/components/chart/ChartToolbar";
 import { EventDrawer } from "@/components/chart/EventDrawer";
 import { IndicatorPicker } from "@/components/chart/IndicatorPicker";
-import type { InstrumentRow } from "@/lib/api";
+import type { CandlestickPattern, InstrumentRow } from "@/lib/api";
 import {
   type IndicatorSpec,
   specsToQueryParam,
@@ -14,6 +14,7 @@ import {
   useChartBars,
   useChartCurve,
   useChartIndicators,
+  useChartPatterns,
   useInstruments,
 } from "@/lib/queries";
 import { useChannel } from "@/lib/realtime";
@@ -115,6 +116,7 @@ export function ChartShell({
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [logScale, setLogScale] = useState(false);
   const [showCurve, setShowCurve] = useState(false);
+  const [showPatterns, setShowPatterns] = useState(false);
   const [range, setRange] = useState<RangePreset>("2Y");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -128,6 +130,7 @@ export function ChartShell({
     setChartType(getPref<ChartType>("goldeneye:chart:type", "candlestick"));
     setLogScale(getPref<string>("goldeneye:chart:logscale", "0") === "1");
     setShowCurve(getPref<string>("goldeneye:chart:curve", "0") === "1");
+    setShowPatterns(getPref<string>("goldeneye:chart:patterns", "0") === "1");
     setRange(getPref<RangePreset>("goldeneye:chart:range", "2Y"));
   }, []);
 
@@ -192,6 +195,18 @@ export function ChartShell({
   const barsData =
     (fetchedBars as ChartBarsResponse | undefined) ?? initialBars;
 
+  // Candlestick patterns — only fetched while the toggle is on.
+  const { data: patternsResp } = useChartPatterns(
+    contractCode,
+    resolution,
+    from,
+    today,
+    showPatterns,
+  );
+  const patterns: CandlestickPattern[] = showPatterns
+    ? (patternsResp?.patterns ?? [])
+    : [];
+
   const specQuery = specsToQueryParam(indicators);
   const { data: indicatorsData } = useChartIndicators(activeSymbol, specQuery);
 
@@ -251,6 +266,12 @@ export function ChartShell({
       return !v;
     });
   }, []);
+  const togglePatterns = useCallback(() => {
+    setShowPatterns((v) => {
+      setPref("goldeneye:chart:patterns", v ? "0" : "1");
+      return !v;
+    });
+  }, []);
 
   const handleScreenshot = useCallback(() => {
     const canvas = chartApiRef.current?.screenshot();
@@ -284,6 +305,9 @@ export function ChartShell({
         onToggleLog={toggleLog}
         showCurve={showCurve}
         onToggleCurve={toggleCurve}
+        showPatterns={showPatterns}
+        onTogglePatterns={togglePatterns}
+        patternCount={patterns.length}
         indicatorCount={indicators.filter((i) => i.visible).length}
         onOpenIndicators={() => setPickerOpen(true)}
         onClearIndicators={() => persistAndSet([])}
@@ -303,6 +327,7 @@ export function ChartShell({
               logScale={logScale}
               showCurve={showCurve}
               curve={curvePoints}
+              patterns={patterns}
               livePrice={livePrice}
               apiRef={chartApiRef}
             />

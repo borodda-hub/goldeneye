@@ -622,3 +622,42 @@ export async function getPositioning(
 ): Promise<PositioningResponse> {
   return apiFetch(`/v1/positioning?symbol=${encodeURIComponent(symbol)}`);
 }
+
+// ── Candlestick patterns (Phase 21) ──────────────────────────────────────────
+export type PatternDirection = "bullish" | "bearish" | "neutral";
+
+export interface CandlestickPattern {
+  ts: string;
+  code: string;
+  name: string;
+  direction: PatternDirection;
+  strength: number;
+  meaning: string;
+}
+
+export interface PatternsResponse {
+  contract_code: string;
+  resolution: string;
+  patterns: CandlestickPattern[];
+  safety: {
+    confidence: string;
+    caveats: string[];
+    as_of: string;
+    disclaimer: string;
+  };
+}
+
+export async function getChartPatterns(params: {
+  contract_code: string;
+  resolution: string;
+  from: string;
+  to: string;
+}): Promise<PatternsResponse> {
+  const q = new URLSearchParams({
+    contract_code: params.contract_code,
+    resolution: params.resolution,
+    from: params.from,
+    to: params.to,
+  });
+  return apiFetch(`/v1/chart/patterns?${q.toString()}`);
+}

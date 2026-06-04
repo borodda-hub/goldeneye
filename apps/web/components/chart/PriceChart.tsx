@@ -7,7 +7,7 @@ import type {
   CurvePoint,
   EventMarkerData,
 } from "@/app/(app)/chart/types";
-import type { IndicatorSeriesDTO } from "@/lib/api";
+import type { CandlestickPattern, IndicatorSeriesDTO } from "@/lib/api";
 import type { IndicatorSpec } from "@/lib/chart/indicatorRegistry";
 import { colors } from "@/lib/colors";
 import {
@@ -31,6 +31,8 @@ interface Props {
   logScale: boolean;
   showCurve: boolean;
   curve: CurvePoint[];
+  /** Candlestick-pattern detections to mark below the bars. */
+  patterns: CandlestickPattern[];
   /** Latest live price (from the front-month tick channel); updates the last bar. */
   livePrice: number | null;
   /** Populated with an imperative handle (screenshot) once the chart exists. */
@@ -123,6 +125,7 @@ export function PriceChart({
   logScale,
   showCurve,
   curve,
+  patterns,
   livePrice,
   apiRef,
 }: Props) {
@@ -287,22 +290,48 @@ export function PriceChart({
       );
     }
 
-    // ── Event markers ──────────────────────────────────────────────────────
-    if (eventMarkers.length > 0) {
+    // ── Markers: events (above) + candlestick patterns (below) ─────────────
+    type Marker = {
+      time: UTCTimestamp;
+      position: "aboveBar" | "belowBar";
+      color: string;
+      shape: "circle" | "arrowUp" | "arrowDown";
+      text: string;
+      size: number;
+    };
+    const markers: Marker[] = [
+      ...eventMarkers.map((m) => ({
+        time: toUtcEpoch(m.ts),
+        position: "aboveBar" as const,
+        color: colors.accent,
+        shape: "circle" as const,
+        text:
+          m.kind === "eia_storage"
+            ? "EIA"
+            : m.label.substring(0, 3).toUpperCase(),
+        size: 1,
+      })),
+      ...patterns.map((p) => ({
+        time: toUtcEpoch(p.ts),
+        position: "belowBar" as const,
+        color:
+          p.direction === "bullish"
+            ? colors.up
+            : p.direction === "bearish"
+              ? colors.down
+              : colors.flat,
+        shape: (p.direction === "bullish"
+          ? "arrowUp"
+          : p.direction === "bearish"
+            ? "arrowDown"
+            : "circle") as Marker["shape"],
+        text: p.code,
+        size: 1,
+      })),
+    ].sort((a, b) => a.time - b.time);
+    if (markers.length > 0) {
       priceSeries.setMarkers(
-        sortedUnique(
-          eventMarkers.map((m) => ({
-            time: toUtcEpoch(m.ts),
-            position: "aboveBar" as const,
-            color: colors.accent,
-            shape: "circle" as const,
-            text:
-              m.kind === "eia_storage"
-                ? "EIA"
-                : m.label.substring(0, 3).toUpperCase(),
-            size: 1,
-          })),
-        ) as Parameters<typeof priceSeries.setMarkers>[0],
+        markers as Parameters<typeof priceSeries.setMarkers>[0],
       );
     }
 
@@ -336,6 +365,7 @@ export function PriceChart({
     logScale,
     showCurve,
     curve,
+    patterns,
     apiRef,
   ]);
 

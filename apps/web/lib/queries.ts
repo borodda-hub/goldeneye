@@ -13,6 +13,7 @@ import {
   getChartBars,
   getChartCurve,
   getChartIndicators,
+  getChartPatterns,
   getCurrentSignal,
   getCurrentThesis,
   getDashboardSummary,
@@ -149,6 +150,22 @@ export function useChartBars(
     queryKey: queryKeys.chartBars(contractCode, resolution, from, to),
     queryFn: () =>
       getChartBars({ contract_code: contractCode, resolution, from, to }),
+    staleTime: resolution === "1m" ? 0 : 60_000,
+  });
+}
+
+export function useChartPatterns(
+  contractCode: string,
+  resolution: string,
+  from: string,
+  to: string,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ["chart", "patterns", contractCode, resolution, from, to],
+    queryFn: () =>
+      getChartPatterns({ contract_code: contractCode, resolution, from, to }),
+    enabled,
     staleTime: resolution === "1m" ? 0 : 60_000,
   });
 }
