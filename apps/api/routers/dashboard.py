@@ -79,6 +79,8 @@ async def get_summary(
             "impact_score": e.get("impact_score"),
             "url": e.get("url"),
             "source": e.get("source"),
+            # 1-paragraph summary from the feed's <description> / Atom summary.
+            "body": e.get("body") or "",
         }
         for e in events
     ]

@@ -43,6 +43,8 @@ export interface RecentEvent {
    * fixtures. The UI renders the headline as an anchor when this is set. */
   url?: string | null;
   source?: string | null;
+  /** Summary paragraph from the feed's <description> / Atom summary, ~1 para. */
+  body?: string | null;
 }
 
 export interface SafetyEnvelope {
