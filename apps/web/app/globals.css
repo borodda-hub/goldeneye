@@ -68,6 +68,63 @@ body::before {
   outline-offset: 2px;
 }
 
+/* Watchlist container query — scale row figures as the sidebar widens.
+   The aside.watchlist-cq is the named container. Numbers and symbol grow
+   when the user drags the right-edge handle wider. */
+.watchlist-cq {
+  container-type: inline-size;
+  container-name: watchlist;
+}
+@container watchlist (min-width: 280px) {
+  .wl-symbol { font-size: 0.95rem; }   /* ~15px */
+  .wl-pct    { font-size: 0.8125rem; } /* ~13px */
+  .wl-price  { font-size: 0.8125rem; }
+  .wl-abs    { font-size: 0.6875rem; }
+  .wl-name   { font-size: 0.6875rem; max-width: 110px; }
+}
+@container watchlist (min-width: 320px) {
+  .wl-symbol { font-size: 1.05rem; }   /* ~17px */
+  .wl-pct    { font-size: 0.875rem; }  /* ~14px */
+  .wl-price  { font-size: 0.875rem; }
+  .wl-abs    { font-size: 0.75rem; }
+  .wl-name   { font-size: 0.75rem; max-width: 140px; }
+  .wl-rank   { font-size: 0.6875rem; }
+}
+@container watchlist (min-width: 360px) {
+  .wl-symbol { font-size: 1.125rem; }  /* 18px */
+  .wl-pct    { font-size: 0.9375rem; } /* 15px */
+  .wl-price  { font-size: 0.9375rem; }
+  .wl-abs    { font-size: 0.8125rem; }
+  .wl-name   { font-size: 0.8125rem; max-width: 170px; }
+}
+
+/* Scrollbars — transparent track, soft grey thumb. Webkit + Firefox. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #565249 transparent;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #565249;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6b665c;
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Dashboard chyron ticker — looped marquee. Two copies of the row run inside
    the viewport so the translate(-50%) animation seamlessly wraps. Hover the
    container to pause. */

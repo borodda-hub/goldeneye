@@ -64,13 +64,13 @@ function Row({
       } ${flashBgClass(flash)}`}
       data-symbol={row.symbol}
     >
-      {/* Row 1: rank · symbol · sparkline (right-aligned) · pct */}
+      {/* Row 1: rank · symbol · sparkline (fluid) · pct */}
       <div className="flex items-center gap-2">
-        <span className="font-mono text-[10px] tabular-nums text-ink-4 w-3 text-right">
+        <span className="font-mono text-[10px] tabular-nums text-ink-4 w-3 text-right wl-rank">
           {rank}
         </span>
         <span
-          className={`font-mono text-sm font-semibold ${
+          className={`font-mono text-sm font-semibold wl-symbol ${
             active ? "text-accent-bright" : "text-ink-1"
           }`}
         >
@@ -80,20 +80,20 @@ function Row({
           contractCode={q.front_month_code}
           changePct={q.change_pct}
         />
-        <span className={`ml-auto font-mono text-xs tabular-nums ${cc}`}>
+        <span className={`font-mono text-xs tabular-nums wl-pct ${cc}`}>
           {arrow(q.change_pct)} {fmtChangePct(q.change_pct)}
         </span>
       </div>
       {/* Row 2: name · last · net change abs */}
       <div className="flex items-baseline justify-between gap-2 mt-1 pl-5">
-        <span className="text-[10px] text-ink-3 leading-tight truncate max-w-[80px]">
+        <span className="text-[10px] text-ink-3 leading-tight truncate max-w-[80px] wl-name">
           {row.name}
         </span>
         <div className="flex items-baseline gap-2">
-          <span className="font-mono text-xs tabular-nums text-ink-1">
+          <span className="font-mono text-xs tabular-nums text-ink-1 wl-price">
             {fmtPrice(q.last_price)}
           </span>
-          <span className={`font-mono text-[10px] tabular-nums ${cc}`}>
+          <span className={`font-mono text-[10px] tabular-nums wl-abs ${cc}`}>
             {arrow(q.change_abs)} {fmtChangeAbs(q.change_abs)}
           </span>
         </div>
@@ -109,7 +109,7 @@ export function WatchlistSidebar({ className = "" }: Props) {
   return (
     <aside
       aria-label="Watchlist"
-      className={`flex flex-col border border-line-1 bg-surface-1 max-h-[calc(100vh-7rem)] ${className}`}
+      className={`watchlist-cq flex flex-col border border-line-1 bg-surface-1 max-h-[calc(100vh-7rem)] ${className}`}
     >
       <div className="flex items-center justify-between px-3 pt-2 pb-1 border-b border-line-1 shrink-0">
         <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">

@@ -1,5 +1,6 @@
 "use client";
 
+import { ResizableColumn } from "@/components/ResizableColumn";
 import { ResizableSplit } from "@/components/ResizableSplit";
 import { AiThesisCard } from "@/components/dashboard/AiThesisCard";
 import { DashboardLiveBar } from "@/components/dashboard/DashboardLiveBar";
@@ -51,12 +52,21 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
   const feedMode: "live" | "delayed" = tick?.delayed ? "delayed" : "live";
 
   return (
-    <div className="flex gap-4 items-start">
-      {/* Left rail: watchlist (sticky on tall screens) */}
-      <WatchlistSidebar className="w-60 shrink-0 sticky top-0 self-start" />
+    <div className="flex items-start">
+      {/* Left rail: watchlist (sticky, resizable right edge) */}
+      <ResizableColumn
+        side="right"
+        defaultWidth={240}
+        minWidth={200}
+        maxWidth={400}
+        storageKey="goldeneye:dashboard:watchlist-width"
+        className="sticky top-0 self-start"
+      >
+        <WatchlistSidebar className="pr-2" />
+      </ResizableColumn>
 
       {/* Main column */}
-      <div className="flex-1 min-w-0 flex flex-col gap-4">
+      <div className="flex-1 min-w-0 flex flex-col gap-4 px-4">
         {!summary ? (
           <>
             <SkeletonCard className="h-10" />
@@ -150,15 +160,25 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
         )}
       </div>
 
-      {/* Right rail: paper equity + open positions (live MTM) + recent trades */}
-      <aside
-        aria-label="Paper trading rail"
-        className="w-80 shrink-0 sticky top-0 self-start flex flex-col gap-3"
+      {/* Right rail: paper equity + open positions + recent trades.
+          Resizable left edge. */}
+      <ResizableColumn
+        side="left"
+        defaultWidth={320}
+        minWidth={260}
+        maxWidth={480}
+        storageKey="goldeneye:dashboard:rail-width"
+        className="sticky top-0 self-start"
       >
-        <PaperEquityCard />
-        <OpenPositionsCard />
-        <RecentTradesCard />
-      </aside>
+        <aside
+          aria-label="Paper trading rail"
+          className="flex flex-col gap-3 pl-2"
+        >
+          <PaperEquityCard />
+          <OpenPositionsCard />
+          <RecentTradesCard />
+        </aside>
+      </ResizableColumn>
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { Area, AreaChart, ResponsiveContainer } from "recharts";
 interface Props {
   contractCode: string | null;
   changePct: number | null;
-  width?: number;
+  /** Fixed pixel height. Width is fluid via flex-1 in the parent row. */
   height?: number;
 }
 
@@ -19,7 +19,6 @@ function toISODate(d: Date): string {
 export function WatchlistSparkline({
   contractCode,
   changePct,
-  width = 48,
   height = 18,
 }: Props) {
   const today = toISODate(new Date());
@@ -38,8 +37,8 @@ export function WatchlistSparkline({
     return (
       <span
         aria-hidden="true"
-        style={{ width, height }}
-        className="inline-block"
+        style={{ height }}
+        className="flex-1 min-w-[24px] inline-block"
       />
     );
   }
@@ -52,8 +51,8 @@ export function WatchlistSparkline({
   return (
     <span
       aria-hidden="true"
-      style={{ width, height }}
-      className="inline-block shrink-0"
+      style={{ height }}
+      className="flex-1 min-w-[24px] inline-block"
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={bars} margin={{ top: 1, right: 0, bottom: 1, left: 0 }}>
