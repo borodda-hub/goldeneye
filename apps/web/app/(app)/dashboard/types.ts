@@ -39,6 +39,10 @@ export interface RecentEvent {
   headline: string;
   category: string;
   impact_score: number;
+  /** Source-feed URL — present for live RSS items, null for legacy seeded
+   * fixtures. The UI renders the headline as an anchor when this is set. */
+  url?: string | null;
+  source?: string | null;
 }
 
 export interface SafetyEnvelope {

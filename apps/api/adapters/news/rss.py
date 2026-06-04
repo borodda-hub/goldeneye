@@ -144,6 +144,32 @@ SYMBOL_CONFIGS: dict[str, SymbolNewsConfig] = {
 }
 
 
+def _make_default_config(symbol: str) -> SymbolNewsConfig:
+    """Generic per-symbol config for any commodity we haven't curated keyword
+    lists for. Uses Yahoo Finance's per-symbol headline RSS — already filtered
+    upstream to news mentioning the ticker, so we skip the local keyword
+    filter via accept_all_sources.
+
+    Yahoo's per-symbol feed URL format:
+        https://feeds.finance.yahoo.com/rss/2.0/headline?s=<SYMBOL>=F&region=US&lang=en-US
+
+    Works for any of our 26 instruments since they all have a valid =F
+    continuous ticker (verified during the watchlist expansion).
+    """
+    upper = symbol.upper()
+    source_id = f"yahoo_finance_{upper.lower()}"
+    return SymbolNewsConfig(
+        feeds={
+            source_id: (
+                f"https://feeds.finance.yahoo.com/rss/2.0/headline?s={upper}=F&region=US&lang=en-US",
+                "rss",
+            ),
+        },
+        keywords=[],
+        accept_all_sources=frozenset({source_id}),
+    )
+
+
 # ── Categorization (shared) ───────────────────────────────────────────────
 
 # Soft category classifier — first keyword match wins. Order matters.
@@ -317,7 +343,7 @@ class RssNewsAdapter:
     def __init__(self, symbol: str = "NG") -> None:
         upper = (symbol or "NG").upper()
         self._symbol = upper
-        self._config = SYMBOL_CONFIGS.get(upper, _NG_CONFIG)
+        self._config = SYMBOL_CONFIGS.get(upper) or _make_default_config(upper)
         self._client = AdapterHTTPClient(
             adapter_name=f"news.rss.{upper.lower()}"
         )

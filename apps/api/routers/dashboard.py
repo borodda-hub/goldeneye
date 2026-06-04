@@ -5,16 +5,25 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from functools import lru_cache
+
+from apps.api.adapters.news.rss import RssNewsAdapter
 from apps.api.db.session import get_db
 from apps.api.repos import instruments as instr_repo
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import price_bars as price_repo
 from apps.api.services.price_lookup import get_latest_closes
-from apps.api.repos import news as news_repo
 from apps.api.adapters.registry import get_market
 from apps.api.services.model_registry import ForecastContext, run_all
 from apps.api.services.ensemble import compute_ensemble
 from apps.api.services.llm_explainer import generate_thesis, summarize_market
+
+
+@lru_cache(maxsize=None)
+def _live_news(symbol: str) -> RssNewsAdapter:
+    """Per-symbol RSS news adapter with its own 10-min response cache.
+    Module-level cache so we don't recreate the HTTP client per request."""
+    return RssNewsAdapter(symbol)
 
 router = APIRouter(prefix="/v1/dashboard", tags=["dashboard"])
 
@@ -55,15 +64,21 @@ async def get_summary(
     # Futures curve
     curve_snap = await market.get_curve_snapshot(symbol, datetime.utcnow())
 
-    # Recent news
-    events = await news_repo.get_recent(session, limit=5)
+    # Recent news — per-symbol live RSS (Yahoo Finance per-instrument headline
+    # feed). Each headline carries its source URL so the UI can link out.
+    try:
+        events = await _live_news(symbol).get_recent_events(limit=5)
+    except Exception:  # noqa: BLE001 — never let the news feed take down the dashboard
+        events = []
     recent_events = [
         {
-            "id": str(e.id),
-            "published_at": e.published_at.isoformat() if e.published_at else None,
-            "headline": e.headline,
-            "category": e.category,
-            "impact_score": float(e.impact_score) if e.impact_score is not None else None,
+            "id": e.get("url") or f"{e.get('source','')}-{e.get('headline','')[:32]}",
+            "published_at": e.get("published_at"),
+            "headline": e.get("headline"),
+            "category": e.get("category", "other"),
+            "impact_score": e.get("impact_score"),
+            "url": e.get("url"),
+            "source": e.get("source"),
         }
         for e in events
     ]
@@ -122,7 +137,7 @@ async def get_summary(
         "direction": ensemble.get("direction"),
         "confidence": ensemble.get("confidence"),
         "curve_shape": curve_shape,
-        "recent_events": [e.headline for e in events[:5]],
+        "recent_events": [e.get("headline", "") for e in events[:5]],
         "supporting_factors": supporting_factors[:5],
         "contradicting_factors": contradicting_factors[:5],
     }
