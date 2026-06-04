@@ -15,6 +15,8 @@ const defaultProps = {
   showPatterns: false,
   onTogglePatterns: vi.fn(),
   patternCount: 0,
+  showAutoTa: false,
+  onToggleAutoTa: vi.fn(),
   indicatorCount: 0,
   onOpenIndicators: vi.fn(),
   onClearIndicators: vi.fn(),
@@ -149,6 +151,12 @@ describe("ChartToolbar", () => {
     );
     fireEvent.click(screen.getByText("Patterns"));
     expect(onTogglePatterns).toHaveBeenCalled();
+    const onToggleAutoTa = vi.fn();
+    rerender(
+      <ChartToolbar {...defaultProps} onToggleAutoTa={onToggleAutoTa} />,
+    );
+    fireEvent.click(screen.getByText("Auto-TA"));
+    expect(onToggleAutoTa).toHaveBeenCalled();
     // Count shows only when active.
     rerender(
       <ChartToolbar {...defaultProps} showPatterns={true} patternCount={5} />,

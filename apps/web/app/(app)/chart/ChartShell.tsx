@@ -11,6 +11,7 @@ import {
   storageKey,
 } from "@/lib/chart/indicatorRegistry";
 import {
+  useChartAutoTa,
   useChartBars,
   useChartCurve,
   useChartIndicators,
@@ -117,6 +118,7 @@ export function ChartShell({
   const [logScale, setLogScale] = useState(false);
   const [showCurve, setShowCurve] = useState(false);
   const [showPatterns, setShowPatterns] = useState(false);
+  const [showAutoTa, setShowAutoTa] = useState(false);
   const [range, setRange] = useState<RangePreset>("2Y");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -131,6 +133,7 @@ export function ChartShell({
     setLogScale(getPref<string>("goldeneye:chart:logscale", "0") === "1");
     setShowCurve(getPref<string>("goldeneye:chart:curve", "0") === "1");
     setShowPatterns(getPref<string>("goldeneye:chart:patterns", "0") === "1");
+    setShowAutoTa(getPref<string>("goldeneye:chart:autota", "0") === "1");
     setRange(getPref<RangePreset>("goldeneye:chart:range", "2Y"));
   }, []);
 
@@ -207,6 +210,16 @@ export function ChartShell({
     ? (patternsResp?.patterns ?? [])
     : [];
 
+  // Auto-TA (support/resistance, trendlines, chart patterns).
+  const { data: autoTaResp } = useChartAutoTa(
+    contractCode,
+    resolution,
+    from,
+    today,
+    showAutoTa,
+  );
+  const autoTa = showAutoTa ? (autoTaResp ?? null) : null;
+
   const specQuery = specsToQueryParam(indicators);
   const { data: indicatorsData } = useChartIndicators(activeSymbol, specQuery);
 
@@ -272,6 +285,12 @@ export function ChartShell({
       return !v;
     });
   }, []);
+  const toggleAutoTa = useCallback(() => {
+    setShowAutoTa((v) => {
+      setPref("goldeneye:chart:autota", v ? "0" : "1");
+      return !v;
+    });
+  }, []);
 
   const handleScreenshot = useCallback(() => {
     const canvas = chartApiRef.current?.screenshot();
@@ -308,6 +327,8 @@ export function ChartShell({
         showPatterns={showPatterns}
         onTogglePatterns={togglePatterns}
         patternCount={patterns.length}
+        showAutoTa={showAutoTa}
+        onToggleAutoTa={toggleAutoTa}
         indicatorCount={indicators.filter((i) => i.visible).length}
         onOpenIndicators={() => setPickerOpen(true)}
         onClearIndicators={() => persistAndSet([])}
@@ -328,6 +349,7 @@ export function ChartShell({
               showCurve={showCurve}
               curve={curvePoints}
               patterns={patterns}
+              autoTa={autoTa}
               livePrice={livePrice}
               apiRef={chartApiRef}
             />

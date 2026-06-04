@@ -49,6 +49,7 @@ const base = {
   showCurve: false,
   curve: [],
   patterns: [],
+  autoTa: null,
   livePrice: null,
 };
 

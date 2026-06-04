@@ -155,6 +155,20 @@ console errors. +12 backend tests; web 54 chart tests; health green.
 - Acceptance: detectors fire on seeded + live bars; overlays render; narration
   passes the forbidden-phrase scan; tests.
 
+**SHIPPED 2026-06-04 (core).** Backend `services/patterns/chart_patterns.py` —
+pure-numpy swing-point geometry (no scipy): **support/resistance levels**
+(clustered swing prices, ≥2 touches), **support/resistance trendlines**
+(regression through recent swings), **double top/bottom**, and **head & shoulders
+(+ inverse)**. Each carries geometry + confidence + a deterministic desk-analyst
+`description`. `GET /v1/chart/auto-ta` (safety-wrapped, confidence "low").
+Frontend: an **Auto-TA** toolbar toggle; PriceChart renders levels as labelled
+v5 price-lines (R/S + touch count) and trendlines / pattern outlines as
+line-series, colored by support/resistance/direction. Verified live on NG (six
+S/R levels + both trendlines render; zero console errors). +6 backend tests, +1
+frontend; health green. **Follow-ups (Phase 25 candidates): triangles/wedges/
+flags, auto-Fibonacci, LLM narration of detected patterns, and the pattern
+outline as a filled shape rather than a polyline.**
+
 ## Phase 25 — Differentiators: pattern credibility, drawing tools, seasonality, spreads · ~5–7 days (stretch, split as needed)
 
 What makes it a **gas/commodity research terminal**, not a generic chart widget.

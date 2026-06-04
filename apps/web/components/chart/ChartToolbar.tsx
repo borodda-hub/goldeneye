@@ -29,6 +29,8 @@ interface Props {
   showPatterns: boolean;
   onTogglePatterns: () => void;
   patternCount: number;
+  showAutoTa: boolean;
+  onToggleAutoTa: () => void;
   indicatorCount: number;
   onOpenIndicators: () => void;
   onClearIndicators: () => void;
@@ -88,6 +90,8 @@ export function ChartToolbar({
   showPatterns,
   onTogglePatterns,
   patternCount,
+  showAutoTa,
+  onToggleAutoTa,
   indicatorCount,
   onOpenIndicators,
   onClearIndicators,
@@ -167,6 +171,19 @@ export function ChartToolbar({
         {showPatterns && patternCount > 0 ? (
           <span className="text-accent tabular-nums">({patternCount})</span>
         ) : null}
+      </button>
+
+      {/* Auto-TA: support/resistance + trendlines + chart patterns */}
+      <button
+        type="button"
+        onClick={onToggleAutoTa}
+        aria-pressed={showAutoTa}
+        title="Auto support/resistance, trendlines & chart patterns (descriptive)"
+        className={`rounded border border-line-2 ${SEG_BASE} ${
+          showAutoTa ? SEG_ON : SEG_OFF
+        }`}
+      >
+        Auto-TA
       </button>
 
       {/* Indicators */}

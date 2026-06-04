@@ -668,3 +668,59 @@ export async function getChartPatterns(params: {
   });
   return apiFetch(`/v1/chart/patterns?${q.toString()}`);
 }
+
+// ── Auto-TA: support/resistance + trendlines + chart patterns (Phase 24) ──────
+export interface AutoTaPoint {
+  ts: string;
+  price: number;
+}
+
+export interface AutoTaLevel {
+  price: number;
+  kind: "support" | "resistance";
+  touches: number;
+}
+
+export interface AutoTaTrendline {
+  role: "support" | "resistance";
+  p1: AutoTaPoint;
+  p2: AutoTaPoint;
+}
+
+export interface AutoTaPattern {
+  name: string;
+  direction: PatternDirection;
+  points: AutoTaPoint[];
+  neckline?: number;
+  confidence: number;
+  description: string;
+}
+
+export interface AutoTaResponse {
+  contract_code: string;
+  resolution: string;
+  levels: AutoTaLevel[];
+  trendlines: AutoTaTrendline[];
+  patterns: AutoTaPattern[];
+  safety: {
+    confidence: string;
+    caveats: string[];
+    as_of: string;
+    disclaimer: string;
+  };
+}
+
+export async function getChartAutoTa(params: {
+  contract_code: string;
+  resolution: string;
+  from: string;
+  to: string;
+}): Promise<AutoTaResponse> {
+  const q = new URLSearchParams({
+    contract_code: params.contract_code,
+    resolution: params.resolution,
+    from: params.from,
+    to: params.to,
+  });
+  return apiFetch(`/v1/chart/auto-ta?${q.toString()}`);
+}

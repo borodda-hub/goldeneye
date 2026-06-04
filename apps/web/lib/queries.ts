@@ -10,6 +10,7 @@ import {
   getAlerts,
   getBacktestSummary,
   getCalibration,
+  getChartAutoTa,
   getChartBars,
   getChartCurve,
   getChartIndicators,
@@ -165,6 +166,22 @@ export function useChartPatterns(
     queryKey: ["chart", "patterns", contractCode, resolution, from, to],
     queryFn: () =>
       getChartPatterns({ contract_code: contractCode, resolution, from, to }),
+    enabled,
+    staleTime: resolution === "1m" ? 0 : 60_000,
+  });
+}
+
+export function useChartAutoTa(
+  contractCode: string,
+  resolution: string,
+  from: string,
+  to: string,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ["chart", "auto-ta", contractCode, resolution, from, to],
+    queryFn: () =>
+      getChartAutoTa({ contract_code: contractCode, resolution, from, to }),
     enabled,
     staleTime: resolution === "1m" ? 0 : 60_000,
   });

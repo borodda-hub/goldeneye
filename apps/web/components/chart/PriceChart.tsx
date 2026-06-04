@@ -7,7 +7,13 @@ import type {
   CurvePoint,
   EventMarkerData,
 } from "@/app/(app)/chart/types";
-import type { CandlestickPattern, IndicatorSeriesDTO } from "@/lib/api";
+import type {
+  AutoTaLevel,
+  AutoTaPattern,
+  AutoTaTrendline,
+  CandlestickPattern,
+  IndicatorSeriesDTO,
+} from "@/lib/api";
 import type { IndicatorSpec } from "@/lib/chart/indicatorRegistry";
 import { colors } from "@/lib/colors";
 import {
@@ -40,6 +46,12 @@ interface Props {
   curve: CurvePoint[];
   /** Candlestick-pattern detections to mark below the bars. */
   patterns: CandlestickPattern[];
+  /** Auto-TA overlays (support/resistance, trendlines, chart patterns). */
+  autoTa: {
+    levels: AutoTaLevel[];
+    trendlines: AutoTaTrendline[];
+    patterns: AutoTaPattern[];
+  } | null;
   /** Latest live price (from the front-month tick channel); updates the last bar. */
   livePrice: number | null;
   /** Populated with an imperative handle (screenshot) once the chart exists. */
@@ -127,6 +139,7 @@ export function PriceChart({
   showCurve,
   curve,
   patterns,
+  autoTa,
   livePrice,
   apiRef,
 }: Props) {
@@ -318,6 +331,54 @@ export function PriceChart({
       );
     }
 
+    // ── Auto-TA overlays: S/R levels, trendlines, chart-pattern outlines ────
+    if (autoTa) {
+      for (const lvl of autoTa.levels) {
+        priceSeries.createPriceLine({
+          price: lvl.price,
+          color: lvl.kind === "support" ? colors.up : colors.down,
+          lineWidth: 1,
+          lineStyle: 2,
+          axisLabelVisible: true,
+          title: `${lvl.kind === "support" ? "S" : "R"} ·${lvl.touches}`,
+        });
+      }
+      const segment = (
+        pts: { ts: string; price: number }[],
+        color: string,
+        style: number,
+      ) => {
+        const data = sortedUnique(
+          pts.map((p) => ({ time: toUtcEpoch(p.ts), value: p.price })),
+        );
+        if (data.length < 2) return;
+        const line = chart.addSeries(LineSeries, {
+          color,
+          lineWidth: 1,
+          lineStyle: style,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        line.setData(data as Parameters<typeof line.setData>[0]);
+      };
+      for (const t of autoTa.trendlines) {
+        segment(
+          [t.p1, t.p2],
+          t.role === "support" ? colors.up : colors.down,
+          0,
+        );
+      }
+      for (const p of autoTa.patterns) {
+        const color =
+          p.direction === "bullish"
+            ? colors.up
+            : p.direction === "bearish"
+              ? colors.down
+              : colors.flat;
+        segment(p.points, color, 0);
+      }
+    }
+
     // ── Markers: events (above) + candlestick patterns (below) ─────────────
     type Marker = {
       time: UTCTimestamp;
@@ -395,6 +456,7 @@ export function PriceChart({
     showCurve,
     curve,
     patterns,
+    autoTa,
     apiRef,
   ]);
 
