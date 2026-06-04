@@ -1,6 +1,5 @@
 "use client";
 
-import type { ReactNode } from "react";
 import type { AiThesis, Instrument } from "@/app/(app)/dashboard/types";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 
@@ -15,105 +14,6 @@ const CURVE_LABEL: Record<AiThesis["curve_shape"], string> = {
   mixed: "Mixed curve",
   unknown: "Curve —",
 };
-
-// Keyword groups for inline highlighting. Order matters when a substring
-// of one word would also match another — we sort longest-first when building
-// the regex so "backwardation" wins over "back" (hypothetical).
-const HIGHLIGHT_GROUPS: { className: string; words: string[] }[] = [
-  {
-    className: "font-semibold text-up",
-    words: [
-      "bullish",
-      "backwardation",
-      "supportive",
-      "supports",
-      "tightness",
-      "tight",
-      "constructive",
-      "deficit",
-      "draws",
-      "draw",
-      "strengthens",
-      "strengthening",
-      "rally",
-      "gains",
-      "upside",
-      "upward",
-    ],
-  },
-  {
-    className: "font-semibold text-down",
-    words: [
-      "bearish",
-      "contango",
-      "oversupply",
-      "surplus",
-      "glut",
-      "ample",
-      "weakness",
-      "weakening",
-      "contradicts",
-      "contradicting",
-      "build",
-      "builds",
-      "declines",
-      "declining",
-      "downside",
-      "downward",
-    ],
-  },
-  {
-    className: "font-semibold text-accent-bright",
-    words: [
-      "volatility",
-      "regime",
-      "ensemble",
-      "basis",
-      "confidence",
-      "elevated",
-      "compressed",
-      "medium confidence",
-      "high confidence",
-      "low confidence",
-    ],
-  },
-];
-
-function buildHighlightRegex(): RegExp {
-  const all: string[] = [];
-  for (const g of HIGHLIGHT_GROUPS) all.push(...g.words);
-  // Longest first so multi-word phrases (e.g. "medium confidence") match
-  // before their constituent single-word entries.
-  all.sort((a, b) => b.length - a.length);
-  const escaped = all.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  return new RegExp(`\\b(${escaped.join("|")})\\b`, "gi");
-}
-
-function classForToken(token: string): string | null {
-  const lower = token.toLowerCase();
-  for (const g of HIGHLIGHT_GROUPS) {
-    if (g.words.includes(lower)) return g.className;
-  }
-  return null;
-}
-
-const HIGHLIGHT_RE = buildHighlightRegex();
-
-function renderHighlighted(text: string): ReactNode {
-  if (!text) return null;
-  const parts = text.split(HIGHLIGHT_RE);
-  return parts.map((part, idx) => {
-    const cls = classForToken(part);
-    if (cls) {
-      return (
-        <span key={idx} className={cls}>
-          {part}
-        </span>
-      );
-    }
-    return <span key={idx}>{part}</span>;
-  });
-}
 
 export function AiThesisCard({ instrument, thesis }: Props) {
   const hasThesis = thesis.thesis.length > 0;
@@ -132,11 +32,11 @@ export function AiThesisCard({ instrument, thesis }: Props) {
       </div>
 
       {hasThesis ? (
-        <p className="text-sm text-ink-3 leading-relaxed">
-          {renderHighlighted(thesis.thesis)}
+        <p className="text-base text-ink-2 leading-relaxed">
+          {thesis.thesis}
         </p>
       ) : (
-        <p className="text-sm text-ink-4 italic">
+        <p className="text-base text-ink-4 italic">
           Thesis unavailable for this snapshot.
         </p>
       )}
