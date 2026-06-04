@@ -17,10 +17,11 @@ const CURVE_LABEL: Record<AiThesis["curve_shape"], string> = {
 
 export function AiThesisCard({ instrument, thesis }: Props) {
   const hasThesis = thesis.thesis.length > 0;
+  const hasLists = thesis.drivers.length > 0 || thesis.watch.length > 0;
   return (
     <section
       aria-label="AI thesis"
-      className="border border-line-1 rounded-md bg-surface-1 px-4 py-3 flex flex-col gap-3"
+      className="border border-line-1 rounded-md bg-surface-1 px-4 py-3 flex flex-col gap-2"
     >
       <div className="flex items-baseline justify-between gap-3">
         <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
@@ -31,20 +32,24 @@ export function AiThesisCard({ instrument, thesis }: Props) {
         </span>
       </div>
 
-      {hasThesis ? (
-        <p className="text-base text-ink-2 leading-relaxed">
-          {thesis.thesis}
-        </p>
-      ) : (
-        <p className="text-base text-ink-4 italic">
-          Thesis unavailable for this snapshot.
-        </p>
-      )}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Left half: thesis prose */}
+        <div>
+          {hasThesis ? (
+            <p className="text-sm text-ink-2 leading-relaxed">
+              {thesis.thesis}
+            </p>
+          ) : (
+            <p className="text-sm text-ink-4 italic">
+              Thesis unavailable for this snapshot.
+            </p>
+          )}
+        </div>
 
-      {(thesis.drivers.length > 0 || thesis.watch.length > 0) && (
-        <div className="grid grid-cols-2 gap-4">
+        {/* Right half: drivers stacked over watch */}
+        <div className="flex flex-col gap-3">
           <div>
-            <div className="font-mono text-[10px] text-ink-3 uppercase tracking-widest mb-1.5">
+            <div className="font-mono text-[10px] text-ink-3 uppercase tracking-widest mb-1">
               Key drivers
             </div>
             {thesis.drivers.length === 0 ? (
@@ -64,7 +69,7 @@ export function AiThesisCard({ instrument, thesis }: Props) {
             )}
           </div>
           <div>
-            <div className="font-mono text-[10px] text-ink-3 uppercase tracking-widest mb-1.5">
+            <div className="font-mono text-[10px] text-ink-3 uppercase tracking-widest mb-1">
               Watch
             </div>
             {thesis.watch.length === 0 ? (
@@ -84,9 +89,11 @@ export function AiThesisCard({ instrument, thesis }: Props) {
             )}
           </div>
         </div>
-      )}
+      </div>
 
-      <SafetyEnvelopeNote envelope={thesis.safety} defaultOpen={false} />
+      {hasLists && (
+        <SafetyEnvelopeNote envelope={thesis.safety} defaultOpen={false} />
+      )}
     </section>
   );
 }
