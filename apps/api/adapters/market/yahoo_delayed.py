@@ -67,15 +67,57 @@ _CACHE_TTL_SECONDS = 5 * 60
 # know the listing yet — Yahoo will return empty for a wrong-suffix request,
 # which surfaces as "no data" rather than a crash).
 _EXCHANGE_SUFFIX_BY_PREFIX: dict[str, str] = {
+    # Energy — NYMEX
     "NG": ".NYM",
     "CL": ".NYM",
     "HO": ".NYM",
     "RB": ".NYM",
+    "BZ": ".NYM",  # Brent on Yahoo lists under NYM symbol
+    # Metals — COMEX
     "GC": ".CMX",
     "SI": ".CMX",
     "HG": ".CMX",
+    # Precious — NYMEX
+    "PL": ".NYM",
+    "PA": ".NYM",
+    # Grains — CBOT
+    "ZC": ".CBT",
+    "ZS": ".CBT",
+    "ZW": ".CBT",
+    "ZL": ".CBT",
+    "ZM": ".CBT",
+    # Softs — ICE
+    "KC": ".NYB",
+    "CC": ".NYB",
+    "SB": ".NYB",
+    "CT": ".NYB",
+    "OJ": ".NYB",
+    # Livestock — CME
+    "LE": ".CME",
+    "HE": ".CME",
+    "GF": ".CME",
+    # Indices — CME / CBOT
+    "ES": ".CME",
+    "NQ": ".CME",
+    "YM": ".CBT",
 }
 _DEFAULT_EXCHANGE_SUFFIX = ".NYM"
+
+
+def continuous_ticker_for(contract_code: str | None) -> str | None:
+    """Return the Yahoo continuous front-month ticker (`<SYMBOL>=F`) for a
+    contract code, or None if the input doesn't match our pattern.
+
+    Used as the fallback when a contract-coded request 404s — typically
+    because the contract has rolled off and Yahoo no longer publishes data
+    for that specific delivery month.
+    """
+    if not contract_code:
+        return None
+    code = contract_code.upper().strip()
+    if len(code) >= 4 and code[-3] in _MONTH_LETTERS and code[-2:].isdigit():
+        return f"{code[:-3]}=F"
+    return None
 
 
 def contract_to_yahoo_symbol(contract_code: str | None, symbol: str = "NG") -> str:
@@ -216,11 +258,58 @@ class YahooDelayedMarketAdapter:
 
     async def _fetch_bars(self, contract_code: str, resolution: str) -> list[dict[str, Any]]:
         interval, default_range = _RESOLUTION_MAP.get(resolution, _RESOLUTION_MAP["1d"])
-        symbol = contract_to_yahoo_symbol(contract_code)
-        url = YAHOO_BASE_URL + symbol
-        params = {"interval": interval, "range": default_range, "includePrePost": "false"}
-        response = await self._client.get(url, params=params, headers=_HEADERS)
-        return _parse_chart(response.json(), contract_code, resolution)
+        primary = contract_to_yahoo_symbol(contract_code)
+        params = {
+            "interval": interval,
+            "range": default_range,
+            "includePrePost": "false",
+        }
+
+        # First attempt: contract-coded ticker (e.g. NGM26.NYM).
+        try:
+            response = await self._client.get(
+                YAHOO_BASE_URL + primary, params=params, headers=_HEADERS
+            )
+            bars = _parse_chart(response.json(), contract_code, resolution)
+            if bars:
+                return bars
+            # Empty result on a contract-coded request — fall through to
+            # continuous-ticker fallback so an expired/wrong-suffix code
+            # still shows price data.
+        except Exception as exc:
+            logger.debug(
+                "Yahoo contract fetch failed for %s @ %s: %s — trying continuous fallback.",
+                contract_code,
+                resolution,
+                exc,
+            )
+
+        fallback = continuous_ticker_for(contract_code)
+        if not fallback or fallback == primary:
+            return []
+
+        try:
+            response = await self._client.get(
+                YAHOO_BASE_URL + fallback, params=params, headers=_HEADERS
+            )
+            bars = _parse_chart(response.json(), contract_code, resolution)
+            if bars:
+                logger.info(
+                    "Yahoo continuous fallback resolved %s -> %s (%d bars).",
+                    contract_code,
+                    fallback,
+                    len(bars),
+                )
+            return bars
+        except Exception as exc:
+            logger.warning(
+                "Yahoo continuous fallback failed for %s -> %s @ %s: %s",
+                contract_code,
+                fallback,
+                resolution,
+                exc,
+            )
+            return []
 
 
 def _parse_chart(body: dict, contract_code: str, resolution: str) -> list[dict[str, Any]]:

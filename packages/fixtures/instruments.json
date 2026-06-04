@@ -92,5 +92,225 @@
       "description": "COMEX Silver Futures",
       "trading_hours": "Sunday–Friday 18:00–17:00 ET"
     }
+  },
+  {
+    "symbol": "BZ",
+    "name": "Brent Crude Oil",
+    "exchange": "ICE",
+    "asset_class": "energy",
+    "currency": "USD",
+    "unit": "barrel",
+    "contract_size": 1000,
+    "tick_size": 0.01,
+    "metadata": { "yahoo_ticker": "BZ=F", "description": "ICE Brent Crude Futures" }
+  },
+  {
+    "symbol": "HG",
+    "name": "Copper",
+    "exchange": "COMEX",
+    "asset_class": "metal",
+    "currency": "USD",
+    "unit": "pound",
+    "contract_size": 25000,
+    "tick_size": 0.0005,
+    "metadata": { "yahoo_ticker": "HG=F", "description": "COMEX Copper Futures" }
+  },
+  {
+    "symbol": "PL",
+    "name": "Platinum",
+    "exchange": "NYMEX",
+    "asset_class": "metal",
+    "currency": "USD",
+    "unit": "troy ounce",
+    "contract_size": 50,
+    "tick_size": 0.10,
+    "metadata": { "yahoo_ticker": "PL=F", "description": "NYMEX Platinum Futures" }
+  },
+  {
+    "symbol": "PA",
+    "name": "Palladium",
+    "exchange": "NYMEX",
+    "asset_class": "metal",
+    "currency": "USD",
+    "unit": "troy ounce",
+    "contract_size": 100,
+    "tick_size": 0.05,
+    "metadata": { "yahoo_ticker": "PA=F", "description": "NYMEX Palladium Futures" }
+  },
+  {
+    "symbol": "ZC",
+    "name": "Corn",
+    "exchange": "CBOT",
+    "asset_class": "grain",
+    "currency": "USD",
+    "unit": "bushel",
+    "contract_size": 5000,
+    "tick_size": 0.0025,
+    "metadata": { "yahoo_ticker": "ZC=F", "description": "CBOT Corn Futures" }
+  },
+  {
+    "symbol": "ZS",
+    "name": "Soybeans",
+    "exchange": "CBOT",
+    "asset_class": "grain",
+    "currency": "USD",
+    "unit": "bushel",
+    "contract_size": 5000,
+    "tick_size": 0.0025,
+    "metadata": { "yahoo_ticker": "ZS=F", "description": "CBOT Soybean Futures" }
+  },
+  {
+    "symbol": "ZW",
+    "name": "Wheat",
+    "exchange": "CBOT",
+    "asset_class": "grain",
+    "currency": "USD",
+    "unit": "bushel",
+    "contract_size": 5000,
+    "tick_size": 0.0025,
+    "metadata": { "yahoo_ticker": "ZW=F", "description": "CBOT Wheat Futures" }
+  },
+  {
+    "symbol": "ZL",
+    "name": "Soybean Oil",
+    "exchange": "CBOT",
+    "asset_class": "grain",
+    "currency": "USD",
+    "unit": "pound",
+    "contract_size": 60000,
+    "tick_size": 0.0001,
+    "metadata": { "yahoo_ticker": "ZL=F", "description": "CBOT Soybean Oil Futures" }
+  },
+  {
+    "symbol": "ZM",
+    "name": "Soybean Meal",
+    "exchange": "CBOT",
+    "asset_class": "grain",
+    "currency": "USD",
+    "unit": "short ton",
+    "contract_size": 100,
+    "tick_size": 0.10,
+    "metadata": { "yahoo_ticker": "ZM=F", "description": "CBOT Soybean Meal Futures" }
+  },
+  {
+    "symbol": "KC",
+    "name": "Coffee",
+    "exchange": "ICE",
+    "asset_class": "soft",
+    "currency": "USD",
+    "unit": "pound",
+    "contract_size": 37500,
+    "tick_size": 0.0005,
+    "metadata": { "yahoo_ticker": "KC=F", "description": "ICE Arabica Coffee Futures" }
+  },
+  {
+    "symbol": "CC",
+    "name": "Cocoa",
+    "exchange": "ICE",
+    "asset_class": "soft",
+    "currency": "USD",
+    "unit": "metric ton",
+    "contract_size": 10,
+    "tick_size": 1.0,
+    "metadata": { "yahoo_ticker": "CC=F", "description": "ICE Cocoa Futures" }
+  },
+  {
+    "symbol": "SB",
+    "name": "Sugar No. 11",
+    "exchange": "ICE",
+    "asset_class": "soft",
+    "currency": "USD",
+    "unit": "pound",
+    "contract_size": 112000,
+    "tick_size": 0.0001,
+    "metadata": { "yahoo_ticker": "SB=F", "description": "ICE Sugar No. 11 Futures" }
+  },
+  {
+    "symbol": "CT",
+    "name": "Cotton",
+    "exchange": "ICE",
+    "asset_class": "soft",
+    "currency": "USD",
+    "unit": "pound",
+    "contract_size": 50000,
+    "tick_size": 0.0001,
+    "metadata": { "yahoo_ticker": "CT=F", "description": "ICE Cotton No. 2 Futures" }
+  },
+  {
+    "symbol": "OJ",
+    "name": "Orange Juice",
+    "exchange": "ICE",
+    "asset_class": "soft",
+    "currency": "USD",
+    "unit": "pound",
+    "contract_size": 15000,
+    "tick_size": 0.0005,
+    "metadata": { "yahoo_ticker": "OJ=F", "description": "ICE FCOJ Futures" }
+  },
+  {
+    "symbol": "LE",
+    "name": "Live Cattle",
+    "exchange": "CME",
+    "asset_class": "livestock",
+    "currency": "USD",
+    "unit": "pound",
+    "contract_size": 40000,
+    "tick_size": 0.00025,
+    "metadata": { "yahoo_ticker": "LE=F", "description": "CME Live Cattle Futures" }
+  },
+  {
+    "symbol": "HE",
+    "name": "Lean Hogs",
+    "exchange": "CME",
+    "asset_class": "livestock",
+    "currency": "USD",
+    "unit": "pound",
+    "contract_size": 40000,
+    "tick_size": 0.00025,
+    "metadata": { "yahoo_ticker": "HE=F", "description": "CME Lean Hogs Futures" }
+  },
+  {
+    "symbol": "GF",
+    "name": "Feeder Cattle",
+    "exchange": "CME",
+    "asset_class": "livestock",
+    "currency": "USD",
+    "unit": "pound",
+    "contract_size": 50000,
+    "tick_size": 0.00025,
+    "metadata": { "yahoo_ticker": "GF=F", "description": "CME Feeder Cattle Futures" }
+  },
+  {
+    "symbol": "ES",
+    "name": "S&P 500 E-mini",
+    "exchange": "CME",
+    "asset_class": "index",
+    "currency": "USD",
+    "unit": "index point",
+    "contract_size": 50,
+    "tick_size": 0.25,
+    "metadata": { "yahoo_ticker": "ES=F", "description": "CME E-mini S&P 500 Futures" }
+  },
+  {
+    "symbol": "NQ",
+    "name": "Nasdaq 100 E-mini",
+    "exchange": "CME",
+    "asset_class": "index",
+    "currency": "USD",
+    "unit": "index point",
+    "contract_size": 20,
+    "tick_size": 0.25,
+    "metadata": { "yahoo_ticker": "NQ=F", "description": "CME E-mini Nasdaq 100 Futures" }
+  },
+  {
+    "symbol": "YM",
+    "name": "Dow E-mini",
+    "exchange": "CBOT",
+    "asset_class": "index",
+    "currency": "USD",
+    "unit": "index point",
+    "contract_size": 5,
+    "tick_size": 1.0,
+    "metadata": { "yahoo_ticker": "YM=F", "description": "CBOT E-mini Dow Futures" }
   }
 ]

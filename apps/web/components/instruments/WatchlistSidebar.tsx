@@ -109,9 +109,9 @@ export function WatchlistSidebar({ className = "" }: Props) {
   return (
     <aside
       aria-label="Watchlist"
-      className={`flex flex-col border border-line-1 bg-surface-1 ${className}`}
+      className={`flex flex-col border border-line-1 bg-surface-1 max-h-[calc(100vh-7rem)] ${className}`}
     >
-      <div className="flex items-center justify-between px-3 pt-2 pb-1 border-b border-line-1">
+      <div className="flex items-center justify-between px-3 pt-2 pb-1 border-b border-line-1 shrink-0">
         <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
           Watchlist
         </span>
@@ -126,7 +126,7 @@ export function WatchlistSidebar({ className = "" }: Props) {
           Failed to load watchlist.
         </p>
       ) : (
-        <div className="flex flex-col">
+        <div className="flex flex-col overflow-y-auto">
           {data.instruments.map((row, idx) => (
             <Row
               key={row.symbol}
