@@ -4,30 +4,36 @@ import { newSpec } from "@/lib/chart/indicatorRegistry";
 import { render } from "@testing-library/react";
 import { PriceChart } from "../PriceChart";
 
-const addLineSeries = vi.fn(() => ({ setData: vi.fn() }));
-
-function series() {
-  return { setData: vi.fn(), setMarkers: vi.fn(), update: vi.fn() };
-}
+// v5: every series is created via addSeries(SeriesDefinition, options).
+const addSeries = vi.fn((_def: unknown, _opts?: unknown) => ({
+  setData: vi.fn(),
+  update: vi.fn(),
+}));
 
 vi.mock("lightweight-charts", () => ({
   createChart: vi.fn(() => ({
-    addCandlestickSeries: vi.fn(series),
-    addBarSeries: vi.fn(series),
-    addAreaSeries: vi.fn(series),
-    addBaselineSeries: vi.fn(series),
-    addHistogramSeries: vi.fn(() => ({ setData: vi.fn() })),
-    addLineSeries,
+    addSeries,
     priceScale: vi.fn(() => ({ applyOptions: vi.fn() })),
-    timeScale: vi.fn(() => ({ fitContent: vi.fn(), borderColor: "" })),
+    timeScale: vi.fn(() => ({ fitContent: vi.fn() })),
     takeScreenshot: vi.fn(),
     resize: vi.fn(),
     remove: vi.fn(),
   })),
+  createSeriesMarkers: vi.fn(),
+  CandlestickSeries: "CandlestickSeries",
+  BarSeries: "BarSeries",
+  AreaSeries: "AreaSeries",
+  BaselineSeries: "BaselineSeries",
+  LineSeries: "LineSeries",
+  HistogramSeries: "HistogramSeries",
   ColorType: { Solid: "solid" },
   CrosshairMode: { Magnet: 1 },
   PriceScaleMode: { Normal: 0, Logarithmic: 1 },
 }));
+
+function lineSeriesCalls() {
+  return addSeries.mock.calls.filter((c) => c[0] === "LineSeries");
+}
 
 const bars: Bar[] = [
   { ts: "2026-05-01T00:00:00Z", o: 3.4, h: 3.5, l: 3.3, c: 3.45, v: 10000 },
@@ -48,7 +54,7 @@ const base = {
 
 describe("PriceChart", () => {
   beforeEach(() => {
-    addLineSeries.mockClear();
+    addSeries.mockClear();
   });
 
   it("renders without crashing with valid bar data", () => {
@@ -90,9 +96,10 @@ describe("PriceChart", () => {
         indicatorSeries={indicatorSeries}
       />,
     );
-    expect(addLineSeries).toHaveBeenCalledTimes(2);
-    expect(addLineSeries).toHaveBeenNthCalledWith(
-      1,
+    const lines = lineSeriesCalls();
+    expect(lines).toHaveLength(2);
+    // First spec (EMA) → its color/weight passed as the options arg.
+    expect(lines[0][1]).toEqual(
       expect.objectContaining({ color: ema.color, lineWidth: ema.weight }),
     );
   });
@@ -120,7 +127,7 @@ describe("PriceChart", () => {
         indicatorSeries={indicatorSeries}
       />,
     );
-    expect(addLineSeries).toHaveBeenCalledTimes(1);
+    expect(lineSeriesCalls()).toHaveLength(1);
   });
 
   it("does not crash if the API hasn't returned a series for a spec yet", () => {
@@ -129,6 +136,6 @@ describe("PriceChart", () => {
       <PriceChart {...base} bars={bars} indicators={[ema]} />,
     );
     expect(container.firstChild).toBeInTheDocument();
-    expect(addLineSeries).not.toHaveBeenCalled();
+    expect(lineSeriesCalls()).toHaveLength(0);
   });
 });

@@ -11,14 +11,21 @@ import type { CandlestickPattern, IndicatorSeriesDTO } from "@/lib/api";
 import type { IndicatorSpec } from "@/lib/chart/indicatorRegistry";
 import { colors } from "@/lib/colors";
 import {
+  AreaSeries,
+  BarSeries,
+  BaselineSeries,
+  CandlestickSeries,
   ColorType,
   CrosshairMode,
+  HistogramSeries,
   type IChartApi,
   type ISeriesApi,
+  LineSeries,
   PriceScaleMode,
   type SeriesType,
   type UTCTimestamp,
   createChart,
+  createSeriesMarkers,
 } from "lightweight-charts";
 import { type MutableRefObject, useEffect, useRef } from "react";
 
@@ -169,9 +176,12 @@ export function PriceChart({
     let priceSeries: ISeriesApi<SeriesType>;
     const ohlc = isOhlcType(chartType);
     if (chartType === "line") {
-      priceSeries = chart.addLineSeries({ color: colors.accent, lineWidth: 2 });
+      priceSeries = chart.addSeries(LineSeries, {
+        color: colors.accent,
+        lineWidth: 2,
+      });
     } else if (chartType === "area") {
-      priceSeries = chart.addAreaSeries({
+      priceSeries = chart.addSeries(AreaSeries, {
         lineColor: colors.accent,
         topColor: colors.accentSoft,
         bottomColor: colors.bg,
@@ -179,19 +189,19 @@ export function PriceChart({
       });
     } else if (chartType === "baseline") {
       const base = bars[0]?.c ?? 0;
-      priceSeries = chart.addBaselineSeries({
+      priceSeries = chart.addSeries(BaselineSeries, {
         baseValue: { type: "price", price: base },
         topLineColor: colors.up,
         bottomLineColor: colors.down,
       });
     } else if (chartType === "bars") {
-      priceSeries = chart.addBarSeries({
+      priceSeries = chart.addSeries(BarSeries, {
         upColor: colors.up,
         downColor: colors.down,
       });
     } else {
       // candlestick + heikin-ashi
-      priceSeries = chart.addCandlestickSeries({
+      priceSeries = chart.addSeries(CandlestickSeries, {
         upColor: colors.up,
         downColor: colors.down,
         borderUpColor: colors.up,
@@ -234,7 +244,7 @@ export function PriceChart({
     }
 
     // ── Volume ─────────────────────────────────────────────────────────────
-    const volumeSeries = chart.addHistogramSeries({
+    const volumeSeries = chart.addSeries(HistogramSeries, {
       color: colors.line1,
       priceFormat: { type: "volume" },
       priceScaleId: "volume",
@@ -257,7 +267,7 @@ export function PriceChart({
       indicators,
       indicatorSeries,
     )) {
-      const line = chart.addLineSeries({
+      const line = chart.addSeries(LineSeries, {
         color: spec.color,
         lineWidth: spec.weight,
         priceLineVisible: false,
@@ -271,7 +281,7 @@ export function PriceChart({
 
     // ── Futures-curve overlay (forward term structure) ─────────────────────
     if (showCurve && curve.length > 0) {
-      const curveLine = chart.addLineSeries({
+      const curveLine = chart.addSeries(LineSeries, {
         color: colors.accentBright,
         lineWidth: 1,
         lineStyle: 2, // dashed
@@ -330,8 +340,9 @@ export function PriceChart({
       })),
     ].sort((a, b) => a.time - b.time);
     if (markers.length > 0) {
-      priceSeries.setMarkers(
-        markers as Parameters<typeof priceSeries.setMarkers>[0],
+      createSeriesMarkers(
+        priceSeries as Parameters<typeof createSeriesMarkers>[0],
+        markers as Parameters<typeof createSeriesMarkers>[1],
       );
     }
 

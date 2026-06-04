@@ -106,6 +106,16 @@ a small follow-up (legend/tooltip).
   behind a flag until parity is verified.
 - Acceptance: visual + test parity with the v4 chart; bundle size noted.
 
+**SHIPPED 2026-06-04.** `lightweight-charts` 4.2.3 → 5.2.0. Mechanical API
+migration in `PriceChart.tsx`: `chart.addXSeries(opts)` → `chart.addSeries(XSeries,
+opts)` (series defs imported); `series.setMarkers()` → `createSeriesMarkers(series,
+markers)`; `ColorType`/`CrosshairMode`/`PriceScaleMode` + core methods unchanged.
+v5 is ESM-only (Next 14 handles it). Test mock updated to the v5 API. Full parity
+verified live (Playwright): all six chart types, the 12-EMA Ribbon indicator,
+pattern markers, volume, live tick — **zero console errors**. Bundle: v5 base is
+~16% smaller than v4 (~35 kB). **Now unblocks panes (sub-pane oscillators, Phase
+23) and primitives (drawing tools + auto-pattern overlays, Phase 24).**
+
 ## Phase 23 — Oscillators + bands/channels in sub-panes · ~3–4 days (needs v5)
 
 Completes the long-standing Phase 15/16/17 indicator follow-ups.
