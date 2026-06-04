@@ -407,6 +407,21 @@ export async function getTickerQuotes(): Promise<{
   return apiFetch("/v1/ticker/quotes");
 }
 
+export interface NewsTickerItem {
+  headline: string;
+  url: string | null;
+  published_at: string | null;
+}
+
+export async function getTickerNews(): Promise<{
+  items: NewsTickerItem[];
+  source: string;
+  cached: boolean;
+  stale?: boolean;
+}> {
+  return apiFetch("/v1/ticker/news");
+}
+
 // ── Instruments ────────────────────────────────────────────────────────────
 export interface InstrumentQuote {
   last_price: number | null;

@@ -1,20 +1,20 @@
-"""Dashboard chyron ticker — batched Yahoo quotes for a macro basket.
+"""Dashboard chyron tickers.
 
-Curated symbol list — equities + commodities + macro — pulled in parallel from
-Yahoo's chart endpoint (the same endpoint the market adapter uses for NG/CL).
-A 5-min in-memory cache keeps Yahoo from getting hammered as the dashboard
-refetches.
+Two endpoints:
+- /v1/ticker/quotes — curated macro basket prices (existing)
+- /v1/ticker/news   — Bloomberg Markets RSS headlines (new)
 
-Returns the same minimal {symbol, name, last_price, change_pct} shape as the
-watchlist endpoint so the frontend ticker can render with the same component
-vocabulary as the watchlist sidebar.
+Both are 5-min cached so the dashboard's polling doesn't hammer upstreams.
 """
 from __future__ import annotations
 
 import asyncio
 import logging
 import time
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from typing import Any
+from xml.etree import ElementTree as ET
 
 import httpx
 from fastapi import APIRouter
@@ -126,3 +126,67 @@ async def get_ticker_quotes() -> dict[str, Any]:
     _cache["ts"] = now
     _cache["rows"] = items
     return {"items": items, "cached": False}
+
+
+# ─── News chyron ────────────────────────────────────────────────────────────
+
+_BLOOMBERG_MARKETS_RSS = "https://feeds.bloomberg.com/markets/news.rss"
+_NEWS_CACHE_TTL_SECONDS = 5 * 60
+_news_cache: dict[str, Any] = {"ts": 0.0, "items": []}
+
+
+def _parse_pub_date(raw: str | None) -> str | None:
+    if not raw:
+        return None
+    try:
+        dt = parsedate_to_datetime(raw.strip())
+        if dt is not None:
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.astimezone(timezone.utc).isoformat()
+    except (TypeError, ValueError):
+        pass
+    return None
+
+
+@router.get("/news")
+async def get_ticker_news() -> dict[str, Any]:
+    """Bloomberg Markets RSS headlines for the secondary chyron."""
+    now = time.time()
+    if (now - float(_news_cache["ts"])) < _NEWS_CACHE_TTL_SECONDS and _news_cache["items"]:
+        return {"items": _news_cache["items"], "source": "Bloomberg Markets", "cached": True}
+
+    try:
+        async with httpx.AsyncClient(headers=_HEADERS, timeout=10.0) as client:
+            resp = await client.get(_BLOOMBERG_MARKETS_RSS)
+            xml_bytes = resp.content
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Bloomberg ticker fetch failed: %s", exc)
+        # Serve last good cache if we have one, even if stale.
+        return {
+            "items": _news_cache["items"],
+            "source": "Bloomberg Markets",
+            "cached": True,
+            "stale": True,
+        }
+
+    items: list[dict[str, Any]] = []
+    try:
+        root = ET.fromstring(xml_bytes)
+    except ET.ParseError as exc:
+        logger.warning("Bloomberg RSS parse error: %s", exc)
+        return {"items": _news_cache["items"], "source": "Bloomberg Markets", "cached": True, "stale": True}
+
+    for el in root.iter("item"):
+        title = (el.findtext("title") or "").strip()
+        link = (el.findtext("link") or "").strip()
+        pub = _parse_pub_date(el.findtext("pubDate"))
+        if not title:
+            continue
+        items.append({"headline": title, "url": link or None, "published_at": pub})
+        if len(items) >= 30:
+            break
+
+    _news_cache["ts"] = now
+    _news_cache["items"] = items
+    return {"items": items, "source": "Bloomberg Markets", "cached": False}

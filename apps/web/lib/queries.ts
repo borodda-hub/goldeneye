@@ -27,6 +27,7 @@ import {
   getSignalHistory,
   getSignalQuality,
   getThesisSeed,
+  getTickerNews,
   getTickerQuotes,
   listJournalEntries,
   listPaperTrades,
@@ -310,6 +311,16 @@ export function useTickerQuotes() {
     queryFn: () => getTickerQuotes(),
     // Backend caches Yahoo for 5 min — the chyron is decorative, not a
     // trading feed, so 5 min between client refetches is plenty.
+    staleTime: 5 * 60_000,
+    refetchInterval: 5 * 60_000,
+  });
+}
+
+export function useTickerNews() {
+  return useQuery({
+    queryKey: ["ticker", "news"],
+    queryFn: () => getTickerNews(),
+    // Bloomberg RSS rebuilds every couple minutes; backend caches 5 min.
     staleTime: 5 * 60_000,
     refetchInterval: 5 * 60_000,
   });

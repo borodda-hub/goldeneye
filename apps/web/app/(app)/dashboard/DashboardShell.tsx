@@ -5,6 +5,7 @@ import { ResizableSplit } from "@/components/ResizableSplit";
 import { AiThesisCard } from "@/components/dashboard/AiThesisCard";
 import { DashboardLiveBar } from "@/components/dashboard/DashboardLiveBar";
 import { DashboardTicker } from "@/components/dashboard/DashboardTicker";
+import { NewsTicker } from "@/components/dashboard/NewsTicker";
 import { DirectionalBiasCard } from "@/components/dashboard/DirectionalBiasCard";
 import { FuturesCurveCard } from "@/components/dashboard/FuturesCurveCard";
 import { HeaderRow } from "@/components/dashboard/HeaderRow";
@@ -156,6 +157,9 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
 
             {/* Row 6: Macro chyron — indices + commodities + macro pairs */}
             <DashboardTicker />
+
+            {/* Row 7: Bloomberg Markets headlines chyron */}
+            <NewsTicker />
           </>
         )}
       </div>
