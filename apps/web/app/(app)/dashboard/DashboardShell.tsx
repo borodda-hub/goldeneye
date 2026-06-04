@@ -6,11 +6,13 @@ import { AiThesisCard } from "@/components/dashboard/AiThesisCard";
 import { DashboardLiveBar } from "@/components/dashboard/DashboardLiveBar";
 import { DashboardTicker } from "@/components/dashboard/DashboardTicker";
 import { DirectionalBiasCard } from "@/components/dashboard/DirectionalBiasCard";
+import { FundamentalsCard } from "@/components/dashboard/FundamentalsCard";
 import { FuturesCurveCard } from "@/components/dashboard/FuturesCurveCard";
 import { HeaderRow } from "@/components/dashboard/HeaderRow";
 import { NewsTicker } from "@/components/dashboard/NewsTicker";
 import { OpenPositionsCard } from "@/components/dashboard/OpenPositionsCard";
 import { PaperEquityCard } from "@/components/dashboard/PaperEquityCard";
+import { PositioningCard } from "@/components/dashboard/PositioningCard";
 import { PriceMiniChart } from "@/components/dashboard/PriceMiniChart";
 import { RecentEventsList } from "@/components/dashboard/RecentEventsList";
 import { RecentTradesCard } from "@/components/dashboard/RecentTradesCard";
@@ -148,6 +150,25 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
               right={
                 <div className="h-full pl-2">
                   <RecentEventsList events={summary.recent_events} />
+                </div>
+              }
+            />
+
+            {/* Row 4b: Fundamentals + Positioning — per-symbol inventory + COT */}
+            <ResizableSplit
+              className="h-[20vh] min-h-[160px]"
+              storageKey="goldeneye:dashboard:fundamentals-positioning-width"
+              defaultRightWidth={420}
+              rightMinWidth={240}
+              leftMinWidth={280}
+              left={
+                <div className="h-full pr-2">
+                  <FundamentalsCard symbol={symbol} />
+                </div>
+              }
+              right={
+                <div className="h-full pl-2">
+                  <PositioningCard symbol={symbol} />
                 </div>
               }
             />

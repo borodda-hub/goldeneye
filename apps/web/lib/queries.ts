@@ -18,9 +18,11 @@ import {
   getDashboardSummary,
   getDataHealth,
   getDqCoaching,
+  getFundamentals,
   getInstruments,
   getJournalEntry,
   getPaperEquityCurve,
+  getPositioning,
   getRecentNews,
   getScenarioRuns,
   getScenarioTemplates,
@@ -290,6 +292,24 @@ export function useCalibration(instrumentCode = "NG", bucketCount = 5) {
   return useQuery({
     queryKey: ["calibration", instrumentCode, bucketCount],
     queryFn: () => getCalibration(instrumentCode, bucketCount),
+    staleTime: 30_000,
+  });
+}
+
+// ── Fundamentals + Positioning (Phase 18) ─────────────────────────────────
+
+export function useFundamentals(symbol = "NG") {
+  return useQuery({
+    queryKey: ["fundamentals", symbol],
+    queryFn: () => getFundamentals(symbol),
+    staleTime: 30_000,
+  });
+}
+
+export function usePositioning(symbol = "NG") {
+  return useQuery({
+    queryKey: ["positioning", symbol],
+    queryFn: () => getPositioning(symbol),
     staleTime: 30_000,
   });
 }

@@ -575,3 +575,50 @@ export async function explainScenario(runId: string): Promise<unknown> {
 export async function explainJournal(entryId: string): Promise<unknown> {
   return apiFetch(`/v1/llm/explain-journal/${encodeURIComponent(entryId)}`);
 }
+
+// ── Fundamentals (Phase 18) ──────────────────────────────────────────────────
+export type FundamentalsKind = "gas_storage" | "petroleum_stocks" | "none";
+
+export interface FundamentalsLatest {
+  as_of: string | null;
+  level: number | null;
+  net_change: number | null;
+  surprise: number | null;
+  five_year_avg: number | null;
+}
+
+export interface FundamentalsResponse {
+  symbol: string;
+  kind: FundamentalsKind;
+  title: string;
+  unit: string | null;
+  latest: FundamentalsLatest | null;
+  source: string | null;
+  empty_reason: string | null;
+}
+
+export async function getFundamentals(
+  symbol: string,
+): Promise<FundamentalsResponse> {
+  return apiFetch(`/v1/fundamentals?symbol=${encodeURIComponent(symbol)}`);
+}
+
+// ── Positioning (Phase 18) ───────────────────────────────────────────────────
+export interface PositioningResponse {
+  symbol: string;
+  available: boolean;
+  report_date: string | null;
+  release_date: string | null;
+  managed_money_net: number | null;
+  managed_money_long: number | null;
+  managed_money_short: number | null;
+  mm_net_delta: number | null;
+  open_interest_total: number | null;
+  source: string | null;
+}
+
+export async function getPositioning(
+  symbol: string,
+): Promise<PositioningResponse> {
+  return apiFetch(`/v1/positioning?symbol=${encodeURIComponent(symbol)}`);
+}

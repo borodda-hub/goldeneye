@@ -285,6 +285,57 @@ if no contract was bound). `409` if no price bar is available.
 still open at EOD(d))`. Open-position MTM uses the day's 1d bar close (carry-forward
 from the most recent prior close if a day is missing).
 
+### Fundamentals (Phase 18)
+
+`GET /v1/fundamentals?symbol=NG`
+
+Latest weekly inventory/stock data, asset-class aware. Raw factual data — no
+safety envelope (carries `as_of` for freshness). `kind` is `gas_storage` (NG),
+`petroleum_stocks` (CL/HO/RB), or `none` (metals/other → honest empty state).
+
+```jsonc
+{
+  "symbol": "NG",
+  "kind": "gas_storage",            // "petroleum_stocks" | "none"
+  "title": "Working Gas in Storage",
+  "unit": "Bcf",                    // "Mbbl" for products; null when none
+  "latest": {                       // null when kind == "none"
+    "as_of": "2026-05-01",
+    "level": 1512.1,
+    "net_change": 2.7,
+    "surprise": -0.3,               // null for products
+    "five_year_avg": 1500.4         // null for products
+  },
+  "source": "EIA",                  // "eia_petroleum" for products
+  "empty_reason": null              // string when kind == "none"
+}
+```
+404 on unknown instrument.
+
+### Positioning (Phase 18)
+
+`GET /v1/positioning?symbol=NG`
+
+Latest CFTC managed-money positioning, keyed by the instrument's
+`cftc_market_code`. Instruments without a market code or COT rows return
+`available: false`. Raw factual data — no safety envelope.
+
+```jsonc
+{
+  "symbol": "NG",
+  "available": true,
+  "report_date": "2026-05-05",
+  "release_date": "2026-05-08",
+  "managed_money_net": 16594,
+  "managed_money_long": 159956,
+  "managed_money_short": 143362,
+  "mm_net_delta": -9484,            // week-over-week change in net
+  "open_interest_total": 1378398,
+  "source": "CFTC_PRE"             // "mock" when seeded
+}
+```
+404 on unknown instrument.
+
 ### Admin / Data Health
 
 `GET /v1/admin/data-health` — per-adapter last-success, status, lag.

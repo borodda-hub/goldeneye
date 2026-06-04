@@ -28,11 +28,13 @@ from apps.api.routers import (  # noqa: E402
     chart,
     dashboard,
     explain,
+    fundamentals,
     indicators,
     instruments,
     journal,
     news,
     paper,
+    positioning,
     realtime,
     scenarios,
     signal_quality,
@@ -100,6 +102,8 @@ app.include_router(calibration.router)
 app.include_router(instruments.router)
 app.include_router(ticker.router)
 app.include_router(indicators.router)
+app.include_router(fundamentals.router)
+app.include_router(positioning.router)
 
 
 @app.get("/v1/health")
