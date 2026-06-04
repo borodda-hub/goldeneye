@@ -186,7 +186,7 @@ What makes it a **gas/commodity research terminal**, not a generic chart widget.
   into the existing `alerts` table).
 - **Harmonic patterns** (XABCD/Gartley/Bat/Butterfly) as a final stretch.
 
-**Seasonality SHIPPED 2026-06-04 (`__`).** The signature energy-desk view: backend
+**Seasonality SHIPPED 2026-06-04 (`285034f`).** The signature energy-desk view: backend
 `services/seasonality.py` groups daily bars by calendar year, aligns to MM-DD, and
 returns per-year close series + a cross-year average. `GET /v1/chart/seasonality`.
 Frontend: a **Season** toolbar toggle swaps the price chart for `SeasonalityChart`
