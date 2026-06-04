@@ -44,6 +44,7 @@
     "tick_size": 0.0001,
     "metadata": {
       "yahoo_ticker": "HO=F",
+      "cftc_market_code": "022651",
       "description": "NYMEX New York Harbor ULSD Futures",
       "trading_hours": "Sunday–Friday 18:00–17:00 ET"
     }
@@ -59,6 +60,7 @@
     "tick_size": 0.0001,
     "metadata": {
       "yahoo_ticker": "RB=F",
+      "cftc_market_code": "111659",
       "description": "NYMEX RBOB Gasoline Futures",
       "trading_hours": "Sunday–Friday 18:00–17:00 ET"
     }
@@ -74,6 +76,7 @@
     "tick_size": 0.10,
     "metadata": {
       "yahoo_ticker": "GC=F",
+      "cftc_market_code": "088691",
       "description": "COMEX Gold Futures",
       "trading_hours": "Sunday–Friday 18:00–17:00 ET"
     }
@@ -89,6 +92,7 @@
     "tick_size": 0.005,
     "metadata": {
       "yahoo_ticker": "SI=F",
+      "cftc_market_code": "084691",
       "description": "COMEX Silver Futures",
       "trading_hours": "Sunday–Friday 18:00–17:00 ET"
     }

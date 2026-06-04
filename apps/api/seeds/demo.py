@@ -160,9 +160,11 @@ async def main(fresh: bool = False) -> None:
                 await session.execute(insert(eia_t).values(eia_rows[i:i + _CHUNK]))
             print(f"  inserted {len(eia_rows)} EIA reports")
 
-            # ── Step 4: COT reports ─────────────────────────────────────────
+            # ── Step 4: COT reports (per symbol) ────────────────────────────
             print("step 4: generating COT reports …")
-            cot_rows_raw = cot_generator.generate()
+            cot_rows_raw: list[dict] = []
+            for sym in cot_generator.COT_PARAMS:
+                cot_rows_raw.extend(cot_generator.generate(sym))
             # Exclude managed_money_net (DB-computed generated column)
             cot_rows = [
                 {k: v for k, v in row.items() if k != "managed_money_net"}
@@ -170,7 +172,10 @@ async def main(fresh: bool = False) -> None:
             ]
             for i in range(0, len(cot_rows), _CHUNK):
                 await session.execute(insert(cot_t).values(cot_rows[i:i + _CHUNK]))
-            print(f"  inserted {len(cot_rows)} COT reports")
+            print(
+                f"  inserted {len(cot_rows)} COT reports across "
+                f"{len(cot_generator.COT_PARAMS)} symbols"
+            )
 
             # ── Step 5: Weather ─────────────────────────────────────────────
             print("step 5: generating weather data …")

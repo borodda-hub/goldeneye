@@ -17,6 +17,15 @@ This file exists so Claude Code does not have to re-research these every time we
   - `natural-gas/cons/sum/data/` — consumption summary
   - `natural-gas/move/expc/data/` — exports
   - `natural-gas/move/impc/data/` — imports
+- **Petroleum product weekly stocks (Phase 17 — HO/RB/CL alt-data):** all ride the
+  `petroleum/stoc/wstk/data/` route via `adapters/energy/eia_petroleum.py`'s
+  per-symbol `PETROLEUM_SERIES` table. Series IDs (verify live; EIA occasionally
+  reissues):
+  - CL → `WCESTP31` (Cushing OK ending stocks) + `WCESTUS1` (total Lower-48 ex-SPR, context)
+  - HO → `WDISTUS1` (total distillate stocks)
+  - RB → `WGTSTUS1` (total motor gasoline stocks)
+  Metals (GC/SI) have no EIA inventory report — `registry.get_energy()` routes them
+  to `NullEnergyAdapter` (empty), never to NG storage.
 - **Frequency:** weekly (`weekly`), monthly (`monthly`), daily (`daily`) where applicable.
 - **Notes:**
   - APIv1 is deprecated. Use v2 only.
@@ -42,6 +51,10 @@ This file exists so Claude Code does not have to re-research these every time we
   - Late-2025: CFTC paused publication during a federal funding lapse, then resumed in chronological order. Adapter must tolerate gaps and out-of-order publication; never assume "the most recent report is for last Tuesday."
   - There is no primary key; sort by `report_date_as_yyyy_mm_dd` and `contract_market_name`.
   - The natural-gas contract market name we want includes `NATURAL GAS - NEW YORK MERCANTILE EXCHANGE`. There are several other NG-adjacent markets (Henry Hub Last Day, etc.) — match deliberately.
+  - **Market codes (Phase 17)** in `adapters/positioning/cftc.py::MARKETS` and
+    `instruments.json` metadata `cftc_market_code` (verify live — Socrata reissues):
+    NG `023651`, CL `067651`, HO `022651` (NY Harbor ULSD), RB `111659` (Gasoline
+    RBOB), GC `088691` (Gold, COMEX), SI `084691` (Silver, COMEX).
 
 ## §nws — National Weather Service
 

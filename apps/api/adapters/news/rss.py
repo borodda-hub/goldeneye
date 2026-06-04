@@ -138,9 +138,114 @@ _CL_CONFIG = SymbolNewsConfig(
 )
 
 
+# ── HO (heating oil / distillate) configuration ───────────────────────────
+
+_HO_CONFIG = SymbolNewsConfig(
+    feeds={
+        "eia_today_in_energy": ("https://www.eia.gov/todayinenergy/rss.xml", "rss"),
+        "yahoo_finance_ho": (
+            "https://feeds.finance.yahoo.com/rss/2.0/headline?s=HO=F&region=US&lang=en-US",
+            "rss",
+        ),
+        "oilprice_main": ("https://oilprice.com/rss/main", "rss"),
+    },
+    keywords=[
+        "heating oil",
+        "distillate",
+        "diesel",
+        "ulsd",
+        "crack spread",
+        "refinery",
+        "refining",
+        "winter demand",
+        "winter heating",
+    ],
+    accept_all_sources=frozenset({"yahoo_finance_ho"}),
+)
+
+
+# ── RB (RBOB gasoline) configuration ──────────────────────────────────────
+
+_RB_CONFIG = SymbolNewsConfig(
+    feeds={
+        "eia_today_in_energy": ("https://www.eia.gov/todayinenergy/rss.xml", "rss"),
+        "yahoo_finance_rb": (
+            "https://feeds.finance.yahoo.com/rss/2.0/headline?s=RB=F&region=US&lang=en-US",
+            "rss",
+        ),
+        "oilprice_main": ("https://oilprice.com/rss/main", "rss"),
+    },
+    keywords=[
+        "gasoline",
+        "rbob",
+        "refinery",
+        "refining",
+        "crack spread",
+        "driving season",
+        "pump price",
+        "summer blend",
+    ],
+    accept_all_sources=frozenset({"yahoo_finance_rb"}),
+)
+
+
+# ── GC (gold) configuration ───────────────────────────────────────────────
+
+_GC_CONFIG = SymbolNewsConfig(
+    feeds={
+        "yahoo_finance_gc": (
+            "https://feeds.finance.yahoo.com/rss/2.0/headline?s=GC=F&region=US&lang=en-US",
+            "rss",
+        ),
+        # Kitco metals news — feed URL verified live in 17g; on fetch failure
+        # the Yahoo source still carries the card.
+        "kitco_news": ("https://www.kitco.com/rss/KitcoNews.xml", "rss"),
+    },
+    keywords=[
+        "gold",
+        "bullion",
+        "fomc",
+        "federal reserve",
+        "dollar",
+        "dxy",
+        "real yields",
+        "safe haven",
+        "central bank",
+    ],
+    accept_all_sources=frozenset({"yahoo_finance_gc"}),
+)
+
+
+# ── SI (silver) configuration ─────────────────────────────────────────────
+
+_SI_CONFIG = SymbolNewsConfig(
+    feeds={
+        "yahoo_finance_si": (
+            "https://feeds.finance.yahoo.com/rss/2.0/headline?s=SI=F&region=US&lang=en-US",
+            "rss",
+        ),
+        "kitco_news": ("https://www.kitco.com/rss/KitcoNews.xml", "rss"),
+    },
+    keywords=[
+        "silver",
+        "bullion",
+        "industrial demand",
+        "solar",
+        "gold-silver ratio",
+        "fomc",
+        "real yields",
+    ],
+    accept_all_sources=frozenset({"yahoo_finance_si"}),
+)
+
+
 SYMBOL_CONFIGS: dict[str, SymbolNewsConfig] = {
     "NG": _NG_CONFIG,
     "CL": _CL_CONFIG,
+    "HO": _HO_CONFIG,
+    "RB": _RB_CONFIG,
+    "GC": _GC_CONFIG,
+    "SI": _SI_CONFIG,
 }
 
 
@@ -179,6 +284,9 @@ _CATEGORY_RULES: list[tuple[str, list[str]]] = [
     ("lng_export", ["lng export", "feedgas", "lng cargo", "ferc", "lng terminal"]),
     ("production", ["production", "well", "rig count", "frac", "haynesville", "appalachian", "permian", "drilling"]),
     ("refining", ["refinery", "refining", "distillate", "gasoline crack"]),
+    # Monetary / macro — drivers for metals (gold, silver). Listed before
+    # regulatory so a Fed/FOMC headline doesn't get caught by "policy".
+    ("monetary", ["fomc", "fed", "rate cut", "rate hike", "real yields", "dollar", "dxy", "safe haven", "central bank"]),
     ("regulatory", ["epa", "ferc", "regulation", "policy", "tax", "spr"]),
     ("geopolitical", ["russia", "europe gas", "ukraine", "sanction", "import", "opec", "iran"]),
 ]
@@ -336,8 +444,9 @@ class RssNewsAdapter:
     """Per-instrument NewsDataAdapter reading curated RSS feeds.
 
     Construct one instance per symbol so the 10-min response cache and the
-    keyword filter stay consistent. Unknown symbols silently fall through
-    to the NG config rather than 500-ing the news endpoint.
+    keyword filter stay consistent. Curated configs exist for NG/CL/HO/RB/GC/SI;
+    any other symbol falls through to a generic Yahoo per-symbol feed
+    (_make_default_config) rather than 500-ing the news endpoint.
     """
 
     def __init__(self, symbol: str = "NG") -> None:

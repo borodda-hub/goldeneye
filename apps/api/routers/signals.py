@@ -51,23 +51,12 @@ async def get_current_signal(
         from apps.api.repos import cot as cot_repo
 
         # Energy / storage alt-data path. NG has years of backfilled rows in
-        # eia_storage_reports so we read from the table. CL has no backfill —
-        # call EIAPetroleumAdapter live (24h-cached) for the latest weekly
-        # Cushing stock report. Both paths emit the same {delta_vs_consensus,
-        # actual_bcf} shape that xgboost consumes.
-        if symbol.upper() == "CL":
-            petroleum = get_energy("CL")
-            live_storage = await petroleum.get_latest_storage()
-            if live_storage and live_storage.get("surprise_bcf") is not None:
-                latest_storage = {
-                    "delta_vs_consensus": float(live_storage["surprise_bcf"]),
-                    "actual_bcf": (
-                        float(live_storage.get("actual_bcf"))
-                        if live_storage.get("actual_bcf") is not None
-                        else None
-                    ),
-                }
-        else:
+        # eia_storage_reports so we read from the table. Non-NG instruments have
+        # no backfill — ask the registry for the right per-symbol energy adapter:
+        # EIA petroleum stocks (24h-cached) for CL/HO/RB, NullEnergyAdapter for
+        # metals/other (returns None). Both live and table paths emit the same
+        # {delta_vs_consensus, actual_bcf} shape that xgboost consumes.
+        if symbol.upper() == "NG":
             storage_row = await eia_repo.get_latest(session)
             if storage_row is not None and storage_row.surprise_bcf is not None:
                 # surprise_bcf = actual net_change - consensus → matches the
@@ -77,6 +66,18 @@ async def get_current_signal(
                     "actual_bcf": float(storage_row.net_change_bcf)
                     if storage_row.net_change_bcf is not None
                     else None,
+                }
+        else:
+            energy = get_energy(symbol)
+            live_storage = await energy.get_latest_storage()
+            if live_storage and live_storage.get("surprise_bcf") is not None:
+                latest_storage = {
+                    "delta_vs_consensus": float(live_storage["surprise_bcf"]),
+                    "actual_bcf": (
+                        float(live_storage.get("actual_bcf"))
+                        if live_storage.get("actual_bcf") is not None
+                        else None
+                    ),
                 }
 
         # Phase 14: filter COT reports to the active instrument's market code.

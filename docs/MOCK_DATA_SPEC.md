@@ -47,8 +47,15 @@ Generated, weekly Thursdays at 14:30 ET for 2 years. Generator: `apps/api/seeds/
 
 Generated, weekly Tuesdays for 2 years (released the following Friday). Generator: `apps/api/seeds/cot_generator.py`.
 
-- Open interest baseline ~1.4M contracts, slow drift ±10%.
-- Managed-money net position oscillates between -150k and +250k, with momentum-following behavior (lags price by ~2 weeks).
+- **Per-symbol (Phase 17).** `generate(symbol)` emits 100 weekly reports for each
+  of NG/CL/HO/RB/GC/SI, keyed by the market's CFTC code. `demo.py` step 4 loops
+  the `COT_PARAMS` table. Every absolute magnitude (baseline, biases, noise std,
+  OI floor) scales by `oi_baseline / 1.4M`, and each symbol draws from its own
+  seeded RNG. NG keeps `seed=42` and a 1.4M baseline, so its output is unchanged.
+- Open-interest baselines (approx): NG 1.4M, CL 1.8M, HO 300k, RB 300k, GC 500k,
+  SI 150k; slow ±10% drift.
+- Managed-money net oscillates within a per-symbol band (NG −150k…+250k; bands
+  scale down for smaller markets), momentum-following (lags price by ~2 weeks).
 - Producer net position is the inverse of managed-money net (commercials hedge against speculator positioning), with smoothing.
 - Swap dealer position relatively stable.
 - Categories sum correctly (long_total + short_total + nonreportable = 2 × open_interest).

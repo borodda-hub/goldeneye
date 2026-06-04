@@ -49,6 +49,28 @@ MARKETS: dict[str, CftcMarket] = {
         name_prefix="CRUDE OIL",
         default_market_name="CRUDE OIL, LIGHT SWEET - NEW YORK MERCANTILE EXCHANGE",
     ),
+    # Phase 17 — petroleum products + metals. Codes verified live against CFTC
+    # PRE (Socrata occasionally reissues; recheck if a symbol returns no rows).
+    "HO": CftcMarket(
+        contract_code="022651",
+        name_prefix="NY HARBOR ULSD",  # hist. "#2 HEATING OIL"
+        default_market_name="NY HARBOR ULSD - NEW YORK MERCANTILE EXCHANGE",
+    ),
+    "RB": CftcMarket(
+        contract_code="111659",
+        name_prefix="GASOLINE RBOB",
+        default_market_name="GASOLINE RBOB - NEW YORK MERCANTILE EXCHANGE",
+    ),
+    "GC": CftcMarket(
+        contract_code="088691",
+        name_prefix="GOLD",
+        default_market_name="GOLD - COMMODITY EXCHANGE INC.",
+    ),
+    "SI": CftcMarket(
+        contract_code="084691",
+        name_prefix="SILVER",
+        default_market_name="SILVER - COMMODITY EXCHANGE INC.",
+    ),
 }
 
 # Backwards-compat exports — pre-Phase-14 callers used these as module-level

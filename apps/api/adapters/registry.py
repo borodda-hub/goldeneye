@@ -33,17 +33,25 @@ def get_energy(symbol: str = "NG"):
     """Return the energy-storage adapter for the given instrument.
 
     - NG → EIA natural-gas weekly storage (Lower-48 + regional breakdowns)
-    - CL → EIA petroleum weekly stocks (Cushing OK + total ex-SPR)
-    - Unknown symbols silently fall back to mock NG storage so the
-      dashboard never crashes on a freshly-added instrument.
+    - CL / HO / RB → EIA petroleum weekly stocks (per-symbol series table)
+    - Everything else (metals, grains, …) → NullEnergyAdapter (empty), so a
+      non-energy instrument never gets bogus gas-storage alt-data and never 500s.
+
+    The Null routing applies in both mock and real modes — a metal has no EIA
+    inventory report regardless of adapter configuration.
     """
+    from apps.api.adapters.energy.eia_petroleum import PETROLEUM_SERIES
+
     upper = symbol.upper() if symbol else "NG"
+    if upper != "NG" and upper not in PETROLEUM_SERIES:
+        from apps.api.adapters.energy.null_energy import NullEnergyAdapter
+        return NullEnergyAdapter()
     if settings.adapter_energy == "mock" or not settings.eia_api_key:
         from apps.api.adapters.energy.mock_eia import MockEIAAdapter
         return MockEIAAdapter()
-    if upper == "CL":
+    if upper in PETROLEUM_SERIES:
         from apps.api.adapters.energy.eia_petroleum import EIAPetroleumAdapter
-        return EIAPetroleumAdapter()
+        return EIAPetroleumAdapter(upper)
     from apps.api.adapters.energy.eia import EIAAdapter
     return EIAAdapter()
 
