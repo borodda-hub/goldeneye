@@ -134,7 +134,7 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
       {/* Right rail: paper equity + open positions (live MTM) + recent trades */}
       <aside
         aria-label="Paper trading rail"
-        className="w-72 shrink-0 sticky top-0 self-start flex flex-col gap-3"
+        className="w-80 shrink-0 sticky top-0 self-start flex flex-col gap-3"
       >
         <PaperEquityCard />
         <OpenPositionsCard />

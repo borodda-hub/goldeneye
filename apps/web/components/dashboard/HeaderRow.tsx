@@ -84,21 +84,23 @@ export function HeaderRow({
 
       {/* Center: price */}
       <div
-        className={`flex items-center gap-3 rounded-md px-2 -mx-2 py-0.5 transition-colors duration-500 ${flashBgClass(flash)}`}
+        className={`flex items-baseline gap-3 rounded-md px-2 -mx-2 py-1 transition-colors duration-500 ${flashBgClass(flash)}`}
       >
-        <NumberCell value={displayPrice} precision={3} />
+        <span className="text-3xl leading-none">
+          <NumberCell value={displayPrice} precision={3} />
+        </span>
         {hasChange ? (
           <>
-            <span className={`font-mono text-sm tabular-nums ${changeColor}`}>
+            <span className={`font-mono text-base tabular-nums ${changeColor}`}>
               {changeSign} {Math.abs(changeAbs as number).toFixed(3)}
             </span>
-            <span className={`font-mono text-sm tabular-nums ${changeColor}`}>
+            <span className={`font-mono text-base tabular-nums ${changeColor}`}>
               ({pctSign}
               {((changePct as number) * 100).toFixed(2)}%)
             </span>
           </>
         ) : (
-          <span className="font-mono text-sm tabular-nums text-ink-4">—</span>
+          <span className="font-mono text-base tabular-nums text-ink-4">—</span>
         )}
       </div>
 

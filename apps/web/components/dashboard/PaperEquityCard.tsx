@@ -61,7 +61,7 @@ export function PaperEquityCard() {
         </span>
       </div>
       <div className="flex items-baseline gap-3">
-        <span className="font-mono text-xl tabular-nums text-ink-1">
+        <span className="font-mono text-3xl tabular-nums text-ink-1 leading-none">
           {last !== null ? fmtUsd(last) : "—"}
         </span>
       </div>

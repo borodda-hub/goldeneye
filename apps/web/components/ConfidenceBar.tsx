@@ -23,7 +23,7 @@ export function ConfidenceBar({ confidence }: Props) {
       {[1, 2, 3].map((seg) => (
         <div
           key={seg}
-          className={`h-1.5 w-6 rounded-sm ${seg <= filled ? color : "bg-surface-2"}`}
+          className={`h-2 w-8 rounded-sm ${seg <= filled ? color : "bg-surface-2"}`}
           data-filled={seg <= filled}
         />
       ))}
