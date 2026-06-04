@@ -141,8 +141,19 @@ body::before {
 .ticker-track:hover {
   animation-play-state: paused;
 }
+/* News chyron — 50% slower than the macro quotes track for readability. */
+.news-ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll 180s linear infinite;
+  will-change: transform;
+}
+.news-ticker-track:hover {
+  animation-play-state: paused;
+}
 @media (prefers-reduced-motion: reduce) {
-  .ticker-track {
+  .ticker-track,
+  .news-ticker-track {
     animation: none;
   }
 }

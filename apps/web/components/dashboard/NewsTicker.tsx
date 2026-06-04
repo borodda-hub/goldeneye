@@ -16,12 +16,23 @@ function relativeAgo(iso: string | null): string {
   return `${days}d`;
 }
 
-function Cell({ item }: { item: NewsTickerItem }) {
-  const content = (
-    <span className="inline-flex items-baseline gap-2 px-4 py-1.5 shrink-0 whitespace-nowrap">
+function BrandPill() {
+  return (
+    <span
+      className="inline-flex items-baseline gap-2 px-4 py-1.5 shrink-0 whitespace-nowrap"
+      aria-hidden="true"
+    >
       <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
         Bloomberg
       </span>
+      <span className="text-ink-4">·</span>
+    </span>
+  );
+}
+
+function Cell({ item }: { item: NewsTickerItem }) {
+  const content = (
+    <span className="inline-flex items-baseline gap-2 px-4 py-1.5 shrink-0 whitespace-nowrap">
       <span className="text-xs text-ink-1 leading-none">{item.headline}</span>
       <span className="font-mono text-[10px] tabular-nums text-ink-4">
         {relativeAgo(item.published_at)}
@@ -81,10 +92,14 @@ export function NewsTicker() {
       aria-label="Bloomberg news ticker"
       data-testid="dashboard-news-ticker"
     >
-      <div className="ticker-track">
+      <div className="news-ticker-track">
+        {/* Brand label appears once per copy → exactly once per visible
+            rotation as the track wraps. */}
+        <BrandPill />
         {items.map((item, i) => (
           <Cell key={`a-${i}-${item.headline.slice(0, 24)}`} item={item} />
         ))}
+        <BrandPill />
         {items.map((item, i) => (
           <Cell key={`b-${i}-${item.headline.slice(0, 24)}`} item={item} />
         ))}
