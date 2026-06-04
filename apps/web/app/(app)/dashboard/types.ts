@@ -48,6 +48,16 @@ export interface SafetyEnvelope {
   disclaimer: string;
 }
 
+export type CurveShape = "contango" | "backwardation" | "mixed" | "unknown";
+
+export interface AiThesis {
+  thesis: string;
+  drivers: string[];
+  watch: string[];
+  curve_shape: CurveShape;
+  safety: SafetyEnvelope;
+}
+
 export interface DashboardSummary {
   instrument: Instrument;
   front_month: FrontMonth;
@@ -56,5 +66,6 @@ export interface DashboardSummary {
   futures_curve: FuturesCurvePoint[];
   recent_events: RecentEvent[];
   ai_summary: string;
+  ai_thesis?: AiThesis | null;
   safety: SafetyEnvelope;
 }

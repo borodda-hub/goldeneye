@@ -119,6 +119,68 @@ def summarize_market_messages(ctx: dict) -> PromptParts:  # type: ignore[type-ar
     )
 
 
+def generate_thesis_messages(ctx: dict) -> PromptParts:  # type: ignore[type-arg]
+    """Build messages for generate_thesis — a per-instrument research thesis
+    synthesizing current trends and news.
+
+    Recognized ctx keys: symbol, name, last_price, change_pct, vol_regime,
+    direction, confidence, curve_shape, recent_events (list of headlines),
+    supporting_factors (list), contradicting_factors (list). All optional.
+    """
+    symbol = ctx.get("symbol", "?")
+    name = ctx.get("name", symbol)
+    last_price = ctx.get("last_price", "N/A")
+    change_pct = ctx.get("change_pct", "N/A")
+    vol_regime = ctx.get("vol_regime", "unknown")
+    direction = ctx.get("direction", "neutral")
+    confidence = ctx.get("confidence", "low")
+    curve_shape = ctx.get("curve_shape", "unknown")
+    events = ctx.get("recent_events") or []
+    supporting = ctx.get("supporting_factors") or []
+    contradicting = ctx.get("contradicting_factors") or []
+
+    events_text = (
+        "\n".join(f"  - {e}" for e in events[:5]) if events else "  - None available"
+    )
+    sup_text = (
+        "\n".join(f"  - {f}" for f in supporting[:5]) if supporting else "  - None"
+    )
+    con_text = (
+        "\n".join(f"  - {f}" for f in contradicting[:5])
+        if contradicting
+        else "  - None"
+    )
+
+    task_instructions = (
+        "Task: generate_thesis. Synthesize a current research thesis (3-5 "
+        "sentences) for this commodity using the inputs below. Lead with the "
+        "directional read framed as inference, weave in the strongest news / "
+        "trend driver, acknowledge the strongest contradicting factor, and "
+        "close with the confidence band. Then list 3-5 key drivers (short "
+        "noun phrases) and 2-4 watch-items (events or thresholds that would "
+        "invalidate or confirm). "
+        "Output strict JSON only (no markdown fences), of shape: "
+        '{"thesis": "<paragraph>", "drivers": ["..."], "watch": ["..."]}. '
+        "Never use forbidden phrases; never give a specific future price level."
+    )
+    user_content = (
+        "Inputs:\n"
+        f"- Instrument: {symbol} ({name})\n"
+        f"- Front-month price: {last_price}, change_pct: {change_pct}\n"
+        f"- Volatility regime: {vol_regime}\n"
+        f"- Ensemble direction: {direction}, confidence: {confidence}\n"
+        f"- Futures curve shape: {curve_shape}\n"
+        f"- Recent news headlines:\n{events_text}\n"
+        f"- Strongest supporting factors:\n{sup_text}\n"
+        f"- Strongest contradicting factors:\n{con_text}\n"
+    )
+
+    return PromptParts(
+        system_blocks=[_persona_block(), _task_block(task_instructions)],
+        user_messages=[{"role": "user", "content": user_content}],
+    )
+
+
 def explain_signal_messages(signal: dict, ctx: dict) -> PromptParts:  # type: ignore[type-arg]
     """Build messages for explain_signal. Caps supporting/contradicting to top-2 per model."""
     direction = signal.get("direction", "neutral")

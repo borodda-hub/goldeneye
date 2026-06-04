@@ -30,6 +30,7 @@ from apps.api.services.llm_prompts import (
     critique_thesis_messages,
     explain_signal_messages,
     extract_event_messages,
+    generate_thesis_messages,
     narrate_scenario_messages,
     review_journal_entry_messages,
     summarize_market_messages,
@@ -49,6 +50,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 _cache: dict[str, tuple[str, SafetyEnvelope]] = {}
 _event_cache: dict[str, dict[str, Any]] = {}
+_thesis_cache: dict[str, tuple[dict[str, Any], SafetyEnvelope]] = {}
 
 
 def _cache_key(prompt: PromptParts) -> str:
@@ -120,6 +122,64 @@ async def summarize_market(ctx: dict[str, Any]) -> tuple[str, SafetyEnvelope]:
     result = (text, envelope)
     _cache[key] = result
     return result
+
+
+async def generate_thesis(
+    ctx: dict[str, Any],
+) -> tuple[dict[str, Any], SafetyEnvelope]:
+    """Synthesize a per-instrument research thesis using current trends + news.
+
+    Returns ({"thesis": str, "drivers": [str], "watch": [str]}, envelope).
+    Cached on ctx hash. Degrades to an empty-but-shaped object on malformed
+    JSON so the UI can still render with the safety envelope.
+    """
+    prompt = generate_thesis_messages(ctx)
+    key = _cache_key(prompt)
+    if key in _thesis_cache:
+        return _thesis_cache[key]
+
+    model = select_model("generate_thesis", ctx)
+    text = await _call_with_safety_check(
+        "generate_thesis", prompt, model=model, max_tokens=600
+    )
+    parsed = _parse_thesis_json(text)
+    envelope = wrap_with_uncertainty(
+        {},
+        confidence="medium",
+        caveats=[
+            "Thesis is an LLM inference over current snapshot data, not a forecast.",
+            "Based on synthetic mock data for research purposes.",
+        ],
+        as_of=datetime.utcnow(),
+    )
+    result = (parsed, envelope)
+    _thesis_cache[key] = result
+    return result
+
+
+def _parse_thesis_json(text: str) -> dict[str, Any]:
+    """Parse JSON thesis; degrade to empty-but-shaped on failure."""
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        lines = stripped.splitlines()
+        inner_lines = (
+            lines[1:-1] if lines[-1].strip().startswith("```") else lines[1:]
+        )
+        stripped = "\n".join(inner_lines)
+    try:
+        data = _lenient_json_load(stripped)
+        return {
+            "thesis": str(data.get("thesis", "")).strip(),
+            "drivers": [str(s).strip() for s in (data.get("drivers") or [])][:5],
+            "watch": [str(s).strip() for s in (data.get("watch") or [])][:4],
+        }
+    except (json.JSONDecodeError, ValueError, TypeError) as exc:
+        logger.warning(
+            "Failed to parse generate_thesis JSON: %s. Text (first 500 chars): %r",
+            exc,
+            stripped[:500],
+        )
+        return {"thesis": "", "drivers": [], "watch": []}
 
 
 async def explain_signal(

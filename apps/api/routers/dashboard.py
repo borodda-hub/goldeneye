@@ -14,7 +14,7 @@ from apps.api.repos import news as news_repo
 from apps.api.adapters.registry import get_market
 from apps.api.services.model_registry import ForecastContext, run_all
 from apps.api.services.ensemble import compute_ensemble
-from apps.api.services.llm_explainer import summarize_market
+from apps.api.services.llm_explainer import generate_thesis, summarize_market
 
 router = APIRouter(prefix="/v1/dashboard", tags=["dashboard"])
 
@@ -88,6 +88,46 @@ async def get_summary(
     }
     ai_text, safety_env = await summarize_market(market_ctx)
 
+    # AI thesis — richer per-instrument synthesis: news + factors + curve shape.
+    # Curve shape from front-3 mids: monotonically rising = contango, falling =
+    # backwardation, else flat/mixed.
+    curve_shape = "unknown"
+    if curve_snap and len(curve_snap) >= 3:
+        mids = [c["mid_price"] for c in curve_snap[:3]]
+        if mids[2] > mids[1] > mids[0]:
+            curve_shape = "contango"
+        elif mids[2] < mids[1] < mids[0]:
+            curve_shape = "backwardation"
+        else:
+            curve_shape = "mixed"
+
+    supporting_factors: list[str] = []
+    contradicting_factors: list[str] = []
+    for m in (ensemble.get("models") or [])[:4]:
+        for f in (m.get("supporting") or [])[:2]:
+            factor = str(f.get("factor", "")).strip()
+            if factor and factor not in supporting_factors:
+                supporting_factors.append(factor)
+        for f in (m.get("contradicting") or [])[:2]:
+            factor = str(f.get("factor", "")).strip()
+            if factor and factor not in contradicting_factors:
+                contradicting_factors.append(factor)
+
+    thesis_ctx = {
+        "symbol": symbol,
+        "name": instrument.name,
+        "last_price": last_price,
+        "change_pct": change_pct,
+        "vol_regime": ensemble.get("vol_regime"),
+        "direction": ensemble.get("direction"),
+        "confidence": ensemble.get("confidence"),
+        "curve_shape": curve_shape,
+        "recent_events": [e.headline for e in events[:5]],
+        "supporting_factors": supporting_factors[:5],
+        "contradicting_factors": contradicting_factors[:5],
+    }
+    thesis_data, thesis_safety = await generate_thesis(thesis_ctx)
+
     return {
         "instrument": {
             "symbol": instrument.symbol,
@@ -113,5 +153,12 @@ async def get_summary(
         ],
         "recent_events": recent_events,
         "ai_summary": ai_text,
+        "ai_thesis": {
+            "thesis": thesis_data.get("thesis", ""),
+            "drivers": thesis_data.get("drivers", []),
+            "watch": thesis_data.get("watch", []),
+            "curve_shape": curve_shape,
+            "safety": thesis_safety.model_dump(mode="json"),
+        },
         "safety": safety_env.model_dump(mode="json"),
     }

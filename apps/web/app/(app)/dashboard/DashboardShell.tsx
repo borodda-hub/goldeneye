@@ -1,6 +1,7 @@
 "use client";
 
 import { ResizableSplit } from "@/components/ResizableSplit";
+import { AiThesisCard } from "@/components/dashboard/AiThesisCard";
 import { DashboardLiveBar } from "@/components/dashboard/DashboardLiveBar";
 import { DashboardTicker } from "@/components/dashboard/DashboardTicker";
 import { DirectionalBiasCard } from "@/components/dashboard/DirectionalBiasCard";
@@ -82,7 +83,16 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
               feedMode={feedMode}
             />
 
-            {/* Row 2: Working Thesis */}
+            {/* Row 2a: AI Thesis (per-instrument synthesis). Tolerate older API
+                payloads that predate the ai_thesis field by simply not rendering. */}
+            {summary.ai_thesis && (
+              <AiThesisCard
+                instrument={summary.instrument}
+                thesis={summary.ai_thesis}
+              />
+            )}
+
+            {/* Row 2b: Working Thesis (user-authored) */}
             <WorkingThesisCard instrumentCode={summary.instrument.symbol} />
 
             {/* Row 3: Chart + Bias — drag the divider to resize. Width
