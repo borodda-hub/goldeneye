@@ -122,15 +122,24 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
               }
             />
 
-            {/* Row 4: Curve + Events — scales with viewport, floored at 160px */}
-            <div className="flex gap-4 h-[20vh] min-h-[160px]">
-              <div className="flex-1">
-                <FuturesCurveCard curve={summary.futures_curve} />
-              </div>
-              <div className="flex-1">
-                <RecentEventsList events={summary.recent_events} />
-              </div>
-            </div>
+            {/* Row 4: Curve + Events — resizable divider, scales with viewport */}
+            <ResizableSplit
+              className="h-[20vh] min-h-[160px]"
+              storageKey="goldeneye:dashboard:curve-events-width"
+              defaultRightWidth={420}
+              rightMinWidth={240}
+              leftMinWidth={280}
+              left={
+                <div className="h-full pr-2">
+                  <FuturesCurveCard curve={summary.futures_curve} />
+                </div>
+              }
+              right={
+                <div className="h-full pl-2">
+                  <RecentEventsList events={summary.recent_events} />
+                </div>
+              }
+            />
 
             {/* Row 5: Live bar */}
             <DashboardLiveBar />

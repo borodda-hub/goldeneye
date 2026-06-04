@@ -9,6 +9,8 @@ import {
   usePatchThesis,
   useThesisSeed,
 } from "@/lib/queries";
+import { CollapseToggle } from "@/components/CollapseToggle";
+import { useCollapsed } from "@/lib/useCollapsed";
 import { ThesisCritiqueDrawer } from "./ThesisCritiqueDrawer";
 import { ThesisEditModal } from "./ThesisEditModal";
 
@@ -171,6 +173,9 @@ export function WorkingThesisCard({
   const { data: thesis, isLoading } = useCurrentThesis(instrumentCode);
   const [editOpen, setEditOpen] = useState(false);
   const [seedFetching, setSeedFetching] = useState(false);
+  const { collapsed, toggle } = useCollapsed(
+    "goldeneye:dashboard:working-thesis-collapsed",
+  );
   const seedQ = useThesisSeed(instrumentCode, seedFetching);
   const createMut = useCreateThesis(instrumentCode);
   const patchMut = usePatchThesis(instrumentCode);
@@ -243,9 +248,14 @@ export function WorkingThesisCard({
           <span aria-hidden="true" className="inline-block w-[18px] h-px bg-accent" />
           Working Thesis · {instrumentCode}
         </span>
+        <CollapseToggle
+          collapsed={collapsed}
+          onToggle={toggle}
+          label="Working thesis"
+        />
       </div>
 
-      {isLoading ? (
+      {collapsed ? null : isLoading ? (
         <p className="text-xs text-ink-4 font-mono">Loading thesis…</p>
       ) : thesis ? (
         <ReadView

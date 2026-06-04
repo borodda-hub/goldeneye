@@ -1,7 +1,9 @@
 "use client";
 
 import type { AiThesis, Instrument } from "@/app/(app)/dashboard/types";
+import { CollapseToggle } from "@/components/CollapseToggle";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
+import { useCollapsed } from "@/lib/useCollapsed";
 
 interface Props {
   instrument: Instrument;
@@ -18,20 +20,30 @@ const CURVE_LABEL: Record<AiThesis["curve_shape"], string> = {
 export function AiThesisCard({ instrument, thesis }: Props) {
   const hasThesis = thesis.thesis.length > 0;
   const hasLists = thesis.drivers.length > 0 || thesis.watch.length > 0;
+  const { collapsed, toggle } = useCollapsed("goldeneye:dashboard:ai-thesis-collapsed");
   return (
     <section
       aria-label="AI thesis"
       className="border border-line-1 rounded-md bg-surface-1 px-4 py-3 flex flex-col gap-2"
     >
       <div className="flex items-baseline justify-between gap-3">
-        <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
-          AI Thesis · {instrument.symbol}
-        </span>
+        <div className="flex items-center gap-2">
+          <CollapseToggle
+            collapsed={collapsed}
+            onToggle={toggle}
+            label="AI thesis"
+          />
+          <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+            AI Thesis · {instrument.symbol}
+          </span>
+        </div>
         <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
           {CURVE_LABEL[thesis.curve_shape]}
         </span>
       </div>
 
+      {collapsed ? null : (
+        <>
       <div className="grid grid-cols-2 gap-4">
         {/* Left half: thesis prose */}
         <div>
@@ -93,6 +105,8 @@ export function AiThesisCard({ instrument, thesis }: Props) {
 
       {hasLists && (
         <SafetyEnvelopeNote envelope={thesis.safety} defaultOpen={false} />
+      )}
+        </>
       )}
     </section>
   );
