@@ -125,6 +125,7 @@ export function NewEntryForm({ onCreated }: Props) {
         )}
         {form.evidence.map((ev, idx) => (
           <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: form-managed render-only list, no stable id
             key={idx}
             className="flex items-center gap-2 border border-line-1 bg-surface-2 px-2 py-1.5"
           >

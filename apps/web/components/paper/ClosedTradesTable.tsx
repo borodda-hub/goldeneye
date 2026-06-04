@@ -121,42 +121,60 @@ export function ClosedTradesTable({ trades }: Props) {
         <table className="w-full text-xs font-mono">
           <thead>
             <tr className="border-b border-line-1 text-ink-3 text-[10px] uppercase tracking-widest">
-              <th
-                className="text-left px-3 py-1.5 cursor-pointer"
-                onClick={() => toggleSort("closed_at")}
-              >
-                Closed{sortIndicator("closed_at")}
+              <th className="text-left px-3 py-1.5 cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => toggleSort("closed_at")}
+                  className="w-full text-left uppercase tracking-widest cursor-pointer"
+                >
+                  Closed{sortIndicator("closed_at")}
+                </button>
               </th>
               <th className="text-left px-3 py-1.5">Contract</th>
-              <th
-                className="text-left px-3 py-1.5 cursor-pointer"
-                onClick={() => toggleSort("side")}
-              >
-                Side{sortIndicator("side")}
+              <th className="text-left px-3 py-1.5 cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => toggleSort("side")}
+                  className="w-full text-left uppercase tracking-widest cursor-pointer"
+                >
+                  Side{sortIndicator("side")}
+                </button>
               </th>
-              <th
-                className="text-right px-3 py-1.5 cursor-pointer"
-                onClick={() => toggleSort("size_contracts")}
-              >
-                Size{sortIndicator("size_contracts")}
+              <th className="text-right px-3 py-1.5 cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => toggleSort("size_contracts")}
+                  className="w-full text-right uppercase tracking-widest cursor-pointer"
+                >
+                  Size{sortIndicator("size_contracts")}
+                </button>
               </th>
-              <th
-                className="text-right px-3 py-1.5 cursor-pointer"
-                onClick={() => toggleSort("entry_price")}
-              >
-                Entry{sortIndicator("entry_price")}
+              <th className="text-right px-3 py-1.5 cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => toggleSort("entry_price")}
+                  className="w-full text-right uppercase tracking-widest cursor-pointer"
+                >
+                  Entry{sortIndicator("entry_price")}
+                </button>
               </th>
-              <th
-                className="text-right px-3 py-1.5 cursor-pointer"
-                onClick={() => toggleSort("exit_price")}
-              >
-                Exit{sortIndicator("exit_price")}
+              <th className="text-right px-3 py-1.5 cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => toggleSort("exit_price")}
+                  className="w-full text-right uppercase tracking-widest cursor-pointer"
+                >
+                  Exit{sortIndicator("exit_price")}
+                </button>
               </th>
-              <th
-                className="text-right px-3 py-1.5 cursor-pointer"
-                onClick={() => toggleSort("outcome_pnl")}
-              >
-                PnL{sortIndicator("outcome_pnl")}
+              <th className="text-right px-3 py-1.5 cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => toggleSort("outcome_pnl")}
+                  className="w-full text-right uppercase tracking-widest cursor-pointer"
+                >
+                  PnL{sortIndicator("outcome_pnl")}
+                </button>
               </th>
             </tr>
           </thead>

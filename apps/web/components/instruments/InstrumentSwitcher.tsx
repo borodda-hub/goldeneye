@@ -65,7 +65,10 @@ export function InstrumentSwitcher({ className = "" }: Props) {
         </span>
       </button>
       {open ? (
+        // biome-ignore lint/a11y/useFocusableInteractive: options inside are focusable buttons; the listbox container is not a tab stop by design
         <ul
+          // biome-ignore lint/a11y/useSemanticElements: styled custom dropdown using the ARIA listbox pattern; native <select> cannot carry this layout
+          // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: intentional ARIA listbox over a styled <ul>; native <select> cannot carry this layout
           role="listbox"
           aria-label="Instruments"
           className="absolute right-0 top-full mt-1 z-50 min-w-[200px] border border-line-2 bg-surface-1 shadow-xl flex flex-col"
@@ -81,6 +84,7 @@ export function InstrumentSwitcher({ className = "" }: Props) {
                 <li key={r.symbol}>
                   <button
                     type="button"
+                    // biome-ignore lint/a11y/useSemanticElements: ARIA option inside a styled custom listbox; native <option> is not stylable here
                     role="option"
                     aria-selected={isActive}
                     onClick={() => {

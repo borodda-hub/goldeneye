@@ -165,6 +165,7 @@ export function ShockBuilder({ shocks, onChange }: Props) {
         )}
         {shocks.map((s, i) => (
           <ShockRow
+            // biome-ignore lint/suspicious/noArrayIndexKey: form-managed render-only list, no stable id
             key={i}
             shock={s}
             onUpdate={(next) => update(i, next)}

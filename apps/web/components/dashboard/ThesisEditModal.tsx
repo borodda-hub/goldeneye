@@ -69,6 +69,7 @@ export function ThesisEditModal({
   const canSave = statement.trim().length > 0 && !saving;
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: custom backdrop modal; native <dialog> would change the click-outside backdrop and positioning model. Escape is handled via a window keydown listener.
     <div
       role="dialog"
       aria-modal="true"
@@ -77,6 +78,9 @@ export function ThesisEditModal({
       style={{ background: "rgba(10, 10, 9, 0.82)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose();
       }}
     >
       <div

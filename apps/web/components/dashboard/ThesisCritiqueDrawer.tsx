@@ -31,6 +31,7 @@ function Section({
         <ol className="flex flex-col gap-2">
           {items.map((item, i) => (
             <li
+              // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
               key={`${title}-${i}`}
               className="flex gap-2.5 text-sm text-ink-2 leading-relaxed"
             >
@@ -65,6 +66,7 @@ export function ThesisCritiqueDrawer({
   if (!open) return null;
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: custom backdrop drawer; native <dialog> would change the click-outside backdrop and positioning model. Escape is handled via a window keydown listener.
     <div
       role="dialog"
       aria-modal="true"
@@ -73,6 +75,9 @@ export function ThesisCritiqueDrawer({
       style={{ background: "rgba(10, 10, 9, 0.82)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose();
       }}
     >
       <div className="w-full max-w-xl h-full overflow-y-auto border-l border-line-2 bg-surface-1 p-6 flex flex-col gap-5">
@@ -136,6 +141,7 @@ export function ThesisCritiqueDrawer({
                 </span>
               </p>
               {critique.safety.caveats.map((c, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
                 <p key={i} className="text-xs text-ink-4 leading-relaxed">
                   • {c}
                 </p>

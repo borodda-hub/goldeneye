@@ -131,6 +131,7 @@ export function EntryDetailDrawer({ entry, onClose }: Props) {
           <ul className="flex flex-col gap-1">
             {entry.evidence.map((ev, i) => (
               <li
+                // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
                 key={i}
                 className="text-xs text-ink-2 leading-relaxed font-mono"
               >
@@ -157,6 +158,7 @@ export function EntryDetailDrawer({ entry, onClose }: Props) {
           <div className="flex flex-wrap gap-1">
             {entry.risk_factors.map((rf, i) => (
               <span
+                // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
                 key={i}
                 className="font-mono text-[10px] text-ink-3 border border-line-1 px-1.5 py-0.5"
               >
@@ -186,6 +188,7 @@ export function EntryDetailDrawer({ entry, onClose }: Props) {
               data-testid="llm-review-bullets"
             >
               {bullets.map((b, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
                 <li key={i}>{b}</li>
               ))}
             </ul>

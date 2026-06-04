@@ -87,6 +87,7 @@ function Popover({
   return (
     <div
       ref={ref}
+      // biome-ignore lint/a11y/useSemanticElements: anchored click-outside popup; native <dialog> would break absolute positioning and focus model
       role="dialog"
       aria-label="Signal Quality breakdown"
       className="absolute right-0 top-full mt-2 z-50 w-72 border border-line-2 bg-surface-1 p-4 flex flex-col gap-3 shadow-xl"

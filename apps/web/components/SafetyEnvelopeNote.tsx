@@ -44,6 +44,7 @@ export function SafetyEnvelopeNote({ envelope, defaultOpen = false }: Props) {
           {envelope.caveats.length > 0 && (
             <ul className="list-disc list-inside space-y-0.5">
               {envelope.caveats.map((c, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
                 <li key={i}>{c}</li>
               ))}
             </ul>

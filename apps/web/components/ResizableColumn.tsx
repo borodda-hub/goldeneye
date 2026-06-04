@@ -119,6 +119,7 @@ export function ResizableColumn({
   );
 
   const handle = (
+    // biome-ignore lint/a11y/useSemanticElements: interactive drag handle using role="separator"; native <hr> cannot host pointer/keyboard handlers or child affordance
     <div
       role="separator"
       aria-orientation="vertical"

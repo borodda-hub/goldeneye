@@ -52,6 +52,7 @@ function EventPopup({
   return (
     <div
       ref={ref}
+      // biome-ignore lint/a11y/useSemanticElements: anchored click-outside popup; native <dialog> would break absolute positioning and focus model
       role="dialog"
       aria-label={event.headline}
       // Anchor to the events card's top-left, then shift up + left so the

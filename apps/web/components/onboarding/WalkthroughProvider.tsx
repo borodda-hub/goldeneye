@@ -74,6 +74,7 @@ export function WalkthroughProvider({
 
   // Push the router whenever the active step demands a different route.
   // Runs on every stepIndex change while the tour is open.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is intentionally omitted — including it would re-run the effect on every navigation; the equality check inside short-circuits on the next render instead. `steps` is the module constant DASHBOARD_TOUR and is stable.
   useEffect(() => {
     if (!open) return;
     const step = steps[stepIndex];

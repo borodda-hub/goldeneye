@@ -126,6 +126,7 @@ export function ResizableSplit({
       data-testid="resizable-split"
     >
       <div className="flex-1 min-w-0">{left}</div>
+      {/* biome-ignore lint/a11y/useSemanticElements: interactive drag handle using role="separator"; native <hr> cannot host pointer/keyboard handlers or child affordance */}
       <div
         role="separator"
         aria-orientation="vertical"

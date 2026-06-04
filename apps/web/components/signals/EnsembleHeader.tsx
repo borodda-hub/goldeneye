@@ -71,6 +71,7 @@ export function EnsembleHeader({ ensemble }: Props) {
       {confidence_rationale.length > 0 && (
         <ul className="mt-3 space-y-0.5">
           {confidence_rationale.map((r, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
             <li key={i} className="text-xs text-ink-3 font-mono">
               · {r}
             </li>
@@ -82,6 +83,7 @@ export function EnsembleHeader({ ensemble }: Props) {
       {caveats.length > 0 && (
         <ul className="mt-2 space-y-0.5">
           {caveats.map((c, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
             <li key={i} className="text-xs text-conf-low font-mono">
               ⚠ {c}
             </li>

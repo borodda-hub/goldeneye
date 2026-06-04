@@ -17,6 +17,7 @@ export function CalibrationSummary({ data }: Props) {
         {data.summary ? (
           <p className="font-serif text-[24px] leading-snug text-ink-1 tracking-[-0.01em]">
             {data.summary.split(" resolved at ").map((chunk, i, arr) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
               <span key={i}>
                 {chunk}
                 {i < arr.length - 1 ? (

@@ -28,6 +28,7 @@ function PatternList({
     <ul className="flex flex-col gap-1.5">
       {items.map((item, i) => (
         <li
+          // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
           key={`${tone}-${i}`}
           className="flex items-start gap-2 text-xs text-ink-2 leading-relaxed"
         >
@@ -105,6 +106,7 @@ function EmptyState({ caveats }: { caveats: string[] }) {
       {caveats.length > 0 ? (
         <ul className="flex flex-col gap-1 mt-1">
           {caveats.map((c, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
             <li key={i} className="text-xs text-ink-4 leading-relaxed">
               • {c}
             </li>

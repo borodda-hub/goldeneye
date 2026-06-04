@@ -41,6 +41,7 @@ export function MissingDataList({ items, onChange }: Props) {
         ) : (
           items.map((item, i) => (
             <li
+              // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
               key={`${item}-${i}`}
               className="flex items-start gap-2 text-xs text-ink-2 leading-relaxed"
             >

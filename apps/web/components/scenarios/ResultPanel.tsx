@@ -29,6 +29,7 @@ function NumberedList({
   return (
     <ol className="space-y-1.5">
       {items.map((item, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
         <li key={i} className="text-xs text-ink-3 leading-relaxed flex gap-2">
           <span className="font-mono text-ink-4 tabular-nums">{i + 1}.</span>
           <span>{item}</span>

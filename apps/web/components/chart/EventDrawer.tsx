@@ -51,6 +51,7 @@ export function EventDrawer({ events, open, onToggle }: Props) {
       ) : (
         <div className="flex-1 overflow-auto divide-y divide-line-1">
           {events.map((m, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
             <div key={i} className="px-3 py-2">
               <span className="text-ink-4 text-xs font-mono block mb-1">
                 {formatDate(m.ts)}

@@ -167,6 +167,7 @@ export function WalkthroughOverlay({
   const tooltip = tooltipPosition(rect, step.side, viewport);
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: non-modal pointer-events-none overlay container; native <dialog> semantics would break the spotlight layout and keyboard nav handled at component level
     <div
       role="dialog"
       aria-modal="true"
@@ -192,6 +193,9 @@ export function WalkthroughOverlay({
               "top 220ms ease-out, left 220ms ease-out, width 220ms ease-out, height 220ms ease-out",
           }}
           onClick={onClose}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") onClose();
+          }}
         />
       ) : (
         <div
@@ -199,6 +203,9 @@ export function WalkthroughOverlay({
           className="absolute inset-0 pointer-events-auto"
           style={{ background: "rgba(10, 10, 9, 0.78)" }}
           onClick={onClose}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") onClose();
+          }}
         />
       )}
 
@@ -232,6 +239,7 @@ export function WalkthroughOverlay({
         <div className="flex items-center gap-1.5 mt-1">
           {steps.map((_, i) => (
             <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
               key={i}
               className={`inline-block h-1 w-4 transition-colors ${
                 i === stepIndex

@@ -148,6 +148,7 @@ export function IndicatorPicker({
   }
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: custom backdrop modal; native <dialog> would change the click-outside backdrop and positioning model. Escape is handled via a window keydown listener.
     <div
       role="dialog"
       aria-modal="true"
@@ -156,6 +157,9 @@ export function IndicatorPicker({
       style={{ background: "rgba(10, 10, 9, 0.82)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose();
       }}
     >
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-line-2 bg-surface-1 p-6 flex flex-col gap-5">

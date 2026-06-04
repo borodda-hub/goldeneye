@@ -78,6 +78,7 @@ export function ResolutionPicker({ entryId, value }: Props) {
           <button
             key={String(opt.key)}
             type="button"
+            // biome-ignore lint/a11y/useSemanticElements: styled segmented toggle using the ARIA radio pattern; native <input type=radio> cannot carry this layout
             role="radio"
             aria-checked={isActive}
             disabled={mutation.isPending}
