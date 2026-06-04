@@ -15,7 +15,6 @@ function severityColor(severity: string): string {
       return "text-down";
     case "warning":
       return "text-conf-medium";
-    case "info":
     default:
       return "text-ink-3";
   }

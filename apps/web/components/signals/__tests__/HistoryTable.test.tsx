@@ -55,9 +55,9 @@ describe("HistoryTable", () => {
 
   it("shows empty state when no rows", () => {
     vi.mocked(useSignalHistory).mockReturnValueOnce({
-      data: { rows: [] } as any,
+      data: { rows: [] },
       isLoading: false,
-    } as any);
+    } as unknown as ReturnType<typeof useSignalHistory>);
     render(<HistoryTable />);
     expect(screen.getByText(/No scored forecasts/)).toBeInTheDocument();
   });
@@ -75,7 +75,7 @@ describe("HistoryTable outcome glyphs", () => {
     vi.mocked(useSignalHistory).mockReturnValueOnce({
       data: makeRow(outcome, realized_pct),
       isLoading: false,
-    } as any);
+    } as unknown as ReturnType<typeof useSignalHistory>);
     render(<HistoryTable />);
     expect(screen.getByText(glyph)).toBeInTheDocument();
   });

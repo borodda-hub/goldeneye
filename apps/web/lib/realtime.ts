@@ -132,13 +132,15 @@ class RealtimeClient {
   }
 
   subscribe<T>(channel: string, listener: Listener<T>) {
-    if (!this.listeners.has(channel)) {
-      this.listeners.set(channel, new Set());
+    let set = this.listeners.get(channel);
+    if (!set) {
+      set = new Set();
+      this.listeners.set(channel, set);
       if (this.ws?.readyState === WebSocket.OPEN) {
         this.sendSubscribe(channel);
       }
     }
-    this.listeners.get(channel)!.add(listener as Listener<unknown>);
+    set.add(listener as Listener<unknown>);
 
     if (this.ws === null) {
       this.connect();

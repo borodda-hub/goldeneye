@@ -69,7 +69,6 @@ function tooltipPosition(
       top = rect.top + rect.height / 2 - 100;
       left = rect.left - TOOLTIP_GAP - TOOLTIP_WIDTH;
       break;
-    case "center":
     default:
       top = viewport.h / 2 - 140;
       left = viewport.w / 2 - TOOLTIP_WIDTH / 2;
