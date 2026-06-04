@@ -16,6 +16,7 @@ import {
   useChartCurve,
   useChartIndicators,
   useChartPatterns,
+  useChartSeasonality,
   useInstruments,
 } from "@/lib/queries";
 import { useChannel } from "@/lib/realtime";
@@ -36,6 +37,14 @@ const PriceChart = dynamic(
   () =>
     import("@/components/chart/PriceChart").then((m) => ({
       default: m.PriceChart,
+    })),
+  { ssr: false },
+);
+
+const SeasonalityChart = dynamic(
+  () =>
+    import("@/components/chart/SeasonalityChart").then((m) => ({
+      default: m.SeasonalityChart,
     })),
   { ssr: false },
 );
@@ -119,6 +128,7 @@ export function ChartShell({
   const [showCurve, setShowCurve] = useState(false);
   const [showPatterns, setShowPatterns] = useState(false);
   const [showAutoTa, setShowAutoTa] = useState(false);
+  const [showSeasonality, setShowSeasonality] = useState(false);
   const [range, setRange] = useState<RangePreset>("2Y");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -134,6 +144,7 @@ export function ChartShell({
     setShowCurve(getPref<string>("goldeneye:chart:curve", "0") === "1");
     setShowPatterns(getPref<string>("goldeneye:chart:patterns", "0") === "1");
     setShowAutoTa(getPref<string>("goldeneye:chart:autota", "0") === "1");
+    setShowSeasonality(getPref<string>("goldeneye:chart:season", "0") === "1");
     setRange(getPref<RangePreset>("goldeneye:chart:range", "2Y"));
   }, []);
 
@@ -220,6 +231,13 @@ export function ChartShell({
   );
   const autoTa = showAutoTa ? (autoTaResp ?? null) : null;
 
+  // Seasonality view (per-year overlay) — fetched only while toggled on.
+  const { data: seasonalityResp } = useChartSeasonality(
+    contractCode,
+    6,
+    showSeasonality,
+  );
+
   const specQuery = specsToQueryParam(indicators);
   const { data: indicatorsData } = useChartIndicators(activeSymbol, specQuery);
 
@@ -291,6 +309,12 @@ export function ChartShell({
       return !v;
     });
   }, []);
+  const toggleSeasonality = useCallback(() => {
+    setShowSeasonality((v) => {
+      setPref("goldeneye:chart:season", v ? "0" : "1");
+      return !v;
+    });
+  }, []);
 
   const handleScreenshot = useCallback(() => {
     const canvas = chartApiRef.current?.screenshot();
@@ -329,6 +353,8 @@ export function ChartShell({
         patternCount={patterns.length}
         showAutoTa={showAutoTa}
         onToggleAutoTa={toggleAutoTa}
+        showSeasonality={showSeasonality}
+        onToggleSeasonality={toggleSeasonality}
         indicatorCount={indicators.filter((i) => i.visible).length}
         onOpenIndicators={() => setPickerOpen(true)}
         onClearIndicators={() => persistAndSet([])}
@@ -338,7 +364,13 @@ export function ChartShell({
       />
       <div className="flex flex-1 min-h-0 gap-0">
         <div className="flex-1 min-w-0">
-          {barsData ? (
+          {showSeasonality ? (
+            seasonalityResp ? (
+              <SeasonalityChart data={seasonalityResp} />
+            ) : (
+              <LoadingPlaceholder />
+            )
+          ) : barsData ? (
             <PriceChart
               bars={barsData.bars}
               eventMarkers={barsData.event_markers}

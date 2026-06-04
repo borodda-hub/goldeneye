@@ -12,6 +12,7 @@ from apps.api.repos import instruments as instr_repo
 from apps.api.repos import news as news_repo
 from apps.api.repos import eia as eia_repo
 from apps.api.adapters.registry import get_market
+from apps.api.services.seasonality import build_seasonality
 
 router = APIRouter(prefix="/v1/chart", tags=["chart"])
 
@@ -115,6 +116,27 @@ async def get_bars(
         "bars": bar_list,
         "overlays": overlays,
         "event_markers": eia_markers,
+    }
+
+
+@router.get("/seasonality")
+async def get_seasonality(
+    contract_code: str = Query(...),
+    years: int = Query(default=5, ge=2, le=12),
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    contract = await contract_repo.get_by_code(session, contract_code)
+    if contract is None:
+        raise HTTPException(status_code=404, detail=f"Contract {contract_code!r} not found")
+
+    market = get_market()
+    to_dt = datetime.now()
+    from_dt = datetime(to_dt.year - years, to_dt.month, to_dt.day)
+    bars = await market.get_bars(contract_code, "1d", from_dt=from_dt, to_dt=to_dt)
+    data = build_seasonality(bars, max_years=years)
+    return {
+        "contract_code": contract_code,
+        **data,
     }
 
 

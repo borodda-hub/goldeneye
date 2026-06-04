@@ -186,6 +186,18 @@ What makes it a **gas/commodity research terminal**, not a generic chart widget.
   into the existing `alerts` table).
 - **Harmonic patterns** (XABCD/Gartley/Bat/Butterfly) as a final stretch.
 
+**Seasonality SHIPPED 2026-06-04 (`__`).** The signature energy-desk view: backend
+`services/seasonality.py` groups daily bars by calendar year, aligns to MM-DD, and
+returns per-year close series + a cross-year average. `GET /v1/chart/seasonality`.
+Frontend: a **Season** toolbar toggle swaps the price chart for `SeasonalityChart`
+— each year overlaid on one Jan→Dec axis (recent year brightest, older years
+dimmed, a dashed cross-year average). Verified live on NG: the classic gas shape
+(Feb cold-snap spike → spring/summer trough → winter rise) is visible. +5 backend
+tests; health green. (NG contract history is ~2 years here; more years layer in
+automatically with a longer continuous series.) **Still open in Phase 25: manual
+drawing tools, spread/ratio charts, multi-symbol comparison, pattern-credibility
+backtest, alerts-on-chart, harmonic patterns.**
+
 ## Sequencing rationale
 
 20 (quick wins, independent) → 21 (candlestick patterns, independent, high value)

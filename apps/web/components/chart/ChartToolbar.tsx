@@ -31,6 +31,8 @@ interface Props {
   patternCount: number;
   showAutoTa: boolean;
   onToggleAutoTa: () => void;
+  showSeasonality: boolean;
+  onToggleSeasonality: () => void;
   indicatorCount: number;
   onOpenIndicators: () => void;
   onClearIndicators: () => void;
@@ -92,6 +94,8 @@ export function ChartToolbar({
   patternCount,
   showAutoTa,
   onToggleAutoTa,
+  showSeasonality,
+  onToggleSeasonality,
   indicatorCount,
   onOpenIndicators,
   onClearIndicators,
@@ -184,6 +188,19 @@ export function ChartToolbar({
         }`}
       >
         Auto-TA
+      </button>
+
+      {/* Seasonality view (per-year overlay on a common Jan→Dec axis) */}
+      <button
+        type="button"
+        onClick={onToggleSeasonality}
+        aria-pressed={showSeasonality}
+        title="Seasonality — overlay each year's price path on one Jan→Dec axis"
+        className={`rounded border border-line-2 ${SEG_BASE} ${
+          showSeasonality ? SEG_ON : SEG_OFF
+        }`}
+      >
+        Season
       </button>
 
       {/* Indicators */}

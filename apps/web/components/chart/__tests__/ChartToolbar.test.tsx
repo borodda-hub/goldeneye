@@ -17,6 +17,8 @@ const defaultProps = {
   patternCount: 0,
   showAutoTa: false,
   onToggleAutoTa: vi.fn(),
+  showSeasonality: false,
+  onToggleSeasonality: vi.fn(),
   indicatorCount: 0,
   onOpenIndicators: vi.fn(),
   onClearIndicators: vi.fn(),

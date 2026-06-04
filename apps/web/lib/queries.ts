@@ -15,6 +15,7 @@ import {
   getChartCurve,
   getChartIndicators,
   getChartPatterns,
+  getChartSeasonality,
   getCurrentSignal,
   getCurrentThesis,
   getDashboardSummary,
@@ -184,6 +185,19 @@ export function useChartAutoTa(
       getChartAutoTa({ contract_code: contractCode, resolution, from, to }),
     enabled,
     staleTime: resolution === "1m" ? 0 : 60_000,
+  });
+}
+
+export function useChartSeasonality(
+  contractCode: string,
+  years: number,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ["chart", "seasonality", contractCode, years],
+    queryFn: () => getChartSeasonality({ contract_code: contractCode, years }),
+    enabled,
+    staleTime: 5 * 60_000,
   });
 }
 

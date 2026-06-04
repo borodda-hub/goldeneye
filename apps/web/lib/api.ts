@@ -724,3 +724,29 @@ export async function getChartAutoTa(params: {
   });
   return apiFetch(`/v1/chart/auto-ta?${q.toString()}`);
 }
+
+// ── Seasonality (Phase 25) ───────────────────────────────────────────────────
+export interface SeasonalityPoint {
+  md: string; // "MM-DD"
+  v: number;
+}
+
+export interface SeasonalityYear {
+  year: number;
+  points: SeasonalityPoint[];
+}
+
+export interface SeasonalityResponse {
+  contract_code: string;
+  years: SeasonalityYear[];
+  average: SeasonalityPoint[];
+}
+
+export async function getChartSeasonality(params: {
+  contract_code: string;
+  years?: number;
+}): Promise<SeasonalityResponse> {
+  const q = new URLSearchParams({ contract_code: params.contract_code });
+  if (params.years) q.set("years", String(params.years));
+  return apiFetch(`/v1/chart/seasonality?${q.toString()}`);
+}
