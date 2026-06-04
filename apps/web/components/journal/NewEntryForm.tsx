@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import type { Evidence, JournalEntry } from "../../app/(app)/journal/types";
 import { createJournalEntry } from "../../lib/api";
 import { queryKeys } from "../../lib/queries";
-import type { Evidence, JournalEntry } from "../../app/(app)/journal/types";
 
 interface Props {
   onCreated?: (id: string) => void;
@@ -44,8 +44,7 @@ export function NewEntryForm({ onCreated }: Props) {
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean),
-        invalidation_criteria:
-          form.invalidation_criteria.trim() || undefined,
+        invalidation_criteria: form.invalidation_criteria.trim() || undefined,
       };
       return (await createJournalEntry(body)) as JournalEntry;
     },
@@ -139,9 +138,7 @@ export function NewEntryForm({ onCreated }: Props) {
               className="bg-surface-1 border border-line-1 px-1 py-0.5 font-mono text-[11px] text-ink-2 flex-1 min-w-0"
               placeholder="summary"
               value={ev.summary}
-              onChange={(e) =>
-                updateEvidence(idx, { summary: e.target.value })
-              }
+              onChange={(e) => updateEvidence(idx, { summary: e.target.value })}
             />
             <input
               type="number"

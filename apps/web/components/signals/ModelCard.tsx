@@ -1,6 +1,6 @@
-import { DirectionChip } from "@/components/DirectionChip";
-import { ConfidenceBar } from "@/components/ConfidenceBar";
 import type { ModelResult } from "@/app/(app)/signals/types";
+import { ConfidenceBar } from "@/components/ConfidenceBar";
+import { DirectionChip } from "@/components/DirectionChip";
 
 interface Props {
   model: ModelResult;
@@ -59,7 +59,9 @@ export function ModelCard({ model }: Props) {
           <div className="font-mono text-xs text-ink-2 truncate">
             {topSupporting.factor}
           </div>
-          <div className="text-xs text-ink-3 line-clamp-2">{topSupporting.note}</div>
+          <div className="text-xs text-ink-3 line-clamp-2">
+            {topSupporting.note}
+          </div>
         </div>
       )}
 
@@ -69,7 +71,9 @@ export function ModelCard({ model }: Props) {
           <div className="font-mono text-xs text-ink-2 truncate">
             {topContradicting.factor}
           </div>
-          <div className="text-xs text-ink-3 line-clamp-2">{topContradicting.note}</div>
+          <div className="text-xs text-ink-3 line-clamp-2">
+            {topContradicting.note}
+          </div>
         </div>
       )}
     </div>

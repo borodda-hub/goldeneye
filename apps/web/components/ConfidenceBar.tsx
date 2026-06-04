@@ -19,7 +19,10 @@ export function ConfidenceBar({ confidence }: Props) {
   const color = FILL_COLOR[confidence];
 
   return (
-    <div className="flex gap-1 items-center" aria-label={`Confidence: ${confidence}`}>
+    <div
+      className="flex gap-1 items-center"
+      aria-label={`Confidence: ${confidence}`}
+    >
       {[1, 2, 3].map((seg) => (
         <div
           key={seg}

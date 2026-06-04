@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 const FORBIDDEN_PHRASES = [
   "guaranteed",
@@ -31,18 +31,26 @@ test.describe("Scenario Lab page", () => {
 
   test("loads a template and populates shock builder", async ({ page }) => {
     await page.goto("/scenarios");
-    await page.getByText(/Cold Snap/).first().click();
+    await page
+      .getByText(/Cold Snap/)
+      .first()
+      .click();
     await expect(page.getByText(/loaded/i).first()).toBeVisible();
     await expect(page.locator("text=Shock Builder")).toBeVisible();
   });
 
   test("running a scenario populates the result panel", async ({ page }) => {
     await page.goto("/scenarios");
-    await page.getByText(/Cold Snap/).first().click();
+    await page
+      .getByText(/Cold Snap/)
+      .first()
+      .click();
     await page.getByRole("button", { name: /Run Scenario/i }).click();
 
     // Result panel populates with all six sub-sections
-    await expect(page.getByText(/Result/i).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Result/i).first()).toBeVisible({
+      timeout: 10000,
+    });
     await expect(page.getByText(/Timeframe/i)).toBeVisible();
     await expect(page.getByText(/Expected range/i)).toBeVisible();
     await expect(page.getByText(/Assumptions/i)).toBeVisible();

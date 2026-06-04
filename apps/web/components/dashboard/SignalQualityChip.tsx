@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import type { SignalQualityGrade, SignalQualityResponse } from "@/lib/api";
 import { useSignalQuality } from "@/lib/queries";
+import { useEffect, useRef, useState } from "react";
 
 const GRADE_STYLES: Record<SignalQualityGrade, string> = {
   "A+": "bg-up-soft text-up border-up/40",
@@ -52,9 +52,7 @@ function ScoreBar({
       <div className="h-1.5 w-full bg-surface-2">
         <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
       </div>
-      {detail ? (
-        <span className="text-[10px] text-ink-4">{detail}</span>
-      ) : null}
+      {detail ? <span className="text-[10px] text-ink-4">{detail}</span> : null}
     </div>
   );
 }

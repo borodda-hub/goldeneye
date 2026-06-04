@@ -1,5 +1,5 @@
-import { ModelCard } from "./ModelCard";
 import type { ModelResult } from "@/app/(app)/signals/types";
+import { ModelCard } from "./ModelCard";
 
 interface Props {
   models: ModelResult[];

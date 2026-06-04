@@ -1,5 +1,7 @@
 "use client";
 
+import type { CalibrationBucket } from "@/lib/api";
+import { colors } from "@/lib/colors";
 import {
   CartesianGrid,
   Line,
@@ -13,8 +15,6 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
-import type { CalibrationBucket } from "@/lib/api";
-import { colors } from "@/lib/colors";
 
 interface Props {
   buckets: CalibrationBucket[];
@@ -30,7 +30,8 @@ interface ChartPoint {
 function bucketsToPoints(buckets: CalibrationBucket[]): ChartPoint[] {
   return buckets
     .filter(
-      (b) => b.hit_rate !== null && b.claimed_mean !== null && b.total_count > 0,
+      (b) =>
+        b.hit_rate !== null && b.claimed_mean !== null && b.total_count > 0,
     )
     .map((b) => ({
       claimed: Number(b.claimed_mean),
@@ -45,17 +46,23 @@ const DIAGONAL: { x: number; y: number }[] = [
   { x: 100, y: 100 },
 ];
 
-function PointTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload?: ChartPoint }> }) {
-  if (!active || !payload || payload.length === 0 || !payload[0].payload) return null;
+function PointTooltip({
+  active,
+  payload,
+}: { active?: boolean; payload?: Array<{ payload?: ChartPoint }> }) {
+  if (!active || !payload || payload.length === 0 || !payload[0].payload)
+    return null;
   const p = payload[0].payload;
   return (
     <div className="border border-line-2 bg-surface-1 px-3 py-2 text-xs font-mono">
       <div className="text-ink-3">Bucket {p.label}</div>
       <div className="text-ink-1">
-        Claimed: <span className="text-accent-bright">{p.claimed.toFixed(0)}%</span>
+        Claimed:{" "}
+        <span className="text-accent-bright">{p.claimed.toFixed(0)}%</span>
       </div>
       <div className="text-ink-1">
-        Actual: <span className="text-accent-bright">{p.actual.toFixed(0)}%</span>
+        Actual:{" "}
+        <span className="text-accent-bright">{p.actual.toFixed(0)}%</span>
       </div>
       <div className="text-ink-3 mt-1">n={p.total}</div>
     </div>
@@ -86,8 +93,8 @@ export function ReliabilityDiagram({ buckets }: Props) {
       <div className="h-[48vh] min-h-[300px]">
         {!hasPoints ? (
           <div className="h-full flex items-center justify-center text-sm text-ink-4 font-mono">
-            No buckets have ≥ 3 resolved entries yet. Log + resolve more
-            journal entries to populate the diagram.
+            No buckets have ≥ 3 resolved entries yet. Log + resolve more journal
+            entries to populate the diagram.
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
@@ -149,7 +156,10 @@ export function ReliabilityDiagram({ buckets }: Props) {
                 strokeDasharray="4 4"
                 ifOverflow="extendDomain"
               />
-              <Tooltip content={<PointTooltip />} cursor={{ stroke: colors.line2 }} />
+              <Tooltip
+                content={<PointTooltip />}
+                cursor={{ stroke: colors.line2 }}
+              />
               <Scatter
                 name="Observed"
                 data={points}

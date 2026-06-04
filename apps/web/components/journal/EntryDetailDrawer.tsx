@@ -1,13 +1,10 @@
 "use client";
 
+import type { JournalEntry } from "../../app/(app)/journal/types";
 import { ConfidenceBar } from "../ConfidenceBar";
 import { SafetyEnvelopeNote } from "../SafetyEnvelopeNote";
 import { ResolutionPicker } from "./ResolutionPicker";
-import {
-  resolutionLabel,
-  resolutionStripeClass,
-} from "./resolutionStyles";
-import type { JournalEntry } from "../../app/(app)/journal/types";
+import { resolutionLabel, resolutionStripeClass } from "./resolutionStyles";
 
 interface Props {
   entry: JournalEntry;
@@ -126,10 +123,7 @@ export function EntryDetailDrawer({ entry, onClose }: Props) {
       </Section>
 
       <Section label="Resolution">
-        <ResolutionPicker
-          entryId={entry.id}
-          value={entry.resolved_direction}
-        />
+        <ResolutionPicker entryId={entry.id} value={entry.resolved_direction} />
       </Section>
 
       {entry.evidence.length > 0 && (
@@ -197,15 +191,17 @@ export function EntryDetailDrawer({ entry, onClose }: Props) {
             </ul>
             {safety ? (
               <SafetyEnvelopeNote
-                envelope={safety as React.ComponentProps<typeof SafetyEnvelopeNote>["envelope"]}
+                envelope={
+                  safety as React.ComponentProps<
+                    typeof SafetyEnvelopeNote
+                  >["envelope"]
+                }
                 defaultOpen={true}
               />
             ) : null}
           </>
         ) : (
-          <p className="text-xs text-ink-4 font-mono italic">
-            Review pending…
-          </p>
+          <p className="text-xs text-ink-4 font-mono italic">Review pending…</p>
         )}
       </div>
 

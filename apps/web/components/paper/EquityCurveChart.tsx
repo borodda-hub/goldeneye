@@ -1,5 +1,6 @@
 "use client";
 
+import { colors } from "@/lib/colors";
 import {
   CartesianGrid,
   Line,
@@ -11,7 +12,6 @@ import {
   YAxis,
 } from "recharts";
 import type { EquityPoint } from "../../app/(app)/paper/types";
-import { colors } from "@/lib/colors";
 
 interface Props {
   series: EquityPoint[];
@@ -20,7 +20,8 @@ interface Props {
 const STARTING_EQUITY = 100_000;
 
 export function EquityCurveChart({ series }: Props) {
-  const last = series.length > 0 ? series[series.length - 1].equity : STARTING_EQUITY;
+  const last =
+    series.length > 0 ? series[series.length - 1].equity : STARTING_EQUITY;
   const isUp = last >= STARTING_EQUITY;
   const stroke = isUp ? colors.up : colors.down;
 

@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
 import type { RecentEvent } from "@/app/(app)/dashboard/types";
 import { EventMarker } from "@/components/EventMarker";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
   events: RecentEvent[];

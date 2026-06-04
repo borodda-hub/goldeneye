@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
 import type { CalibrationBucket } from "@/lib/api";
+import { render, screen } from "@testing-library/react";
 import { BucketTable } from "../BucketTable";
 
 const buckets: CalibrationBucket[] = [

@@ -45,14 +45,20 @@ describe("EnsembleHeader", () => {
   it("renders caveats when present", () => {
     const withCaveat = {
       ...base,
-      caveats: ["Models disagree at low volatility; no clear directional signal."],
+      caveats: [
+        "Models disagree at low volatility; no clear directional signal.",
+      ],
     };
     render(<EnsembleHeader ensemble={withCaveat} />);
     expect(screen.getByText(/Models disagree/)).toBeInTheDocument();
   });
 
   it("shows fallback when expected_pct is null", () => {
-    render(<EnsembleHeader ensemble={{ ...base, expected_pct: null, range: null }} />);
+    render(
+      <EnsembleHeader
+        ensemble={{ ...base, expected_pct: null, range: null }}
+      />,
+    );
     expect(screen.getByText(/no range/)).toBeInTheDocument();
   });
 

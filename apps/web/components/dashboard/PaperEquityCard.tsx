@@ -1,9 +1,6 @@
 "use client";
 
-import type {
-  EquityCurveResponse,
-  EquityPoint,
-} from "@/app/(app)/paper/types";
+import type { EquityCurveResponse, EquityPoint } from "@/app/(app)/paper/types";
 import { colors } from "@/lib/colors";
 import { usePaperEquityCurve } from "@/lib/queries";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
@@ -31,9 +28,7 @@ export function PaperEquityCard() {
   const prev = series.length > 1 ? series[series.length - 2].equity : null;
   const dayChange = last !== null && prev !== null ? last - prev : null;
   const dayPct =
-    dayChange !== null && prev !== null && prev !== 0
-      ? dayChange / prev
-      : null;
+    dayChange !== null && prev !== null && prev !== 0 ? dayChange / prev : null;
 
   const isUp = dayChange !== null && dayChange >= 0;
   const tone =
@@ -44,8 +39,7 @@ export function PaperEquityCard() {
         : dayChange < 0
           ? "text-down"
           : "text-flat";
-  const arrow =
-    dayChange === null || dayChange === 0 ? "·" : isUp ? "▲" : "▼";
+  const arrow = dayChange === null || dayChange === 0 ? "·" : isUp ? "▲" : "▼";
 
   return (
     <div
@@ -65,7 +59,9 @@ export function PaperEquityCard() {
           {last !== null ? fmtUsd(last) : "—"}
         </span>
       </div>
-      <div className={`flex items-baseline gap-2 font-mono text-xs tabular-nums ${tone}`}>
+      <div
+        className={`flex items-baseline gap-2 font-mono text-xs tabular-nums ${tone}`}
+      >
         <span>{arrow}</span>
         <span>{dayChange !== null ? fmtUsd(dayChange, true) : "—"}</span>
         <span className="text-[11px]">
@@ -78,11 +74,22 @@ export function PaperEquityCard() {
       {series.length > 1 && (
         <div className="h-10 -mx-1 mt-1" aria-hidden="true">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={series} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
+            <AreaChart
+              data={series}
+              margin={{ top: 2, right: 2, bottom: 2, left: 2 }}
+            >
               <defs>
                 <linearGradient id="eq-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={isUp ? colors.up : colors.down} stopOpacity={0.35} />
-                  <stop offset="100%" stopColor={isUp ? colors.up : colors.down} stopOpacity={0} />
+                  <stop
+                    offset="0%"
+                    stopColor={isUp ? colors.up : colors.down}
+                    stopOpacity={0.35}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor={isUp ? colors.up : colors.down}
+                    stopOpacity={0}
+                  />
                 </linearGradient>
               </defs>
               <Area

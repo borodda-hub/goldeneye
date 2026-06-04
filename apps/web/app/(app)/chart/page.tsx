@@ -1,12 +1,17 @@
-import { getChartBars, getChartCurve } from "@/lib/api";
 import { readActiveSymbolFromSearchParams } from "@/lib/activeInstrument";
+import { getChartBars, getChartCurve } from "@/lib/api";
 import { ChartShell } from "./ChartShell";
 import type { ChartBarsResponse, CurvePoint } from "./types";
 
 interface CurveResponse {
   symbol: string;
   as_of: string;
-  curve: Array<{ contract_code: string; expiry: string; mid_price?: number; mid?: number }>;
+  curve: Array<{
+    contract_code: string;
+    expiry: string;
+    mid_price?: number;
+    mid?: number;
+  }>;
 }
 
 const FRONT_MONTH_FALLBACK_BY_SYMBOL: Record<string, string> = {

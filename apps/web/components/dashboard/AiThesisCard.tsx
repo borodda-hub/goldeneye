@@ -20,7 +20,9 @@ const CURVE_LABEL: Record<AiThesis["curve_shape"], string> = {
 export function AiThesisCard({ instrument, thesis }: Props) {
   const hasThesis = thesis.thesis.length > 0;
   const hasLists = thesis.drivers.length > 0 || thesis.watch.length > 0;
-  const { collapsed, toggle } = useCollapsed("goldeneye:dashboard:ai-thesis-collapsed");
+  const { collapsed, toggle } = useCollapsed(
+    "goldeneye:dashboard:ai-thesis-collapsed",
+  );
   return (
     <section
       aria-label="AI thesis"
@@ -44,68 +46,68 @@ export function AiThesisCard({ instrument, thesis }: Props) {
 
       {collapsed ? null : (
         <>
-      <div className="grid grid-cols-2 gap-4">
-        {/* Left half: thesis prose */}
-        <div>
-          {hasThesis ? (
-            <p className="text-sm text-ink-2 leading-relaxed">
-              {thesis.thesis}
-            </p>
-          ) : (
-            <p className="text-sm text-ink-4 italic">
-              Thesis unavailable for this snapshot.
-            </p>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Left half: thesis prose */}
+            <div>
+              {hasThesis ? (
+                <p className="text-sm text-ink-2 leading-relaxed">
+                  {thesis.thesis}
+                </p>
+              ) : (
+                <p className="text-sm text-ink-4 italic">
+                  Thesis unavailable for this snapshot.
+                </p>
+              )}
+            </div>
+
+            {/* Right half: drivers stacked over watch */}
+            <div className="flex flex-col gap-3">
+              <div>
+                <div className="font-mono text-[10px] text-ink-3 uppercase tracking-widest mb-1">
+                  Key drivers
+                </div>
+                {thesis.drivers.length === 0 ? (
+                  <span className="text-[11px] text-ink-4 font-mono">—</span>
+                ) : (
+                  <ul className="flex flex-col gap-0.5">
+                    {thesis.drivers.map((d) => (
+                      <li
+                        key={d}
+                        className="text-[12px] text-ink-2 leading-snug flex gap-1.5"
+                      >
+                        <span className="text-up shrink-0">+</span>
+                        <span>{d}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div>
+                <div className="font-mono text-[10px] text-ink-3 uppercase tracking-widest mb-1">
+                  Watch
+                </div>
+                {thesis.watch.length === 0 ? (
+                  <span className="text-[11px] text-ink-4 font-mono">—</span>
+                ) : (
+                  <ul className="flex flex-col gap-0.5">
+                    {thesis.watch.map((w) => (
+                      <li
+                        key={w}
+                        className="text-[12px] text-ink-2 leading-snug flex gap-1.5"
+                      >
+                        <span className="text-conf-medium shrink-0">◇</span>
+                        <span>{w}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {hasLists && (
+            <SafetyEnvelopeNote envelope={thesis.safety} defaultOpen={false} />
           )}
-        </div>
-
-        {/* Right half: drivers stacked over watch */}
-        <div className="flex flex-col gap-3">
-          <div>
-            <div className="font-mono text-[10px] text-ink-3 uppercase tracking-widest mb-1">
-              Key drivers
-            </div>
-            {thesis.drivers.length === 0 ? (
-              <span className="text-[11px] text-ink-4 font-mono">—</span>
-            ) : (
-              <ul className="flex flex-col gap-0.5">
-                {thesis.drivers.map((d) => (
-                  <li
-                    key={d}
-                    className="text-[12px] text-ink-2 leading-snug flex gap-1.5"
-                  >
-                    <span className="text-up shrink-0">+</span>
-                    <span>{d}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div>
-            <div className="font-mono text-[10px] text-ink-3 uppercase tracking-widest mb-1">
-              Watch
-            </div>
-            {thesis.watch.length === 0 ? (
-              <span className="text-[11px] text-ink-4 font-mono">—</span>
-            ) : (
-              <ul className="flex flex-col gap-0.5">
-                {thesis.watch.map((w) => (
-                  <li
-                    key={w}
-                    className="text-[12px] text-ink-2 leading-snug flex gap-1.5"
-                  >
-                    <span className="text-conf-medium shrink-0">◇</span>
-                    <span>{w}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {hasLists && (
-        <SafetyEnvelopeNote envelope={thesis.safety} defaultOpen={false} />
-      )}
         </>
       )}
     </section>

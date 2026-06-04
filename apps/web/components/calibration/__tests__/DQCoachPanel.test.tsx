@@ -1,6 +1,6 @@
+import type { DqCoachingResponse } from "@/lib/api";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
-import type { DqCoachingResponse } from "@/lib/api";
 
 const useDqCoachingMock = vi.fn();
 
@@ -18,13 +18,17 @@ function _coaching(
     buckets: [
       {
         label: "60-80",
-        effective_patterns: ["weather skill on cold snaps", "tight invalidation"],
+        effective_patterns: [
+          "weather skill on cold snaps",
+          "tight invalidation",
+        ],
         failure_patterns: ["overweighted LNG export claims"],
         recommendation: "Score weather skill before sizing.",
       },
     ],
     overall: {
-      synthesis: "Your 60-80% bucket calibrates well on weather but drifts on LNG.",
+      synthesis:
+        "Your 60-80% bucket calibrates well on weather but drifts on LNG.",
       top_recommendation: "Tighten invalidation criteria on LNG-driven theses.",
     },
     safety: {
@@ -82,9 +86,7 @@ describe("DQCoachPanel", () => {
       isFetching: false,
     });
     render(<DQCoachPanel />);
-    expect(
-      screen.getByText(/calibrates well on weather/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/calibrates well on weather/)).toBeInTheDocument();
     expect(
       screen.getByText(/Tighten invalidation criteria/),
     ).toBeInTheDocument();
@@ -101,8 +103,12 @@ describe("DQCoachPanel", () => {
     render(<DQCoachPanel />);
     expect(screen.getByText("Bucket 60-80%")).toBeInTheDocument();
     expect(screen.getByText(/weather skill on cold snaps/)).toBeInTheDocument();
-    expect(screen.getByText(/overweighted LNG export claims/)).toBeInTheDocument();
-    expect(screen.getByText(/Score weather skill before sizing/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/overweighted LNG export claims/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Score weather skill before sizing/),
+    ).toBeInTheDocument();
   });
 
   it("renders the safety disclaimer at the bottom", () => {
@@ -114,9 +120,7 @@ describe("DQCoachPanel", () => {
       isFetching: false,
     });
     render(<DQCoachPanel />);
-    expect(
-      screen.getByText(/Goldeneye is a research/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Goldeneye is a research/)).toBeInTheDocument();
   });
 
   it("re-run button calls refetch", () => {

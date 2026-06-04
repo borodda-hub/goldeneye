@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { CollapseToggle } from "@/components/CollapseToggle";
 import type { Thesis, ThesisCritique, ThesisSeed } from "@/lib/api";
 import {
   useCreateThesis,
@@ -9,8 +9,8 @@ import {
   usePatchThesis,
   useThesisSeed,
 } from "@/lib/queries";
-import { CollapseToggle } from "@/components/CollapseToggle";
 import { useCollapsed } from "@/lib/useCollapsed";
+import { useState } from "react";
 import { ThesisCritiqueDrawer } from "./ThesisCritiqueDrawer";
 import { ThesisEditModal } from "./ThesisEditModal";
 
@@ -232,8 +232,8 @@ export function WorkingThesisCard({
   const initialForModal = thesis
     ? thesis
     : seedFetching && seedQ.data
-    ? seedQ.data
-    : EMPTY_SEED;
+      ? seedQ.data
+      : EMPTY_SEED;
 
   const saving = createMut.isPending || patchMut.isPending;
   const saveError = (createMut.error || patchMut.error) as Error | null;
@@ -245,7 +245,10 @@ export function WorkingThesisCard({
     >
       <div className="flex items-center justify-between">
         <span className="inline-flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
-          <span aria-hidden="true" className="inline-block w-[18px] h-px bg-accent" />
+          <span
+            aria-hidden="true"
+            className="inline-block w-[18px] h-px bg-accent"
+          />
           Working Thesis · {instrumentCode}
         </span>
         <CollapseToggle

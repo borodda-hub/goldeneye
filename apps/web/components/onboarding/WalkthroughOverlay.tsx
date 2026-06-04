@@ -218,7 +218,8 @@ export function WalkthroughOverlay({
             ─── {step.id}
           </span>
           <span className="font-mono text-[10px] tabular-nums text-ink-3">
-            {String(stepIndex + 1).padStart(2, "0")} / {String(steps.length).padStart(2, "0")}
+            {String(stepIndex + 1).padStart(2, "0")} /{" "}
+            {String(steps.length).padStart(2, "0")}
           </span>
         </div>
 
@@ -237,8 +238,8 @@ export function WalkthroughOverlay({
                 i === stepIndex
                   ? "bg-accent"
                   : i < stepIndex
-                  ? "bg-accent-deep"
-                  : "bg-line-2"
+                    ? "bg-accent-deep"
+                    : "bg-line-2"
               }`}
               aria-hidden="true"
             />

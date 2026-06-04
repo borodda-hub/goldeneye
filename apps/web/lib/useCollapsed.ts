@@ -9,7 +9,11 @@ import { useEffect, useState } from "react";
 export function useCollapsed(
   storageKey: string,
   defaultCollapsed = false,
-): { collapsed: boolean; toggle: () => void; setCollapsed: (v: boolean) => void } {
+): {
+  collapsed: boolean;
+  toggle: () => void;
+  setCollapsed: (v: boolean) => void;
+} {
   const [collapsed, setCollapsedState] = useState(defaultCollapsed);
 
   useEffect(() => {

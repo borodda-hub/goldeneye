@@ -65,16 +65,13 @@ export function ResizableColumn({
     [minWidth, maxWidth],
   );
 
-  const onPointerDown = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      draggingRef.current = true;
-      (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
-      document.body.style.cursor = "col-resize";
-      document.body.style.userSelect = "none";
-    },
-    [],
-  );
+  const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    draggingRef.current = true;
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }, []);
 
   const onPointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -112,14 +109,10 @@ export function ResizableColumn({
       const STEP = 16;
       if (e.key === "ArrowLeft") {
         e.preventDefault();
-        setWidth((w) =>
-          clamp(side === "right" ? w - STEP : w + STEP),
-        );
+        setWidth((w) => clamp(side === "right" ? w - STEP : w + STEP));
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        setWidth((w) =>
-          clamp(side === "right" ? w + STEP : w - STEP),
-        );
+        setWidth((w) => clamp(side === "right" ? w + STEP : w - STEP));
       }
     },
     [clamp, side],
@@ -154,7 +147,10 @@ export function ResizableColumn({
       data-testid="resizable-column"
     >
       {side === "left" && handle}
-      <div className="min-w-0 flex-1" style={{ width: `${width}px`, flex: `0 0 ${width}px` }}>
+      <div
+        className="min-w-0 flex-1"
+        style={{ width: `${width}px`, flex: `0 0 ${width}px` }}
+      >
         {children}
       </div>
       {side === "right" && handle}

@@ -60,10 +60,10 @@ export function RecentTradesCard() {
   // Pull both open and closed; merge and show the most recent 8.
   const openQ = usePaperTrades("open");
   const closedQ = usePaperTrades("closed");
-  const open =
-    ((openQ.data as TradesResponse | undefined)?.trades ?? []) as Trade[];
-  const closed =
-    ((closedQ.data as TradesResponse | undefined)?.trades ?? []) as Trade[];
+  const open = ((openQ.data as TradesResponse | undefined)?.trades ??
+    []) as Trade[];
+  const closed = ((closedQ.data as TradesResponse | undefined)?.trades ??
+    []) as Trade[];
   const recent = mergeAndSort(open, closed).slice(0, 8);
 
   return (

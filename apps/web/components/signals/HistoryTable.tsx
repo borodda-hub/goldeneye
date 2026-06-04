@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useSignalHistory } from "@/lib/queries";
 import type { HistoryRow, SignalHistory } from "@/app/(app)/signals/types";
+import { useSignalHistory } from "@/lib/queries";
+import { useState } from "react";
 
 function OutcomeGlyph({ outcome }: { outcome: HistoryRow["outcome"] }) {
   switch (outcome) {
@@ -88,7 +88,10 @@ export function HistoryTable({ symbol = "NG", initialLimit = 25 }: Props) {
               </tr>
             )}
             {rows.map((row) => (
-              <tr key={row.id} className="border-b border-line-1 hover:bg-surface-2">
+              <tr
+                key={row.id}
+                className="border-b border-line-1 hover:bg-surface-2"
+              >
                 <td className="px-3 py-1.5 tabular-nums text-ink-3">
                   {fmtDate(row.horizon_end)}
                 </td>

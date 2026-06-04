@@ -41,8 +41,7 @@ const MODEL_LABEL: Record<string, string> = {
 function HitRateBar({ value }: { value: number }) {
   const pct = Math.max(0, Math.min(100, value * 100));
   // Color the bar by where it sits vs 50% (coin flip baseline).
-  const color =
-    pct >= 55 ? "bg-up" : pct >= 45 ? "bg-conf-medium" : "bg-down";
+  const color = pct >= 55 ? "bg-up" : pct >= 45 ? "bg-conf-medium" : "bg-down";
   return (
     <div
       className="relative w-32 h-2 bg-surface-2 rounded-sm overflow-hidden"
@@ -169,7 +168,8 @@ export function BacktestCard({ symbol = "NG" }: BacktestCardProps = {}) {
         </div>
       ) : (resp?.models ?? []).length === 0 ? (
         <div className="px-3 py-6 text-xs text-ink-4 font-mono text-center">
-          No backtest rows persisted yet. Run a backtest to populate per-model hit-rates.
+          No backtest rows persisted yet. Run a backtest to populate per-model
+          hit-rates.
         </div>
       ) : (
         <div className="flex flex-col">

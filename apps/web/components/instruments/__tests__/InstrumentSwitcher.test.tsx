@@ -1,6 +1,6 @@
+import type { InstrumentRow } from "@/lib/api";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
-import type { InstrumentRow } from "@/lib/api";
 
 const useInstrumentsMock = vi.fn();
 const setActiveSymbolMock = vi.fn();
@@ -10,8 +10,7 @@ vi.mock("@/lib/queries", () => ({
   useInstruments: (...args: unknown[]) => useInstrumentsMock(...args),
 }));
 vi.mock("@/lib/useActiveInstrument", () => ({
-  useActiveInstrument: (...args: unknown[]) =>
-    useActiveInstrumentMock(...args),
+  useActiveInstrument: (...args: unknown[]) => useActiveInstrumentMock(...args),
 }));
 
 import { InstrumentSwitcher } from "../InstrumentSwitcher";
@@ -43,7 +42,9 @@ beforeEach(() => {
     setActiveSymbol: setActiveSymbolMock,
   });
   useInstrumentsMock.mockReturnValue({
-    data: { instruments: [_row("NG", "Natural Gas"), _row("CL", "WTI Crude Oil")] },
+    data: {
+      instruments: [_row("NG", "Natural Gas"), _row("CL", "WTI Crude Oil")],
+    },
     isLoading: false,
     error: null,
   });
@@ -60,7 +61,9 @@ describe("InstrumentSwitcher", () => {
   it("opens a listbox when clicked", () => {
     render(<InstrumentSwitcher />);
     fireEvent.click(screen.getByTestId("instrument-switcher"));
-    expect(screen.getByRole("listbox", { name: /Instruments/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("listbox", { name: /Instruments/i }),
+    ).toBeInTheDocument();
     expect(screen.getAllByRole("option")).toHaveLength(2);
   });
 

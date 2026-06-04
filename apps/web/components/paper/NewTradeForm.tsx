@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import type { JournalEntry } from "../../app/(app)/journal/types";
+import type { Trade } from "../../app/(app)/paper/types";
 import { openPaperTrade } from "../../lib/api";
 import { queryKeys } from "../../lib/queries";
-import type { Trade } from "../../app/(app)/paper/types";
-import type { JournalEntry } from "../../app/(app)/journal/types";
 
 interface Props {
   journalEntries: JournalEntry[];
@@ -57,7 +57,9 @@ export function NewTradeForm({ journalEntries }: Props) {
       setErrorMsg(null);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.paperTrades("open") });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.paperTrades("open"),
+      });
       queryClient.invalidateQueries({ queryKey: ["paper", "equity-curve"] });
       setForm(initial);
     },
@@ -240,9 +242,7 @@ export function NewTradeForm({ journalEntries }: Props) {
         {mutation.isPending ? "Opening…" : "Open Trade"}
       </button>
 
-      {errorMsg && (
-        <p className="text-xs text-down font-mono">{errorMsg}</p>
-      )}
+      {errorMsg && <p className="text-xs text-down font-mono">{errorMsg}</p>}
     </form>
   );
 }

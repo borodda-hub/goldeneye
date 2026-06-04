@@ -35,9 +35,7 @@ describe("EnvironmentBlock", () => {
 
   it("never renders env var values, only presence", () => {
     const { container } = render(
-      <EnvironmentBlock
-        envFlags={{ DATABASE_URL: true }}
-      />,
+      <EnvironmentBlock envFlags={{ DATABASE_URL: true }} />,
     );
     // No env values should leak through — only "✓ set" or "○ unset"
     expect(container.textContent).not.toContain("postgresql");

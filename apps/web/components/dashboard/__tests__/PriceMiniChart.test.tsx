@@ -15,7 +15,8 @@ class _StubResizeObserver {
   unobserve() {}
   disconnect() {}
 }
-globalThis.ResizeObserver = _StubResizeObserver as unknown as typeof ResizeObserver;
+globalThis.ResizeObserver =
+  _StubResizeObserver as unknown as typeof ResizeObserver;
 
 function _sampleBars() {
   return {
@@ -54,7 +55,9 @@ describe("PriceMiniChart timeframe controls", () => {
 
   it("requests 1d resolution by default", () => {
     render(<PriceMiniChart contractCode="NGM26" />);
-    const [contract, resolution] = useChartBarsMock.mock.calls.at(-1) as unknown[];
+    const [contract, resolution] = useChartBarsMock.mock.calls.at(
+      -1,
+    ) as unknown[];
     expect(contract).toBe("NGM26");
     expect(resolution).toBe("1d");
   });
@@ -62,7 +65,9 @@ describe("PriceMiniChart timeframe controls", () => {
   it("switches to 1H → 1m resolution", () => {
     render(<PriceMiniChart contractCode="NGM26" />);
     fireEvent.click(screen.getByRole("tab", { name: "1H" }));
-    const [_contract, resolution] = useChartBarsMock.mock.calls.at(-1) as unknown[];
+    const [_contract, resolution] = useChartBarsMock.mock.calls.at(
+      -1,
+    ) as unknown[];
     expect(resolution).toBe("1m");
     expect(screen.getByRole("tab", { name: "1H" })).toHaveAttribute(
       "aria-selected",
@@ -74,7 +79,9 @@ describe("PriceMiniChart timeframe controls", () => {
   it("switches to 5D → 15m resolution", () => {
     render(<PriceMiniChart contractCode="NGM26" />);
     fireEvent.click(screen.getByRole("tab", { name: "5D" }));
-    const [_contract, resolution] = useChartBarsMock.mock.calls.at(-1) as unknown[];
+    const [_contract, resolution] = useChartBarsMock.mock.calls.at(
+      -1,
+    ) as unknown[];
     expect(resolution).toBe("15m");
     expect(screen.getByText(/5D 15m/)).toBeInTheDocument();
   });
@@ -82,7 +89,9 @@ describe("PriceMiniChart timeframe controls", () => {
   it("switches to 1D → 5m resolution", () => {
     render(<PriceMiniChart contractCode="NGM26" />);
     fireEvent.click(screen.getByRole("tab", { name: "1D" }));
-    const [_contract, resolution] = useChartBarsMock.mock.calls.at(-1) as unknown[];
+    const [_contract, resolution] = useChartBarsMock.mock.calls.at(
+      -1,
+    ) as unknown[];
     expect(resolution).toBe("5m");
   });
 
@@ -103,7 +112,11 @@ describe("PriceMiniChart timeframe controls", () => {
 
   it("shows the empty-state copy when no bars are returned", () => {
     useChartBarsMock.mockReturnValue({
-      data: { bars: [], overlays: { sma_20: [], ema_50: [] }, event_markers: [] },
+      data: {
+        bars: [],
+        overlays: { sma_20: [], ema_50: [] },
+        event_markers: [],
+      },
       isLoading: false,
     });
     render(<PriceMiniChart contractCode="NGM26" />);

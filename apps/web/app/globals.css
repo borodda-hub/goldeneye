@@ -30,10 +30,16 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(ellipse 1200px 700px at 50% -10%, rgba(201, 163, 92, 0.05), transparent),
-    radial-gradient(ellipse 800px 500px at 90% 110%, rgba(125, 211, 224, 0.025), transparent),
-    var(--bg);
+  background: radial-gradient(
+      ellipse 1200px 700px at 50% -10%,
+      rgba(201, 163, 92, 0.05),
+      transparent
+    ),
+    radial-gradient(
+      ellipse 800px 500px at 90% 110%,
+      rgba(125, 211, 224, 0.025),
+      transparent
+    ), var(--bg);
   color: var(--text);
   font-family: "Hanken Grotesk", system-ui, -apple-system, sans-serif;
   font-size: 14px;
@@ -70,16 +76,15 @@ body::before {
 
 /* Pulsing accent glow — used by dashboard pings (Signal Lab link, etc.) */
 @keyframes accent-pulse {
-  0%, 100% {
-    box-shadow:
-      0 0 0 0 rgba(201, 163, 92, 0.55),
-      0 0 6px 1px rgba(201, 163, 92, 0.25);
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(201, 163, 92, 0.55), 0 0 6px 1px
+      rgba(201, 163, 92, 0.25);
     opacity: 0.85;
   }
   50% {
-    box-shadow:
-      0 0 0 4px rgba(201, 163, 92, 0),
-      0 0 14px 3px rgba(201, 163, 92, 0.6);
+    box-shadow: 0 0 0 4px rgba(201, 163, 92, 0), 0 0 14px 3px
+      rgba(201, 163, 92, 0.6);
     opacity: 1;
   }
 }
@@ -100,26 +105,61 @@ body::before {
   container-name: watchlist;
 }
 @container watchlist (min-width: 280px) {
-  .wl-symbol { font-size: 0.95rem; }   /* ~15px */
-  .wl-pct    { font-size: 0.8125rem; } /* ~13px */
-  .wl-price  { font-size: 0.8125rem; }
-  .wl-abs    { font-size: 0.6875rem; }
-  .wl-name   { font-size: 0.6875rem; max-width: 110px; }
+  .wl-symbol {
+    font-size: 0.95rem;
+  } /* ~15px */
+  .wl-pct {
+    font-size: 0.8125rem;
+  } /* ~13px */
+  .wl-price {
+    font-size: 0.8125rem;
+  }
+  .wl-abs {
+    font-size: 0.6875rem;
+  }
+  .wl-name {
+    font-size: 0.6875rem;
+    max-width: 110px;
+  }
 }
 @container watchlist (min-width: 320px) {
-  .wl-symbol { font-size: 1.05rem; }   /* ~17px */
-  .wl-pct    { font-size: 0.875rem; }  /* ~14px */
-  .wl-price  { font-size: 0.875rem; }
-  .wl-abs    { font-size: 0.75rem; }
-  .wl-name   { font-size: 0.75rem; max-width: 140px; }
-  .wl-rank   { font-size: 0.6875rem; }
+  .wl-symbol {
+    font-size: 1.05rem;
+  } /* ~17px */
+  .wl-pct {
+    font-size: 0.875rem;
+  } /* ~14px */
+  .wl-price {
+    font-size: 0.875rem;
+  }
+  .wl-abs {
+    font-size: 0.75rem;
+  }
+  .wl-name {
+    font-size: 0.75rem;
+    max-width: 140px;
+  }
+  .wl-rank {
+    font-size: 0.6875rem;
+  }
 }
 @container watchlist (min-width: 360px) {
-  .wl-symbol { font-size: 1.125rem; }  /* 18px */
-  .wl-pct    { font-size: 0.9375rem; } /* 15px */
-  .wl-price  { font-size: 0.9375rem; }
-  .wl-abs    { font-size: 0.8125rem; }
-  .wl-name   { font-size: 0.8125rem; max-width: 170px; }
+  .wl-symbol {
+    font-size: 1.125rem;
+  } /* 18px */
+  .wl-pct {
+    font-size: 0.9375rem;
+  } /* 15px */
+  .wl-price {
+    font-size: 0.9375rem;
+  }
+  .wl-abs {
+    font-size: 0.8125rem;
+  }
+  .wl-name {
+    font-size: 0.8125rem;
+    max-width: 170px;
+  }
 }
 
 /* Scrollbars — transparent track, soft grey thumb. Webkit + Firefox. */
@@ -153,8 +193,12 @@ body::before {
    the viewport so the translate(-50%) animation seamlessly wraps. Hover the
    container to pause. */
 @keyframes ticker-scroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 .ticker-track {
   display: flex;

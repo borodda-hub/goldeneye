@@ -26,13 +26,21 @@ beforeEach(() => {
 
 describe("NewsFeedPanel", () => {
   it("renders a loading state", () => {
-    useRecentNewsMock.mockReturnValue({ data: undefined, isLoading: true, isError: false });
+    useRecentNewsMock.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+    });
     render(<NewsFeedPanel />);
     expect(screen.getByText(/Loading news/)).toBeInTheDocument();
   });
 
   it("renders an error state", () => {
-    useRecentNewsMock.mockReturnValue({ data: undefined, isLoading: false, isError: true });
+    useRecentNewsMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+    });
     render(<NewsFeedPanel />);
     expect(screen.getByText(/News feed unavailable/)).toBeInTheDocument();
   });

@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
 
 const useCurrentThesisMock = vi.fn();
@@ -25,11 +25,26 @@ function _sampleThesis() {
     statement:
       "Storage draws should exceed the five-year average through late March.",
     supporting_evidence: [
-      { factor: "weather_demand", weight: 0.7, note: "NE cold", source: "moving_average_directional" },
-      { factor: "lng_export_stable", weight: 0.4, note: "", source: "volatility_regime" },
+      {
+        factor: "weather_demand",
+        weight: 0.7,
+        note: "NE cold",
+        source: "moving_average_directional",
+      },
+      {
+        factor: "lng_export_stable",
+        weight: 0.4,
+        note: "",
+        source: "volatility_regime",
+      },
     ],
     contradicting_evidence: [
-      { factor: "production_up", weight: 0.3, note: "", source: "prophet_trend" },
+      {
+        factor: "production_up",
+        weight: 0.3,
+        note: "",
+        source: "prophet_trend",
+      },
     ],
     missing_data: ["EIA Weekly Storage", "NWS 6-10 day"],
     conviction_pct: 72,
@@ -124,7 +139,9 @@ describe("WorkingThesisCard", () => {
     });
     renderCard();
     fireEvent.click(screen.getByRole("button", { name: /⚙ Edit/i }));
-    expect(screen.getByRole("dialog", { name: /Edit Working Thesis/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: /Edit Working Thesis/i }),
+    ).toBeInTheDocument();
   });
 
   it("opens the critique drawer when the Critique button is clicked", () => {
@@ -134,6 +151,8 @@ describe("WorkingThesisCard", () => {
     });
     renderCard();
     fireEvent.click(screen.getByRole("button", { name: /→ Critique/i }));
-    expect(screen.getByRole("dialog", { name: /Thesis critique/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: /Thesis critique/i }),
+    ).toBeInTheDocument();
   });
 });

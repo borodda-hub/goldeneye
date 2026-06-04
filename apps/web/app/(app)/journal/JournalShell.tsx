@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useJournalEntries } from "../../../lib/queries";
-import { useActiveInstrument } from "../../../lib/useActiveInstrument";
+import { EntryDetailDrawer } from "../../../components/journal/EntryDetailDrawer";
 import { EntryList } from "../../../components/journal/EntryList";
 import { NewEntryForm } from "../../../components/journal/NewEntryForm";
-import { EntryDetailDrawer } from "../../../components/journal/EntryDetailDrawer";
+import { useJournalEntries } from "../../../lib/queries";
+import { useActiveInstrument } from "../../../lib/useActiveInstrument";
 import type { JournalEntriesResponse, JournalEntry } from "./types";
 
 interface Props {

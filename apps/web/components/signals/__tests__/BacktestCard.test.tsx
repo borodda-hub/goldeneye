@@ -68,7 +68,9 @@ describe("BacktestCard", () => {
       isError: false,
     });
     render(<BacktestCard />);
-    expect(screen.getByText(/No backtest rows persisted yet/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/No backtest rows persisted yet/),
+    ).toBeInTheDocument();
   });
 
   it("renders all four model rows in stable order", () => {
@@ -134,7 +136,9 @@ describe("BacktestCard", () => {
       isError: false,
     });
     render(<BacktestCard />);
-    const button = screen.getByRole("button", { name: /Re-run backtest for XGBoost/i });
+    const button = screen.getByRole("button", {
+      name: /Re-run backtest for XGBoost/i,
+    });
     fireEvent.click(button);
     expect(mutateMock).toHaveBeenCalledWith("xgboost_placeholder");
   });

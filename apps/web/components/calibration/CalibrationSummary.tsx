@@ -32,9 +32,9 @@ export function CalibrationSummary({ data }: Props) {
           </p>
         ) : (
           <p className="text-sm text-ink-3 leading-relaxed">
-            All conviction buckets calibrate within 5 percentage points of
-            their claimed level. Either your decision quality is on-pace or
-            the sample size is still too small to detect drift.
+            All conviction buckets calibrate within 5 percentage points of their
+            claimed level. Either your decision quality is on-pace or the sample
+            size is still too small to detect drift.
           </p>
         )}
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import type { EvidenceEntry, Thesis, ThesisSeed } from "@/lib/api";
+import { useEffect, useRef, useState } from "react";
 import { ConvictionSlider } from "./ConvictionSlider";
 import { EvidenceList } from "./EvidenceList";
 import { MissingDataList } from "./MissingDataList";
@@ -63,7 +63,9 @@ export function ThesisEditModal({
   if (!open) return null;
 
   const isExistingThesis = "id" in initial;
-  const title = isExistingThesis ? "Edit Working Thesis" : "Draft Working Thesis";
+  const title = isExistingThesis
+    ? "Edit Working Thesis"
+    : "Draft Working Thesis";
   const canSave = statement.trim().length > 0 && !saving;
 
   return (
@@ -148,9 +150,7 @@ export function ThesisEditModal({
         </div>
 
         {/* Error */}
-        {error ? (
-          <p className="text-xs text-down font-mono">{error}</p>
-        ) : null}
+        {error ? <p className="text-xs text-down font-mono">{error}</p> : null}
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-3 border-t border-line-1 pt-4">

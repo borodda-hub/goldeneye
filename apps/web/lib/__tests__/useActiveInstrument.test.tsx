@@ -94,8 +94,8 @@ describe("readActiveSymbolFromSearchParams (server-side helper)", () => {
   });
 
   it("returns default when symbol is an array (Next can pass arrays for repeated params)", () => {
-    expect(
-      readActiveSymbolFromSearchParams({ symbol: ["CL", "NG"] }),
-    ).toBe(DEFAULT_SYMBOL);
+    expect(readActiveSymbolFromSearchParams({ symbol: ["CL", "NG"] })).toBe(
+      DEFAULT_SYMBOL,
+    );
   });
 });

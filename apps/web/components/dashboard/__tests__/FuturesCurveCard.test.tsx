@@ -1,6 +1,6 @@
+import type { FuturesCurvePoint } from "@/app/(app)/dashboard/types";
 import { render, screen } from "@testing-library/react";
 import { FuturesCurveCard } from "../FuturesCurveCard";
-import type { FuturesCurvePoint } from "@/app/(app)/dashboard/types";
 
 vi.mock("recharts", async () => {
   const actual = await vi.importActual<typeof import("recharts")>("recharts");

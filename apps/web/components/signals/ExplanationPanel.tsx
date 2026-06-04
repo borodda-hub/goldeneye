@@ -1,5 +1,5 @@
-import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 import type { SafetyEnvelope } from "@/app/(app)/signals/types";
+import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 
 interface Props {
   explanation: string | null;

@@ -1,11 +1,8 @@
 "use client";
 
-import { ConfidenceBar } from "../ConfidenceBar";
-import {
-  resolutionLabel,
-  resolutionStripeClass,
-} from "./resolutionStyles";
 import type { JournalEntry } from "../../app/(app)/journal/types";
+import { ConfidenceBar } from "../ConfidenceBar";
+import { resolutionLabel, resolutionStripeClass } from "./resolutionStyles";
 
 interface Props {
   entries: JournalEntry[];
@@ -62,9 +59,7 @@ export function EntryList({ entries, selectedId, onSelect }: Props) {
                 {fmtDate(entry.created_at)}
               </span>
               <span
-                aria-label={
-                  hasReview ? "Review present" : "Review pending"
-                }
+                aria-label={hasReview ? "Review present" : "Review pending"}
                 className={`inline-block h-2 w-2 rounded-full ${
                   hasReview ? "bg-accent" : "bg-surface-2 border border-line-2"
                 }`}

@@ -12,7 +12,10 @@ export const metadata = {
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
     <span className="inline-flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
-      <span aria-hidden="true" className="inline-block w-[18px] h-px bg-accent" />
+      <span
+        aria-hidden="true"
+        className="inline-block w-[18px] h-px bg-accent"
+      />
       {children}
     </span>
   );
@@ -22,7 +25,10 @@ function GoldRule({ className = "" }: { className?: string }) {
   return <hr className={`border-0 border-t border-accent-deep ${className}`} />;
 }
 
-function PrimaryCta({ href, children }: { href: string; children: React.ReactNode }) {
+function PrimaryCta({
+  href,
+  children,
+}: { href: string; children: React.ReactNode }) {
   return (
     <Link
       href={href}
@@ -33,7 +39,10 @@ function PrimaryCta({ href, children }: { href: string; children: React.ReactNod
   );
 }
 
-function GhostCta({ href, children }: { href: string; children: React.ReactNode }) {
+function GhostCta({
+  href,
+  children,
+}: { href: string; children: React.ReactNode }) {
   return (
     <Link
       href={href}
@@ -62,7 +71,10 @@ export default function LandingPage() {
           </span>
         </div>
         <div className="flex items-center gap-6 pointer-events-auto">
-          <Link href="/dashboard" className="hover:text-accent transition-colors">
+          <Link
+            href="/dashboard"
+            className="hover:text-accent transition-colors"
+          >
             Enter Terminal →
           </Link>
         </div>
@@ -104,8 +116,8 @@ export default function LandingPage() {
             className="font-serif italic text-xl md:text-2xl text-ink-2 max-w-2xl mt-2"
             style={{ fontVariationSettings: '"opsz" 36, "SOFT" 60' }}
           >
-            A terminal for analysts who think in <GoldItalic>distributions</GoldItalic>,
-            not directions.
+            A terminal for analysts who think in{" "}
+            <GoldItalic>distributions</GoldItalic>, not directions.
           </p>
 
           <div className="flex items-center gap-3 mt-8">
@@ -130,9 +142,9 @@ export default function LandingPage() {
             className="font-serif font-light text-[56px] md:text-[88px] leading-[1.02] tracking-[-0.025em]"
             style={{ fontVariationSettings: '"opsz" 144, "SOFT" 50' }}
           >
-            The era of certainty is{" "}
-            <GoldItalic>over</GoldItalic>. The decade ahead belongs to those who can
-            reason in <GoldItalic>distributions</GoldItalic>.
+            The era of certainty is <GoldItalic>over</GoldItalic>. The decade
+            ahead belongs to those who can reason in{" "}
+            <GoldItalic>distributions</GoldItalic>.
           </h2>
           <div className="flex items-center gap-6 mt-8 font-mono text-[11px] tracking-[0.2em] uppercase text-ink-3">
             <span className="block w-[60px] h-px bg-accent" />
@@ -199,8 +211,8 @@ export default function LandingPage() {
         <div className="flex flex-col gap-4 mb-16 max-w-3xl">
           <Eyebrow>03 · What we built</Eyebrow>
           <h2 className="font-serif font-light text-[40px] md:text-[56px] leading-[1.02] tracking-[-0.015em]">
-            A terminal designed to make{" "}
-            <GoldItalic>reasoning</GoldItalic> the product — not the byproduct.
+            A terminal designed to make <GoldItalic>reasoning</GoldItalic> the
+            product — not the byproduct.
           </h2>
         </div>
 
@@ -265,15 +277,21 @@ export default function LandingPage() {
             </p>
             <p className="text-base leading-relaxed text-ink-2 max-w-[64ch]">
               Over time the calibration record builds a personal reliability
-              diagram. <span className="text-ink-1">Your 70% theses
-              resolved at 64%.</span> That gap is the most actionable signal
-              an analyst can have — and nobody else is measuring it.
+              diagram.{" "}
+              <span className="text-ink-1">
+                Your 70% theses resolved at 64%.
+              </span>{" "}
+              That gap is the most actionable signal an analyst can have — and
+              nobody else is measuring it.
             </p>
 
             <div className="grid grid-cols-3 gap-6 mt-6 border-t border-line-1 pt-6">
               <Stat value="3" label="Loop stages: pre-decision, mid, post" />
               <Stat value="N" label="Conviction buckets, scored on hit-rate" />
-              <Stat value="LLM" label="DQ Coach surfaces patterns across runs" />
+              <Stat
+                value="LLM"
+                label="DQ Coach surfaces patterns across runs"
+              />
             </div>
           </div>
         </div>
@@ -298,7 +316,9 @@ export default function LandingPage() {
                 <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
                   {row.label}
                 </span>
-                <span className="font-mono text-sm text-ink-1">{row.value}</span>
+                <span className="font-mono text-sm text-ink-1">
+                  {row.value}
+                </span>
                 <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-4 mt-auto">
                   {row.detail}
                 </span>
@@ -335,7 +355,9 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
             <PrimaryCta href="/dashboard">Enter Terminal →</PrimaryCta>
-            <GhostCta href="mailto:bo@goldeneye.intel">Talk to founders</GhostCta>
+            <GhostCta href="mailto:bo@goldeneye.intel">
+              Talk to founders
+            </GhostCta>
           </div>
         </div>
       </section>
@@ -405,9 +427,18 @@ const PROBLEM_FORCES = [
 ];
 
 const PROBLEM_STATS = [
-  { value: "~12×", label: "Data sources a commodity analyst is expected to track in real-time" },
-  { value: "3.2s", label: "Median attention span on any single chart before context-switch" },
-  { value: "<7%", label: "Of analysts measure their own conviction calibration formally" },
+  {
+    value: "~12×",
+    label: "Data sources a commodity analyst is expected to track in real-time",
+  },
+  {
+    value: "3.2s",
+    label: "Median attention span on any single chart before context-switch",
+  },
+  {
+    value: "<7%",
+    label: "Of analysts measure their own conviction calibration formally",
+  },
 ];
 
 const CAPABILITIES = [
@@ -415,8 +446,7 @@ const CAPABILITIES = [
     tag: "Working Thesis",
     title:
       "A first-class object for what you believe — and what would change your mind.",
-    body:
-      "Every screen revolves around the analyst's current view. Evidence pulled from forecasts and scenarios auto-populates the supporting / contradicting columns. A conviction slider anchors the thesis to a number. Goldeneye's LLM critiques it: missed risks, blind spots, questions to answer.",
+    body: "Every screen revolves around the analyst's current view. Evidence pulled from forecasts and scenarios auto-populates the supporting / contradicting columns. A conviction slider anchors the thesis to a number. Goldeneye's LLM critiques it: missed risks, blind spots, questions to answer.",
     bullets: [
       "Persistent dashboard panel — never two clicks away",
       "Auto-populated from latest ensemble forecast and scenario run",
@@ -427,8 +457,7 @@ const CAPABILITIES = [
     tag: "Explainable Forecasts",
     title:
       "Four models, weighted reasoning steps, an honest hit-rate against history.",
-    body:
-      "The ensemble reads weather, storage, positioning, and price-only signals. Each model's directional call carries its supporting + contradicting factors with weights. A backtest engine replays the same models against real history under strict look-ahead controls — the hit rates are honest.",
+    body: "The ensemble reads weather, storage, positioning, and price-only signals. Each model's directional call carries its supporting + contradicting factors with weights. A backtest engine replays the same models against real history under strict look-ahead controls — the hit rates are honest.",
     bullets: [
       "Moving Average · Volatility Regime · Prophet · XGBoost placeholder",
       "Look-ahead-safe replay with cheating-model property tests",
@@ -437,10 +466,8 @@ const CAPABILITIES = [
   },
   {
     tag: "Scenario Lab",
-    title:
-      "Counterfactuals as a workflow — not a spreadsheet exercise.",
-    body:
-      "Apply primitive shocks (weather, LNG export, production, storage) to a baseline and watch the forecast shift. Goldeneye's narrator explains the directional pressure, the strongest counterargument, and the data that would validate or invalidate each scenario in the next 1-2 weeks. Exportable as a PDF for the desk's morning meeting.",
+    title: "Counterfactuals as a workflow — not a spreadsheet exercise.",
+    body: "Apply primitive shocks (weather, LNG export, production, storage) to a baseline and watch the forecast shift. Goldeneye's narrator explains the directional pressure, the strongest counterargument, and the data that would validate or invalidate each scenario in the next 1-2 weeks. Exportable as a PDF for the desk's morning meeting.",
     bullets: [
       "Six pre-built templates, plus custom shock builder",
       "LLM-narrated outputs with safety envelope",
@@ -449,10 +476,8 @@ const CAPABILITIES = [
   },
   {
     tag: "Decision Quality",
-    title:
-      "A reliability diagram for your own convictions.",
-    body:
-      "The Calibration page buckets every resolved journal entry by claimed conviction and reports actual hit rate. The DQ Coach panel synthesizes per-bucket coaching — what patterns appear in your wins, what patterns appear in your misses, and one actionable suggestion per band.",
+    title: "A reliability diagram for your own convictions.",
+    body: "The Calibration page buckets every resolved journal entry by claimed conviction and reports actual hit rate. The DQ Coach panel synthesizes per-bucket coaching — what patterns appear in your wins, what patterns appear in your misses, and one actionable suggestion per band.",
     bullets: [
       "Resolved entries → reliability diagram with sample-size guardrails",
       "Auto-generated headline copy when calibration drifts ≥ 5 pp",
@@ -462,8 +487,16 @@ const CAPABILITIES = [
 ];
 
 const ARCHITECTURE = [
-  { label: "Frontend", value: "Next.js 14", detail: "App Router · RSC · TypeScript" },
-  { label: "Backend", value: "FastAPI", detail: "Async SQLAlchemy · Pydantic v2" },
+  {
+    label: "Frontend",
+    value: "Next.js 14",
+    detail: "App Router · RSC · TypeScript",
+  },
+  {
+    label: "Backend",
+    value: "FastAPI",
+    detail: "Async SQLAlchemy · Pydantic v2",
+  },
   { label: "Database", value: "Postgres", detail: "TimescaleDB hypertables" },
   { label: "Intelligence", value: "Claude", detail: "Anthropic Sonnet + Opus" },
 ];

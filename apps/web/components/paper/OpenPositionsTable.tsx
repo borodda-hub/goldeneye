@@ -1,11 +1,11 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { PriceTick, Trade } from "../../app/(app)/paper/types";
+import { NG_TICK_VALUE_USD } from "../../app/(app)/paper/types";
 import { closePaperTrade } from "../../lib/api";
 import { queryKeys } from "../../lib/queries";
 import { useChannel } from "../../lib/realtime";
-import type { PriceTick, Trade } from "../../app/(app)/paper/types";
-import { NG_TICK_VALUE_USD } from "../../app/(app)/paper/types";
 
 interface Props {
   trades: Trade[];
@@ -36,7 +36,9 @@ export function OpenPositionsTable({ trades }: Props) {
   const closeMutation = useMutation<unknown, Error, string>({
     mutationFn: async (id: string) => closePaperTrade(id, {}),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.paperTrades("open") });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.paperTrades("open"),
+      });
       queryClient.invalidateQueries({
         queryKey: queryKeys.paperTrades("closed"),
       });
@@ -51,8 +53,7 @@ export function OpenPositionsTable({ trades }: Props) {
           Open Positions
         </span>
         <span className="font-mono text-[10px] text-ink-4 tabular-nums ml-auto">
-          live{" "}
-          {livePrice !== null ? `$${livePrice.toFixed(3)}` : "—"}
+          live {livePrice !== null ? `$${livePrice.toFixed(3)}` : "—"}
         </span>
       </div>
       <div className="overflow-auto">
@@ -79,8 +80,7 @@ export function OpenPositionsTable({ trades }: Props) {
               </tr>
             )}
             {trades.map((t) => {
-              const mtm =
-                livePrice !== null ? computeMtm(t, livePrice) : null;
+              const mtm = livePrice !== null ? computeMtm(t, livePrice) : null;
               const pnlClass =
                 mtm === null
                   ? "text-ink-4"
@@ -118,9 +118,7 @@ export function OpenPositionsTable({ trades }: Props) {
                     {t.stop_loss !== null ? t.stop_loss.toFixed(3) : "—"}
                   </td>
                   <td className="px-3 py-1.5 tabular-nums text-right text-ink-3">
-                    {t.take_profit !== null
-                      ? t.take_profit.toFixed(3)
-                      : "—"}
+                    {t.take_profit !== null ? t.take_profit.toFixed(3) : "—"}
                   </td>
                   <td
                     className={`px-3 py-1.5 tabular-nums text-right ${pnlClass}`}

@@ -1,7 +1,4 @@
-import {
-  resolutionLabel,
-  resolutionStripeClass,
-} from "../resolutionStyles";
+import { resolutionLabel, resolutionStripeClass } from "../resolutionStyles";
 
 describe("resolutionStripeClass", () => {
   it("returns empty string when resolution is null", () => {

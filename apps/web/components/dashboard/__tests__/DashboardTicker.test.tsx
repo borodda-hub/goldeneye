@@ -1,6 +1,6 @@
+import type { TickerItem } from "@/lib/api";
 import { render, screen } from "@testing-library/react";
 import { vi } from "vitest";
-import type { TickerItem } from "@/lib/api";
 
 const useTickerQuotesMock = vi.fn();
 
@@ -11,7 +11,12 @@ vi.mock("@/lib/queries", () => ({
 import { DashboardTicker } from "../DashboardTicker";
 
 const _items: TickerItem[] = [
-  { symbol: "^GSPC", label: "S&P 500", last_price: 5482.13, change_pct: 0.0042 },
+  {
+    symbol: "^GSPC",
+    label: "S&P 500",
+    last_price: 5482.13,
+    change_pct: 0.0042,
+  },
   { symbol: "NG=F", label: "Nat Gas", last_price: 3.205, change_pct: -0.0125 },
   { symbol: "CL=F", label: "WTI Crude", last_price: 78.42, change_pct: 0.0087 },
 ];
@@ -38,7 +43,9 @@ describe("DashboardTicker", () => {
       error: new Error("boom"),
     });
     render(<DashboardTicker />);
-    expect(screen.getByLabelText(/Market ticker unavailable/i)).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/Market ticker unavailable/i),
+    ).toBeInTheDocument();
   });
 
   it("renders the basket twice for the seamless loop", () => {

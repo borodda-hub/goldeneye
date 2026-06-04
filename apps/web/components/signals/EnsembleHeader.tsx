@@ -1,6 +1,6 @@
-import { DirectionChip } from "@/components/DirectionChip";
-import { ConfidenceBar } from "@/components/ConfidenceBar";
 import type { EnsembleData } from "@/app/(app)/signals/types";
+import { ConfidenceBar } from "@/components/ConfidenceBar";
+import { DirectionChip } from "@/components/DirectionChip";
 
 interface Props {
   ensemble: EnsembleData;

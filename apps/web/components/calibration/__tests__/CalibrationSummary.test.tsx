@@ -1,8 +1,10 @@
-import { render, screen } from "@testing-library/react";
 import type { CalibrationResponse } from "@/lib/api";
+import { render, screen } from "@testing-library/react";
 import { CalibrationSummary } from "../CalibrationSummary";
 
-function _data(overrides: Partial<CalibrationResponse> = {}): CalibrationResponse {
+function _data(
+  overrides: Partial<CalibrationResponse> = {},
+): CalibrationResponse {
   return {
     instrument_code: "NG",
     buckets: [],
@@ -24,7 +26,12 @@ describe("CalibrationSummary", () => {
   it("renders the no-drift fallback copy when summary is null", () => {
     render(
       <CalibrationSummary
-        data={_data({ summary: null, total_entries: 4, resolved_entries: 4, unresolved_entries: 0 })}
+        data={_data({
+          summary: null,
+          total_entries: 4,
+          resolved_entries: 4,
+          unresolved_entries: 0,
+        })}
       />,
     );
     expect(

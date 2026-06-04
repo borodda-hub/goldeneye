@@ -1,10 +1,6 @@
 "use client";
 
-import type {
-  PriceTick,
-  Trade,
-  TradesResponse,
-} from "@/app/(app)/paper/types";
+import type { PriceTick, Trade, TradesResponse } from "@/app/(app)/paper/types";
 import { NG_TICK_VALUE_USD } from "@/app/(app)/paper/types";
 import { computeMtm } from "@/components/paper/OpenPositionsTable";
 import { usePaperTrades } from "@/lib/queries";
@@ -22,7 +18,8 @@ function fmtSize(n: number): string {
 
 export function OpenPositionsCard() {
   const { data } = usePaperTrades("open");
-  const trades = ((data as TradesResponse | undefined)?.trades ?? []) as Trade[];
+  const trades = ((data as TradesResponse | undefined)?.trades ??
+    []) as Trade[];
   const { data: tick } = useChannel<PriceTick>("price.NG.front");
   const livePrice = tick?.price ?? null;
 

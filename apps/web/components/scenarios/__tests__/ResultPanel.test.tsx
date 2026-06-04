@@ -77,10 +77,7 @@ describe("ResultPanel", () => {
 
   it("renders fallback narrative when missing", () => {
     render(
-      <ResultPanel
-        result={{ ...mockResult, narrative: "" }}
-        name="Test"
-      />,
+      <ResultPanel result={{ ...mockResult, narrative: "" }} name="Test" />,
     );
     expect(screen.getByText(/Narrative unavailable/)).toBeInTheDocument();
   });

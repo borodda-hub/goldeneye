@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Journal + Paper trading flow", () => {
   test("create journal entry then open and close a paper trade", async ({
@@ -52,8 +52,8 @@ test.describe("Journal + Paper trading flow", () => {
 
     // 6. Close the trade and verify it moves to closed table
     await openRow.getByTestId("close-trade-btn").click();
-    await expect(
-      page.getByTestId("closed-trade-row").first(),
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("closed-trade-row").first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 });

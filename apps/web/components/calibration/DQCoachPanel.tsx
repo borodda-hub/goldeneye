@@ -91,13 +91,16 @@ function EmptyState({ caveats }: { caveats: string[] }) {
   return (
     <div className="border border-line-1 bg-surface-1 p-5 flex flex-col gap-3">
       <span className="inline-flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
-        <span aria-hidden="true" className="inline-block w-[18px] h-px bg-accent" />
+        <span
+          aria-hidden="true"
+          className="inline-block w-[18px] h-px bg-accent"
+        />
         DQ Coach
       </span>
       <p className="text-sm text-ink-2 leading-relaxed">
-        Coaching is unavailable until at least 3 journal entries have a
-        resolved direction (Hit / Miss). Mark recent entries from the
-        Journal page to unlock per-bucket analysis here.
+        Coaching is unavailable until at least 3 journal entries have a resolved
+        direction (Hit / Miss). Mark recent entries from the Journal page to
+        unlock per-bucket analysis here.
       </p>
       {caveats.length > 0 ? (
         <ul className="flex flex-col gap-1 mt-1">
@@ -113,9 +116,8 @@ function EmptyState({ caveats }: { caveats: string[] }) {
 }
 
 export function DQCoachPanel({ instrumentCode = "NG" }: Props) {
-  const { data, isLoading, error, refetch, isFetching } = useDqCoaching(
-    instrumentCode,
-  );
+  const { data, isLoading, error, refetch, isFetching } =
+    useDqCoaching(instrumentCode);
 
   if (isLoading) {
     return (
@@ -161,10 +163,7 @@ export function DQCoachPanel({ instrumentCode = "NG" }: Props) {
   }
 
   return (
-    <section
-      aria-label="DQ Coach"
-      className="flex flex-col gap-4"
-    >
+    <section aria-label="DQ Coach" className="flex flex-col gap-4">
       <div className="border border-line-1 bg-surface-1 p-5 flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
           <span className="inline-flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
@@ -190,9 +189,7 @@ export function DQCoachPanel({ instrumentCode = "NG" }: Props) {
             {coaching.overall.synthesis}
           </p>
         ) : (
-          <p className="text-xs text-ink-4 italic">
-            No overall synthesis yet.
-          </p>
+          <p className="text-xs text-ink-4 italic">No overall synthesis yet.</p>
         )}
 
         {coaching.overall.top_recommendation ? (

@@ -19,7 +19,9 @@ const CATEGORY_ICON: Record<string, string> = {
 };
 
 function getCategoryIcon(category: string): string {
-  return CATEGORY_ICON[category.toLowerCase()] ?? category.charAt(0).toUpperCase();
+  return (
+    CATEGORY_ICON[category.toLowerCase()] ?? category.charAt(0).toUpperCase()
+  );
 }
 
 export function EventMarker({ event }: Props) {

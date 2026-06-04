@@ -36,10 +36,14 @@ function Cell({ item }: { item: TickerItem }) {
       <span className="font-mono tabular-nums text-xs text-ink-1">
         {fmtPrice(item.last_price)}
       </span>
-      <span className={`font-mono tabular-nums text-xs ${tone(item.change_pct)}`}>
+      <span
+        className={`font-mono tabular-nums text-xs ${tone(item.change_pct)}`}
+      >
         {fmtChangePct(item.change_pct)}
       </span>
-      <span aria-hidden="true" className="text-ink-4">·</span>
+      <span aria-hidden="true" className="text-ink-4">
+        ·
+      </span>
     </span>
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { acknowledgeAlert } from "@/lib/api";
 import type { Alert } from "@/app/(app)/admin/types";
+import { acknowledgeAlert } from "@/lib/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Props {
   alerts: Alert[];

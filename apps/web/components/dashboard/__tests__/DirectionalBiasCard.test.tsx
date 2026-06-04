@@ -1,6 +1,9 @@
+import type {
+  DirectionalBias,
+  SafetyEnvelope,
+} from "@/app/(app)/dashboard/types";
 import { render, screen } from "@testing-library/react";
 import { DirectionalBiasCard } from "../DirectionalBiasCard";
-import type { DirectionalBias, SafetyEnvelope } from "@/app/(app)/dashboard/types";
 
 const bias: DirectionalBias = {
   direction: "bullish",
@@ -43,8 +46,6 @@ describe("DirectionalBiasCard", () => {
       <DirectionalBiasCard bias={bias} aiSummary={aiSummary} safety={safety} />,
     );
     // defaultOpen=true means caveats should be visible without clicking
-    expect(
-      screen.getByText(/statistical inferences/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/statistical inferences/i)).toBeInTheDocument();
   });
 });

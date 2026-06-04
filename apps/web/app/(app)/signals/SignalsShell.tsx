@@ -1,14 +1,14 @@
 "use client";
 
+import { BacktestCard } from "@/components/signals/BacktestCard";
+import { EnsembleHeader } from "@/components/signals/EnsembleHeader";
+import { ExplanationPanel } from "@/components/signals/ExplanationPanel";
+import { HistoryTable } from "@/components/signals/HistoryTable";
+import { ModelGrid } from "@/components/signals/ModelGrid";
+import { NewsFeedPanel } from "@/components/signals/NewsFeedPanel";
 import { useCurrentSignal } from "@/lib/queries";
 import { useChannel } from "@/lib/realtime";
 import { useActiveInstrument } from "@/lib/useActiveInstrument";
-import { EnsembleHeader } from "@/components/signals/EnsembleHeader";
-import { ModelGrid } from "@/components/signals/ModelGrid";
-import { ExplanationPanel } from "@/components/signals/ExplanationPanel";
-import { HistoryTable } from "@/components/signals/HistoryTable";
-import { NewsFeedPanel } from "@/components/signals/NewsFeedPanel";
-import { BacktestCard } from "@/components/signals/BacktestCard";
 import type { CurrentSignal } from "./types";
 
 interface Props {
@@ -23,7 +23,9 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
   const signal =
     fromQuery ?? (activeSymbol === initialSymbol ? initialSignal : null);
 
-  useChannel<{ direction: string; confidence: string }>(`signal.${activeSymbol}`);
+  useChannel<{ direction: string; confidence: string }>(
+    `signal.${activeSymbol}`,
+  );
 
   if (!signal) {
     return (
@@ -31,7 +33,10 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
         <div className="border border-line-1 bg-surface-1 h-24 animate-pulse" />
         <div className="grid grid-cols-4 gap-4">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="border border-line-1 bg-surface-1 h-44 animate-pulse" />
+            <div
+              key={i}
+              className="border border-line-1 bg-surface-1 h-44 animate-pulse"
+            />
           ))}
         </div>
         <div className="flex gap-4 flex-1 min-h-0">
@@ -59,7 +64,10 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
       {/* Row 3: Explanation + History */}
       <div className="flex gap-4 min-h-0 h-[40vh]">
         <div className="flex-[3] min-h-0">
-          <ExplanationPanel explanation={signal.explanation} safety={signal.safety} />
+          <ExplanationPanel
+            explanation={signal.explanation}
+            safety={signal.safety}
+          />
         </div>
         <div className="flex-[2] min-h-0">
           <HistoryTable symbol={activeSymbol} />

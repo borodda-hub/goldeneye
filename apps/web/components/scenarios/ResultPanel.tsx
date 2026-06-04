@@ -1,7 +1,7 @@
-import { DirectionChip } from "@/components/DirectionChip";
-import { ConfidenceBar } from "@/components/ConfidenceBar";
-import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 import type { ScenarioResult } from "@/app/(app)/scenarios/types";
+import { ConfidenceBar } from "@/components/ConfidenceBar";
+import { DirectionChip } from "@/components/DirectionChip";
+import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 
 interface Props {
   result: ScenarioResult;

@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  CHART_COLOR_OPTIONS,
-  type ChartColorKey,
-} from "@/lib/useChartColor";
+import { CHART_COLOR_OPTIONS, type ChartColorKey } from "@/lib/useChartColor";
 
 interface Props {
   value: ChartColorKey;

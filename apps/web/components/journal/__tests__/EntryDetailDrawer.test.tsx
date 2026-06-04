@@ -7,17 +7,15 @@ vi.mock("@/lib/queries", () => ({
   usePatchJournalEntry: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
-import { EntryDetailDrawer } from "../EntryDetailDrawer";
 import type { JournalEntry } from "../../../app/(app)/journal/types";
+import { EntryDetailDrawer } from "../EntryDetailDrawer";
 
 const baseEntry: JournalEntry = {
   id: "entry-1",
   created_at: "2026-05-10T14:30:00Z",
   instrument_id: "ng-id",
   hypothesis: "Cold snap likely tightens balances.",
-  evidence: [
-    { source: "NWS", summary: "Polar vortex anomaly", weight: 0.7 },
-  ],
+  evidence: [{ source: "NWS", summary: "Polar vortex anomaly", weight: 0.7 }],
   confidence_pct: 65,
   planned_action: "Watch storage report Thursday",
   risk_factors: ["LNG demand surprise"],

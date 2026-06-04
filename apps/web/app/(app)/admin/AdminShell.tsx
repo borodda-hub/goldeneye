@@ -1,11 +1,11 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { getAlerts, getDataHealth } from "@/lib/api";
-import { DataHealthGrid } from "@/components/admin/DataHealthGrid";
-import { ModelHealthGrid } from "@/components/admin/ModelHealthGrid";
 import { AlertsList } from "@/components/admin/AlertsList";
+import { DataHealthGrid } from "@/components/admin/DataHealthGrid";
 import { EnvironmentBlock } from "@/components/admin/EnvironmentBlock";
+import { ModelHealthGrid } from "@/components/admin/ModelHealthGrid";
+import { getAlerts, getDataHealth } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 import type { AlertsResponse, DataHealth } from "./types";
 
 interface Props {

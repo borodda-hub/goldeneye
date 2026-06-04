@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import type { ResolvedDirection } from "@/app/(app)/journal/types";
 import { usePatchJournalEntry } from "@/lib/queries";
+import { useState } from "react";
 
 interface Props {
   entryId: string;
@@ -22,7 +22,10 @@ const OPTIONS: OptionDef[] = [
   { key: "neutral", label: "Neutral", tone: "flat" },
 ];
 
-const TONE_STYLES: Record<OptionDef["tone"], { active: string; inactive: string }> = {
+const TONE_STYLES: Record<
+  OptionDef["tone"],
+  { active: string; inactive: string }
+> = {
   up: {
     active: "bg-up-soft text-up border-up/40",
     inactive: "text-ink-3 border-line-1 hover:text-up hover:border-up/40",

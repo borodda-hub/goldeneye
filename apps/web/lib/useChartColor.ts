@@ -22,7 +22,10 @@ function isValid(v: string | null): v is ChartColorKey {
   return v !== null && KEYS.includes(v);
 }
 
-export function useChartColor(): [ChartColorOption, (key: ChartColorKey) => void] {
+export function useChartColor(): [
+  ChartColorOption,
+  (key: ChartColorKey) => void,
+] {
   // Default to the first option (gold). Reading localStorage during SSR would
   // hydration-mismatch; defer it to an effect.
   const [key, setKey] = useState<ChartColorKey>(CHART_COLOR_OPTIONS[0].key);

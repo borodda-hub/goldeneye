@@ -1,6 +1,6 @@
+import { readActiveSymbolFromSearchParams } from "../../../lib/activeInstrument";
 import { getCalibration } from "../../../lib/api";
 import type { CalibrationResponse } from "../../../lib/api";
-import { readActiveSymbolFromSearchParams } from "../../../lib/activeInstrument";
 import { CalibrationShell } from "./CalibrationShell";
 
 interface Props {

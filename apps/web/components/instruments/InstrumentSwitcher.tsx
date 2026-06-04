@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { useInstruments } from "@/lib/queries";
 import { useActiveInstrument } from "@/lib/useActiveInstrument";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
   className?: string;
@@ -52,13 +52,17 @@ export function InstrumentSwitcher({ className = "" }: Props) {
         className="inline-flex items-center gap-2 border border-line-1 px-2.5 py-1 bg-surface-1 hover:bg-surface-2 hover:border-line-2 transition-colors"
         data-testid="instrument-switcher"
       >
-        <span className="font-mono text-xs font-semibold text-ink-1">{label}</span>
+        <span className="font-mono text-xs font-semibold text-ink-1">
+          {label}
+        </span>
         {name ? (
           <span className="text-[10px] text-ink-3 max-w-[120px] truncate">
             {name}
           </span>
         ) : null}
-        <span aria-hidden="true" className="text-ink-4 text-xs">▾</span>
+        <span aria-hidden="true" className="text-ink-4 text-xs">
+          ▾
+        </span>
       </button>
       {open ? (
         <ul

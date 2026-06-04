@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import { EquityCurveChart } from "../EquityCurveChart";
 import type { EquityPoint } from "../../../app/(app)/paper/types";
+import { EquityCurveChart } from "../EquityCurveChart";
 
 const upSeries: EquityPoint[] = [
   { date: "2026-04-01", equity: 100000 },

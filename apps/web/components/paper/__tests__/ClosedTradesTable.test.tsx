@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
-import { ClosedTradesTable } from "../ClosedTradesTable";
 import type { Trade } from "../../../app/(app)/paper/types";
+import { ClosedTradesTable } from "../ClosedTradesTable";
 
 const trades: Trade[] = [
   {

@@ -23,12 +23,7 @@ export function WatchlistSparkline({
 }: Props) {
   const today = toISODate(new Date());
   const from = toISODate(new Date(Date.now() - 30 * 86400_000));
-  const { data } = useChartBars(
-    contractCode ?? "",
-    "1d",
-    from,
-    today,
-  );
+  const { data } = useChartBars(contractCode ?? "", "1d", from, today);
   const bars: Bar[] = contractCode
     ? ((data as ChartBarsResponse | undefined)?.bars ?? [])
     : [];
@@ -55,7 +50,10 @@ export function WatchlistSparkline({
       className="flex-1 min-w-[24px] inline-block"
     >
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={bars} margin={{ top: 1, right: 0, bottom: 1, left: 0 }}>
+        <AreaChart
+          data={bars}
+          margin={{ top: 1, right: 0, bottom: 1, left: 0 }}
+        >
           <defs>
             <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={stroke} stopOpacity={0.35} />

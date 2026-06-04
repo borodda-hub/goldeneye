@@ -1,4 +1,7 @@
-import type { DirectionalBias, SafetyEnvelope } from "@/app/(app)/dashboard/types";
+import type {
+  DirectionalBias,
+  SafetyEnvelope,
+} from "@/app/(app)/dashboard/types";
 import { ConfidenceBar } from "@/components/ConfidenceBar";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 
@@ -40,7 +43,9 @@ export function DirectionalBiasCard({ bias, aiSummary, safety }: Props) {
       </div>
 
       {/* Hero direction — large serif so the verdict is unmistakable */}
-      <div className={`font-serif font-semibold text-5xl leading-none tracking-tight ${tone}`}>
+      <div
+        className={`font-serif font-semibold text-5xl leading-none tracking-tight ${tone}`}
+      >
         <span className="mr-2 text-4xl align-baseline">
           {DIRECTION_GLYPH[bias.direction]}
         </span>

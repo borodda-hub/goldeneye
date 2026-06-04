@@ -1,21 +1,18 @@
 "use client";
 
-import {
-  usePaperEquityCurve,
-  usePaperTrades,
-} from "../../../lib/queries";
-import { useActiveInstrument } from "../../../lib/useActiveInstrument";
-import { EquityCurveChart } from "../../../components/paper/EquityCurveChart";
-import { OpenPositionsTable } from "../../../components/paper/OpenPositionsTable";
 import { ClosedTradesTable } from "../../../components/paper/ClosedTradesTable";
+import { EquityCurveChart } from "../../../components/paper/EquityCurveChart";
 import { NewTradeForm } from "../../../components/paper/NewTradeForm";
+import { OpenPositionsTable } from "../../../components/paper/OpenPositionsTable";
+import { usePaperEquityCurve, usePaperTrades } from "../../../lib/queries";
+import { useActiveInstrument } from "../../../lib/useActiveInstrument";
+import type { JournalEntry } from "../journal/types";
 import type {
   EquityCurveResponse,
   EquityPoint,
   Trade,
   TradesResponse,
 } from "./types";
-import type { JournalEntry } from "../journal/types";
 
 function isoDaysAgo(days: number): string {
   const d = new Date(Date.now() - days * 86_400_000);

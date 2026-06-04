@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
-import { EntryList } from "../EntryList";
 import type { JournalEntry } from "../../../app/(app)/journal/types";
+import { EntryList } from "../EntryList";
 
 const entries: JournalEntry[] = [
   {

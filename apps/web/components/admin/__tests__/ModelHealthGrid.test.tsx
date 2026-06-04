@@ -29,6 +29,8 @@ describe("ModelHealthGrid", () => {
 
   it("shows empty state when no models", () => {
     render(<ModelHealthGrid models={[]} />);
-    expect(screen.getByText(/No forecasts in the last 7 days/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/No forecasts in the last 7 days/),
+    ).toBeInTheDocument();
   });
 });

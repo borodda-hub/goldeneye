@@ -128,7 +128,8 @@ export function NewsFeedPanel({ symbol = "NG" }: NewsFeedPanelProps = {}) {
       )}
 
       <div className="border-t border-line-1 px-3 py-1 text-[10px] font-mono text-ink-4">
-        Sources: EIA &middot; Yahoo Finance &middot; filtered for NG-relevance &middot; auto-refresh 5m
+        Sources: EIA &middot; Yahoo Finance &middot; filtered for NG-relevance
+        &middot; auto-refresh 5m
       </div>
     </div>
   );

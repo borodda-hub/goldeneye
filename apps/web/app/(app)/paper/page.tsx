@@ -3,6 +3,7 @@ import {
   listJournalEntries,
   listPaperTrades,
 } from "../../../lib/api";
+import type { JournalEntriesResponse, JournalEntry } from "../journal/types";
 import { PaperShell } from "./PaperShell";
 import type {
   EquityCurveResponse,
@@ -10,10 +11,6 @@ import type {
   Trade,
   TradesResponse,
 } from "./types";
-import type {
-  JournalEntriesResponse,
-  JournalEntry,
-} from "../journal/types";
 
 function isoDaysAgo(days: number): string {
   const d = new Date(Date.now() - days * 86_400_000);

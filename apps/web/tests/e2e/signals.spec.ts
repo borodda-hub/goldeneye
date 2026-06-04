@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 const FORBIDDEN_PHRASES = [
   "guaranteed",
@@ -28,9 +28,9 @@ test.describe("Signals page", () => {
   }) => {
     const startTime = Date.now();
     await page.goto("/signals");
-    await expect(
-      page.locator("text=moving average").first(),
-    ).toBeVisible({ timeout: 2000 });
+    await expect(page.locator("text=moving average").first()).toBeVisible({
+      timeout: 2000,
+    });
     expect(Date.now() - startTime).toBeLessThan(2000);
   });
 

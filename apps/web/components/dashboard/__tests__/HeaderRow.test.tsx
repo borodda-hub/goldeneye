@@ -1,6 +1,10 @@
+import type {
+  FrontMonth,
+  Instrument,
+  VolRegime,
+} from "@/app/(app)/dashboard/types";
 import { render, screen } from "@testing-library/react";
 import { vi } from "vitest";
-import type { FrontMonth, Instrument, VolRegime } from "@/app/(app)/dashboard/types";
 
 // Stub the signal-quality hook so HeaderRow renders without a QueryClient.
 vi.mock("@/lib/queries", () => ({

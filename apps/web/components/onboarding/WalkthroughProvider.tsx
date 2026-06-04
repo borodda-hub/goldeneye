@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname, useRouter } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -7,9 +8,8 @@ import {
   useEffect,
   useState,
 } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { DASHBOARD_TOUR, type WalkthroughStep } from "./steps";
 import { WalkthroughOverlay } from "./WalkthroughOverlay";
+import { DASHBOARD_TOUR, type WalkthroughStep } from "./steps";
 
 const STORAGE_KEY = "goldeneye:walkthrough-completed";
 
@@ -29,7 +29,9 @@ export function useWalkthrough(): ContextShape {
   return useContext(Ctx);
 }
 
-export function WalkthroughProvider({ children }: { children: React.ReactNode }) {
+export function WalkthroughProvider({
+  children,
+}: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);

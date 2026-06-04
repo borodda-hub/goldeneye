@@ -183,9 +183,10 @@ function getClient(): RealtimeClient {
   return singleton;
 }
 
-export function useChannel<T>(
-  channel: string,
-): { data: T | null; status: ConnectionStatus } {
+export function useChannel<T>(channel: string): {
+  data: T | null;
+  status: ConnectionStatus;
+} {
   const [data, setData] = useState<T | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
   const clientRef = useRef<RealtimeClient | null>(null);

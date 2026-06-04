@@ -25,9 +25,7 @@ describe("ExplanationPanel", () => {
   });
 
   it("renders SafetyEnvelopeNote open — shows caveats", () => {
-    render(
-      <ExplanationPanel explanation="Some text." safety={mockSafety} />,
-    );
+    render(<ExplanationPanel explanation="Some text." safety={mockSafety} />);
     expect(
       screen.getByText(/Model outputs are statistical inferences/),
     ).toBeInTheDocument();
@@ -35,6 +33,8 @@ describe("ExplanationPanel", () => {
 
   it("renders disclaimer text", () => {
     render(<ExplanationPanel explanation="Some text." safety={mockSafety} />);
-    expect(screen.getByText(/Goldeneye is a research terminal/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Goldeneye is a research terminal/),
+    ).toBeInTheDocument();
   });
 });

@@ -28,9 +28,7 @@ const templates = [
     name: "LNG Export Disruption",
     description: "Terminal offline.",
     instrument: "NG",
-    shocks: [
-      { type: "lng_export" as const, delta_bcfd: -2.1, days: 14 },
-    ],
+    shocks: [{ type: "lng_export" as const, delta_bcfd: -2.1, days: 14 }],
   },
 ];
 

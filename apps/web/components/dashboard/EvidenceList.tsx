@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import type { EvidenceEntry } from "@/lib/api";
+import { useState } from "react";
 
 interface Props {
   label: string;
@@ -22,10 +22,7 @@ export function EvidenceList({ label, items, onChange, tone }: Props) {
   function addItem() {
     const factor = newFactor.trim();
     if (!factor) return;
-    onChange([
-      ...items,
-      { factor, weight: null, note: "", source: null },
-    ]);
+    onChange([...items, { factor, weight: null, note: "", source: null }]);
     setNewFactor("");
   }
 

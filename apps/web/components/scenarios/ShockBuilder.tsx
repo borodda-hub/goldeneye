@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import type { Shock, ShockType } from "@/app/(app)/scenarios/types";
+import { useState } from "react";
 
 interface Props {
   shocks: Shock[];
   onChange: (shocks: Shock[]) => void;
 }
 
-const SHOCK_TYPES: ShockType[] = ["weather", "lng_export", "production", "storage"];
+const SHOCK_TYPES: ShockType[] = [
+  "weather",
+  "lng_export",
+  "production",
+  "storage",
+];
 
 function defaultShock(type: ShockType): Shock {
   switch (type) {

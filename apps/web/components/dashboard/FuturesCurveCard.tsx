@@ -1,5 +1,7 @@
 "use client";
 
+import type { FuturesCurvePoint } from "@/app/(app)/dashboard/types";
+import { colors } from "@/lib/colors";
 import {
   Line,
   LineChart,
@@ -8,8 +10,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { FuturesCurvePoint } from "@/app/(app)/dashboard/types";
-import { colors } from "@/lib/colors";
 
 interface Props {
   curve: FuturesCurvePoint[];
@@ -26,7 +26,10 @@ export function FuturesCurveCard({ curve }: Props) {
       ) : (
         <div className="flex-1 min-h-0">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={curve} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
+            <LineChart
+              data={curve}
+              margin={{ top: 4, right: 8, bottom: 4, left: 0 }}
+            >
               <XAxis
                 dataKey="contract_code"
                 tick={{ fontSize: 10, fill: colors.ink3 }}

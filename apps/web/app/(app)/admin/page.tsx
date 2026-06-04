@@ -32,7 +32,8 @@ export default async function AdminPage() {
     envFlags[name] = Boolean(process.env[name]);
   }
 
-  const gitSha = process.env.NEXT_PUBLIC_GIT_SHA ?? process.env.VERCEL_GIT_COMMIT_SHA;
+  const gitSha =
+    process.env.NEXT_PUBLIC_GIT_SHA ?? process.env.VERCEL_GIT_COMMIT_SHA;
   const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME;
 
   return (

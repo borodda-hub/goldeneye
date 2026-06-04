@@ -1,7 +1,7 @@
 "use client";
 
-import { useChannel } from "@/lib/realtime";
 import { LiveDot } from "@/components/LiveDot";
+import { useChannel } from "@/lib/realtime";
 
 interface TickData {
   ts: string;
@@ -51,7 +51,9 @@ export function DashboardLiveBar() {
       {status === "connected" && (
         <span
           className={`ml-auto ${isDelayed ? "text-conf-medium" : "text-accent"}`}
-          aria-label={isDelayed ? "Delayed feed (15-minute delay)" : "Live feed"}
+          aria-label={
+            isDelayed ? "Delayed feed (15-minute delay)" : "Live feed"
+          }
         >
           {isDelayed ? "DELAYED 15m" : "LIVE"}
         </span>

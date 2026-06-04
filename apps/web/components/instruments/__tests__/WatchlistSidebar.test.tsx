@@ -1,6 +1,6 @@
+import type { InstrumentRow } from "@/lib/api";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
-import type { InstrumentRow } from "@/lib/api";
 
 const useInstrumentsMock = vi.fn();
 const setActiveSymbolMock = vi.fn();
@@ -11,8 +11,7 @@ vi.mock("@/lib/queries", () => ({
   useChartBars: () => ({ data: undefined, isLoading: false, error: null }),
 }));
 vi.mock("@/lib/useActiveInstrument", () => ({
-  useActiveInstrument: (...args: unknown[]) =>
-    useActiveInstrumentMock(...args),
+  useActiveInstrument: (...args: unknown[]) => useActiveInstrumentMock(...args),
 }));
 vi.mock("@/components/instruments/WatchlistSparkline", () => ({
   WatchlistSparkline: () => null,
@@ -55,14 +54,23 @@ beforeEach(() => {
 
 describe("WatchlistSidebar", () => {
   it("renders a loading state", () => {
-    useInstrumentsMock.mockReturnValue({ data: undefined, isLoading: true, error: null });
+    useInstrumentsMock.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      error: null,
+    });
     render(<WatchlistSidebar />);
     expect(screen.getByText(/Loading/)).toBeInTheDocument();
   });
 
   it("renders one row per instrument with symbol + name + price", () => {
     useInstrumentsMock.mockReturnValue({
-      data: { instruments: [_row("NG", "Henry Hub Natural Gas"), _row("CL", "WTI Crude Oil")] },
+      data: {
+        instruments: [
+          _row("NG", "Henry Hub Natural Gas"),
+          _row("CL", "WTI Crude Oil"),
+        ],
+      },
       isLoading: false,
       error: null,
     });

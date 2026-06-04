@@ -1,7 +1,7 @@
+import type { Shock } from "@/app/(app)/scenarios/types";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
 import { ShockBuilder } from "../ShockBuilder";
-import type { Shock } from "@/app/(app)/scenarios/types";
 
 describe("ShockBuilder", () => {
   it("renders empty state with no shocks", () => {
@@ -39,9 +39,7 @@ describe("ShockBuilder", () => {
 
   it("calls onChange when removing a shock", () => {
     const onChange = vi.fn();
-    const shocks: Shock[] = [
-      { type: "production", delta_bcfd: -2, days: 7 },
-    ];
+    const shocks: Shock[] = [{ type: "production", delta_bcfd: -2, days: 7 }];
     render(<ShockBuilder shocks={shocks} onChange={onChange} />);
     fireEvent.click(screen.getByText(/Remove/i));
     expect(onChange).toHaveBeenCalledWith([]);

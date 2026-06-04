@@ -15,7 +15,8 @@ const makeRow = (outcome: string, realized_pct: number | null = 0.018) => ({
       vol_regime: "elevated",
       outcome,
       realized_pct,
-      delta_from_expected_pct: realized_pct !== null ? realized_pct - 0.012 : null,
+      delta_from_expected_pct:
+        realized_pct !== null ? realized_pct - 0.012 : null,
       scored_at: "2026-05-10T20:00:00Z",
     },
   ],

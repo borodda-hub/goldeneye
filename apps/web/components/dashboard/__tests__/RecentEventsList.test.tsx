@@ -1,6 +1,6 @@
+import type { RecentEvent } from "@/app/(app)/dashboard/types";
 import { render, screen } from "@testing-library/react";
 import { RecentEventsList } from "../RecentEventsList";
-import type { RecentEvent } from "@/app/(app)/dashboard/types";
 
 const events: RecentEvent[] = [
   {

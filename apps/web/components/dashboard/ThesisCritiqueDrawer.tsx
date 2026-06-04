@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import type { ThesisCritique } from "@/lib/api";
+import { useEffect } from "react";
 
 interface Props {
   open: boolean;
