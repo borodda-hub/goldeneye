@@ -866,6 +866,13 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** IndicatorLine */
+        IndicatorLine: {
+            /** Role */
+            role: string;
+            /** Points */
+            points: components["schemas"]["IndicatorPoint"][];
+        };
         /** IndicatorPoint */
         IndicatorPoint: {
             /**
@@ -884,8 +891,13 @@ export interface components {
             params: {
                 [key: string]: unknown;
             };
-            /** Points */
-            points: components["schemas"]["IndicatorPoint"][];
+            /**
+             * Pane
+             * @default price
+             */
+            pane: string;
+            /** Lines */
+            lines: components["schemas"]["IndicatorLine"][];
         };
         /** JournalCreateRequest */
         JournalCreateRequest: {

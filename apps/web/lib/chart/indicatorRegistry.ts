@@ -22,7 +22,21 @@ export const MA_TYPES = [
   "vwma",
 ] as const;
 export type MAType = (typeof MA_TYPES)[number];
-export type IndicatorType = MAType;
+
+/** Phase 23 — oscillators (sub-pane) + volatility bands (price overlay). */
+export const OSC_TYPES = [
+  "rsi",
+  "macd",
+  "stoch",
+  "adx",
+  "atr",
+  "bb",
+  "kc",
+  "dc",
+] as const;
+export type OscType = (typeof OSC_TYPES)[number];
+
+export type IndicatorType = MAType | OscType;
 
 export const PRICE_SOURCES = [
   "close",
@@ -42,6 +56,9 @@ export interface IndicatorSpec {
   type: IndicatorType;
   period: number;
   source: PriceSource;
+  /** Multi-param indicators (MACD, Bollinger, …) store their params here.
+   *  MAs use `period`/`source`; for oscillators/bands `period` is unused. */
+  params?: Record<string, number>;
   /** Raw chart color (Lightweight Charts takes hex). Always a token from `colors`. */
   color: string;
   weight: LineWeight;
@@ -81,15 +98,120 @@ export const MA_LABEL: Record<MAType, string> = {
 export const PERIOD_MIN = 2;
 export const PERIOD_MAX = 500;
 
-export function specToLabel(s: IndicatorSpec): string {
-  return `${s.type.toUpperCase()}(${s.period})`;
+/** Catalog for oscillators / bands: presentation + default params + pane. */
+export interface OscDef {
+  label: string;
+  category: "Momentum" | "Trend" | "Volatility";
+  pane: "price" | "sub";
+  paramOrder: string[];
+  defaults: Record<string, number>;
+  color: string;
 }
 
-/** Single spec → `type:period[:source]` for the comma-separated query param. */
+export const OSC_CATALOG: Record<OscType, OscDef> = {
+  rsi: {
+    label: "RSI",
+    category: "Momentum",
+    pane: "sub",
+    paramOrder: ["period"],
+    defaults: { period: 14 },
+    color: colors.cyan,
+  },
+  macd: {
+    label: "MACD",
+    category: "Momentum",
+    pane: "sub",
+    paramOrder: ["fast", "slow", "signal"],
+    defaults: { fast: 12, slow: 26, signal: 9 },
+    color: colors.accentBright,
+  },
+  stoch: {
+    label: "Stochastic",
+    category: "Momentum",
+    pane: "sub",
+    paramOrder: ["k", "d", "smooth"],
+    defaults: { k: 14, d: 3, smooth: 3 },
+    color: colors.violet,
+  },
+  adx: {
+    label: "ADX",
+    category: "Trend",
+    pane: "sub",
+    paramOrder: ["period"],
+    defaults: { period: 14 },
+    color: colors.amber,
+  },
+  atr: {
+    label: "ATR",
+    category: "Volatility",
+    pane: "sub",
+    paramOrder: ["period"],
+    defaults: { period: 14 },
+    color: colors.accent,
+  },
+  bb: {
+    label: "Bollinger",
+    category: "Volatility",
+    pane: "price",
+    paramOrder: ["period", "stddev"],
+    defaults: { period: 20, stddev: 2 },
+    color: colors.accentDeep,
+  },
+  kc: {
+    label: "Keltner",
+    category: "Volatility",
+    pane: "price",
+    paramOrder: ["period", "mult"],
+    defaults: { period: 20, mult: 2 },
+    color: colors.accentDeep,
+  },
+  dc: {
+    label: "Donchian",
+    category: "Volatility",
+    pane: "price",
+    paramOrder: ["period"],
+    defaults: { period: 20 },
+    color: colors.accentDeep,
+  },
+};
+
+export function isMaType(t: IndicatorType): t is MAType {
+  return (MA_TYPES as readonly string[]).includes(t);
+}
+
+export function specToLabel(s: IndicatorSpec): string {
+  if (isMaType(s.type)) return `${s.type.toUpperCase()}(${s.period})`;
+  const def = OSC_CATALOG[s.type];
+  const vals = def.paramOrder.map((k) => s.params?.[k] ?? def.defaults[k]);
+  return `${def.label}(${vals.join(",")})`;
+}
+
+/** Single spec → query fragment. MAs: `type:period[:source]`; oscillators/
+ *  bands: `type:p1:p2:…` in the catalog's param order. */
 export function specToQueryFragment(s: IndicatorSpec): string {
-  return s.source === "close"
-    ? `${s.type}:${s.period}`
-    : `${s.type}:${s.period}:${s.source}`;
+  if (isMaType(s.type)) {
+    return s.source === "close"
+      ? `${s.type}:${s.period}`
+      : `${s.type}:${s.period}:${s.source}`;
+  }
+  const def = OSC_CATALOG[s.type];
+  const vals = def.paramOrder.map((k) => s.params?.[k] ?? def.defaults[k]);
+  return [s.type, ...vals].join(":");
+}
+
+/** Build a preset spec (default params) for an oscillator / band type. */
+export function presetSpec(type: OscType): IndicatorSpec {
+  const def = OSC_CATALOG[type];
+  return {
+    id: nextId(),
+    type,
+    period: def.defaults.period ?? 14,
+    source: "close",
+    params: { ...def.defaults },
+    color: def.color,
+    weight: 2,
+    visible: true,
+  };
 }
 
 /** Join visible specs into the comma-separated `spec=` value the API expects. */

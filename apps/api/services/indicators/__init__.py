@@ -13,8 +13,11 @@ REST surface lives in `apps/api/routers/indicators.py` (Phase 15 step 15b).
 """
 from __future__ import annotations
 
+from apps.api.services.indicators import channels  # noqa: F401 — register
 from apps.api.services.indicators import moving_averages  # noqa: F401 — register
+from apps.api.services.indicators import oscillators  # noqa: F401 — register
 from apps.api.services.indicators.base import (
+    IndicatorLine,
     IndicatorPoint,
     IndicatorSeries,
     IndicatorSpec,
@@ -25,6 +28,7 @@ from apps.api.services.indicators.base import (
 )
 
 __all__ = [
+    "IndicatorLine",
     "IndicatorPoint",
     "IndicatorSeries",
     "IndicatorSpec",

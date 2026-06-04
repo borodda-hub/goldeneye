@@ -9,6 +9,7 @@ gap rendering.
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal
 
@@ -30,10 +31,17 @@ class IndicatorPoint(BaseModel):
     v: float | None
 
 
+class IndicatorLine(BaseModel):
+    role: str  # "line" | "macd" | "signal" | "hist" | "upper" | "mid" | "lower" | "k" | "d"
+    points: list[IndicatorPoint]
+
+
 class IndicatorSeries(BaseModel):
     type: str
     params: dict[str, Any]
-    points: list[IndicatorPoint]
+    # "price" → overlay on the price pane; "sub" → its own pane below price.
+    pane: str = "price"
+    lines: list[IndicatorLine]
 
 
 class UnknownIndicatorError(ValueError):
@@ -44,7 +52,19 @@ class VolumeRequiredError(ValueError):
     """Indicator requires volume but the input has none."""
 
 
-Computer = Callable[[pd.DataFrame, dict[str, Any]], pd.Series]
+@dataclass
+class IndicatorResult:
+    """Multi-line indicator output: one or more named lines + target pane.
+
+    Single-line price-overlay indicators may just return a bare ``pd.Series``;
+    ``compute()`` wraps it as one line (role ``"line"``) on the ``price`` pane.
+    """
+
+    pane: str  # "price" | "sub"
+    lines: list[tuple[str, pd.Series]]
+
+
+Computer = Callable[[pd.DataFrame, dict[str, Any]], "pd.Series | IndicatorResult"]
 _REGISTRY: dict[str, Computer] = {}
 
 
@@ -98,8 +118,22 @@ def compute(spec: IndicatorSpec, ohlcv: pd.DataFrame) -> IndicatorSeries:
         raise UnknownIndicatorError(
             f"unknown indicator type {spec.type!r}; supported: {registered_types()}"
         )
-    series = fn(ohlcv, spec.params)
+    result = fn(ohlcv, spec.params)
+    if isinstance(result, pd.Series):
+        pane = "price"
+        raw_lines: list[tuple[str, pd.Series]] = [("line", result)]
+    else:
+        pane = result.pane
+        raw_lines = result.lines
 
+    lines = [
+        IndicatorLine(role=role, points=_series_points(series))
+        for role, series in raw_lines
+    ]
+    return IndicatorSeries(type=spec.type, params=spec.params, pane=pane, lines=lines)
+
+
+def _series_points(series: pd.Series) -> list[IndicatorPoint]:
     points: list[IndicatorPoint] = []
     for ts, raw in series.items():
         if raw is None or (isinstance(raw, float) and np.isnan(raw)):
@@ -107,7 +141,7 @@ def compute(spec: IndicatorSpec, ohlcv: pd.DataFrame) -> IndicatorSeries:
         else:
             v = float(raw)
         points.append(IndicatorPoint(t=_to_datetime(ts), v=v))
-    return IndicatorSeries(type=spec.type, params=spec.params, points=points)
+    return points
 
 
 def _to_datetime(ts: Any) -> datetime:

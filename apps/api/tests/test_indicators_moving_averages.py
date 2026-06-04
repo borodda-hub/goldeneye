@@ -37,7 +37,7 @@ def _frame(closes: list[float], volumes: list[float] | None = None) -> pd.DataFr
 
 
 def _values(spec: IndicatorSpec, df: pd.DataFrame) -> list[float | None]:
-    return [p.v for p in compute(spec, df).points]
+    return [p.v for p in compute(spec, df).lines[0].points]
 
 
 # ---------- registry ----------

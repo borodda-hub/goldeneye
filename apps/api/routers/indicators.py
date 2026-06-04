@@ -47,9 +47,26 @@ _DEFAULT_WINDOW_DAYS = 365
 _MIN_PERIOD = 2
 _MAX_PERIOD = 500
 
+# Moving averages keep the original `type:period[:source]` grammar.
+_MA_TYPES = {"sma", "ema", "wma", "hma", "dema", "tema", "vwma"}
+
+# Oscillators / bands: positional numeric params (name, default). `stddev`/
+# `mult` may be fractional; period-like params are coerced to int + range-checked.
+_PARAM_SCHEMA: dict[str, list[tuple[str, float]]] = {
+    "rsi": [("period", 14)],
+    "macd": [("fast", 12), ("slow", 26), ("signal", 9)],
+    "stoch": [("k", 14), ("d", 3), ("smooth", 3)],
+    "adx": [("period", 14)],
+    "atr": [("period", 14)],
+    "bb": [("period", 20), ("stddev", 2)],
+    "kc": [("period", 20), ("mult", 2)],
+    "dc": [("period", 20)],
+}
+_PERIODIC_KEYS = {"period", "fast", "slow", "signal", "k", "d", "smooth"}
+
 
 def _parse_spec(spec: str) -> list[IndicatorSpec]:
-    """Parse `ema:21,sma:50:hl2,vwma:20` into a list of IndicatorSpec."""
+    """Parse `ema:21,sma:50:hl2,macd:12:26:9,bb:20:2` into IndicatorSpec list."""
     supported = set(registered_types())
     out: list[IndicatorSpec] = []
     for item in spec.split(","):
@@ -66,22 +83,45 @@ def _parse_spec(spec: str) -> list[IndicatorSpec]:
                     f"supported: {sorted(supported)}"
                 ),
             )
-        try:
-            period = int(parts[1]) if len(parts) > 1 else 20
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=f"bad period in {s!r}: {e}")
-        if not (_MIN_PERIOD <= period <= _MAX_PERIOD):
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    f"period out of range in {s!r}: {period} "
-                    f"(allowed {_MIN_PERIOD}..{_MAX_PERIOD})"
-                ),
+        if type_key in _MA_TYPES:
+            try:
+                period = int(parts[1]) if len(parts) > 1 else 20
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=f"bad period in {s!r}: {e}")
+            if not (_MIN_PERIOD <= period <= _MAX_PERIOD):
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"period out of range in {s!r}: {period} "
+                        f"(allowed {_MIN_PERIOD}..{_MAX_PERIOD})"
+                    ),
+                )
+            source = parts[2].strip().lower() if len(parts) > 2 else "close"
+            out.append(
+                IndicatorSpec(
+                    type=type_key, params={"period": period, "source": source}
+                )
             )
-        source = parts[2].strip().lower() if len(parts) > 2 else "close"
-        out.append(
-            IndicatorSpec(type=type_key, params={"period": period, "source": source})
-        )
+        else:
+            schema = _PARAM_SCHEMA.get(type_key, [("period", 20)])
+            params: dict[str, Any] = {}
+            for i, (name, default) in enumerate(schema):
+                raw = parts[i + 1].strip() if len(parts) > i + 1 and parts[i + 1].strip() else None
+                try:
+                    val: float = float(raw) if raw is not None else float(default)
+                except ValueError as e:
+                    raise HTTPException(status_code=400, detail=f"bad {name} in {s!r}: {e}")
+                if name in _PERIODIC_KEYS:
+                    iv = int(val)
+                    if not (1 <= iv <= _MAX_PERIOD):
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"{name} out of range in {s!r}: {iv} (1..{_MAX_PERIOD})",
+                        )
+                    params[name] = iv
+                else:
+                    params[name] = val
+            out.append(IndicatorSpec(type=type_key, params=params))
     if not out:
         raise HTTPException(status_code=400, detail="spec is empty")
     return out

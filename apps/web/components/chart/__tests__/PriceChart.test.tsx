@@ -74,17 +74,29 @@ describe("PriceChart", () => {
       {
         type: "ema",
         params: { period: 21, source: "close" },
-        points: [
-          { t: "2026-05-01T00:00:00Z", v: 3.4 },
-          { t: "2026-05-02T00:00:00Z", v: 3.42 },
+        pane: "price",
+        lines: [
+          {
+            role: "line",
+            points: [
+              { t: "2026-05-01T00:00:00Z", v: 3.4 },
+              { t: "2026-05-02T00:00:00Z", v: 3.42 },
+            ],
+          },
         ],
       },
       {
         type: "sma",
         params: { period: 50, source: "close" },
-        points: [
-          { t: "2026-05-01T00:00:00Z", v: 3.41 },
-          { t: "2026-05-02T00:00:00Z", v: 3.43 },
+        pane: "price",
+        lines: [
+          {
+            role: "line",
+            points: [
+              { t: "2026-05-01T00:00:00Z", v: 3.41 },
+              { t: "2026-05-02T00:00:00Z", v: 3.43 },
+            ],
+          },
         ],
       },
     ];
@@ -111,12 +123,18 @@ describe("PriceChart", () => {
       {
         type: "ema",
         params: { period: 21, source: "close" },
-        points: [{ t: "2026-05-01T00:00:00Z", v: 3.4 }],
+        pane: "price",
+        lines: [
+          { role: "line", points: [{ t: "2026-05-01T00:00:00Z", v: 3.4 }] },
+        ],
       },
       {
         type: "sma",
         params: { period: 50, source: "close" },
-        points: [{ t: "2026-05-01T00:00:00Z", v: 3.41 }],
+        pane: "price",
+        lines: [
+          { role: "line", points: [{ t: "2026-05-01T00:00:00Z", v: 3.41 }] },
+        ],
       },
     ];
     render(

@@ -89,10 +89,17 @@ export interface IndicatorPointDTO {
   v: number | null;
 }
 
+export interface IndicatorLineDTO {
+  role: string;
+  points: IndicatorPointDTO[];
+}
+
 export interface IndicatorSeriesDTO {
   type: string;
   params: Record<string, unknown>;
-  points: IndicatorPointDTO[];
+  /** "price" overlay or "sub" (own pane below price). */
+  pane: string;
+  lines: IndicatorLineDTO[];
 }
 
 export interface GetIndicatorsResponseDTO {

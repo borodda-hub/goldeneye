@@ -80,11 +80,11 @@ def test_happy_path_multi_indicator(client: TestClient):
     assert by_type["ema"]["params"]["period"] == 21
     assert by_type["sma"]["params"]["period"] == 5
     # Each indicator returns one point per input bar
-    assert len(by_type["ema"]["points"]) == 60
-    assert len(by_type["sma"]["points"]) == 60
+    assert len(by_type["ema"]["lines"][0]["points"]) == 60
+    assert len(by_type["sma"]["lines"][0]["points"]) == 60
     # SMA(5) defined from index 4 onward
-    assert by_type["sma"]["points"][3]["v"] is None
-    assert by_type["sma"]["points"][4]["v"] is not None
+    assert by_type["sma"]["lines"][0]["points"][3]["v"] is None
+    assert by_type["sma"]["lines"][0]["points"][4]["v"] is not None
 
 
 def test_default_source_is_close(client: TestClient):

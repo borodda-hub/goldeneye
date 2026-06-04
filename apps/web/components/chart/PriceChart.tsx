@@ -63,27 +63,21 @@ function sortedUnique<T extends { time: UTCTimestamp }>(rows: T[]): T[] {
   return out;
 }
 
-function pairSeriesToSpec(
-  specs: IndicatorSpec[],
-  series: IndicatorSeriesDTO[],
-): { spec: IndicatorSpec; series: IndicatorSeriesDTO }[] {
-  const out: { spec: IndicatorSpec; series: IndicatorSeriesDTO }[] = [];
-  const used = new Set<number>();
-  for (const spec of specs) {
-    if (!spec.visible) continue;
-    const idx = series.findIndex((s, i) => {
-      if (used.has(i)) return false;
-      const period = (s.params as { period?: number }).period;
-      const source = (s.params as { source?: string }).source;
-      return (
-        s.type === spec.type && period === spec.period && source === spec.source
-      );
-    });
-    if (idx === -1) continue;
-    used.add(idx);
-    out.push({ spec, series: series[idx] });
+/** Color per indicator line role. Single-line roles use the spec's color;
+ *  secondary lines (signal/hist/mid/%D) get muted/contrast tokens. */
+function roleColor(base: string, role: string): string {
+  switch (role) {
+    case "signal":
+      return colors.down;
+    case "hist":
+      return colors.line2;
+    case "mid":
+      return colors.ink3;
+    case "d":
+      return colors.amber;
+    default:
+      return base; // line, rsi, adx, macd, k, upper, lower
   }
-  return out;
 }
 
 type OhlcPoint = {
@@ -262,22 +256,46 @@ export function PriceChart({
       ) as Parameters<typeof volumeSeries.setData>[0],
     );
 
-    // ── Indicator overlays ─────────────────────────────────────────────────
-    for (const { spec, series } of pairSeriesToSpec(
-      indicators,
-      indicatorSeries,
-    )) {
-      const line = chart.addSeries(LineSeries, {
-        color: spec.color,
-        lineWidth: spec.weight,
-        priceLineVisible: false,
-        lastValueVisible: false,
-      });
-      const points = series.points
-        .filter((p) => p.v !== null)
-        .map((p) => ({ time: toUtcEpoch(p.t), value: p.v as number }));
-      line.setData(sortedUnique(points) as Parameters<typeof line.setData>[0]);
-    }
+    // ── Indicators (order-based pairing; multi-line + sub-pane aware) ──────
+    // The backend returns one series per visible spec, in spec order. Each
+    // series carries one or more named lines and a target pane: "price"
+    // overlays the candles; "sub" gets its own pane below (RSI/MACD/etc.).
+    const visibleSpecs = indicators.filter((s) => s.visible);
+    let nextPane = 1;
+    visibleSpecs.forEach((spec, i) => {
+      const series = indicatorSeries[i];
+      if (!series) return;
+      const paneIndex = series.pane === "sub" ? nextPane++ : 0;
+      for (const ln of series.lines) {
+        const clean = sortedUnique(
+          ln.points
+            .filter((p) => p.v !== null)
+            .map((p) => ({ time: toUtcEpoch(p.t), value: p.v as number })),
+        );
+        const color = roleColor(spec.color, ln.role);
+        if (ln.role === "hist") {
+          const hist = chart.addSeries(
+            HistogramSeries,
+            { color, priceLineVisible: false, lastValueVisible: false },
+            paneIndex,
+          );
+          hist.setData(clean as Parameters<typeof hist.setData>[0]);
+        } else {
+          const line = chart.addSeries(
+            LineSeries,
+            {
+              color,
+              lineWidth: ln.role === "mid" ? 1 : spec.weight,
+              lineStyle: ln.role === "mid" ? 2 : 0,
+              priceLineVisible: false,
+              lastValueVisible: false,
+            },
+            paneIndex,
+          );
+          line.setData(clean as Parameters<typeof line.setData>[0]);
+        }
+      }
+    });
 
     // ── Futures-curve overlay (forward term structure) ─────────────────────
     if (showCurve && curve.length > 0) {

@@ -6,13 +6,17 @@ import {
   type MAType,
   MA_LABEL,
   MA_TYPES,
+  OSC_CATALOG,
+  OSC_TYPES,
   PERIOD_MAX,
   PERIOD_MIN,
   PRICE_SOURCES,
   type PriceSource,
   hasRibbon,
+  isMaType,
   isValidPeriod,
   newSpec,
+  presetSpec,
   ribbonSpecs,
   specToLabel,
 } from "@/lib/chart/indicatorRegistry";
@@ -57,7 +61,7 @@ interface FormState {
 function freshForm(): FormState {
   const s = newSpec("ema");
   return {
-    type: s.type,
+    type: s.type as MAType,
     period: s.period,
     periodText: String(s.period),
     source: s.source,
@@ -68,7 +72,7 @@ function freshForm(): FormState {
 
 function formFromSpec(spec: IndicatorSpec): FormState {
   return {
-    type: spec.type,
+    type: spec.type as MAType,
     period: spec.period,
     periodText: String(spec.period),
     source: spec.source,
@@ -214,7 +218,27 @@ export function IndicatorPicker({
           </span>
         </div>
 
-        {/* Form */}
+        {/* Oscillators & bands — one-click presets (default params) */}
+        <div className="flex flex-wrap items-center gap-2 border-b border-line-1 pb-3">
+          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+            Add
+          </span>
+          {OSC_TYPES.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => onAdd(presetSpec(t))}
+              title={`${OSC_CATALOG[t].label} · ${OSC_CATALOG[t].category} · ${
+                OSC_CATALOG[t].pane === "sub" ? "sub-pane" : "overlay"
+              }`}
+              className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1.5 text-ink-2 hover:bg-surface-2 hover:text-ink-1"
+            >
+              {OSC_CATALOG[t].label}
+            </button>
+          ))}
+        </div>
+
+        {/* Form (moving averages) */}
         <div className="grid grid-cols-2 gap-4">
           <Field label="Type">
             <select
@@ -362,7 +386,12 @@ export function IndicatorPicker({
                     className={`font-mono text-xs flex-1 ${s.visible ? "text-ink-1" : "text-ink-4 line-through"}`}
                   >
                     {specToLabel(s)}{" "}
-                    <span className="text-ink-4">· {s.source}</span>
+                    <span className="text-ink-4">
+                      ·{" "}
+                      {isMaType(s.type)
+                        ? s.source
+                        : OSC_CATALOG[s.type].category.toLowerCase()}
+                    </span>
                   </span>
                   <button
                     type="button"
@@ -372,14 +401,16 @@ export function IndicatorPicker({
                   >
                     {s.visible ? "Hide" : "Show"}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => startEdit(s)}
-                    className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3 hover:text-ink-1 px-1"
-                    aria-label={`Edit ${specToLabel(s)}`}
-                  >
-                    Edit
-                  </button>
+                  {isMaType(s.type) ? (
+                    <button
+                      type="button"
+                      onClick={() => startEdit(s)}
+                      className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3 hover:text-ink-1 px-1"
+                      aria-label={`Edit ${specToLabel(s)}`}
+                    >
+                      Edit
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => onDelete(s.id)}

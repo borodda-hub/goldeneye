@@ -127,6 +127,18 @@ Completes the long-standing Phase 15/16/17 indicator follow-ups.
 - Acceptance: each indicator renders in the correct pane; persists per-symbol;
   picker categories; tests.
 
+**SHIPPED 2026-06-04.** Backend: `services/indicators/oscillators.py` (RSI, MACD,
+Stochastic, ADX, ATR) + `channels.py` (Bollinger, Keltner, Donchian). The
+indicator engine now returns `pane` + named `lines[]` (an indicator may emit
+several lines, e.g. MACD→macd/signal/hist, Bollinger→upper/mid/lower); MAs stay
+single-line for back-compat. Spec grammar extended for positional multi-params
+(`macd:12:26:9`, `bb:20:2`). Frontend: registry gains an `OSC_CATALOG`; the
+IndicatorPicker adds one-click presets (RSI/MACD/Stochastic/ADX/ATR/Bollinger/
+Keltner/Donchian); PriceChart renders multi-line indicators and places `sub`-pane
+oscillators in their own v5 panes (order-based spec↔series pairing). Verified live
+(Playwright): Bollinger bands on the price pane + RSI and MACD in sub-panes, zero
+console errors. +12 backend tests; web 54 chart tests; health green.
+
 ## Phase 24 — Auto chart patterns + auto-TA (TrendSpider/TradingView tier) · ~4–5 days (needs v5 primitives)
 
 - Backend `services/patterns/chart_patterns.py`: scipy-peak + rolling-extreme +

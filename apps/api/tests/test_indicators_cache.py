@@ -105,9 +105,9 @@ async def test_miss_computes_and_sets():
 
     assert redis.get_calls == 1
     assert redis.set_calls == 1
-    assert len(series.points) == 10
+    assert len(series.lines[0].points) == 10
     # SMA(3) of the fixture's first defined index = 11.0
-    assert series.points[2].v == pytest.approx(11.0)
+    assert series.lines[0].points[2].v == pytest.approx(11.0)
 
 
 @pytest.mark.asyncio
@@ -129,7 +129,9 @@ async def test_hit_skips_compute():
 
     assert redis.set_calls == 1  # no additional SET on hit
     assert redis.get_calls == 2
-    assert [p.v for p in first.points] == [p.v for p in second.points]
+    assert [p.v for p in first.lines[0].points] == [
+        p.v for p in second.lines[0].points
+    ]
 
 
 @pytest.mark.asyncio
@@ -139,8 +141,8 @@ async def test_falls_through_on_redis_error():
         spec, _frame(), symbol="NG", from_ts=_FROM, to_ts=_TO, client=BrokenRedis()
     )
     # Compute still succeeds — outage is invisible to callers
-    assert len(series.points) == 10
-    assert series.points[2].v == pytest.approx(11.0)
+    assert len(series.lines[0].points) == 10
+    assert series.lines[0].points[2].v == pytest.approx(11.0)
 
 
 @pytest.mark.asyncio
@@ -161,4 +163,4 @@ async def test_no_client_disables_caching_cleanly():
     series = await cached_compute(
         spec, _frame(), symbol="NG", from_ts=_FROM, to_ts=_TO, client=NullCache()
     )
-    assert len(series.points) == 10
+    assert len(series.lines[0].points) == 10
