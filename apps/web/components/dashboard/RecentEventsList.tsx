@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { RecentEvent } from "@/app/(app)/dashboard/types";
 import { EventMarker } from "@/components/EventMarker";
@@ -106,8 +107,17 @@ export function RecentEventsList({ events }: Props) {
 
   return (
     <div className="relative border border-line-1 rounded-md bg-surface-1 flex flex-col h-full">
-      <div className="px-3 pt-2 pb-1 text-xs text-ink-3 uppercase tracking-widest">
-        Recent Events
+      <div className="flex items-center justify-between px-3 pt-2 pb-1">
+        <span className="text-xs text-ink-3 uppercase tracking-widest">
+          Recent Events
+        </span>
+        <Link
+          href="/signals"
+          aria-label="Open Signal Lab"
+          className="accent-pulse inline-flex items-center rounded-full border border-accent bg-accent-soft px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent-bright hover:bg-accent hover:text-bg transition-colors"
+        >
+          Signal Lab →
+        </Link>
       </div>
       {events.length === 0 ? (
         <p className="text-ink-4 text-xs font-mono p-3">No recent events.</p>
