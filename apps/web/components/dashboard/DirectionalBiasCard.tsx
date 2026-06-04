@@ -54,7 +54,7 @@ export function DirectionalBiasCard({ bias, aiSummary, safety }: Props) {
         </span>
       </div>
 
-      <p className="text-sm text-ink-1 leading-relaxed">{aiSummary}</p>
+      <p className="text-sm text-ink-1-soft leading-relaxed">{aiSummary}</p>
 
       <div className="mt-auto">
         <SafetyEnvelopeNote envelope={safety} defaultOpen={true} />
