@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Providers } from "../providers";
 import { DISCLAIMER } from "../../lib/strings";
 import { InstrumentSwitcher } from "@/components/instruments/InstrumentSwitcher";
+import { SideNav } from "@/components/SideNav";
 import { WalkthroughButton } from "@/components/onboarding/WalkthroughButton";
 import { WalkthroughProvider } from "@/components/onboarding/WalkthroughProvider";
 
@@ -10,17 +11,6 @@ import { WalkthroughProvider } from "@/components/onboarding/WalkthroughProvider
 // Force per-request server rendering so deploys don't need the API alive at
 // build time and pages always serve fresh data.
 export const dynamic = "force-dynamic";
-
-const NAV_ITEMS = [
-	{ href: "/dashboard", label: "Dashboard" },
-	{ href: "/chart", label: "Chart" },
-	{ href: "/signals", label: "Signal Lab" },
-	{ href: "/scenarios", label: "Scenario Lab" },
-	{ href: "/journal", label: "Journal" },
-	{ href: "/paper", label: "Paper Trading" },
-	{ href: "/calibration", label: "Calibration" },
-	{ href: "/admin", label: "Admin" },
-];
 
 function Wordmark() {
 	return (
@@ -78,25 +68,6 @@ function TopBar() {
 				</svg>
 			</button>
 		</header>
-	);
-}
-
-function SideNav() {
-	return (
-		<nav className="flex w-44 shrink-0 flex-col border-r border-line-1 bg-surface-1 pt-6">
-			{NAV_ITEMS.map((item, idx) => (
-				<Link
-					key={item.href}
-					href={item.href}
-					className="flex items-center gap-3 px-5 py-2.5 text-[13px] text-ink-2 hover:bg-surface-2 hover:text-ink-1 transition-colors"
-				>
-					<span className="font-mono text-[9px] tabular-nums text-ink-4 tracking-eyebrow">
-						{String(idx + 1).padStart(2, "0")}
-					</span>
-					{item.label}
-				</Link>
-			))}
-		</nav>
 	);
 }
 

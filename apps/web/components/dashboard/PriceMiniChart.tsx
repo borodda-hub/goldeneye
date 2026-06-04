@@ -68,6 +68,21 @@ function formatTooltipTs(iso: string, showTime: boolean): string {
   }
 }
 
+/** Compact x-axis tick: MM-DD for daily ranges, HH:MM for intraday. */
+function formatAxisTs(iso: string, showTime: boolean): string {
+  try {
+    const d = new Date(iso);
+    if (!showTime) {
+      return d.toISOString().slice(5, 10);
+    }
+    const h = d.getUTCHours().toString().padStart(2, "0");
+    const m = d.getUTCMinutes().toString().padStart(2, "0");
+    return `${h}:${m}`;
+  } catch {
+    return iso;
+  }
+}
+
 export function PriceMiniChart({ contractCode, symbol = "NG" }: Props) {
   const [timeframe, setTimeframe] = useState<TimeframeKey>("1M");
   const [chartColor, setChartColor] = useChartColor();
@@ -134,8 +149,22 @@ export function PriceMiniChart({ contractCode, symbol = "NG" }: Props) {
               data={chartData}
               margin={{ top: 4, right: 8, bottom: 4, left: 0 }}
             >
-              <XAxis dataKey="ts" hide />
-              <YAxis domain={["auto", "auto"]} hide />
+              <XAxis
+                dataKey="ts"
+                tick={{ fontSize: 10, fill: colors.ink3 }}
+                tickFormatter={(v: string) => formatAxisTs(v, spec.showTime)}
+                tickLine={{ stroke: colors.line1 }}
+                axisLine={{ stroke: colors.line1 }}
+                minTickGap={40}
+              />
+              <YAxis
+                domain={["auto", "auto"]}
+                tick={{ fontSize: 10, fill: colors.ink3 }}
+                tickLine={{ stroke: colors.line1 }}
+                axisLine={{ stroke: colors.line1 }}
+                width={52}
+                tickFormatter={(v: number) => v.toFixed(3)}
+              />
               <Tooltip
                 contentStyle={{
                   background: colors.surface1,
