@@ -1,8 +1,10 @@
 "use client";
 
+import { WatchlistSparkline } from "@/components/instruments/WatchlistSparkline";
 import type { InstrumentRow } from "@/lib/api";
 import { useInstruments } from "@/lib/queries";
 import { useActiveInstrument } from "@/lib/useActiveInstrument";
+import { flashBgClass, usePriceFlash } from "@/lib/usePriceFlash";
 
 interface Props {
   className?: string;
@@ -14,11 +16,16 @@ function fmtPrice(value: number | null): string {
   return value >= 20 ? value.toFixed(2) : value.toFixed(3);
 }
 
+function fmtChangeAbs(value: number | null): string {
+  if (value === null) return "—";
+  const abs = Math.abs(value);
+  return abs >= 20 ? abs.toFixed(2) : abs.toFixed(3);
+}
+
 function fmtChangePct(value: number | null): string {
   if (value === null) return "—";
-  const pct = value * 100;
-  const sign = pct >= 0 ? "+" : "";
-  return `${sign}${pct.toFixed(2)}%`;
+  const pct = Math.abs(value) * 100;
+  return `${pct.toFixed(2)}%`;
 }
 
 function changeColor(value: number | null): string {
@@ -26,29 +33,42 @@ function changeColor(value: number | null): string {
   return value > 0 ? "text-up" : "text-down";
 }
 
+function arrow(value: number | null): string {
+  if (value === null || value === 0) return "·";
+  return value > 0 ? "▲" : "▼";
+}
+
 function Row({
   row,
+  rank,
   active,
   onSelect,
 }: {
   row: InstrumentRow;
+  rank: number;
   active: boolean;
   onSelect: (symbol: string) => void;
 }) {
   const q = row.quote;
+  const flash = usePriceFlash(q.last_price);
+  const cc = changeColor(q.change_pct);
   return (
     <button
       type="button"
       onClick={() => onSelect(row.symbol)}
       aria-current={active ? "true" : undefined}
-      className={`text-left w-full px-3 py-2.5 border-l-4 transition-colors ${
+      className={`text-left w-full px-2.5 py-2 border-l-4 transition-colors duration-500 ${
         active
           ? "border-l-accent bg-surface-2"
           : "border-l-transparent hover:bg-surface-2/60 hover:border-l-line-2"
-      }`}
+      } ${flashBgClass(flash)}`}
       data-symbol={row.symbol}
     >
-      <div className="flex items-baseline justify-between gap-2">
+      {/* Row 1: rank · symbol · sparkline (right-aligned) · pct */}
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-[10px] tabular-nums text-ink-4 w-3 text-right">
+          {rank}
+        </span>
         <span
           className={`font-mono text-sm font-semibold ${
             active ? "text-accent-bright" : "text-ink-1"
@@ -56,19 +76,27 @@ function Row({
         >
           {row.symbol}
         </span>
-        <span
-          className={`font-mono text-xs tabular-nums ${changeColor(q.change_pct)}`}
-        >
-          {fmtChangePct(q.change_pct)}
+        <WatchlistSparkline
+          contractCode={q.front_month_code}
+          changePct={q.change_pct}
+        />
+        <span className={`ml-auto font-mono text-xs tabular-nums ${cc}`}>
+          {arrow(q.change_pct)} {fmtChangePct(q.change_pct)}
         </span>
       </div>
-      <div className="flex items-baseline justify-between gap-2 mt-0.5">
-        <span className="text-[10px] text-ink-3 leading-tight truncate max-w-[110px]">
+      {/* Row 2: name · last · net change abs */}
+      <div className="flex items-baseline justify-between gap-2 mt-1 pl-5">
+        <span className="text-[10px] text-ink-3 leading-tight truncate max-w-[80px]">
           {row.name}
         </span>
-        <span className="font-mono text-xs tabular-nums text-ink-2">
-          {fmtPrice(q.last_price)}
-        </span>
+        <div className="flex items-baseline gap-2">
+          <span className="font-mono text-xs tabular-nums text-ink-1">
+            {fmtPrice(q.last_price)}
+          </span>
+          <span className={`font-mono text-[10px] tabular-nums ${cc}`}>
+            {arrow(q.change_abs)} {fmtChangeAbs(q.change_abs)}
+          </span>
+        </div>
       </div>
     </button>
   );
@@ -99,10 +127,11 @@ export function WatchlistSidebar({ className = "" }: Props) {
         </p>
       ) : (
         <div className="flex flex-col">
-          {data.instruments.map((row) => (
+          {data.instruments.map((row, idx) => (
             <Row
               key={row.symbol}
               row={row}
+              rank={idx + 1}
               active={row.symbol === activeSymbol}
               onSelect={setActiveSymbol}
             />

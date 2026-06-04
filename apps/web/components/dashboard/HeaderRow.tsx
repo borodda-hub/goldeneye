@@ -1,3 +1,5 @@
+"use client";
+
 import type {
   FrontMonth,
   Instrument,
@@ -7,6 +9,7 @@ import { LiveDot } from "@/components/LiveDot";
 import { NumberCell } from "@/components/NumberCell";
 import { SignalQualityChip } from "@/components/dashboard/SignalQualityChip";
 import type { ConnectionStatus } from "@/lib/realtime";
+import { flashBgClass, usePriceFlash } from "@/lib/usePriceFlash";
 
 interface Props {
   instrument: Instrument;
@@ -54,6 +57,7 @@ export function HeaderRow({
   feedMode = "live",
 }: Props) {
   const displayPrice = livePrice ?? frontMonth.last_price;
+  const flash = usePriceFlash(displayPrice);
   const changeAbs = frontMonth.change_abs;
   const changePct = frontMonth.change_pct;
   const hasChange = changeAbs !== null && changePct !== null;
@@ -79,7 +83,9 @@ export function HeaderRow({
       </div>
 
       {/* Center: price */}
-      <div className="flex items-center gap-3">
+      <div
+        className={`flex items-center gap-3 rounded-md px-2 -mx-2 py-0.5 transition-colors duration-500 ${flashBgClass(flash)}`}
+      >
         <NumberCell value={displayPrice} precision={3} />
         {hasChange ? (
           <>

@@ -8,10 +8,14 @@ const useActiveInstrumentMock = vi.fn();
 
 vi.mock("@/lib/queries", () => ({
   useInstruments: (...args: unknown[]) => useInstrumentsMock(...args),
+  useChartBars: () => ({ data: undefined, isLoading: false, error: null }),
 }));
 vi.mock("@/lib/useActiveInstrument", () => ({
   useActiveInstrument: (...args: unknown[]) =>
     useActiveInstrumentMock(...args),
+}));
+vi.mock("@/components/instruments/WatchlistSparkline", () => ({
+  WatchlistSparkline: () => null,
 }));
 
 import { WatchlistSidebar } from "../WatchlistSidebar";
@@ -72,16 +76,17 @@ describe("WatchlistSidebar", () => {
     expect(screen.getByText("97.26")).toBeInTheDocument();
   });
 
-  it("formats change_pct with sign + percent", () => {
+  it("formats change_pct with arrow + unsigned percent", () => {
     useInstrumentsMock.mockReturnValue({
       data: { instruments: [_row("NG", "NG"), _row("CL", "CL")] },
       isLoading: false,
       error: null,
     });
     render(<WatchlistSidebar />);
-    // NG up 0.38%, CL down 1.27%
-    expect(screen.getByText(/\+0\.38%/)).toBeInTheDocument();
-    expect(screen.getByText(/-1\.27%/)).toBeInTheDocument();
+    // NG up 0.38% (▲), CL down 1.27% (▼). Arrow is rendered in same span
+    // as the pct, so we match the combined text.
+    expect(screen.getByText(/▲ 0\.38%/)).toBeInTheDocument();
+    expect(screen.getByText(/▼ 1\.27%/)).toBeInTheDocument();
   });
 
   it("marks the active instrument with aria-current", () => {
@@ -128,7 +133,9 @@ describe("WatchlistSidebar", () => {
       error: null,
     });
     render(<WatchlistSidebar />);
-    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
+    // last price renders as bare "—"; change values render as "· —"
+    // (neutral arrow + em-dash). At least one literal "—" must exist.
+    expect(screen.getAllByText(/—/).length).toBeGreaterThan(0);
   });
 
   it("renders an error state when the query fails", () => {

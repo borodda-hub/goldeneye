@@ -68,6 +68,14 @@ function formatTooltipTs(iso: string, showTime: boolean): string {
   }
 }
 
+/** Compact volume: 1.2K / 3.4M / 5.6B. */
+function formatVolume(v: number): string {
+  if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(2)}B`;
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`;
+  if (v >= 1_000) return `${(v / 1_000).toFixed(2)}K`;
+  return v.toFixed(0);
+}
+
 /** Compact x-axis tick: MM-DD for daily ranges, HH:MM for intraday. */
 function formatAxisTs(iso: string, showTime: boolean): string {
   try {
@@ -98,6 +106,18 @@ export function PriceMiniChart({ contractCode, symbol = "NG" }: Props) {
     today,
   );
   const chartData = (data as ChartBarsResponse | undefined)?.bars ?? [];
+
+  // O/H/L/C/V across the visible window — the chart's own stats, not the
+  // daily front-month change.
+  const ohlcv = chartData.length
+    ? {
+        o: chartData[0].o,
+        h: chartData.reduce((m, b) => (b.h > m ? b.h : m), chartData[0].h),
+        l: chartData.reduce((m, b) => (b.l < m ? b.l : m), chartData[0].l),
+        c: chartData[chartData.length - 1].c,
+        v: chartData.reduce((s, b) => s + b.v, 0),
+      }
+    : null;
 
   return (
     <div
@@ -137,6 +157,29 @@ export function PriceMiniChart({ contractCode, symbol = "NG" }: Props) {
           </div>
         </div>
       </div>
+
+      {ohlcv && (
+        <div
+          className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-3 pb-1 font-mono text-[11px] tabular-nums"
+          aria-label="Range OHLCV"
+        >
+          <span className="text-ink-3">
+            O <span className="text-ink-1">{ohlcv.o.toFixed(3)}</span>
+          </span>
+          <span className="text-ink-3">
+            H <span className="text-up">{ohlcv.h.toFixed(3)}</span>
+          </span>
+          <span className="text-ink-3">
+            L <span className="text-down">{ohlcv.l.toFixed(3)}</span>
+          </span>
+          <span className="text-ink-3">
+            C <span className="text-ink-1">{ohlcv.c.toFixed(3)}</span>
+          </span>
+          <span className="text-ink-3">
+            V <span className="text-ink-2">{formatVolume(ohlcv.v)}</span>
+          </span>
+        </div>
+      )}
 
       {isLoading || chartData.length === 0 ? (
         <div className="flex-1 flex items-center justify-center text-ink-4 text-xs font-mono">

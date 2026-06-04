@@ -6,6 +6,9 @@ import { DashboardTicker } from "@/components/dashboard/DashboardTicker";
 import { DirectionalBiasCard } from "@/components/dashboard/DirectionalBiasCard";
 import { FuturesCurveCard } from "@/components/dashboard/FuturesCurveCard";
 import { HeaderRow } from "@/components/dashboard/HeaderRow";
+import { OpenPositionsCard } from "@/components/dashboard/OpenPositionsCard";
+import { PaperEquityCard } from "@/components/dashboard/PaperEquityCard";
+import { RecentTradesCard } from "@/components/dashboard/RecentTradesCard";
 import { PriceMiniChart } from "@/components/dashboard/PriceMiniChart";
 import { RecentEventsList } from "@/components/dashboard/RecentEventsList";
 import { WorkingThesisCard } from "@/components/dashboard/WorkingThesisCard";
@@ -49,7 +52,7 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
   return (
     <div className="flex gap-4 items-start">
       {/* Left rail: watchlist (sticky on tall screens) */}
-      <WatchlistSidebar className="w-52 shrink-0 sticky top-0 self-start" />
+      <WatchlistSidebar className="w-60 shrink-0 sticky top-0 self-start" />
 
       {/* Main column */}
       <div className="flex-1 min-w-0 flex flex-col gap-4">
@@ -127,6 +130,16 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
           </>
         )}
       </div>
+
+      {/* Right rail: paper equity + open positions (live MTM) + recent trades */}
+      <aside
+        aria-label="Paper trading rail"
+        className="w-72 shrink-0 sticky top-0 self-start flex flex-col gap-3"
+      >
+        <PaperEquityCard />
+        <OpenPositionsCard />
+        <RecentTradesCard />
+      </aside>
     </div>
   );
 }
