@@ -4,9 +4,19 @@ import { ChartToolbar } from "../ChartToolbar";
 const defaultProps = {
   resolution: "1d" as const,
   onResolutionChange: vi.fn(),
+  chartType: "candlestick" as const,
+  onChartTypeChange: vi.fn(),
+  range: "2Y" as const,
+  onRangeChange: vi.fn(),
+  logScale: false,
+  onToggleLog: vi.fn(),
+  showCurve: false,
+  onToggleCurve: vi.fn(),
   indicatorCount: 0,
   onOpenIndicators: vi.fn(),
   onClearIndicators: vi.fn(),
+  onScreenshot: vi.fn(),
+  onFullscreen: vi.fn(),
   contractCode: "NGF26",
 };
 
@@ -85,5 +95,47 @@ describe("ChartToolbar", () => {
     );
     fireEvent.click(screen.getByLabelText(/clear all indicators/i));
     expect(onClearIndicators).toHaveBeenCalled();
+  });
+
+  it("changing the chart type calls onChartTypeChange", () => {
+    const onChartTypeChange = vi.fn();
+    render(
+      <ChartToolbar {...defaultProps} onChartTypeChange={onChartTypeChange} />,
+    );
+    fireEvent.change(screen.getByLabelText(/chart type/i), {
+      target: { value: "heikin-ashi" },
+    });
+    expect(onChartTypeChange).toHaveBeenCalledWith("heikin-ashi");
+  });
+
+  it("clicking a range preset calls onRangeChange", () => {
+    const onRangeChange = vi.fn();
+    render(<ChartToolbar {...defaultProps} onRangeChange={onRangeChange} />);
+    fireEvent.click(screen.getByText("6M"));
+    expect(onRangeChange).toHaveBeenCalledWith("6M");
+  });
+
+  it("toggles log scale and curve and exports", () => {
+    const onToggleLog = vi.fn();
+    const onToggleCurve = vi.fn();
+    const onScreenshot = vi.fn();
+    const onFullscreen = vi.fn();
+    render(
+      <ChartToolbar
+        {...defaultProps}
+        onToggleLog={onToggleLog}
+        onToggleCurve={onToggleCurve}
+        onScreenshot={onScreenshot}
+        onFullscreen={onFullscreen}
+      />,
+    );
+    fireEvent.click(screen.getByText("LOG"));
+    fireEvent.click(screen.getByText("Curve"));
+    fireEvent.click(screen.getByLabelText(/download chart as png/i));
+    fireEvent.click(screen.getByLabelText(/toggle fullscreen/i));
+    expect(onToggleLog).toHaveBeenCalled();
+    expect(onToggleCurve).toHaveBeenCalled();
+    expect(onScreenshot).toHaveBeenCalled();
+    expect(onFullscreen).toHaveBeenCalled();
   });
 });

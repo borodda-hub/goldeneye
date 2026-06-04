@@ -1,5 +1,20 @@
 export type Resolution = "1m" | "5m" | "15m" | "1h" | "1d";
 
+export type ChartType =
+  | "candlestick"
+  | "bars"
+  | "heikin-ashi"
+  | "line"
+  | "area"
+  | "baseline";
+
+export type RangePreset = "3M" | "6M" | "1Y" | "2Y" | "5Y" | "All";
+
+/** Imperative handle PriceChart exposes so the toolbar can screenshot. */
+export interface ChartApi {
+  screenshot: () => HTMLCanvasElement | null;
+}
+
 export interface Bar {
   ts: string;
   o: number;

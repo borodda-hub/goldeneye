@@ -19,8 +19,16 @@ import {
 import { useChannel } from "@/lib/realtime";
 import { useActiveInstrument } from "@/lib/useActiveInstrument";
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useState } from "react";
-import type { Bar, ChartBarsResponse, CurvePoint, Resolution } from "./types";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type {
+  Bar,
+  ChartApi,
+  ChartBarsResponse,
+  ChartType,
+  CurvePoint,
+  RangePreset,
+  Resolution,
+} from "./types";
 
 const PriceChart = dynamic(
   () =>
@@ -43,6 +51,31 @@ const FRONT_MONTH_FALLBACK_BY_SYMBOL: Record<string, string> = {
   NG: "NGM26",
   CL: "CLN26",
 };
+
+const RANGE_DAYS: Record<RangePreset, number> = {
+  "3M": 90,
+  "6M": 182,
+  "1Y": 365,
+  "2Y": 730,
+  "5Y": 1825,
+  All: 3650,
+};
+
+// Global chart preferences (apply across symbols).
+function getPref<T extends string>(key: string, fallback: T): T {
+  try {
+    return (localStorage.getItem(key) as T) || fallback;
+  } catch {
+    return fallback;
+  }
+}
+function setPref(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // ignore
+  }
+}
 
 function LoadingPlaceholder() {
   return (
@@ -79,29 +112,38 @@ export function ChartShell({
 }: Props) {
   const { activeSymbol } = useActiveInstrument();
   const [resolution, setResolution] = useState<Resolution>("1d");
+  const [chartType, setChartType] = useState<ChartType>("candlestick");
+  const [logScale, setLogScale] = useState(false);
+  const [showCurve, setShowCurve] = useState(false);
+  const [range, setRange] = useState<RangePreset>("2Y");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartApiRef = useRef<ChartApi | null>(null);
+
+  // Hydrate global chart prefs after mount (SSR-safe defaults first paint).
+  useEffect(() => {
+    setResolution(getPref<Resolution>("goldeneye:chart:resolution", "1d"));
+    setChartType(getPref<ChartType>("goldeneye:chart:type", "candlestick"));
+    setLogScale(getPref<string>("goldeneye:chart:logscale", "0") === "1");
+    setShowCurve(getPref<string>("goldeneye:chart:curve", "0") === "1");
+    setRange(getPref<RangePreset>("goldeneye:chart:range", "2Y"));
+  }, []);
+
   // Indicator state: re-keyed per-symbol so each instrument has its own set.
-  // Hydrated from localStorage in an effect so SSR and first-paint agree.
   const [indicators, setIndicators] = useState<IndicatorSpec[]>([]);
   useEffect(() => {
     setIndicators(loadIndicators(activeSymbol));
   }, [activeSymbol]);
 
   const today = new Date().toISOString().split("T")[0];
-  const twoYearsAgo = new Date(Date.now() - 730 * 86400_000)
+  const from = new Date(Date.now() - RANGE_DAYS[range] * 86400_000)
     .toISOString()
     .split("T")[0];
 
-  // Resolve front-month contract. Primary source is /v1/instruments which
-  // returns the DB-flagged front month per symbol — that's the only path
-  // guaranteed to point at a contract that actually exists in our chain.
-  // The curve endpoint (useChartCurve) is fed by the market adapter and
-  // generates contiguous monthly codes, which include past-expiry and
-  // non-existent contracts for symbols on irregular cycles (gold, silver).
-  // The curve fallback below keeps the behavior for NG/CL alive while
-  // instruments is still loading.
+  // Resolve front-month contract (see Phase 14 notes): instruments endpoint is
+  // the source of truth; curve endpoint is the live fallback.
   const { data: instruments } = useInstruments();
   type InstrumentsResp = { instruments?: InstrumentRow[] };
   const dbFrontCode = (
@@ -110,7 +152,7 @@ export function ChartShell({
     ?.front_month_code;
 
   const { data: curve } = useChartCurve(activeSymbol, today);
-  type CurveItem = { contract_code: string };
+  type CurveItem = { contract_code: string; expiry: string; mid: number };
   type CurveData = { curve?: CurveItem[] };
   const curveItems = (curve as CurveData | undefined)?.curve ?? [];
   const liveFrontCode = curveItems[0]?.contract_code;
@@ -121,15 +163,31 @@ export function ChartShell({
       ? initialContractCode
       : (FRONT_MONTH_FALLBACK_BY_SYMBOL[activeSymbol] ?? DEFAULT_CONTRACT));
 
+  const curvePoints = useMemo<CurvePoint[]>(
+    () =>
+      curveItems.map((c) => ({
+        contract_code: c.contract_code,
+        expiry: c.expiry,
+        mid: c.mid,
+      })),
+    [curveItems],
+  );
+
   const { data: fetchedBars } = useChartBars(
     contractCode,
     resolution,
-    twoYearsAgo,
+    from,
     today,
   );
 
-  const { data: livebar } = useChannel<Bar>(`price.${activeSymbol}.front.1m`);
-  void livebar; // live bar appending reserved for future enhancement
+  // Live forming candle — drive the last bar's close from the front-month tick.
+  const { data: tick } = useChannel<{ price?: number | null }>(
+    `price.${activeSymbol}.front`,
+  );
+  const livePrice =
+    typeof tick?.price === "number" && Number.isFinite(tick.price)
+      ? tick.price
+      : null;
 
   const barsData =
     (fetchedBars as ChartBarsResponse | undefined) ?? initialBars;
@@ -168,14 +226,69 @@ export function ChartShell({
     [indicators, persistAndSet],
   );
 
+  // ── Pref-changing handlers (persist globally) ────────────────────────────
+  const changeResolution = useCallback((r: Resolution) => {
+    setResolution(r);
+    setPref("goldeneye:chart:resolution", r);
+  }, []);
+  const changeChartType = useCallback((t: ChartType) => {
+    setChartType(t);
+    setPref("goldeneye:chart:type", t);
+  }, []);
+  const changeRange = useCallback((r: RangePreset) => {
+    setRange(r);
+    setPref("goldeneye:chart:range", r);
+  }, []);
+  const toggleLog = useCallback(() => {
+    setLogScale((v) => {
+      setPref("goldeneye:chart:logscale", v ? "0" : "1");
+      return !v;
+    });
+  }, []);
+  const toggleCurve = useCallback(() => {
+    setShowCurve((v) => {
+      setPref("goldeneye:chart:curve", v ? "0" : "1");
+      return !v;
+    });
+  }, []);
+
+  const handleScreenshot = useCallback(() => {
+    const canvas = chartApiRef.current?.screenshot();
+    if (!canvas) return;
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = `goldeneye-${contractCode}-${resolution}.png`;
+    a.click();
+  }, [contractCode, resolution]);
+
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    } else {
+      void el.requestFullscreen?.();
+    }
+  }, []);
+
   return (
-    <div className="flex flex-col h-full">
+    <div ref={containerRef} className="flex flex-col h-full bg-surface-0">
       <ChartToolbar
         resolution={resolution}
-        onResolutionChange={setResolution}
+        onResolutionChange={changeResolution}
+        chartType={chartType}
+        onChartTypeChange={changeChartType}
+        range={range}
+        onRangeChange={changeRange}
+        logScale={logScale}
+        onToggleLog={toggleLog}
+        showCurve={showCurve}
+        onToggleCurve={toggleCurve}
         indicatorCount={indicators.filter((i) => i.visible).length}
         onOpenIndicators={() => setPickerOpen(true)}
         onClearIndicators={() => persistAndSet([])}
+        onScreenshot={handleScreenshot}
+        onFullscreen={toggleFullscreen}
         contractCode={contractCode}
       />
       <div className="flex flex-1 min-h-0 gap-0">
@@ -186,6 +299,12 @@ export function ChartShell({
               eventMarkers={barsData.event_markers}
               indicators={indicators}
               indicatorSeries={indicatorsData?.indicators ?? []}
+              chartType={chartType}
+              logScale={logScale}
+              showCurve={showCurve}
+              curve={curvePoints}
+              livePrice={livePrice}
+              apiRef={chartApiRef}
             />
           ) : (
             <LoadingPlaceholder />
