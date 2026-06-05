@@ -38,6 +38,7 @@ interface Props {
   onClearIndicators: () => void;
   onScreenshot: () => void;
   onFullscreen: () => void;
+  onOpenSettings: () => void;
   contractCode: string;
 }
 
@@ -101,6 +102,7 @@ export function ChartToolbar({
   onClearIndicators,
   onScreenshot,
   onFullscreen,
+  onOpenSettings,
   contractCode,
 }: Props) {
   return (
@@ -229,8 +231,17 @@ export function ChartToolbar({
         ) : null}
       </div>
 
-      {/* Right side: export + fullscreen + contract */}
+      {/* Right side: settings + export + fullscreen + contract */}
       <div className="ml-auto flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          title="Chart appearance settings"
+          aria-label="Chart appearance settings"
+          className={`rounded border border-line-2 ${SEG_BASE} ${SEG_OFF}`}
+        >
+          ⚙
+        </button>
         <button
           type="button"
           onClick={onScreenshot}

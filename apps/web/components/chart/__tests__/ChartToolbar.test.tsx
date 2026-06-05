@@ -24,6 +24,7 @@ const defaultProps = {
   onClearIndicators: vi.fn(),
   onScreenshot: vi.fn(),
   onFullscreen: vi.fn(),
+  onOpenSettings: vi.fn(),
   contractCode: "NGF26",
 };
 

@@ -14,6 +14,7 @@ import type {
   CandlestickPattern,
   IndicatorSeriesDTO,
 } from "@/lib/api";
+import type { ChartStyle } from "@/lib/chart/chartStyle";
 import type { IndicatorSpec } from "@/lib/chart/indicatorRegistry";
 import { colors } from "@/lib/colors";
 import {
@@ -54,6 +55,8 @@ interface Props {
   } | null;
   /** Latest live price (from the front-month tick channel); updates the last bar. */
   livePrice: number | null;
+  /** User chart-appearance settings (background, candle colors, grid, …). */
+  style: ChartStyle;
   /** Populated with an imperative handle (screenshot) once the chart exists. */
   apiRef?: MutableRefObject<ChartApi | null>;
 }
@@ -129,6 +132,58 @@ function isOhlcType(t: ChartType): boolean {
   return t === "candlestick" || t === "bars" || t === "heikin-ashi";
 }
 
+/** Apply the user's appearance settings to a live chart via applyOptions —
+ *  no rebuild, so color edits update instantly. Candle-color options only
+ *  apply to candle/bar series; line/area types keep their accent styling. */
+function applyChartStyle(
+  chart: IChartApi,
+  priceSeries: ISeriesApi<SeriesType> | null,
+  chartType: ChartType,
+  s: ChartStyle,
+): void {
+  chart.applyOptions({
+    layout: {
+      background: s.gradient
+        ? {
+            type: ColorType.VerticalGradient,
+            topColor: s.background,
+            bottomColor: s.backgroundBottom,
+          }
+        : { type: ColorType.Solid, color: s.background },
+      textColor: s.textColor,
+      fontSize: s.fontSize,
+    },
+    grid: {
+      vertLines: { color: s.gridColor, visible: s.gridVisible },
+      horzLines: { color: s.gridColor, visible: s.gridVisible },
+    },
+    crosshair: {
+      mode: s.crosshairMagnet ? CrosshairMode.Magnet : CrosshairMode.Normal,
+      vertLine: { color: s.crosshairColor, style: s.crosshairStyle },
+      horzLine: { color: s.crosshairColor, style: s.crosshairStyle },
+    },
+    rightPriceScale: { borderColor: s.gridColor },
+    timeScale: { borderColor: s.gridColor },
+  });
+  if (priceSeries === null) return;
+  if (chartType === "candlestick" || chartType === "heikin-ashi") {
+    priceSeries.applyOptions({
+      upColor: s.hollowUp ? "rgba(0,0,0,0)" : s.upColor,
+      downColor: s.downColor,
+      borderVisible: s.borderVisible || s.hollowUp,
+      borderUpColor: s.upColor,
+      borderDownColor: s.downColor,
+      wickUpColor: s.wickUpColor,
+      wickDownColor: s.wickDownColor,
+    } as Parameters<typeof priceSeries.applyOptions>[0]);
+  } else if (chartType === "bars") {
+    priceSeries.applyOptions({
+      upColor: s.upColor,
+      downColor: s.downColor,
+    } as Parameters<typeof priceSeries.applyOptions>[0]);
+  }
+}
+
 export function PriceChart({
   bars,
   eventMarkers,
@@ -141,12 +196,17 @@ export function PriceChart({
   patterns,
   autoTa,
   livePrice,
+  style,
   apiRef,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const priceSeriesRef = useRef<ISeriesApi<SeriesType> | null>(null);
   const lastBarRef = useRef<OhlcPoint | null>(null);
+  // Latest style, read inside the build effect without making it a dep — live
+  // style edits go through the dedicated applyOptions effect below (no rebuild).
+  const styleRef = useRef(style);
+  styleRef.current = style;
 
   // Build / rebuild the chart on any structural or data change. Live ticks are
   // handled in a separate effect so they don't recreate the chart.
@@ -218,6 +278,8 @@ export function PriceChart({
       });
     }
     priceSeriesRef.current = priceSeries;
+    // Paint the user's appearance settings over the just-created series/chart.
+    applyChartStyle(chart, priceSeries, chartType, styleRef.current);
 
     if (ohlc) {
       const data =
@@ -484,6 +546,12 @@ export function PriceChart({
       } as Parameters<typeof series.update>[0]);
     }
   }, [livePrice, chartType]);
+
+  // Live restyle — appearance edits apply via applyOptions, no chart rebuild.
+  useEffect(() => {
+    if (chartRef.current === null) return;
+    applyChartStyle(chartRef.current, priceSeriesRef.current, chartType, style);
+  }, [style, chartType]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 }

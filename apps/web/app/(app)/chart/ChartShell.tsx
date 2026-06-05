@@ -1,10 +1,17 @@
 "use client";
 
 import { ChartFooter } from "@/components/chart/ChartFooter";
+import { ChartSettingsModal } from "@/components/chart/ChartSettingsModal";
 import { ChartToolbar } from "@/components/chart/ChartToolbar";
 import { EventDrawer } from "@/components/chart/EventDrawer";
 import { IndicatorPicker } from "@/components/chart/IndicatorPicker";
 import type { CandlestickPattern, InstrumentRow } from "@/lib/api";
+import {
+  type ChartStyle,
+  DEFAULT_CHART_STYLE,
+  loadChartStyle,
+  saveChartStyle,
+} from "@/lib/chart/chartStyle";
 import {
   type IndicatorSpec,
   specsToQueryParam,
@@ -132,6 +139,8 @@ export function ChartShell({
   const [range, setRange] = useState<RangePreset>("2Y");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [style, setStyle] = useState<ChartStyle>(DEFAULT_CHART_STYLE);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const chartApiRef = useRef<ChartApi | null>(null);
@@ -146,6 +155,12 @@ export function ChartShell({
     setShowAutoTa(getPref<string>("goldeneye:chart:autota", "0") === "1");
     setShowSeasonality(getPref<string>("goldeneye:chart:season", "0") === "1");
     setRange(getPref<RangePreset>("goldeneye:chart:range", "2Y"));
+    setStyle(loadChartStyle());
+  }, []);
+
+  const changeStyle = useCallback((s: ChartStyle) => {
+    setStyle(s);
+    saveChartStyle(s);
   }, []);
 
   // Indicator state: re-keyed per-symbol so each instrument has its own set.
@@ -360,6 +375,7 @@ export function ChartShell({
         onClearIndicators={() => persistAndSet([])}
         onScreenshot={handleScreenshot}
         onFullscreen={toggleFullscreen}
+        onOpenSettings={() => setSettingsOpen(true)}
         contractCode={contractCode}
       />
       <div className="flex flex-1 min-h-0 gap-0">
@@ -383,6 +399,7 @@ export function ChartShell({
               patterns={patterns}
               autoTa={autoTa}
               livePrice={livePrice}
+              style={style}
               apiRef={chartApiRef}
             />
           ) : (
@@ -409,6 +426,12 @@ export function ChartShell({
         onDelete={handleDelete}
         onToggleVisible={handleToggleVisible}
         onReplaceAll={persistAndSet}
+      />
+      <ChartSettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        style={style}
+        onChange={changeStyle}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import type { Bar } from "@/app/(app)/chart/types";
 import type { IndicatorSeriesDTO } from "@/lib/api";
+import { DEFAULT_CHART_STYLE } from "@/lib/chart/chartStyle";
 import { newSpec } from "@/lib/chart/indicatorRegistry";
 import { render } from "@testing-library/react";
 import { PriceChart } from "../PriceChart";
@@ -8,11 +9,14 @@ import { PriceChart } from "../PriceChart";
 const addSeries = vi.fn((_def: unknown, _opts?: unknown) => ({
   setData: vi.fn(),
   update: vi.fn(),
+  applyOptions: vi.fn(),
+  createPriceLine: vi.fn(),
 }));
 
 vi.mock("lightweight-charts", () => ({
   createChart: vi.fn(() => ({
     addSeries,
+    applyOptions: vi.fn(),
     priceScale: vi.fn(() => ({ applyOptions: vi.fn() })),
     timeScale: vi.fn(() => ({ fitContent: vi.fn() })),
     takeScreenshot: vi.fn(),
@@ -26,8 +30,8 @@ vi.mock("lightweight-charts", () => ({
   BaselineSeries: "BaselineSeries",
   LineSeries: "LineSeries",
   HistogramSeries: "HistogramSeries",
-  ColorType: { Solid: "solid" },
-  CrosshairMode: { Magnet: 1 },
+  ColorType: { Solid: "solid", VerticalGradient: "gradient" },
+  CrosshairMode: { Magnet: 1, Normal: 0 },
   PriceScaleMode: { Normal: 0, Logarithmic: 1 },
 }));
 
@@ -51,6 +55,7 @@ const base = {
   patterns: [],
   autoTa: null,
   livePrice: null,
+  style: DEFAULT_CHART_STYLE,
 };
 
 describe("PriceChart", () => {
