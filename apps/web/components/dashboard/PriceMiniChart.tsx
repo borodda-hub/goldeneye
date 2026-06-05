@@ -14,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { ChartColorSwatch } from "./ChartColorSwatch";
+import { SheenGradient } from "./SheenGradient";
 
 interface Props {
   contractCode: string;
@@ -225,8 +226,49 @@ export function PriceMiniChart({ contractCode, symbol = "NG" }: Props) {
                 type="monotone"
                 stroke={chartColor.stroke}
                 strokeWidth={1.5}
-                fill={chartColor.fill}
+                fill="url(#price-mini-fill)"
                 dot={false}
+              />
+              <defs>
+                {/* Soft vertical fade in the stroke color: a gentle glow under
+                    the line at the top, fully translucent at the bottom. */}
+                <linearGradient
+                  id="price-mini-fill"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor={chartColor.stroke}
+                    stopOpacity={0.28}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor={chartColor.stroke}
+                    stopOpacity={0}
+                  />
+                </linearGradient>
+                <SheenGradient
+                  id="sheen-price-mini"
+                  color={chartColor.stroke}
+                  durationSec={8}
+                  peakOpacity={0.14}
+                />
+              </defs>
+              {/* Overlay area: same shape, sheen fill, kept out of the
+                  tooltip so it doesn't duplicate the Close row. */}
+              <Area
+                dataKey="c"
+                type="monotone"
+                stroke="none"
+                fill="url(#sheen-price-mini)"
+                isAnimationActive={false}
+                dot={false}
+                activeDot={false}
+                tooltipType="none"
+                legendType="none"
               />
             </AreaChart>
           </ResponsiveContainer>

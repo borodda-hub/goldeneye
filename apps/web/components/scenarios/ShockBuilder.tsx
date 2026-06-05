@@ -149,7 +149,7 @@ export function ShockBuilder({ shocks, onChange }: Props) {
   return (
     <div className="border border-line-1 bg-surface-1 flex flex-col">
       <div className="px-3 py-2 border-b border-line-1 flex items-center justify-between">
-        <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+        <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
           Shock Builder
         </span>
         <span className="font-mono text-[10px] text-ink-4 tabular-nums">
@@ -175,7 +175,7 @@ export function ShockBuilder({ shocks, onChange }: Props) {
       </div>
 
       <div className="px-3 py-2 border-t border-line-1 flex items-center gap-2">
-        <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+        <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
           Add shock:
         </span>
         <select

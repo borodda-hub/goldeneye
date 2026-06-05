@@ -45,7 +45,7 @@ export function ResultPanel({ result, name, runId }: Props) {
       {/* Header: name + direction + confidence + timeframe + export */}
       <div className="flex items-start gap-6 flex-wrap">
         <div className="flex flex-col gap-1 min-w-0">
-          <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+          <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
             Result
           </span>
           <span className="font-mono text-sm text-ink-2 truncate">{name}</span>
@@ -57,7 +57,7 @@ export function ResultPanel({ result, name, runId }: Props) {
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+          <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
             Timeframe
           </span>
           <span className="font-mono text-xs text-ink-2">
@@ -66,7 +66,7 @@ export function ResultPanel({ result, name, runId }: Props) {
         </div>
 
         <div className="flex flex-col gap-1 ml-auto">
-          <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+          <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
             Expected range
           </span>
           <span className="font-mono tabular-nums text-xs text-ink-2">
@@ -92,13 +92,13 @@ export function ResultPanel({ result, name, runId }: Props) {
       {/* Three columns: assumptions, counterarguments, data needed */}
       <div className="grid grid-cols-3 gap-6 border-t border-line-1 pt-4">
         <div className="flex flex-col gap-2">
-          <h3 className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+          <h3 className="font-mono text-[10px] text-accent uppercase tracking-widest">
             Assumptions
           </h3>
           <NumberedList items={result.assumptions} empty="No assumptions." />
         </div>
         <div className="flex flex-col gap-2">
-          <h3 className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+          <h3 className="font-mono text-[10px] text-accent uppercase tracking-widest">
             Counterarguments
           </h3>
           <NumberedList
@@ -107,7 +107,7 @@ export function ResultPanel({ result, name, runId }: Props) {
           />
         </div>
         <div className="flex flex-col gap-2">
-          <h3 className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+          <h3 className="font-mono text-[10px] text-accent uppercase tracking-widest">
             Data needed to validate
           </h3>
           <NumberedList
@@ -119,7 +119,7 @@ export function ResultPanel({ result, name, runId }: Props) {
 
       {/* Narrative */}
       <div className="flex flex-col gap-2 border-t border-line-1 pt-4">
-        <h3 className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+        <h3 className="font-mono text-[10px] text-accent uppercase tracking-widest">
           Narrative
         </h3>
         {result.narrative ? (

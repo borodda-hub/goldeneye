@@ -30,6 +30,13 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
   if (!signal) {
     return (
       <div className="flex flex-col gap-4 h-full">
+        {/* Header — matches Scenario Lab */}
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-xl font-semibold text-accent">Signal Lab</h1>
+          <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">
+            Multi-model forecast ensemble
+          </span>
+        </div>
         <div className="border border-line-1 bg-surface-1 h-24 animate-pulse" />
         <div className="grid grid-cols-4 gap-4">
           {[0, 1, 2, 3].map((i) => (
@@ -49,6 +56,14 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Header — matches Scenario Lab */}
+      <div className="flex items-baseline gap-3">
+        <h1 className="text-xl font-semibold text-accent">Signal Lab</h1>
+        <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">
+          Multi-model forecast ensemble
+        </span>
+      </div>
+
       {/* Row 1: Ensemble headline */}
       <EnsembleHeader ensemble={signal.ensemble} />
 

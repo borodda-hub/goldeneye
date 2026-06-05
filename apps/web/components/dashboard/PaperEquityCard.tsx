@@ -4,6 +4,7 @@ import type { EquityCurveResponse, EquityPoint } from "@/app/(app)/paper/types";
 import { colors } from "@/lib/colors";
 import { usePaperEquityCurve } from "@/lib/queries";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
+import { SheenGradient } from "./SheenGradient";
 
 function isoDaysAgo(days: number): string {
   return new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
@@ -91,6 +92,12 @@ export function PaperEquityCard() {
                     stopOpacity={0}
                   />
                 </linearGradient>
+                <SheenGradient
+                  id="eq-sheen"
+                  color={isUp ? colors.up : colors.down}
+                  durationSec={11}
+                  peakOpacity={0.22}
+                />
               </defs>
               <Area
                 dataKey="equity"
@@ -98,6 +105,14 @@ export function PaperEquityCard() {
                 stroke={isUp ? colors.up : colors.down}
                 strokeWidth={1.2}
                 fill="url(#eq-grad)"
+                isAnimationActive={false}
+                dot={false}
+              />
+              <Area
+                dataKey="equity"
+                type="monotone"
+                stroke="none"
+                fill="url(#eq-sheen)"
                 isAnimationActive={false}
                 dot={false}
               />

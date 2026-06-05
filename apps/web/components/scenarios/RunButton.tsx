@@ -12,7 +12,7 @@ export function RunButton({ disabled, running, onRun }: Props) {
   const stateClass =
     disabled || running
       ? "border-line-1 text-ink-4 cursor-not-allowed"
-      : "border-accent text-accent hover:bg-surface-2";
+      : "border-accent text-accent hover:bg-surface-2 run-glow";
 
   return (
     <button

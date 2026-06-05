@@ -97,6 +97,48 @@ body::before {
   }
 }
 
+/* Indeterminate golden loading sweep — Scenario Lab run bar. A half-width
+   gold highlight travels right-to-left across an overflow-hidden track. */
+@keyframes scenario-sweep {
+  0% {
+    transform: translateX(220%);
+  }
+  100% {
+    transform: translateX(-220%);
+  }
+}
+.scenario-sweep {
+  animation: scenario-sweep 1.15s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scenario-sweep {
+    /* No travel — hold a soft static gold highlight on the left. */
+    animation: none;
+    transform: none;
+  }
+}
+
+/* Pulsing gold text glow — Scenario Lab Run button when it's ready to run. */
+@keyframes run-glow {
+  0%,
+  100% {
+    text-shadow: 0 0 6px rgba(201, 163, 92, 0.35);
+  }
+  50% {
+    text-shadow: 0 0 12px rgba(232, 192, 116, 0.75), 0 0 4px
+      rgba(201, 163, 92, 0.5);
+  }
+}
+.run-glow {
+  animation: run-glow 2.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .run-glow {
+    animation: none;
+    text-shadow: 0 0 8px rgba(201, 163, 92, 0.5);
+  }
+}
+
 /* Watchlist container query — scale row figures as the sidebar widens.
    The aside.watchlist-cq is the named container. Numbers and symbol grow
    when the user drags the right-edge handle wider. */

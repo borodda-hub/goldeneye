@@ -52,7 +52,7 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
     <div className="flex flex-col gap-4" data-tour="scenario-shell">
       {/* Header */}
       <div className="flex items-baseline gap-3">
-        <h1 className="text-xl font-semibold text-ink-1">Scenario Lab</h1>
+        <h1 className="text-xl font-semibold text-accent">Scenario Lab</h1>
         <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">
           Counterfactual model rerun
         </span>
@@ -60,7 +60,7 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
 
       {/* Templates */}
       <section className="flex flex-col gap-2">
-        <h2 className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+        <h2 className="font-mono text-[10px] text-accent uppercase tracking-widest">
           Templates
         </h2>
         <TemplateGallery
@@ -72,9 +72,9 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
 
       {/* Builder + run */}
       <section className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
+        <div className="relative flex items-center gap-3">
           <label className="flex items-center gap-2 flex-1">
-            <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+            <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
               Name
             </span>
             <input
@@ -89,6 +89,14 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
             running={mutation.isPending}
             onRun={() => mutation.mutate()}
           />
+          {mutation.isPending && (
+            <div
+              className="pointer-events-none absolute inset-x-0 -bottom-2 h-[3px] overflow-hidden rounded-full"
+              aria-hidden="true"
+            >
+              <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-accent-bright to-transparent scenario-sweep" />
+            </div>
+          )}
         </div>
         <ShockBuilder shocks={shocks} onChange={setShocks} />
         {mutation.isError && (
