@@ -86,27 +86,10 @@ export function WalkthroughProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, stepIndex, router]);
 
-  // Auto-trigger on first visit ever (any page).  Only fires once because
-  // start() persists the completed flag on stop().
-  useEffect(() => {
-    try {
-      const seen = localStorage.getItem(STORAGE_KEY);
-      if (seen) return;
-    } catch {
-      return;
-    }
-    // Defer 800 ms so the dashboard finishes its first paint before the
-    // spotlight tries to locate targets.
-    const tid = setTimeout(() => {
-      if (pathname === "/dashboard") {
-        setStepIndex(0);
-        setOpen(true);
-      }
-    }, 800);
-    return () => clearTimeout(tid);
-    // intentionally only on mount + when pathname becomes /dashboard
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  // The tour is opt-in: it launches only from the "Tutorial" button (which
+  // calls start()), never automatically. A forced first-run overlay dimmed the
+  // whole dashboard before the user saw it; passive onboarding now comes from
+  // the ⓘ header tooltips instead. The completed flag is still set on stop().
 
   return (
     <Ctx.Provider value={{ open, start, stop }}>

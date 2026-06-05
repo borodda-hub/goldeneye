@@ -73,8 +73,10 @@ export function PositioningCard({ symbol = "NG" }: Props) {
           <div className="flex items-baseline gap-4 font-mono text-[11px] text-ink-3 tabular-nums mt-0.5">
             <span>OI {fmtInt(p.open_interest_total)}</span>
             {p.source && (
-              <span className="ml-auto text-ink-4 uppercase tracking-widest text-[10px]">
-                {p.source}
+              <span className="ml-auto text-ink-4 normal-case tracking-normal text-[10px]">
+                {p.source.toLowerCase().includes("mock")
+                  ? "demo data"
+                  : p.source}
               </span>
             )}
           </div>
