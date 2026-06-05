@@ -707,6 +707,32 @@ export function PriceChart({
     const DRAW_COLOR = colors.accent;
     const DRAW_WIDTH = 2;
 
+    // If a chart rebuild interrupted a 2-point placement, re-attach the preview
+    // to the fresh series so the shape keeps following the cursor.
+    const resume = inProgressRef.current;
+    if (
+      resume &&
+      previewRef.current === null &&
+      POINTS_NEEDED[resume.type as DrawingType] === 2
+    ) {
+      const preview = new DrawingPrimitive(
+        {
+          id: "__preview__",
+          type: resume.type as DrawingType,
+          points: [resume.points[0], resume.points[0]],
+          color: DRAW_COLOR,
+          width: DRAW_WIDTH,
+        },
+        false,
+      );
+      try {
+        series.attachPrimitive(preview);
+        previewRef.current = preview;
+      } catch {
+        // ignore
+      }
+    }
+
     const toPoint = (param: MouseEventParams<Time>): DrawingPoint | null => {
       if (!param.point) return null;
       try {
@@ -836,7 +862,16 @@ export function PriceChart({
         // chart disposed
       }
       window.removeEventListener("keydown", onKey);
-      clearInProgress();
+      // Keep the in-progress points so placement survives a chart rebuild; only
+      // drop the preview attached to the (possibly disposed) series.
+      if (previewRef.current) {
+        try {
+          series.detachPrimitive(previewRef.current);
+        } catch {
+          // already disposed
+        }
+        previewRef.current = null;
+      }
     };
   }, [chartVersion]);
 

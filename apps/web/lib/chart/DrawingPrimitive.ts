@@ -68,7 +68,11 @@ export class DrawingPrimitive implements ISeriesPrimitive<Time> {
 
   /** Force a redraw after mutating `drawing`/`selected` (used by the preview). */
   requestRedraw(): void {
-    this.req?.();
+    try {
+      this.req?.();
+    } catch {
+      // chart disposed mid-interaction — ignore.
+    }
   }
 
   updateAllViews(): void {}
