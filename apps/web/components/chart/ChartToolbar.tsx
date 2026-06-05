@@ -4,7 +4,7 @@ import type {
   Resolution,
 } from "@/app/(app)/chart/types";
 
-const RESOLUTIONS: Resolution[] = ["1m", "5m", "15m", "1h", "1d"];
+const RESOLUTIONS: Resolution[] = ["1m", "5m", "15m", "1h", "1d", "1w", "1M"];
 const RANGES: RangePreset[] = ["3M", "6M", "1Y", "2Y", "5Y", "All"];
 const CHART_TYPES: { value: ChartType; label: string }[] = [
   { value: "candlestick", label: "Candles" },

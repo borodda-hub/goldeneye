@@ -53,6 +53,8 @@ _RESOLUTION_MAP: dict[str, tuple[str, str]] = {
     "15m": ("15m", "1mo"),
     "1h": ("1h", "3mo"),
     "1d": ("1d", "1y"),
+    "1w": ("1wk", "10y"),
+    "1M": ("1mo", "max"),
 }
 
 # CME futures month codes.

@@ -34,7 +34,7 @@ import {
   createChart,
   createSeriesMarkers,
 } from "lightweight-charts";
-import { type MutableRefObject, useEffect, useRef } from "react";
+import { type MutableRefObject, useEffect, useRef, useState } from "react";
 
 interface Props {
   bars: Bar[];
@@ -132,6 +132,44 @@ function isOhlcType(t: ChartType): boolean {
   return t === "candlestick" || t === "bars" || t === "heikin-ashi";
 }
 
+/** A single Data-Window readout — OHLCV + change vs the prior close. */
+type DataRow = {
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: number;
+  chg: number;
+  pct: number;
+};
+
+function rowFor(bars: Bar[], idx: number): DataRow | null {
+  const b = bars[idx];
+  if (!b) return null;
+  const prev = idx > 0 ? bars[idx - 1].c : b.o;
+  const chg = b.c - prev;
+  return {
+    o: b.o,
+    h: b.h,
+    l: b.l,
+    c: b.c,
+    v: b.v,
+    chg,
+    pct: prev ? chg / prev : 0,
+  };
+}
+
+function fmtPrice(v: number): string {
+  return Math.abs(v) >= 1000 ? v.toFixed(2) : v.toFixed(3);
+}
+
+function fmtVol(v: number): string {
+  if (v >= 1e9) return `${(v / 1e9).toFixed(2)}B`;
+  if (v >= 1e6) return `${(v / 1e6).toFixed(2)}M`;
+  if (v >= 1e3) return `${(v / 1e3).toFixed(1)}K`;
+  return v.toFixed(0);
+}
+
 /** Apply the user's appearance settings to a live chart via applyOptions —
  *  no rebuild, so color edits update instantly. Candle-color options only
  *  apply to candle/bar series; line/area types keep their accent styling. */
@@ -207,6 +245,9 @@ export function PriceChart({
   // style edits go through the dedicated applyOptions effect below (no rebuild).
   const styleRef = useRef(style);
   styleRef.current = style;
+  // Data Window (OHLCV at the crosshair) + scroll-to-realtime affordance.
+  const [hover, setHover] = useState<DataRow | null>(null);
+  const [atRealtime, setAtRealtime] = useState(true);
 
   // Build / rebuild the chart on any structural or data change. Live ticks are
   // handled in a separate effect so they don't recreate the chart.
@@ -489,9 +530,28 @@ export function PriceChart({
 
     chart.timeScale().fitContent();
 
+    // ── Data Window + scroll-to-realtime wiring ───────────────────────────
+    const timeToIdx = new Map<number, number>();
+    bars.forEach((b, i) => timeToIdx.set(toUtcEpoch(b.ts), i));
+    setHover(rowFor(bars, bars.length - 1));
+    chart.subscribeCrosshairMove((param) => {
+      const t = typeof param.time === "number" ? param.time : null;
+      const idx =
+        t !== null && timeToIdx.has(t)
+          ? (timeToIdx.get(t) as number)
+          : bars.length - 1;
+      setHover(rowFor(bars, idx));
+    });
+    chart
+      .timeScale()
+      .subscribeVisibleLogicalRangeChange((range) =>
+        setAtRealtime(range ? range.to >= bars.length - 1.5 : true),
+      );
+
     if (apiRef) {
       apiRef.current = {
         screenshot: () => chartRef.current?.takeScreenshot() ?? null,
+        fitContent: () => chartRef.current?.timeScale().fitContent(),
       };
     }
 
@@ -553,5 +613,38 @@ export function PriceChart({
     applyChartStyle(chartRef.current, priceSeriesRef.current, chartType, style);
   }, [style, chartType]);
 
-  return <div ref={containerRef} className="w-full h-full" />;
+  return (
+    <div className="relative w-full h-full">
+      <div ref={containerRef} className="w-full h-full" />
+      {hover && (
+        <div
+          className="pointer-events-none absolute left-2 top-1.5 z-10 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 font-mono text-[11px] tabular-nums"
+          aria-label="Crosshair OHLCV"
+        >
+          <span style={{ color: style.textColor }}>O {fmtPrice(hover.o)}</span>
+          <span style={{ color: style.textColor }}>H {fmtPrice(hover.h)}</span>
+          <span style={{ color: style.textColor }}>L {fmtPrice(hover.l)}</span>
+          <span style={{ color: style.textColor }}>C {fmtPrice(hover.c)}</span>
+          <span
+            style={{ color: hover.chg >= 0 ? style.upColor : style.downColor }}
+          >
+            {hover.chg >= 0 ? "▲" : "▼"} {fmtPrice(Math.abs(hover.chg))} (
+            {(hover.pct * 100).toFixed(2)}%)
+          </span>
+          <span style={{ color: style.textColor }}>V {fmtVol(hover.v)}</span>
+        </div>
+      )}
+      {!atRealtime && (
+        <button
+          type="button"
+          onClick={() => chartRef.current?.timeScale().scrollToRealTime()}
+          aria-label="Scroll to latest"
+          title="Scroll to latest"
+          className="absolute bottom-9 right-3 z-10 rounded-full border border-line-2 bg-surface-1/90 px-2.5 py-1 font-mono text-[11px] text-ink-2 hover:text-ink-1 hover:bg-surface-2 transition-colors"
+        >
+          »|
+        </button>
+      )}
+    </div>
+  );
 }

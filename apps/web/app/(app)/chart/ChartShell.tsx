@@ -1,5 +1,6 @@
 "use client";
 
+import { ChartContextMenu } from "@/components/chart/ChartContextMenu";
 import { ChartFooter } from "@/components/chart/ChartFooter";
 import { ChartSettingsModal } from "@/components/chart/ChartSettingsModal";
 import { ChartToolbar } from "@/components/chart/ChartToolbar";
@@ -141,6 +142,7 @@ export function ChartShell({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [style, setStyle] = useState<ChartStyle>(DEFAULT_CHART_STYLE);
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const chartApiRef = useRef<ChartApi | null>(null);
@@ -379,7 +381,13 @@ export function ChartShell({
         contractCode={contractCode}
       />
       <div className="flex flex-1 min-h-0 gap-0">
-        <div className="flex-1 min-w-0">
+        <div
+          className="flex-1 min-w-0"
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setMenuPos({ x: e.clientX, y: e.clientY });
+          }}
+        >
           {showSeasonality ? (
             seasonalityResp ? (
               <SeasonalityChart data={seasonalityResp} />
@@ -433,6 +441,29 @@ export function ChartShell({
         style={style}
         onChange={changeStyle}
       />
+      {menuPos && (
+        <ChartContextMenu
+          x={menuPos.x}
+          y={menuPos.y}
+          onClose={() => setMenuPos(null)}
+          items={[
+            {
+              label: "Appearance settings…",
+              onClick: () => setSettingsOpen(true),
+            },
+            { label: "Add indicator…", onClick: () => setPickerOpen(true) },
+            {
+              label: "Reset zoom",
+              onClick: () => chartApiRef.current?.fitContent(),
+            },
+            {
+              label: logScale ? "Linear scale" : "Logarithmic scale",
+              onClick: toggleLog,
+            },
+            { label: "Download PNG", onClick: handleScreenshot },
+          ]}
+        />
+      )}
     </div>
   );
 }
