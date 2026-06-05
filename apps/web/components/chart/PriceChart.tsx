@@ -331,6 +331,7 @@ export function PriceChart({
       handleScale: true,
     });
     chartRef.current = chart;
+    console.log("[dbg] chart rebuild");
 
     // ── Price series (per chart type) ──────────────────────────────────────
     let priceSeries: ISeriesApi<SeriesType>;
@@ -776,6 +777,14 @@ export function PriceChart({
 
     const onClick = (param: MouseEventParams<Time>) => {
       const tool = activeToolRef.current;
+      console.log(
+        "[dbg] click tool=",
+        tool,
+        "ipBefore=",
+        inProgressRef.current ? inProgressRef.current.points.length : "none",
+        "hasPoint=",
+        !!param.point,
+      );
       if (tool === "cursor") {
         if (!param.point) return;
         let hit: string | null = null;
