@@ -1,5 +1,6 @@
 "use client";
 
+import { HelpTip } from "@/components/HelpTip";
 import type { PositioningResponse } from "@/lib/api";
 import { usePositioning } from "@/lib/queries";
 
@@ -37,6 +38,7 @@ export function PositioningCard({ symbol = "NG" }: Props) {
       <div className="flex items-baseline justify-between">
         <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
           Positioning · MM Net
+          <HelpTip k="positioning" className="ml-1" />
         </span>
         <span className="font-mono text-[10px] text-ink-4 tabular-nums">
           {available ? (p?.report_date ?? "") : "CFTC"}

@@ -1,6 +1,7 @@
 "use client";
 
 import type { FuturesCurvePoint } from "@/app/(app)/dashboard/types";
+import { HelpTip } from "@/components/HelpTip";
 import { colors } from "@/lib/colors";
 import {
   Line,
@@ -20,6 +21,7 @@ export function FuturesCurveCard({ curve }: Props) {
     <div className="border border-line-1 rounded-md bg-surface-1 flex flex-col h-full">
       <div className="px-3 pt-2 pb-1 text-xs text-ink-3 uppercase tracking-widest">
         Futures Curve
+        <HelpTip k="futuresCurve" className="ml-1" />
       </div>
       {curve.length === 0 ? (
         <p className="text-ink-4 text-xs font-mono p-3">No curve data.</p>

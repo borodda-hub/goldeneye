@@ -1,4 +1,5 @@
 import type { RecentRun } from "@/app/(app)/scenarios/types";
+import { HelpTip } from "@/components/HelpTip";
 
 interface Props {
   runs: RecentRun[];
@@ -15,6 +16,7 @@ export function ScenarioHistoryList({ runs, onSelect }: Props) {
       <div className="px-3 py-2 border-b border-line-1">
         <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
           Recent Runs
+          <HelpTip k="recentRuns" className="ml-1" />
         </span>
       </div>
       <div className="flex flex-col">

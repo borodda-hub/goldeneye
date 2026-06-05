@@ -1,6 +1,7 @@
 "use client";
 
 import type { HistoryRow, SignalHistory } from "@/app/(app)/signals/types";
+import { HelpTip } from "@/components/HelpTip";
 import { useSignalHistory } from "@/lib/queries";
 import { useState } from "react";
 
@@ -46,6 +47,7 @@ export function HistoryTable({ symbol = "NG", initialLimit = 25 }: Props) {
       <div className="flex items-center justify-between px-3 py-2 border-b border-line-1">
         <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
           History
+          <HelpTip k="signalHistory" className="ml-1" />
         </span>
         <button
           type="button"

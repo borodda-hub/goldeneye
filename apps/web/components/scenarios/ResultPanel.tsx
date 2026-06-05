@@ -1,6 +1,7 @@
 import type { ScenarioResult } from "@/app/(app)/scenarios/types";
 import { ConfidenceBar } from "@/components/ConfidenceBar";
 import { DirectionChip } from "@/components/DirectionChip";
+import { HelpTip } from "@/components/HelpTip";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 
 interface Props {
@@ -47,6 +48,7 @@ export function ResultPanel({ result, name, runId }: Props) {
         <div className="flex flex-col gap-1 min-w-0">
           <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
             Result
+            <HelpTip k="scenarioResult" className="ml-1" />
           </span>
           <span className="font-mono text-sm text-ink-2 truncate">{name}</span>
         </div>
@@ -94,12 +96,14 @@ export function ResultPanel({ result, name, runId }: Props) {
         <div className="flex flex-col gap-2">
           <h3 className="font-mono text-[10px] text-accent uppercase tracking-widest">
             Assumptions
+            <HelpTip k="assumptions" className="ml-1" />
           </h3>
           <NumberedList items={result.assumptions} empty="No assumptions." />
         </div>
         <div className="flex flex-col gap-2">
           <h3 className="font-mono text-[10px] text-accent uppercase tracking-widest">
             Counterarguments
+            <HelpTip k="counterarguments" className="ml-1" />
           </h3>
           <NumberedList
             items={result.counterarguments}
@@ -109,6 +113,7 @@ export function ResultPanel({ result, name, runId }: Props) {
         <div className="flex flex-col gap-2">
           <h3 className="font-mono text-[10px] text-accent uppercase tracking-widest">
             Data needed to validate
+            <HelpTip k="dataNeeded" className="ml-1" />
           </h3>
           <NumberedList
             items={result.data_needed_to_validate}

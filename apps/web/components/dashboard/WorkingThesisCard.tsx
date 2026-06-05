@@ -1,6 +1,7 @@
 "use client";
 
 import { CollapseToggle } from "@/components/CollapseToggle";
+import { HelpTip } from "@/components/HelpTip";
 import type { Thesis, ThesisCritique, ThesisSeed } from "@/lib/api";
 import {
   useCreateThesis,
@@ -251,6 +252,7 @@ export function WorkingThesisCard({
             className="inline-block w-[18px] h-px bg-accent"
           />
           Working Thesis · {instrumentCode}
+          <HelpTip k="workingThesis" className="ml-1" />
         </span>
         <CollapseToggle
           collapsed={collapsed}

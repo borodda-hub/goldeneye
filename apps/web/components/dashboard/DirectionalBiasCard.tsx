@@ -3,6 +3,7 @@ import type {
   SafetyEnvelope,
 } from "@/app/(app)/dashboard/types";
 import { ConfidenceBar } from "@/components/ConfidenceBar";
+import { HelpTip } from "@/components/HelpTip";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 
 interface Props {
@@ -36,6 +37,7 @@ export function DirectionalBiasCard({ bias, aiSummary, safety }: Props) {
       <div className="flex items-baseline justify-between">
         <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
           Directional Bias
+          <HelpTip k="directionalBias" className="ml-1" />
         </span>
         <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
           {bias.confidence} confidence

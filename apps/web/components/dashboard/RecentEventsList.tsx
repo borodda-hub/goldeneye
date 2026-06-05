@@ -2,6 +2,7 @@
 
 import type { RecentEvent } from "@/app/(app)/dashboard/types";
 import { EventMarker } from "@/components/EventMarker";
+import { HelpTip } from "@/components/HelpTip";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
@@ -111,6 +112,7 @@ export function RecentEventsList({ events }: Props) {
       <div className="flex items-center justify-between px-3 pt-2 pb-1">
         <span className="text-xs text-ink-3 uppercase tracking-widest">
           Recent Events
+          <HelpTip k="recentEvents" className="ml-1" />
         </span>
         <Link
           href="/signals"

@@ -2,6 +2,7 @@
 
 import type { AiThesis, Instrument } from "@/app/(app)/dashboard/types";
 import { CollapseToggle } from "@/components/CollapseToggle";
+import { HelpTip } from "@/components/HelpTip";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 import { useCollapsed } from "@/lib/useCollapsed";
 
@@ -38,6 +39,7 @@ export function AiThesisCard({ instrument, thesis }: Props) {
           />
           <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
             AI Thesis · {instrument.symbol}
+            <HelpTip k="aiThesis" className="ml-1" />
           </span>
         </div>
         <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">

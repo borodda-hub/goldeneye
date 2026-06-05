@@ -1,6 +1,7 @@
 "use client";
 
 import type { EquityCurveResponse, EquityPoint } from "@/app/(app)/paper/types";
+import { HelpTip } from "@/components/HelpTip";
 import { colors } from "@/lib/colors";
 import { usePaperEquityCurve } from "@/lib/queries";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
@@ -50,6 +51,7 @@ export function PaperEquityCard() {
       <div className="flex items-baseline justify-between">
         <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
           Equity · Paper
+          <HelpTip k="paperEquity" className="ml-1" />
         </span>
         <span className="font-mono text-[10px] text-ink-4 tabular-nums">
           {series.length ? `${series.length}d` : "—"}

@@ -1,5 +1,6 @@
 "use client";
 
+import { HelpTip } from "@/components/HelpTip";
 import { ResultPanel } from "@/components/scenarios/ResultPanel";
 import { RunButton } from "@/components/scenarios/RunButton";
 import { ScenarioHistoryList } from "@/components/scenarios/ScenarioHistoryList";
@@ -52,7 +53,10 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
     <div className="flex flex-col gap-4" data-tour="scenario-shell">
       {/* Header */}
       <div className="flex items-baseline gap-3">
-        <h1 className="text-xl font-semibold text-accent">Scenario Lab</h1>
+        <h1 className="text-xl font-semibold text-accent">
+          Scenario Lab
+          <HelpTip k="scenarioLab" className="ml-2" />
+        </h1>
         <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">
           Counterfactual model rerun
         </span>
@@ -62,6 +66,7 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
       <section className="flex flex-col gap-2">
         <h2 className="font-mono text-[10px] text-accent uppercase tracking-widest">
           Templates
+          <HelpTip k="templates" className="ml-1" />
         </h2>
         <TemplateGallery
           templates={initialTemplates}

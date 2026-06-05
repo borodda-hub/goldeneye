@@ -1,5 +1,6 @@
 "use client";
 
+import { HelpTip } from "@/components/HelpTip";
 import { useBacktestSummary, useRunBacktest } from "@/lib/queries";
 
 interface ModelSummary {
@@ -150,6 +151,7 @@ export function BacktestCard({ symbol = "NG" }: BacktestCardProps = {}) {
       <div className="flex items-center justify-between px-3 pt-2 pb-1">
         <span className="text-xs text-ink-3 uppercase tracking-widest">
           Backtest Performance · 1d horizon
+          <HelpTip k="backtest" className="ml-1" />
         </span>
         {allFrom && allTo ? (
           <span className="font-mono text-[10px] text-ink-4">

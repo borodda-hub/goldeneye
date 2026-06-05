@@ -1,5 +1,6 @@
 "use client";
 
+import { HelpTip } from "@/components/HelpTip";
 import type { FundamentalsResponse } from "@/lib/api";
 import { useFundamentals } from "@/lib/queries";
 
@@ -38,6 +39,7 @@ export function FundamentalsCard({ symbol = "NG" }: Props) {
       <div className="flex items-baseline justify-between">
         <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
           {f && f.kind !== "none" ? f.title : "Fundamentals"}
+          <HelpTip k="fundamentals" className="ml-1" />
         </span>
         <span className="font-mono text-[10px] text-ink-4 tabular-nums">
           {latest?.as_of ?? f?.unit ?? "—"}

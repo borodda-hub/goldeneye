@@ -1,5 +1,6 @@
 "use client";
 
+import { HelpTip } from "@/components/HelpTip";
 import { BacktestCard } from "@/components/signals/BacktestCard";
 import { EnsembleHeader } from "@/components/signals/EnsembleHeader";
 import { ExplanationPanel } from "@/components/signals/ExplanationPanel";
@@ -32,7 +33,10 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
       <div className="flex flex-col gap-4 h-full">
         {/* Header — matches Scenario Lab */}
         <div className="flex items-baseline gap-3">
-          <h1 className="text-xl font-semibold text-accent">Signal Lab</h1>
+          <h1 className="text-xl font-semibold text-accent">
+            Signal Lab
+            <HelpTip k="ensemble" className="ml-2" />
+          </h1>
           <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">
             Multi-model forecast ensemble
           </span>
@@ -58,7 +62,10 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
     <div className="flex flex-col gap-4">
       {/* Header — matches Scenario Lab */}
       <div className="flex items-baseline gap-3">
-        <h1 className="text-xl font-semibold text-accent">Signal Lab</h1>
+        <h1 className="text-xl font-semibold text-accent">
+          Signal Lab
+          <HelpTip k="ensemble" className="ml-2" />
+        </h1>
         <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">
           Multi-model forecast ensemble
         </span>

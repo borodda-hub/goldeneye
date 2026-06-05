@@ -1,6 +1,7 @@
 "use client";
 
 import type { Shock, ShockType } from "@/app/(app)/scenarios/types";
+import { HelpTip } from "@/components/HelpTip";
 import { useState } from "react";
 
 interface Props {
@@ -151,6 +152,7 @@ export function ShockBuilder({ shocks, onChange }: Props) {
       <div className="px-3 py-2 border-b border-line-1 flex items-center justify-between">
         <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
           Shock Builder
+          <HelpTip k="shockBuilder" className="ml-1" />
         </span>
         <span className="font-mono text-[10px] text-ink-4 tabular-nums">
           {shocks.length} / 10
