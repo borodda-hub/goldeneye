@@ -619,6 +619,7 @@ export function PriceChart({
     setChartVersion((v) => v + 1);
 
     return () => {
+      console.log("[dbg] TEARDOWN");
       ro.disconnect();
       chart.remove();
       chartRef.current = null;
@@ -858,8 +859,10 @@ export function PriceChart({
     chart.subscribeClick(onClick);
     chart.subscribeCrosshairMove(onMove);
     window.addEventListener("keydown", onKey);
+    console.log("[dbg] SUB v=", chartVersion);
 
     return () => {
+      console.log("[dbg] UNSUB v=", chartVersion);
       try {
         chart.unsubscribeClick(onClick);
       } catch {
