@@ -47,6 +47,10 @@ COPY --from=builder /app/apps/api/.venv /app/apps/api/.venv
 COPY apps/__init__.py /app/apps/__init__.py
 COPY apps/api /app/apps/api
 COPY infra/migrations /app/infra/migrations
+# Runtime fixtures read directly at request time (scenario_templates.json for
+# the Scenario Lab; news_events.json for the mock-news fallback). _FIXTURES_DIR
+# resolves to /app/packages/fixtures in the container, so they must ship here.
+COPY packages/fixtures /app/packages/fixtures
 
 ENV VIRTUAL_ENV=/app/apps/api/.venv \
     PATH="/app/apps/api/.venv/bin:$PATH" \
