@@ -14,7 +14,16 @@ import type {
   CandlestickPattern,
   IndicatorSeriesDTO,
 } from "@/lib/api";
+import { DrawingPrimitive } from "@/lib/chart/DrawingPrimitive";
 import type { ChartStyle } from "@/lib/chart/chartStyle";
+import {
+  type Drawing,
+  type DrawingPoint,
+  type DrawingTool,
+  type DrawingType,
+  POINTS_NEEDED,
+  newDrawingId,
+} from "@/lib/chart/drawings";
 import type { IndicatorSpec } from "@/lib/chart/indicatorRegistry";
 import { colors } from "@/lib/colors";
 import {
@@ -28,8 +37,10 @@ import {
   type IChartApi,
   type ISeriesApi,
   LineSeries,
+  type MouseEventParams,
   PriceScaleMode,
   type SeriesType,
+  type Time,
   type UTCTimestamp,
   createChart,
   createSeriesMarkers,
@@ -57,6 +68,16 @@ interface Props {
   livePrice: number | null;
   /** User chart-appearance settings (background, candle colors, grid, …). */
   style: ChartStyle;
+  /** Manual drawings (trendlines, h-lines, …) for the active symbol. */
+  drawings: Drawing[];
+  /** Active drawing tool ("cursor" selects/pans; others place shapes). */
+  activeTool: DrawingTool;
+  /** Currently selected drawing id (shows handles), or null. */
+  selectedDrawingId: string | null;
+  onDrawingsChange: (drawings: Drawing[]) => void;
+  onSelectDrawing: (id: string | null) => void;
+  /** Reset the tool to "cursor" after a shape is finalized. */
+  onToolChange: (tool: DrawingTool) => void;
   /** Populated with an imperative handle (screenshot) once the chart exists. */
   apiRef?: MutableRefObject<ChartApi | null>;
 }
@@ -235,12 +256,25 @@ export function PriceChart({
   autoTa,
   livePrice,
   style,
+  drawings,
+  activeTool,
+  selectedDrawingId,
+  onDrawingsChange,
+  onSelectDrawing,
+  onToolChange,
   apiRef,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const priceSeriesRef = useRef<ISeriesApi<SeriesType> | null>(null);
   const lastBarRef = useRef<OhlcPoint | null>(null);
+  // In-progress drawing being placed (1st point set, awaiting the 2nd) + its
+  // live preview primitive. Persist across renders without retriggering effects.
+  const inProgressRef = useRef<{
+    type: DrawingTool;
+    points: DrawingPoint[];
+  } | null>(null);
+  const previewRef = useRef<DrawingPrimitive | null>(null);
   // Latest style, read inside the build effect without making it a dep — live
   // style edits go through the dedicated applyOptions effect below (no rebuild).
   const styleRef = useRef(style);
@@ -248,6 +282,9 @@ export function PriceChart({
   // Data Window (OHLCV at the crosshair) + scroll-to-realtime affordance.
   const [hover, setHover] = useState<DataRow | null>(null);
   const [atRealtime, setAtRealtime] = useState(true);
+  // Bumped whenever the chart is (re)built, so the drawings effect re-attaches
+  // its primitives to the fresh series.
+  const [chartVersion, setChartVersion] = useState(0);
 
   // Build / rebuild the chart on any structural or data change. Live ticks are
   // handled in a separate effect so they don't recreate the chart.
@@ -562,6 +599,9 @@ export function PriceChart({
     });
     ro.observe(containerRef.current);
 
+    // Signal the drawings effect to (re)attach its primitives to this series.
+    setChartVersion((v) => v + 1);
+
     return () => {
       ro.disconnect();
       chart.remove();
@@ -612,6 +652,159 @@ export function PriceChart({
     if (chartRef.current === null) return;
     applyChartStyle(chartRef.current, priceSeriesRef.current, chartType, style);
   }, [style, chartType]);
+
+  // ── Manual drawings: attach primitives + wire placement / selection ───────
+  // chartVersion is in the deps so this re-attaches when the chart rebuilds.
+  useEffect(() => {
+    const chart = chartRef.current;
+    const series = priceSeriesRef.current;
+    if (chart === null || series === null) return;
+    void chartVersion;
+
+    const DRAW_COLOR = colors.accent;
+    const DRAW_WIDTH = 2;
+
+    const attached: DrawingPrimitive[] = [];
+    const safeDetach = (prim: DrawingPrimitive) => {
+      try {
+        series.detachPrimitive(prim);
+      } catch {
+        // series already disposed by a chart rebuild — nothing to detach.
+      }
+    };
+    for (const d of drawings) {
+      const prim = new DrawingPrimitive(d, d.id === selectedDrawingId);
+      try {
+        series.attachPrimitive(prim);
+        attached.push(prim);
+      } catch {
+        // ignore — will re-attach on the next chartVersion bump.
+      }
+    }
+
+    const toPoint = (param: MouseEventParams<Time>): DrawingPoint | null => {
+      if (!param.point) return null;
+      const price = series.coordinateToPrice(param.point.y);
+      const t = param.time ?? chart.timeScale().coordinateToTime(param.point.x);
+      if (price === null || t === null || t === undefined) return null;
+      return { time: Number(t), price: Number(price) };
+    };
+
+    const clearInProgress = () => {
+      if (previewRef.current) {
+        safeDetach(previewRef.current);
+        previewRef.current = null;
+      }
+      inProgressRef.current = null;
+    };
+
+    const finalize = () => {
+      const ip = inProgressRef.current;
+      if (!ip || ip.type === "cursor" || ip.type === "measure") return;
+      const type = ip.type;
+      const d: Drawing = {
+        id: newDrawingId(),
+        type,
+        points: ip.points.slice(0, POINTS_NEEDED[type]),
+        color: DRAW_COLOR,
+        width: DRAW_WIDTH,
+      };
+      clearInProgress();
+      onDrawingsChange([...drawings, d]);
+      onSelectDrawing(d.id);
+      onToolChange("cursor");
+    };
+
+    const onClick = (param: MouseEventParams<Time>) => {
+      if (activeTool === "cursor") {
+        if (!param.point) return;
+        let hit: string | null = null;
+        for (const prim of attached) {
+          if (prim.hitTest(param.point.x, param.point.y)) {
+            hit = prim.drawing.id;
+            break;
+          }
+        }
+        onSelectDrawing(hit);
+        return;
+      }
+      if (activeTool === "measure") return; // T1.1b
+      const type = activeTool;
+      const pt = toPoint(param);
+      if (!pt) return;
+      const ip = inProgressRef.current;
+      if (!ip) {
+        inProgressRef.current = { type, points: [pt] };
+        if (POINTS_NEEDED[type] === 1) {
+          finalize();
+          return;
+        }
+        const preview = new DrawingPrimitive(
+          {
+            id: "__preview__",
+            type,
+            points: [pt, pt],
+            color: DRAW_COLOR,
+            width: DRAW_WIDTH,
+          },
+          false,
+        );
+        try {
+          series.attachPrimitive(preview);
+          previewRef.current = preview;
+        } catch {
+          // ignore
+        }
+      } else {
+        ip.points.push(pt);
+        if (ip.points.length >= POINTS_NEEDED[type]) finalize();
+      }
+    };
+
+    const onMove = (param: MouseEventParams<Time>) => {
+      const ip = inProgressRef.current;
+      const preview = previewRef.current;
+      if (!ip || !preview || POINTS_NEEDED[ip.type as DrawingType] !== 2)
+        return;
+      const pt = toPoint(param);
+      if (!pt) return;
+      preview.drawing.points = [ip.points[0], pt];
+      preview.requestRedraw();
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        clearInProgress();
+        onSelectDrawing(null);
+      } else if (
+        (e.key === "Delete" || e.key === "Backspace") &&
+        selectedDrawingId !== null
+      ) {
+        onDrawingsChange(drawings.filter((d) => d.id !== selectedDrawingId));
+        onSelectDrawing(null);
+      }
+    };
+
+    chart.subscribeClick(onClick);
+    chart.subscribeCrosshairMove(onMove);
+    window.addEventListener("keydown", onKey);
+
+    return () => {
+      chart.unsubscribeClick(onClick);
+      chart.unsubscribeCrosshairMove(onMove);
+      window.removeEventListener("keydown", onKey);
+      clearInProgress();
+      for (const prim of attached) safeDetach(prim);
+    };
+  }, [
+    drawings,
+    activeTool,
+    selectedDrawingId,
+    chartVersion,
+    onDrawingsChange,
+    onSelectDrawing,
+    onToolChange,
+  ]);
 
   return (
     <div className="relative w-full h-full">

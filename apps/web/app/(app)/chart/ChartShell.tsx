@@ -4,6 +4,7 @@ import { ChartContextMenu } from "@/components/chart/ChartContextMenu";
 import { ChartFooter } from "@/components/chart/ChartFooter";
 import { ChartSettingsModal } from "@/components/chart/ChartSettingsModal";
 import { ChartToolbar } from "@/components/chart/ChartToolbar";
+import { DrawingToolbar } from "@/components/chart/DrawingToolbar";
 import { EventDrawer } from "@/components/chart/EventDrawer";
 import { IndicatorPicker } from "@/components/chart/IndicatorPicker";
 import type { CandlestickPattern, InstrumentRow } from "@/lib/api";
@@ -13,6 +14,12 @@ import {
   loadChartStyle,
   saveChartStyle,
 } from "@/lib/chart/chartStyle";
+import {
+  type Drawing,
+  type DrawingTool,
+  loadDrawings,
+  saveDrawings,
+} from "@/lib/chart/drawings";
 import {
   type IndicatorSpec,
   specsToQueryParam,
@@ -143,6 +150,11 @@ export function ChartShell({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [style, setStyle] = useState<ChartStyle>(DEFAULT_CHART_STYLE);
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [drawings, setDrawings] = useState<Drawing[]>([]);
+  const [activeTool, setActiveTool] = useState<DrawingTool>("cursor");
+  const [selectedDrawingId, setSelectedDrawingId] = useState<string | null>(
+    null,
+  );
 
   const containerRef = useRef<HTMLDivElement>(null);
   const chartApiRef = useRef<ChartApi | null>(null);
@@ -169,7 +181,17 @@ export function ChartShell({
   const [indicators, setIndicators] = useState<IndicatorSpec[]>([]);
   useEffect(() => {
     setIndicators(loadIndicators(activeSymbol));
+    setDrawings(loadDrawings(activeSymbol));
+    setSelectedDrawingId(null);
   }, [activeSymbol]);
+
+  const changeDrawings = useCallback(
+    (next: Drawing[]) => {
+      setDrawings(next);
+      saveDrawings(activeSymbol, next);
+    },
+    [activeSymbol],
+  );
 
   const today = new Date().toISOString().split("T")[0];
   const from = new Date(Date.now() - RANGE_DAYS[range] * 86400_000)
@@ -381,6 +403,14 @@ export function ChartShell({
         contractCode={contractCode}
       />
       <div className="flex flex-1 min-h-0 gap-0">
+        {!showSeasonality && (
+          <DrawingToolbar
+            activeTool={activeTool}
+            onToolChange={setActiveTool}
+            onClearAll={() => changeDrawings([])}
+            hasDrawings={drawings.length > 0}
+          />
+        )}
         <div
           className="flex-1 min-w-0"
           onContextMenu={(e) => {
@@ -408,6 +438,12 @@ export function ChartShell({
               autoTa={autoTa}
               livePrice={livePrice}
               style={style}
+              drawings={drawings}
+              activeTool={activeTool}
+              selectedDrawingId={selectedDrawingId}
+              onDrawingsChange={changeDrawings}
+              onSelectDrawing={setSelectedDrawingId}
+              onToolChange={setActiveTool}
               apiRef={chartApiRef}
             />
           ) : (

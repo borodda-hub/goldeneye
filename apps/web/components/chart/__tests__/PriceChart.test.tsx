@@ -11,6 +11,8 @@ const addSeries = vi.fn((_def: unknown, _opts?: unknown) => ({
   update: vi.fn(),
   applyOptions: vi.fn(),
   createPriceLine: vi.fn(),
+  attachPrimitive: vi.fn(),
+  detachPrimitive: vi.fn(),
 }));
 
 vi.mock("lightweight-charts", () => ({
@@ -18,11 +20,16 @@ vi.mock("lightweight-charts", () => ({
     addSeries,
     applyOptions: vi.fn(),
     subscribeCrosshairMove: vi.fn(),
+    unsubscribeCrosshairMove: vi.fn(),
+    subscribeClick: vi.fn(),
+    unsubscribeClick: vi.fn(),
     priceScale: vi.fn(() => ({ applyOptions: vi.fn() })),
     timeScale: vi.fn(() => ({
       fitContent: vi.fn(),
       subscribeVisibleLogicalRangeChange: vi.fn(),
       scrollToRealTime: vi.fn(),
+      coordinateToTime: vi.fn(),
+      width: vi.fn(() => 800),
     })),
     takeScreenshot: vi.fn(),
     resize: vi.fn(),
@@ -61,6 +68,12 @@ const base = {
   autoTa: null,
   livePrice: null,
   style: DEFAULT_CHART_STYLE,
+  drawings: [],
+  activeTool: "cursor" as const,
+  selectedDrawingId: null,
+  onDrawingsChange: vi.fn(),
+  onSelectDrawing: vi.fn(),
+  onToolChange: vi.fn(),
 };
 
 describe("PriceChart", () => {
