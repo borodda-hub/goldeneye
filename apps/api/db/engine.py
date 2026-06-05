@@ -1,3 +1,4 @@
+import ssl
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
@@ -17,6 +18,25 @@ _LIBPQ_ONLY_PARAMS = (
     "sslkey",
     "gssencmode",
 )
+
+
+def _ssl_arg(sslmode: str | None) -> bool | ssl.SSLContext:
+    """SSL connect arg matching libpq's ``sslmode`` semantics for asyncpg.
+
+    asyncpg's ``ssl=True`` does *full* verification (CERT_REQUIRED +
+    check_hostname), which is stricter than libpq's ``require`` ("encrypt but
+    don't verify"). Managed providers (Timescale Cloud, …) often serve a cert
+    chain that isn't in the local trust store, so verifying ``require`` fails
+    with CERTIFICATE_VERIFY_FAILED. So: ``verify-ca`` / ``verify-full`` verify
+    (``ssl=True``); ``require`` and the bare ``DATABASE_SSL`` flag encrypt
+    without verifying.
+    """
+    if sslmode in ("verify-ca", "verify-full"):
+        return True
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    return ctx
 
 
 def prepare_async_url(url: str) -> tuple[str, dict[str, object]]:
@@ -54,7 +74,9 @@ def prepare_async_url(url: str) -> tuple[str, dict[str, object]]:
     clean = urlunsplit(
         (scheme, parts.netloc, parts.path, urlencode(query), parts.fragment)
     )
-    connect_args: dict[str, object] = {"ssl": True} if want_ssl else {}
+    connect_args: dict[str, object] = {}
+    if want_ssl:
+        connect_args["ssl"] = _ssl_arg(sslmode)
     return clean, connect_args
 
 
