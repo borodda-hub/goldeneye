@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     )
 
     database_url: str = "postgresql+asyncpg://ngti:ngti@localhost:5432/ngti"
+    # Force TLS on the DB connection. Managed Postgres (Timescale Cloud, etc.)
+    # requires it; left False for local/compose. A URL carrying
+    # `sslmode=require` also turns TLS on automatically (see db/engine.py).
+    database_ssl: bool = False
     redis_url: str = "redis://localhost:6379/0"
     debug: bool = False
 

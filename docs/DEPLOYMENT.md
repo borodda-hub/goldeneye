@@ -85,17 +85,31 @@ api.ngti.example.com {
 
 Caddy auto-renews Let's Encrypt certs. Drop the Caddyfile in `/etc/caddy/Caddyfile` and `systemctl restart caddy`.
 
-## Path 3 — Managed (Vercel + Railway + Neon + Upstash)
+## Path 3 — Managed (Vercel + Railway + Timescale Cloud + Upstash)
 
-Higher reliability, ~$25-40/month for a low-traffic demo.
+Higher reliability, ~$25-40/month for a low-traffic demo. This is the path the
+repo is configured for — `railway.json` (api) and `apps/web/vercel.json` (web)
+are checked in.
 
 | Component | Provider | Notes |
 |---|---|---|
-| Frontend (Next.js) | **Vercel** | Auto-deploys from GitHub. Set `NEXT_PUBLIC_API_BASE` and `NEXT_PUBLIC_WS_URL` in project env. No Dockerfile needed — Vercel builds Next.js natively. |
-| Backend (FastAPI) | **Railway** | Builds `apps/api/Dockerfile`. **Set the build context to the repo root, not `apps/api/`** — the Dockerfile copies `apps/__init__.py` + `infra/migrations/` which live above. The CMD runs `alembic upgrade head` then `uvicorn` on `$PORT`. |
-| Postgres + TimescaleDB | **Neon** (or Railway Postgres) | Neon free tier covers the demo. Enable `timescaledb` extension via SQL. |
-| Redis | **Upstash** | Free tier sufficient. Use the `redis://default:<pass>@<host>:6379` URL. |
-| Worker | Railway second service | Same image as api; different command. |
+| Frontend (Next.js) | **Vercel** | Auto-deploys from GitHub. **Set Root Directory = `apps/web`** in the project settings (it's a pnpm workspace). `apps/web/vercel.json` pins the framework + pnpm commands. Set `NEXT_PUBLIC_API_BASE` and `NEXT_PUBLIC_WS_URL` in project env. No Dockerfile needed. |
+| Backend (FastAPI) | **Railway** | Builds `apps/api/Dockerfile` via the checked-in `railway.json` (build context = repo root, healthcheck = `/v1/health`). The Dockerfile CMD runs `alembic upgrade head` then `uvicorn` on `$PORT` — **migrations apply automatically on every deploy**. |
+| Postgres + TimescaleDB | **Timescale Cloud** | The hypertable migration (`003_hypertables.py`) calls `create_hypertable`, which **requires the `timescaledb` extension** — so plain Neon/Railway Postgres will fail that migration. Timescale Cloud ships the extension, so the schema applies unchanged. |
+| Redis | **Upstash** | Free tier sufficient. Use the `rediss://default:<pass>@<host>:6379` URL (note `rediss` = TLS). |
+| Worker | *(skip for the demo)* | The compose `worker` is still a placeholder (`echo …`); no real task queue is wired yet. The demo runs fine without it. |
+
+### Connection strings & TLS (the usual deploy footgun)
+
+Managed Postgres hands out a libpq-style URL like
+`postgres://tsdbadmin:<pw>@<id>.tsdb.cloud.timescale.com:34567/tsdb?sslmode=require`.
+That has two things asyncpg can't use directly: the bare `postgres://` scheme
+and the `sslmode` query param. **You can paste it as-is** — `db/engine.py`
+(and the Alembic env) normalize it: the scheme is rewritten to
+`postgresql+asyncpg://`, libpq-only params (`sslmode`, `channel_binding`, …)
+are stripped, and TLS is enabled via `connect_args={"ssl": True}` whenever the
+URL carried `sslmode=require` (or you set `DATABASE_SSL=true`). Redis from
+Upstash uses `rediss://` (TLS) and needs no special handling.
 
 ### Build the api image locally first (sanity check)
 
@@ -131,11 +145,32 @@ NEXT_PUBLIC_WS_URL=wss://ngti-api.up.railway.app
 ### Railway env vars (api service)
 
 ```
-DATABASE_URL=postgresql+asyncpg://...@ep-xxx.us-east-2.aws.neon.tech/ngti
-REDIS_URL=rediss://default:...@usw1-something.upstash.io:6379
+# Paste the Timescale Cloud service URL verbatim — scheme + sslmode are
+# normalized automatically (see "Connection strings & TLS" above).
+DATABASE_URL=postgres://tsdbadmin:<pw>@<id>.tsdb.cloud.timescale.com:34567/tsdb?sslmode=require
+REDIS_URL=rediss://default:<pw>@<id>.upstash.io:6379
 LLM_MODE=fake
-CORS_ALLOWED_ORIGINS=https://goldeneye.example.com
+CORS_ALLOWED_ORIGINS=https://<your-app>.vercel.app
 ```
+
+### Seed the database (one-off, after the first deploy)
+
+Migrations apply automatically when the api container boots. The demo **seed**
+is a separate one-off — run it once against the Timescale Cloud DB. Easiest is
+a Railway one-off command on the api service (it already has `DATABASE_URL`):
+
+```bash
+cd apps/api && python -m apps.api.seeds.demo --fresh
+```
+
+Or from your laptop, pointing at the cloud DB (TLS auto-detected from the URL):
+
+```bash
+DATABASE_URL='postgres://tsdbadmin:<pw>@<id>.tsdb.cloud.timescale.com:34567/tsdb?sslmode=require' \
+  uv run --directory apps/api python -m seeds.demo --fresh
+```
+
+Re-running with `--fresh` is idempotent (it truncates and reseeds).
 
 If `CORS_ALLOWED_ORIGINS` is missing or wrong, the deployed Next.js app
 will get every fetch blocked by the browser and the chart / dashboard
@@ -148,11 +183,17 @@ api endpoints return 200 in your shell, this is almost always the cause.
 | Item | Cost |
 |---|---|
 | Vercel Hobby | $0 |
-| Railway Hobby (api + worker) | ~$10 |
-| Neon Free (≤0.5GB) | $0 |
+| Railway Hobby (api only) | ~$5 |
+| Timescale Cloud | free 30-day trial, then usage-based (~$25/mo at the smallest tier) |
 | Upstash Free | $0 |
-| Domain | ~$1 |
-| **Total** | **~$10/mo** |
+| Domain (optional) | ~$1 |
+| **Total** | **~$5/mo during the trial; +DB after** |
+
+> DB cost note: Timescale Cloud is the priciest line because it's the only
+> managed provider that ships the `timescaledb` extension the hypertables need.
+> If you'd rather stay free, the alternative is self-hosting Postgres+Timescale
+> on the single-VM path (Path 2), where the bundled `timescale/timescaledb`
+> image gives you the extension at no extra cost.
 
 Bumping to a real LLM (Claude or GPT) is the only line that scales with usage — budget $5-20/mo for typical demo traffic with Haiku for summaries and Sonnet for narratives, with the 30-min cache TTL active.
 

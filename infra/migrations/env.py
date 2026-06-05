@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from apps.api.db.base import Base
+from apps.api.db.engine import prepare_async_url
 import apps.api.models.orm.instruments  # noqa: F401
 import apps.api.models.orm.contracts  # noqa: F401
 import apps.api.models.orm.eia  # noqa: F401
@@ -37,7 +38,7 @@ DATABASE_URL = os.environ.get(
 
 
 def run_migrations_offline() -> None:
-    url = DATABASE_URL
+    url, _ = prepare_async_url(DATABASE_URL)
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -56,11 +57,13 @@ def do_run_migrations(connection):
 
 async def run_migrations_online() -> None:
     cfg = config.get_section(config.config_ini_section, {})
-    cfg["sqlalchemy.url"] = DATABASE_URL
+    url, connect_args = prepare_async_url(DATABASE_URL)
+    cfg["sqlalchemy.url"] = url
     connectable = async_engine_from_config(
         cfg,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
