@@ -57,6 +57,12 @@ def prepare_async_url(url: str) -> tuple[str, dict[str, object]]:
     Local / compose URLs (no ``sslmode``, ``database_ssl=False``) pass through
     with empty connect_args, so dev behaviour is unchanged.
     """
+    # Tolerate values pasted into a hosting dashboard with stray whitespace or
+    # surrounding quotes — otherwise SQLAlchemy can't parse the URL at all.
+    url = url.strip()
+    if len(url) >= 2 and url[0] == url[-1] and url[0] in ("'", '"'):
+        url = url[1:-1].strip()
+
     parts = urlsplit(url)
     scheme = parts.scheme
     if scheme in ("postgres", "postgresql"):

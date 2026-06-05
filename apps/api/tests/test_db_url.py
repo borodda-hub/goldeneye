@@ -66,6 +66,15 @@ def test_verify_full_uses_strict_verification() -> None:
     assert "sslmode" not in url
 
 
+def test_tolerates_surrounding_quotes_and_whitespace() -> None:
+    # A value pasted into a hosting dashboard with quotes/newline must still
+    # parse (otherwise SQLAlchemy raises "Could not parse SQLAlchemy URL").
+    raw = '  "postgres://u:p@host.tsdb.cloud.timescale.com:5432/db?sslmode=require"\n'
+    url, connect_args = prepare_async_url(raw)
+    assert url == "postgresql+asyncpg://u:p@host.tsdb.cloud.timescale.com:5432/db"
+    _assert_encrypt_no_verify(connect_args)
+
+
 def test_sslmode_disable_does_not_force_tls() -> None:
     url, connect_args = prepare_async_url(
         "postgresql+asyncpg://u:p@host:5432/db?sslmode=disable"
