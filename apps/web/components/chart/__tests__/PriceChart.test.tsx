@@ -3,6 +3,7 @@ import type { IndicatorSeriesDTO } from "@/lib/api";
 import { DEFAULT_CHART_STYLE } from "@/lib/chart/chartStyle";
 import { newSpec } from "@/lib/chart/indicatorRegistry";
 import { render } from "@testing-library/react";
+import { createChart } from "lightweight-charts";
 import { PriceChart } from "../PriceChart";
 
 // v5: every series is created via addSeries(SeriesDefinition, options).
@@ -179,5 +180,53 @@ describe("PriceChart", () => {
     );
     expect(container.firstChild).toBeInTheDocument();
     expect(lineSeriesCalls()).toHaveLength(0);
+  });
+
+  // Regression guard for the in-place data refactor: a bars refetch must update
+  // the existing series (setData), NOT tear down and rebuild the chart. A full
+  // rebuild here is what broke drawing placement mid-interaction.
+  it("updates bars in place without rebuilding chart or series", () => {
+    (createChart as unknown as ReturnType<typeof vi.fn>).mockClear();
+    const { rerender } = render(<PriceChart {...base} bars={bars} />);
+    const chartsAfterMount = (
+      createChart as unknown as { mock: { calls: unknown[] } }
+    ).mock.calls.length;
+    const seriesAfterMount = addSeries.mock.calls.length;
+
+    const moreBars: Bar[] = [
+      ...bars,
+      {
+        ts: "2026-05-03T00:00:00Z",
+        o: 3.5,
+        h: 3.6,
+        l: 3.45,
+        c: 3.55,
+        v: 13000,
+      },
+    ];
+    rerender(<PriceChart {...base} bars={moreBars} />);
+
+    expect(
+      (createChart as unknown as { mock: { calls: unknown[] } }).mock.calls
+        .length,
+    ).toBe(chartsAfterMount); // no new createChart → chart not rebuilt
+    expect(addSeries.mock.calls.length).toBe(seriesAfterMount); // no new series
+  });
+
+  // The structural boundary: a chart-type change SHOULD rebuild (different
+  // series type). Documents that the data/structure split is intentional.
+  it("rebuilds the chart when the chart type changes", () => {
+    (createChart as unknown as ReturnType<typeof vi.fn>).mockClear();
+    const { rerender } = render(<PriceChart {...base} bars={bars} />);
+    const chartsAfterMount = (
+      createChart as unknown as { mock: { calls: unknown[] } }
+    ).mock.calls.length;
+
+    rerender(<PriceChart {...base} bars={bars} chartType="line" />);
+
+    expect(
+      (createChart as unknown as { mock: { calls: unknown[] } }).mock.calls
+        .length,
+    ).toBeGreaterThan(chartsAfterMount);
   });
 });
