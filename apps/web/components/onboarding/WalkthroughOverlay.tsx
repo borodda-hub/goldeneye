@@ -177,10 +177,14 @@ export function WalkthroughOverlay({
       {/* Spotlight — a tiny element with a huge box-shadow creates the
           dimming around it without needing an SVG mask. Falls back to a
           plain backdrop when there's no target. */}
+      {/* The dim/spotlight is purely decorative and pointer-events:none, so the
+          page stays interactive during the tour — clicking the highlighted
+          feature (or anything else) doesn't dismiss it. The tour is dismissed
+          only via the tooltip controls (Skip / Done) or Esc. */}
       {rect ? (
         <div
           aria-hidden="true"
-          className="absolute pointer-events-auto"
+          className="absolute pointer-events-none"
           style={{
             top: rect.top,
             left: rect.left,
@@ -192,20 +196,12 @@ export function WalkthroughOverlay({
             transition:
               "top 220ms ease-out, left 220ms ease-out, width 220ms ease-out, height 220ms ease-out",
           }}
-          onClick={onClose}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") onClose();
-          }}
         />
       ) : (
         <div
           aria-hidden="true"
-          className="absolute inset-0 pointer-events-auto"
+          className="absolute inset-0 pointer-events-none"
           style={{ background: "rgba(10, 10, 9, 0.78)" }}
-          onClick={onClose}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") onClose();
-          }}
         />
       )}
 
