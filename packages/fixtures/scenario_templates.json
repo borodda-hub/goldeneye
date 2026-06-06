@@ -59,5 +59,42 @@
       { "type": "weather", "region": "south_central", "delta_temp_f": 8,  "days": 12 },
       { "type": "weather", "region": "midwest",       "delta_temp_f": 7,  "days": 10 }
     ]
+  },
+  {
+    "id": "opec_surprise_cut",
+    "name": "OPEC+ Surprise Cut — 1.5 Mb/d",
+    "description": "OPEC+ announces an unscheduled production cut of 1.5 million barrels per day to defend prices, tightening global balances over the following quarter.",
+    "instrument": "BZ",
+    "shocks": [
+      { "type": "opec_supply", "delta_mbpd": -1.5, "days": 90 }
+    ]
+  },
+  {
+    "id": "hormuz_disruption",
+    "name": "Strait of Hormuz Disruption",
+    "description": "An escalation in the Gulf threatens transit through the Strait of Hormuz, removing barrels from the seaborne market and adding a geopolitical risk premium.",
+    "instrument": "BZ",
+    "shocks": [
+      { "type": "geopolitical_supply", "region": "hormuz", "delta_mbpd": -3.0, "days": 14 },
+      { "type": "inventory", "delta_mmbbl": -25, "days": 14 }
+    ]
+  },
+  {
+    "id": "china_demand_slowdown",
+    "name": "China Demand Slowdown",
+    "description": "A sharper-than-expected slowdown in Chinese industrial activity and travel cuts apparent oil demand, loosening balances into the back half of the year.",
+    "instrument": "BZ",
+    "shocks": [
+      { "type": "demand", "region": "china", "delta_mbpd": -1.8, "days": 60 }
+    ]
+  },
+  {
+    "id": "coordinated_spr_release",
+    "name": "Coordinated SPR Release",
+    "description": "IEA member states announce a coordinated strategic petroleum reserve release, adding government barrels to the market to cap prices over the next month.",
+    "instrument": "BZ",
+    "shocks": [
+      { "type": "inventory", "delta_mmbbl": 60, "days": 30 }
+    ]
   }
 ]

@@ -44,10 +44,16 @@ def apply(
                           heuristic so even price-only models register it.
     """
     # Tunable magnitudes — kept in one place so backtests can sweep them.
+    # Natural gas ($/MMBtu):
     WEATHER_PRICE_PER_DEG_F = -0.005   # cold (negative ΔT) → price up
     PRODUCTION_PRICE_PER_BCFD = -0.01  # supply ↑ → price ↓
     LNG_EXPORT_PRICE_PER_BCFD = 0.01   # demand ↑ → price ↑
     STORAGE_PRICE_PER_BCF = -0.0005    # bigger build vs consensus = bearish
+    # Crude oil ($/bbl) — rough magnitudes, not calibrated sensitivities:
+    OPEC_SUPPLY_PRICE_PER_MBPD = -3.0   # OPEC+ cut (negative) → price up
+    GEO_SUPPLY_PRICE_PER_MBPD = -4.0    # outage (negative) → price up (risk premium)
+    DEMAND_PRICE_PER_MBPD = 3.0         # more demand → price up
+    INVENTORY_PRICE_PER_MMBBL = -0.05   # bigger build / SPR release → price down
 
     shocked_closes = list(baseline_ctx.closes)
     shocked_weather = baseline_ctx.weather_anomaly or 0.0
@@ -114,6 +120,46 @@ def apply(
                 f"heuristic to closes and surfacing the delta on the composite input."
             )
 
+        elif shock_type == "opec_supply":
+            delta_mbpd = float(shock.get("delta_mbpd", 0.0))
+            price_impact = delta_mbpd * OPEC_SUPPLY_PRICE_PER_MBPD * days_factor
+            shocked_closes = [c + price_impact for c in shocked_closes]
+            assumptions.append(
+                f"OPEC+ output changes by {delta_mbpd:+.2f} Mb/d for {days} days, "
+                f"applying a {price_impact:+.3f}/bbl price impact (a cut tightens balances)."
+            )
+
+        elif shock_type == "geopolitical_supply":
+            delta_mbpd = float(shock.get("delta_mbpd", 0.0))
+            region = shock.get("region", "global")
+            price_impact = delta_mbpd * GEO_SUPPLY_PRICE_PER_MBPD * days_factor
+            shocked_closes = [c + price_impact for c in shocked_closes]
+            assumptions.append(
+                f"Geopolitical supply shift of {delta_mbpd:+.2f} Mb/d via {region} for "
+                f"{days} days, applying a {price_impact:+.3f}/bbl price impact "
+                f"(an outage adds a risk premium)."
+            )
+
+        elif shock_type == "demand":
+            delta_mbpd = float(shock.get("delta_mbpd", 0.0))
+            region = shock.get("region", "global")
+            price_impact = delta_mbpd * DEMAND_PRICE_PER_MBPD * days_factor
+            shocked_closes = [c + price_impact for c in shocked_closes]
+            assumptions.append(
+                f"Oil demand changes by {delta_mbpd:+.2f} Mb/d in {region} for {days} days, "
+                f"applying a {price_impact:+.3f}/bbl price impact (demand heuristic)."
+            )
+
+        elif shock_type == "inventory":
+            delta_mmbbl = float(shock.get("delta_mmbbl", 0.0))
+            price_impact = delta_mmbbl * INVENTORY_PRICE_PER_MMBBL * days_factor
+            shocked_closes = [c + price_impact for c in shocked_closes]
+            assumptions.append(
+                f"Available crude stocks shift by {delta_mmbbl:+.1f} MMbbl over {days} days "
+                f"(a build or SPR release adds supply), applying a {price_impact:+.3f}/bbl "
+                f"price-impact heuristic to closes."
+            )
+
     shocked_ctx = replace(
         baseline_ctx,
         closes=shocked_closes,
@@ -176,8 +222,8 @@ async def run_scenario(
     # Standard counterarguments and validation signals based on dominant shock type —
     # these are deterministic, NOT LLM-generated (per docs/PHASE_06_PLAN.md §override 3).
     shock_types = {s.get("type", "") for s in shocks}
-    counterarguments = _standard_counterarguments(shock_types, s_dir)
-    data_needed = _standard_validation_data(shock_types)
+    counterarguments = _standard_counterarguments(shock_types, s_dir, instrument)
+    data_needed = _standard_validation_data(shock_types, instrument)
 
     # Build narrative context
     narrate_results = {
@@ -213,7 +259,9 @@ async def run_scenario(
     }
 
 
-def _standard_counterarguments(shock_types: set[str], direction: str) -> list[str]:
+def _standard_counterarguments(
+    shock_types: set[str], direction: str, instrument: str = "NG"
+) -> list[str]:
     """Return 2-3 standard counterarguments for the given shock types."""
     args: list[str] = []
 
@@ -235,6 +283,31 @@ def _standard_counterarguments(shock_types: set[str], direction: str) -> list[st
             "a single data point is insufficient to confirm a structural shift."
         )
 
+    # --- crude oil shock types ---
+    if "opec_supply" in shock_types:
+        args.append(
+            "OPEC+ compliance is historically imperfect; announced cuts often exceed realized "
+            "cuts, and spare capacity can be redeployed if prices overshoot."
+        )
+
+    if "geopolitical_supply" in shock_types:
+        args.append(
+            "Geopolitical risk premia decay quickly when physical flows are not actually "
+            "interrupted; the market frequently fades the headline within days."
+        )
+
+    if "demand" in shock_types:
+        args.append(
+            "Demand estimates — China especially — are revised substantially; high-frequency "
+            "refinery-run and mobility data may not confirm the assumed shift."
+        )
+
+    if "inventory" in shock_types:
+        args.append(
+            "A single inventory print is noisy and subject to revision, and SPR actions are "
+            "finite and often partly anticipated by the curve."
+        )
+
     # Always include a generic counterargument
     args.append(
         "Speculative positioning is extended in the current COT report; crowded positioning "
@@ -244,11 +317,19 @@ def _standard_counterarguments(shock_types: set[str], direction: str) -> list[st
     return args[:3]
 
 
-def _standard_validation_data(shock_types: set[str]) -> list[str]:
+def _standard_validation_data(shock_types: set[str], instrument: str = "NG") -> list[str]:
     """Return 3-4 standard data validation signals for the given shock types."""
-    signals: list[str] = [
-        "Next EIA Weekly Natural Gas Storage Report (Thursdays) for storage trajectory confirmation.",
-    ]
+    is_crude = instrument in {"BZ", "CL"}
+    if is_crude:
+        signals: list[str] = [
+            "Next EIA Weekly Petroleum Status Report (Wednesdays) and the OPEC+ monthly "
+            "market report for inventory and output trajectory.",
+        ]
+    else:
+        signals = [
+            "Next EIA Weekly Natural Gas Storage Report (Thursdays) for storage trajectory "
+            "confirmation.",
+        ]
 
     if "weather" in shock_types:
         signals.append(
@@ -264,6 +345,31 @@ def _standard_validation_data(shock_types: set[str]) -> list[str]:
     if "lng_export" in shock_types:
         signals.append(
             "LNG feed-gas nominations (daily) from Platts/Genscape to confirm export demand shift."
+        )
+
+    # --- crude oil shock types ---
+    if "opec_supply" in shock_types:
+        signals.append(
+            "OPEC+ JMMC communique plus Argus/Platts realized-production estimates to confirm "
+            "the output change versus the headline."
+        )
+
+    if "geopolitical_supply" in shock_types:
+        signals.append(
+            "Tanker-tracking (Kpler/Vortexa) for actual flows through the affected chokepoint, "
+            "plus insurance and freight-rate moves."
+        )
+
+    if "demand" in shock_types:
+        signals.append(
+            "China apparent demand (refinery throughput + net imports) and IEA/EIA monthly "
+            "demand revisions."
+        )
+
+    if "inventory" in shock_types:
+        signals.append(
+            "Weekly EIA crude stocks and DOE SPR level updates; OECD commercial stock cover "
+            "(days of forward demand)."
         )
 
     signals.append(

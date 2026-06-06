@@ -21,6 +21,14 @@ function shockSummary(s: Shock): string {
       return `Production · ${s.delta_bcfd > 0 ? "+" : ""}${s.delta_bcfd} Bcf/d · ${s.days}d`;
     case "storage":
       return `Storage · ${s.delta_bcf > 0 ? "+" : ""}${s.delta_bcf} Bcf · ${s.days}d`;
+    case "opec_supply":
+      return `OPEC+ · ${s.delta_mbpd > 0 ? "+" : ""}${s.delta_mbpd} Mb/d · ${s.days}d`;
+    case "geopolitical_supply":
+      return `Geopolitical · ${s.region} ${s.delta_mbpd > 0 ? "+" : ""}${s.delta_mbpd} Mb/d · ${s.days}d`;
+    case "demand":
+      return `Demand · ${s.region} ${s.delta_mbpd > 0 ? "+" : ""}${s.delta_mbpd} Mb/d · ${s.days}d`;
+    case "inventory":
+      return `Inventory · ${s.delta_mmbbl > 0 ? "+" : ""}${s.delta_mmbbl} MMbbl · ${s.days}d`;
   }
 }
 

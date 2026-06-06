@@ -2,12 +2,12 @@
 
 import type { Shock } from "@/app/(app)/scenarios/types";
 import {
-  EUROPE,
-  GULF_TERMINALS,
   type GlobeArc,
   type GlobePoint,
-  STORAGE_HUB,
+  benchmarkOf,
   buildGlobeLayers,
+  infraGeography,
+  networkCorridors,
 } from "@/lib/scenarioGeo";
 import { rgba, useThemePalette } from "@/lib/useThemePalette";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -21,21 +21,26 @@ const SAT_IMAGE =
   "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg";
 const SAT_BUMP = "https://unpkg.com/three-globe/example/img/earth-topology.png";
 const HEIGHT = 440;
-const DEFAULT_POV = { lat: 38, lng: -45, altitude: 2.0 };
+// Default camera framing per market — gas centers on the N. Atlantic, crude on
+// the Europe→Gulf axis where Brent + the producing regions sit.
+const POV_BY_INSTRUMENT: Record<
+  string,
+  { lat: number; lng: number; altitude: number }
+> = {
+  NG: { lat: 38, lng: -45, altitude: 2.0 },
+  BZ: { lat: 34, lng: 28, altitude: 2.2 },
+};
+const defaultPov = (instrument: string) =>
+  POV_BY_INSTRUMENT[instrument] ?? POV_BY_INSTRUMENT.NG;
 
 type GlobeStyle = "vector" | "satellite";
 
-/** Real LNG infrastructure (terminals, import hubs, interior storage) shown as
- *  faint reference loci so the globe has context before a scenario loads. */
-const INFRA: { name: string; lat: number; lng: number; role: string }[] = [
-  ...GULF_TERMINALS.map((t) => ({ ...t, role: "LNG terminal" })),
-  ...EUROPE.map((e) => ({ ...e, role: "import hub" })),
-  { ...STORAGE_HUB, role: "storage" },
-];
-
 /** Center + altitude that frames a set of loci (the active scenario geography). */
-function frameView(pts: GlobePoint[]) {
-  if (pts.length <= 1) return { ...DEFAULT_POV };
+function frameView(
+  pts: GlobePoint[],
+  fallback: { lat: number; lng: number; altitude: number },
+) {
+  if (pts.length <= 1) return { ...fallback };
   const lats = pts.map((p) => p.lat);
   const lngs = pts.map((p) => p.lng);
   const lat = (Math.min(...lats) + Math.max(...lats)) / 2;
@@ -56,7 +61,13 @@ function frameView(pts: GlobePoint[]) {
  * and toggleable reference layers (infrastructure, flow network, graticule) let
  * you read the mechanism. Client-only (parent imports it ssr:false).
  */
-export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
+export function ScenarioGlobe({
+  shocks,
+  instrument = "NG",
+}: {
+  shocks: Shock[];
+  instrument?: string;
+}) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const globeRef = useRef<GlobeMethods | undefined>(undefined);
   const [width, setWidth] = useState(640);
@@ -81,8 +92,8 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
     [theme],
   );
   const { points, arcs } = useMemo(
-    () => buildGlobeLayers(shocks, leanPalette),
-    [shocks, leanPalette],
+    () => buildGlobeLayers(shocks, leanPalette, instrument),
+    [shocks, leanPalette, instrument],
   );
 
   // Faint reference infrastructure, minus any locus the active scenario already
@@ -90,32 +101,32 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
   const infraPoints = useMemo<GlobePoint[]>(() => {
     if (!showInfra) return [];
     const active = new Set(points.map((p) => p.label));
-    return INFRA.filter((i) => !active.has(i.name)).map((i) => ({
-      lat: i.lat,
-      lng: i.lng,
-      label: `${i.name} · ${i.role}`,
-      color: rgba(theme.accent, 0.5),
-      size: 0.32,
-      kind: "infra" as const,
-    }));
-  }, [showInfra, points, theme]);
+    return infraGeography(instrument)
+      .filter((i) => !active.has(i.name))
+      .map((i) => ({
+        lat: i.lat,
+        lng: i.lng,
+        label: `${i.name} · ${i.role}`,
+        color: rgba(theme.accent, 0.5),
+        size: 0.32,
+        kind: "infra" as const,
+      }));
+  }, [showInfra, points, theme, instrument]);
 
-  // Faint static Gulf→Europe LNG corridors — the physical network behind shocks.
+  // Faint static trade corridors — the physical network behind shocks.
   const networkArcs = useMemo<GlobeArc[]>(() => {
     if (!showNetwork) return [];
     const c = rgba(theme.accent, 0.22);
-    return GULF_TERMINALS.flatMap((t) =>
-      EUROPE.map((e) => ({
-        startLat: t.lat,
-        startLng: t.lng,
-        endLat: e.lat,
-        endLng: e.lng,
-        color: [c, c] as [string, string],
-        label: `${t.name} → ${e.name} · LNG corridor`,
-        kind: "network" as const,
-      })),
-    );
-  }, [showNetwork, theme]);
+    return networkCorridors(instrument).map((n) => ({
+      startLat: n.from.lat,
+      startLng: n.from.lng,
+      endLat: n.to.lat,
+      endLng: n.to.lng,
+      color: [c, c] as [string, string],
+      label: n.label,
+      kind: "network" as const,
+    }));
+  }, [showNetwork, theme, instrument]);
 
   const allPoints = useMemo(
     () => [...infraPoints, ...points],
@@ -158,28 +169,37 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
     } catch {}
   }, []);
 
+  const pov = useMemo(() => defaultPov(instrument), [instrument]);
+
   const onReady = useCallback(() => {
     applyAutoRotate(autoRotate);
     try {
-      globeRef.current?.pointOfView(DEFAULT_POV, 0);
+      globeRef.current?.pointOfView(pov, 0);
     } catch {}
-  }, [applyAutoRotate, autoRotate]);
+  }, [applyAutoRotate, autoRotate, pov]);
 
   useEffect(() => {
     applyAutoRotate(autoRotate);
   }, [autoRotate, applyAutoRotate]);
 
+  // Re-frame to the market's default view when the instrument switches.
+  useEffect(() => {
+    try {
+      globeRef.current?.pointOfView(pov, 600);
+    } catch {}
+  }, [pov]);
+
   const resetView = useCallback(() => {
     try {
-      globeRef.current?.pointOfView(DEFAULT_POV, 600);
+      globeRef.current?.pointOfView(pov, 600);
     } catch {}
-  }, []);
+  }, [pov]);
 
   const frameScenario = useCallback(() => {
     try {
-      globeRef.current?.pointOfView(frameView(points), 700);
+      globeRef.current?.pointOfView(frameView(points, pov), 700);
     } catch {}
-  }, [points]);
+  }, [points, pov]);
 
   const isVector = style === "vector";
   const toggleCls = (on: boolean) =>
@@ -326,7 +346,8 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
           <span className="text-down">●</span> bearish
         </span>
         <span>
-          <span style={{ color: rgba(theme.accent, 1) }}>●</span> Henry Hub
+          <span style={{ color: rgba(theme.accent, 1) }}>●</span>{" "}
+          {benchmarkOf(instrument)}
         </span>
       </div>
       {arcs.length === 0 && (

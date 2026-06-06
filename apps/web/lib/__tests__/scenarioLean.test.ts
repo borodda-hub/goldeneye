@@ -37,6 +37,57 @@ describe("shockLean", () => {
       "bullish",
     );
   });
+
+  it("opec_supply: cut → bullish, raise → bearish", () => {
+    expect(shockLean({ type: "opec_supply", delta_mbpd: -1.5, days: 90 })).toBe(
+      "bullish",
+    );
+    expect(shockLean({ type: "opec_supply", delta_mbpd: 1.0, days: 90 })).toBe(
+      "bearish",
+    );
+  });
+
+  it("geopolitical_supply: outage → bullish, restored → bearish", () => {
+    expect(
+      shockLean({
+        type: "geopolitical_supply",
+        region: "hormuz",
+        delta_mbpd: -3,
+        days: 14,
+      }),
+    ).toBe("bullish");
+    expect(
+      shockLean({
+        type: "geopolitical_supply",
+        region: "hormuz",
+        delta_mbpd: 3,
+        days: 14,
+      }),
+    ).toBe("bearish");
+  });
+
+  it("demand: more demand → bullish, slowdown → bearish", () => {
+    expect(
+      shockLean({ type: "demand", region: "china", delta_mbpd: 1.5, days: 60 }),
+    ).toBe("bullish");
+    expect(
+      shockLean({
+        type: "demand",
+        region: "china",
+        delta_mbpd: -1.8,
+        days: 60,
+      }),
+    ).toBe("bearish");
+  });
+
+  it("inventory: draw → bullish, build/SPR release → bearish", () => {
+    expect(shockLean({ type: "inventory", delta_mmbbl: -25, days: 14 })).toBe(
+      "bullish",
+    );
+    expect(shockLean({ type: "inventory", delta_mmbbl: 60, days: 30 })).toBe(
+      "bearish",
+    );
+  });
 });
 
 describe("netLean", () => {

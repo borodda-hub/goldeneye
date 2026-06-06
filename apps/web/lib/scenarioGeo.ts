@@ -51,9 +51,9 @@ export interface GlobeArc {
   kind: "flow" | "network";
 }
 
-/** Translate the current shocks into glowing points + animated arcs. Every
- *  element is driven by a real shock + its sign-derived lean. */
-export function buildGlobeLayers(
+/** Natural-gas geography → glowing points + animated arcs. Every element is
+ *  driven by a real shock + its sign-derived lean. */
+function buildGasLayers(
   shocks: Shock[],
   palette: LeanPalette = DEFAULT_LEAN_COLOR,
 ): {
@@ -134,4 +134,182 @@ export function buildGlobeLayers(
   }
 
   return { points, arcs };
+}
+
+// ── Crude oil (Brent) geography ──────────────────────────────────────────────
+export const BRENT = { name: "Brent (North Sea)", lat: 58.0, lng: 1.5 };
+export const HORMUZ = { name: "Strait of Hormuz", lat: 26.6, lng: 56.5 };
+export const OPEC_PRODUCERS = [
+  { name: "Ras Tanura (Saudi)", lat: 26.64, lng: 50.16 },
+  { name: "Basra (Iraq)", lat: 30.5, lng: 47.8 },
+  { name: "Fujairah (UAE)", lat: 25.12, lng: 56.34 },
+];
+export const CRUDE_REFINING = [
+  { name: "Rotterdam (ARA)", lat: 51.9, lng: 4.5 },
+  { name: "Singapore", lat: 1.29, lng: 103.85 },
+  { name: "US Gulf Coast", lat: 29.7, lng: -93.5 },
+];
+export const CRUDE_STOCK_HUB = { name: "US Gulf / SPR", lat: 29.6, lng: -93.2 };
+const CRUDE_GEO_REGIONS: Record<
+  string,
+  { name: string; lat: number; lng: number }
+> = {
+  hormuz: HORMUZ,
+  russia: { name: "Russia (Primorsk/Urals)", lat: 60.0, lng: 28.7 },
+  mideast: { name: "Middle East Gulf", lat: 27.0, lng: 51.0 },
+  libya: { name: "Libya (Es Sider)", lat: 30.9, lng: 18.3 },
+  venezuela: { name: "Venezuela (Jose)", lat: 10.1, lng: -64.7 },
+};
+const CRUDE_DEMAND: Record<string, { name: string; lat: number; lng: number }> =
+  {
+    china: { name: "China demand (Shandong)", lat: 31.2, lng: 121.5 },
+    oecd: { name: "OECD Europe (ARA)", lat: 51.9, lng: 4.5 },
+    us: { name: "US demand (USGC)", lat: 29.7, lng: -93.5 },
+    global: { name: "Global seaborne", lat: 22.0, lng: 60.0 },
+  };
+
+/** Crude-oil geography → glowing points + animated arcs, all routed to the
+ *  Brent benchmark node. Sign-derived lean, same as gas. */
+function buildCrudeLayers(
+  shocks: Shock[],
+  palette: LeanPalette = DEFAULT_LEAN_COLOR,
+): { points: GlobePoint[]; arcs: GlobeArc[] } {
+  const points: GlobePoint[] = [
+    {
+      ...BRENT,
+      label: "Brent (crude benchmark)",
+      color: palette.neutral,
+      size: 0.9,
+      kind: "hub",
+    },
+  ];
+  const arcs: GlobeArc[] = [];
+  const seen = new Set<string>([BRENT.name]);
+
+  const addPoint = (
+    p: { name: string; lat: number; lng: number },
+    lean: Lean,
+    size = 0.6,
+  ) => {
+    if (seen.has(p.name)) return;
+    seen.add(p.name);
+    points.push({
+      lat: p.lat,
+      lng: p.lng,
+      label: p.name,
+      color: palette[lean],
+      size,
+      kind: "locus",
+    });
+  };
+  const toBrent = (
+    p: { lat: number; lng: number; name: string },
+    lean: Lean,
+  ) => {
+    arcs.push({
+      startLat: p.lat,
+      startLng: p.lng,
+      endLat: BRENT.lat,
+      endLng: BRENT.lng,
+      color: [palette[lean], palette.neutral],
+      label: `${p.name} → Brent`,
+      kind: "flow",
+    });
+  };
+
+  for (const s of shocks) {
+    const lean = shockLean(s);
+    if (s.type === "opec_supply") {
+      for (const pr of OPEC_PRODUCERS) {
+        addPoint(pr, lean, 0.6);
+        toBrent(pr, lean);
+      }
+    } else if (s.type === "geopolitical_supply") {
+      const r =
+        CRUDE_GEO_REGIONS[s.region.toLowerCase()] ?? CRUDE_GEO_REGIONS.mideast;
+      addPoint(r, lean, 0.75);
+      toBrent(r, lean);
+    } else if (s.type === "demand") {
+      const d = CRUDE_DEMAND[s.region.toLowerCase()] ?? CRUDE_DEMAND.global;
+      addPoint(d, lean, 0.75);
+      toBrent(d, lean);
+    } else if (s.type === "inventory") {
+      addPoint(CRUDE_STOCK_HUB, lean, 0.6);
+      toBrent(CRUDE_STOCK_HUB, lean);
+    }
+  }
+
+  return { points, arcs };
+}
+
+/** Dispatch to the right geography for the instrument (BZ = crude, else gas). */
+export function buildGlobeLayers(
+  shocks: Shock[],
+  palette: LeanPalette = DEFAULT_LEAN_COLOR,
+  instrument = "NG",
+): { points: GlobePoint[]; arcs: GlobeArc[] } {
+  return instrument === "BZ"
+    ? buildCrudeLayers(shocks, palette)
+    : buildGasLayers(shocks, palette);
+}
+
+/** The pricing-benchmark label for the instrument (legend + framing). */
+export function benchmarkOf(instrument: string): string {
+  return instrument === "BZ" ? "Brent" : "Henry Hub";
+}
+
+/** Faint reference infrastructure (real, static) for the instrument's market. */
+export function infraGeography(
+  instrument: string,
+): { name: string; lat: number; lng: number; role: string }[] {
+  if (instrument === "BZ") {
+    return [
+      ...OPEC_PRODUCERS.map((p) => ({ ...p, role: "producer" })),
+      { ...HORMUZ, role: "chokepoint" },
+      ...CRUDE_REFINING.map((r) => ({ ...r, role: "refining hub" })),
+      { ...CRUDE_STOCK_HUB, role: "storage" },
+    ];
+  }
+  return [
+    ...GULF_TERMINALS.map((t) => ({ ...t, role: "LNG terminal" })),
+    ...EUROPE.map((e) => ({ ...e, role: "import hub" })),
+    { ...STORAGE_HUB, role: "storage" },
+  ];
+}
+
+/** Faint static trade corridors (the physical network behind shocks). */
+export function networkCorridors(instrument: string): {
+  from: { lat: number; lng: number };
+  to: { lat: number; lng: number };
+  label: string;
+}[] {
+  if (instrument === "BZ") {
+    const arcs: {
+      from: { lat: number; lng: number };
+      to: { lat: number; lng: number };
+      label: string;
+    }[] = [];
+    for (const p of OPEC_PRODUCERS) {
+      arcs.push({ from: p, to: HORMUZ, label: `${p.name} → Strait of Hormuz` });
+    }
+    for (const r of CRUDE_REFINING) {
+      arcs.push({ from: HORMUZ, to: r, label: `Strait of Hormuz → ${r.name}` });
+    }
+    return arcs;
+  }
+  const arcs: {
+    from: { lat: number; lng: number };
+    to: { lat: number; lng: number };
+    label: string;
+  }[] = [];
+  for (const t of GULF_TERMINALS) {
+    for (const e of EUROPE) {
+      arcs.push({
+        from: t,
+        to: e,
+        label: `${t.name} → ${e.name} · LNG corridor`,
+      });
+    }
+  }
+  return arcs;
 }

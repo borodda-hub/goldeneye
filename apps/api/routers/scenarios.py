@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import uuid
 from pathlib import Path
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
@@ -11,12 +11,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.db.session import get_db
-from apps.api.repos import instruments as instr_repo
 from apps.api.repos import contracts as contract_repo
-from apps.api.repos import price_bars as price_repo
-from apps.api.services.price_lookup import get_latest_closes
+from apps.api.repos import instruments as instr_repo
 from apps.api.repos import scenarios as scenario_repo
 from apps.api.services.model_registry import ForecastContext
+from apps.api.services.price_lookup import get_latest_closes
 from apps.api.services.scenario_engine import run_scenario
 from apps.api.services.scenario_pdf import render_scenario_pdf
 
@@ -56,8 +55,44 @@ class StorageShock(BaseModel):
     days: int = Field(ge=1, le=60)
 
 
+# --- Crude oil (Brent / WTI) shock taxonomy ---------------------------------
+# Real oil-market units: million barrels/day for flows, million barrels for
+# stocks. Directionality matches the lean layer in apps/web/lib/scenarioLean.ts.
+class OpecSupplyShock(BaseModel):
+    type: Literal["opec_supply"]
+    delta_mbpd: float = Field(ge=-10, le=10)  # OPEC+ output change (cut < 0)
+    days: int = Field(ge=1, le=180)
+
+
+class GeopoliticalSupplyShock(BaseModel):
+    type: Literal["geopolitical_supply"]
+    region: str = Field(min_length=1, max_length=64)  # hormuz, russia, mideast, libya
+    delta_mbpd: float = Field(ge=-25, le=25)  # supply removed from market (outage < 0)
+    days: int = Field(ge=1, le=180)
+
+
+class DemandShock(BaseModel):
+    type: Literal["demand"]
+    region: str = Field(min_length=1, max_length=64)  # china, oecd, global
+    delta_mbpd: float = Field(ge=-15, le=15)  # demand change (more demand > 0)
+    days: int = Field(ge=1, le=180)
+
+
+class InventoryShock(BaseModel):
+    type: Literal["inventory"]
+    delta_mmbbl: float = Field(ge=-300, le=300)  # available stocks (build / SPR release > 0)
+    days: int = Field(ge=1, le=180)
+
+
 Shock = Annotated[
-    Union[WeatherShock, LngExportShock, ProductionShock, StorageShock],
+    WeatherShock
+    | LngExportShock
+    | ProductionShock
+    | StorageShock
+    | OpecSupplyShock
+    | GeopoliticalSupplyShock
+    | DemandShock
+    | InventoryShock,
     Field(discriminator="type"),
 ]
 

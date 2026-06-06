@@ -4,19 +4,23 @@ import type { Shock, ShockType } from "@/app/(app)/scenarios/types";
 import { HelpTip } from "@/components/HelpTip";
 import { leanArrow, leanColor, leanLabel, shockLean } from "@/lib/scenarioLean";
 import { SlidersHorizontal, Zap } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
   shocks: Shock[];
   onChange: (shocks: Shock[]) => void;
+  /** Which shock taxonomy to expose (gas vs crude). Defaults to NG. */
+  instrument?: string;
 }
 
-const SHOCK_TYPES: ShockType[] = [
-  "weather",
-  "lng_export",
-  "production",
-  "storage",
-];
+const SHOCK_TYPES_BY_INSTRUMENT: Record<string, ShockType[]> = {
+  NG: ["weather", "lng_export", "production", "storage"],
+  BZ: ["opec_supply", "geopolitical_supply", "demand", "inventory"],
+};
+
+function shockTypesFor(instrument: string): ShockType[] {
+  return SHOCK_TYPES_BY_INSTRUMENT[instrument] ?? SHOCK_TYPES_BY_INSTRUMENT.NG;
+}
 
 function defaultShock(type: ShockType): Shock {
   switch (type) {
@@ -28,6 +32,14 @@ function defaultShock(type: ShockType): Shock {
       return { type, delta_bcfd: -2, days: 7 };
     case "storage":
       return { type, delta_bcf: -20, days: 7 };
+    case "opec_supply":
+      return { type, delta_mbpd: -1.0, days: 90 };
+    case "geopolitical_supply":
+      return { type, region: "hormuz", delta_mbpd: -2.0, days: 14 };
+    case "demand":
+      return { type, region: "china", delta_mbpd: -1.5, days: 60 };
+    case "inventory":
+      return { type, delta_mmbbl: 50, days: 30 };
   }
 }
 
@@ -42,8 +54,8 @@ function ShockRow({
 }) {
   return (
     <div className="flex items-center gap-3 border border-line-1 bg-surface-1 px-3 py-2">
-      <span className="font-mono text-xs text-ink-2 uppercase tracking-widest w-24">
-        {shock.type.replace("_", " ")}
+      <span className="font-mono text-xs text-ink-2 uppercase tracking-widest w-24 shrink-0">
+        {shock.type.replace(/_/g, " ")}
       </span>
       <span
         className={`font-mono text-[10px] w-20 ${leanColor(shockLean(shock))}`}
@@ -113,13 +125,67 @@ function ShockRow({
         </label>
       )}
 
+      {(shock.type === "geopolitical_supply" || shock.type === "demand") && (
+        <label className="flex items-center gap-1 text-xs text-ink-3">
+          <span className="font-mono">region</span>
+          <input
+            className="bg-surface-2 border border-line-1 px-1 py-0.5 font-mono text-xs text-ink-2 w-28"
+            value={shock.region}
+            onChange={(e) => onUpdate({ ...shock, region: e.target.value })}
+          />
+        </label>
+      )}
+
+      {(shock.type === "opec_supply" ||
+        shock.type === "geopolitical_supply" ||
+        shock.type === "demand") && (
+        <label className="flex items-center gap-1 text-xs text-ink-3">
+          <span className="font-mono">Δ Mb/d</span>
+          <input
+            type="number"
+            step="0.1"
+            min={-25}
+            max={25}
+            className="bg-surface-2 border border-line-1 px-1 py-0.5 font-mono text-xs text-ink-2 w-20 tabular-nums"
+            value={shock.delta_mbpd}
+            onChange={(e) =>
+              onUpdate({ ...shock, delta_mbpd: Number(e.target.value) })
+            }
+          />
+        </label>
+      )}
+
+      {shock.type === "inventory" && (
+        <label className="flex items-center gap-1 text-xs text-ink-3">
+          <span className="font-mono">Δ MMbbl</span>
+          <input
+            type="number"
+            step="1"
+            min={-300}
+            max={300}
+            className="bg-surface-2 border border-line-1 px-1 py-0.5 font-mono text-xs text-ink-2 w-20 tabular-nums"
+            value={shock.delta_mmbbl}
+            onChange={(e) =>
+              onUpdate({ ...shock, delta_mmbbl: Number(e.target.value) })
+            }
+          />
+        </label>
+      )}
+
       <label className="flex items-center gap-1 text-xs text-ink-3">
         <span className="font-mono">days</span>
         <input
           type="number"
           step="1"
           min={1}
-          max={60}
+          max={
+            shock.type === "opec_supply" ||
+            shock.type === "geopolitical_supply" ||
+            shock.type === "demand" ||
+            shock.type === "inventory"
+              ? 180
+              : 60
+          }
           className="bg-surface-2 border border-line-1 px-1 py-0.5 font-mono text-xs text-ink-2 w-14 tabular-nums"
           value={shock.days}
           onChange={(e) => onUpdate({ ...shock, days: Number(e.target.value) })}
@@ -137,8 +203,14 @@ function ShockRow({
   );
 }
 
-export function ShockBuilder({ shocks, onChange }: Props) {
-  const [adding, setAdding] = useState<ShockType>("weather");
+export function ShockBuilder({ shocks, onChange, instrument = "NG" }: Props) {
+  const types = shockTypesFor(instrument);
+  const [adding, setAdding] = useState<ShockType>(types[0]);
+
+  // Keep the "add" selector valid when the instrument (taxonomy) changes.
+  useEffect(() => {
+    setAdding(types[0]);
+  }, [types]);
 
   const update = (idx: number, next: Shock) => {
     const copy = [...shocks];
@@ -203,9 +275,9 @@ export function ShockBuilder({ shocks, onChange }: Props) {
           value={adding}
           onChange={(e) => setAdding(e.target.value as ShockType)}
         >
-          {SHOCK_TYPES.map((t) => (
+          {types.map((t) => (
             <option key={t} value={t}>
-              {t.replace("_", " ")}
+              {t.replace(/_/g, " ")}
             </option>
           ))}
         </select>

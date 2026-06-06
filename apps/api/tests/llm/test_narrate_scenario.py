@@ -1,7 +1,7 @@
 """
 LLM corpus eval for narrate_scenario.
 
-For each of the 6 scenario templates, we provide a plausible fixture narrative response.
+For each scenario template, we provide a plausible fixture narrative response.
 The test verifies:
 1. The inference-marker regex matches (institutional hedged tone).
 2. All 5 required narrative sections are detectable via keyword regex.
@@ -113,6 +113,43 @@ FIXTURE_RESPONSES: dict[str, str] = {
         "coal-to-gas elasticity could blunt the burn impulse. NWS temperature anomaly maps and "
         "ERCOT/MISO daily gen-mix data would confirm or invalidate the scenario."
     ),
+    "opec_surprise_cut": (
+        "The scenario assumes OPEC+ delivers an unscheduled 1.5 Mb/d production cut sustained over "
+        "roughly a quarter. If the cut materializes, balances would shift tighter as seaborne "
+        "supply is withdrawn. This reads as bullish directional pressure with moderate confidence "
+        "over a multi-week timeframe. However, the counterargument is that OPEC+ compliance is "
+        "historically imperfect and announced cuts often exceed realized ones. OPEC+ JMMC "
+        "communiques and Argus/Platts realized-production estimates would validate or invalidate "
+        "the scenario."
+    ),
+    "hormuz_disruption": (
+        "The scenario assumes an escalation threatens transit through the Strait of Hormuz, "
+        "removing roughly 3 Mb/d from the seaborne market alongside a modest inventory draw. If "
+        "flows are interrupted, the data would shift toward a wider risk premium and tighter "
+        "prompt balances. This appears consistent with bullish directional pressure, though only "
+        "low confidence given the binary, headline-driven path. However, the counterargument is "
+        "that risk premia decay quickly when physical flows are not actually interrupted. "
+        "Tanker-tracking through the chokepoint and insurance and freight-rate moves would "
+        "confirm or invalidate the scenario."
+    ),
+    "china_demand_slowdown": (
+        "The scenario assumes a sharper-than-expected Chinese slowdown cuts apparent oil demand by "
+        "about 1.8 Mb/d for two months. If demand softens as assumed, balances would shift looser "
+        "into the back half of the year. This reads as bearish directional pressure with moderate "
+        "confidence over a multi-week timeframe. However, the counterargument is that Chinese "
+        "demand estimates are revised substantially and high-frequency refinery-run data may not "
+        "confirm the shift. China apparent-demand data and IEA/EIA monthly revisions would "
+        "validate or invalidate the scenario."
+    ),
+    "coordinated_spr_release": (
+        "The scenario assumes IEA members announce a coordinated SPR release adding roughly 60 "
+        "MMbbl of government barrels over a month. If the release plays out, available supply "
+        "would shift higher and cap prompt prices. This appears consistent with bearish "
+        "directional pressure with low confidence, as SPR actions are finite and partly "
+        "anticipated. However, the counterargument is that a single release is a one-off that the "
+        "curve may already discount. Weekly EIA crude stocks and DOE SPR level updates would "
+        "confirm or invalidate the scenario."
+    ),
 }
 
 
@@ -181,8 +218,8 @@ def test_fixture_has_section_5_validation(template_id: str) -> None:
     )
 
 
-def test_fixture_covers_all_six_templates() -> None:
-    """Sanity: the fixture set covers all 6 ids in packages/fixtures/scenario_templates.json."""
+def test_fixture_covers_all_templates() -> None:
+    """Sanity: the fixture set covers every id in packages/fixtures/scenario_templates.json."""
     import json
     from pathlib import Path
 

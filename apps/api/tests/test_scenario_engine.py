@@ -155,6 +155,52 @@ def test_apply_returns_empty_assumptions_for_empty_shocks(baseline_ctx: Forecast
 
 
 # ---------------------------------------------------------------------------
+# apply() — crude oil (Brent) shock taxonomy
+# ---------------------------------------------------------------------------
+def test_apply_opec_supply_cut_is_bullish(baseline_ctx: ForecastContext) -> None:
+    """An OPEC+ cut (negative Mb/d) should push closes up."""
+    shocks = [{"type": "opec_supply", "delta_mbpd": -1.5, "days": 90}]
+    shocked, assumptions, max_days = apply(shocks, baseline_ctx)
+
+    # -1.5 × -3.0 × min(90/7, 4.0)=4.0 = +18.0 on every close.
+    assert shocked.closes[0] == pytest.approx(baseline_ctx.closes[0] + 18.0)
+    assert max_days == 90
+    assert len(assumptions) == 1
+    assert "Mb/d" in assumptions[0]
+
+
+def test_apply_demand_drop_is_bearish(baseline_ctx: ForecastContext) -> None:
+    """A demand drop (negative Mb/d) should push closes down."""
+    shocks = [{"type": "demand", "region": "china", "delta_mbpd": -2.0, "days": 7}]
+    shocked, _assumptions, _max_days = apply(shocks, baseline_ctx)
+
+    # -2.0 × 3.0 × 1.0 = -6.0 on every close.
+    assert shocked.closes[0] == pytest.approx(baseline_ctx.closes[0] - 6.0)
+
+
+def test_apply_inventory_build_is_bearish(baseline_ctx: ForecastContext) -> None:
+    """A stock build / SPR release (positive MMbbl) should push closes down."""
+    shocks = [{"type": "inventory", "delta_mmbbl": 60.0, "days": 7}]
+    shocked, _assumptions, _max_days = apply(shocks, baseline_ctx)
+
+    # 60 × -0.05 × 1.0 = -3.0 on every close.
+    assert shocked.closes[0] == pytest.approx(baseline_ctx.closes[0] - 3.0)
+
+
+def test_apply_composes_crude_shocks(baseline_ctx: ForecastContext) -> None:
+    shocks = [
+        {"type": "geopolitical_supply", "region": "hormuz", "delta_mbpd": -3.0, "days": 14},
+        {"type": "inventory", "delta_mmbbl": -25.0, "days": 14},
+    ]
+    shocked, assumptions, max_days = apply(shocks, baseline_ctx)
+
+    assert max_days == 14
+    assert len(assumptions) == 2
+    # Outage bullish (+), draw bullish (+) — net up vs baseline.
+    assert shocked.closes[0] > baseline_ctx.closes[0]
+
+
+# ---------------------------------------------------------------------------
 # run_scenario integration over all 6 templates
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
@@ -162,7 +208,7 @@ async def test_all_templates_run_to_completion(
     templates: list[dict],
     baseline_ctx: ForecastContext,
 ) -> None:
-    assert len(templates) == 6, "Expected 6 scenario templates in the fixture file."
+    assert len(templates) == 10, "Expected 10 scenario templates in the fixture file."
 
     for template in templates:
         result = await run_scenario(

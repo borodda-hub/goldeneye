@@ -184,10 +184,14 @@ Scoring logic (`services/signal_scoring.py`):
 ```
 
 Shocks are validated as a strict Pydantic v2 discriminated union — each `type`
-admits only its own fields with the bounds below. The 6 fixture templates in
-`packages/fixtures/scenario_templates.json` compose these 4 primitives;
-"hurricane" = `production + lng_export`, "demand" = multiple `weather`, etc.
-There are no composite shock types.
+admits only its own fields with the bounds below. The shock taxonomy is
+**instrument-specific**: natural gas (`NG`) uses the gas primitives, crude oil
+(`BZ`) uses the crude primitives. The 10 fixture templates in
+`packages/fixtures/scenario_templates.json` (6 NG + 4 BZ) compose these;
+"hurricane" = `production + lng_export`, "Hormuz disruption" =
+`geopolitical_supply + inventory`, etc. There are no composite shock types.
+
+Natural gas (`NG`) — units in MMBtu / Bcf:
 
 | `type` | Required fields | Bounds |
 | --- | --- | --- |
@@ -195,6 +199,15 @@ There are no composite shock types.
 | `lng_export` | `delta_bcfd`, `days` | `delta_bcfd ∈ [-15, 15]`, `days ∈ [1, 60]` |
 | `production` | `delta_bcfd`, `days` | `delta_bcfd ∈ [-15, 15]`, `days ∈ [1, 60]` |
 | `storage` | `delta_bcf`, `days` | `delta_bcf ∈ [-500, 500]`, `days ∈ [1, 60]` |
+
+Crude oil (`BZ`) — units in million barrels/day (Mb/d) and million barrels (MMbbl):
+
+| `type` | Required fields | Bounds |
+| --- | --- | --- |
+| `opec_supply` | `delta_mbpd`, `days` | `delta_mbpd ∈ [-10, 10]` (cut < 0), `days ∈ [1, 180]` |
+| `geopolitical_supply` | `region` (string, 1-64 chars), `delta_mbpd`, `days` | `delta_mbpd ∈ [-25, 25]` (outage < 0), `days ∈ [1, 180]` |
+| `demand` | `region` (string, 1-64 chars), `delta_mbpd`, `days` | `delta_mbpd ∈ [-15, 15]` (more demand > 0), `days ∈ [1, 180]` |
+| `inventory` | `delta_mmbbl`, `days` | `delta_mmbbl ∈ [-300, 300]` (build / SPR release > 0), `days ∈ [1, 180]` |
 
 Validation rules:
 - `shocks` must contain at least 1 and at most 10 items.
@@ -223,7 +236,7 @@ Response:
 }
 ```
 
-`GET /v1/scenarios/templates` — preset shock templates (cold snap, LNG outage, production freeze, demand collapse, geopolitical shock, hurricane).
+`GET /v1/scenarios/templates` — preset shock templates for both markets: NG (cold snap, LNG outage, production freeze, geopolitical demand, hurricane, heat wave) and Brent crude / BZ (OPEC+ cut, Strait of Hormuz disruption, China demand slowdown, coordinated SPR release). The frontend filters by the selected instrument.
 `GET /v1/scenarios/runs?limit=20` — recent runs (id, name, created_at, instrument_id).
 `GET /v1/scenarios/runs/{run_id}` — full stored run including the original
 shocks list and the complete `result` block above. Returns 404 if the

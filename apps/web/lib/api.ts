@@ -227,7 +227,9 @@ export async function getScenarioRun(runId: string): Promise<unknown> {
 }
 
 export async function getScenarioTemplates(): Promise<unknown> {
-  return apiFetch("/v1/scenarios/templates");
+  // Don't cache — the gallery must reflect the current template fixture (e.g.
+  // newly added instruments) without waiting for a redeploy.
+  return apiFetch("/v1/scenarios/templates", { cache: "no-store" });
 }
 
 export async function getScenarioRuns(limit?: number): Promise<unknown> {

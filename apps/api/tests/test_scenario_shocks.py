@@ -8,7 +8,11 @@ import pytest
 from pydantic import ValidationError
 
 from apps.api.routers.scenarios import (
+    DemandShock,
+    GeopoliticalSupplyShock,
+    InventoryShock,
     LngExportShock,
+    OpecSupplyShock,
     ProductionShock,
     ScenarioRunRequest,
     StorageShock,
@@ -173,3 +177,72 @@ def test_discriminator_dispatches_to_correct_class() -> None:
     assert isinstance(req.shocks[1], LngExportShock)
     assert isinstance(req.shocks[2], ProductionShock)
     assert isinstance(req.shocks[3], StorageShock)
+
+
+# ---------------------------------------------------------------------------
+# Crude oil (Brent / WTI) shock taxonomy
+# ---------------------------------------------------------------------------
+def test_accepts_valid_opec_supply_shock() -> None:
+    shock = OpecSupplyShock(type="opec_supply", delta_mbpd=-1.5, days=90)
+    assert shock.type == "opec_supply"
+    assert shock.delta_mbpd == -1.5
+    assert shock.days == 90
+
+
+def test_accepts_valid_geopolitical_supply_shock() -> None:
+    shock = GeopoliticalSupplyShock(
+        type="geopolitical_supply", region="hormuz", delta_mbpd=-3.0, days=14
+    )
+    assert shock.type == "geopolitical_supply"
+    assert shock.region == "hormuz"
+    assert shock.delta_mbpd == -3.0
+
+
+def test_accepts_valid_demand_shock() -> None:
+    shock = DemandShock(type="demand", region="china", delta_mbpd=-1.8, days=60)
+    assert shock.type == "demand"
+    assert shock.region == "china"
+    assert shock.delta_mbpd == -1.8
+
+
+def test_accepts_valid_inventory_shock() -> None:
+    shock = InventoryShock(type="inventory", delta_mmbbl=60.0, days=30)
+    assert shock.type == "inventory"
+    assert shock.delta_mmbbl == 60.0
+    assert shock.days == 30
+
+
+def test_rejects_out_of_bounds_opec_delta_mbpd() -> None:
+    with pytest.raises(ValidationError):
+        OpecSupplyShock(type="opec_supply", delta_mbpd=-50.0, days=30)
+
+
+def test_rejects_out_of_bounds_inventory_delta_mmbbl() -> None:
+    with pytest.raises(ValidationError):
+        InventoryShock(type="inventory", delta_mmbbl=1000.0, days=30)
+
+
+def test_rejects_missing_region_in_geopolitical_supply() -> None:
+    with pytest.raises(ValidationError):
+        GeopoliticalSupplyShock.model_validate(
+            {"type": "geopolitical_supply", "delta_mbpd": -2.0, "days": 10}
+        )
+
+
+def test_discriminator_dispatches_crude_shocks() -> None:
+    req = ScenarioRunRequest.model_validate(
+        {
+            "instrument": "BZ",
+            "name": "Crude mix",
+            "shocks": [
+                {"type": "opec_supply", "delta_mbpd": -1.5, "days": 90},
+                {"type": "geopolitical_supply", "region": "hormuz", "delta_mbpd": -3.0, "days": 14},
+                {"type": "demand", "region": "china", "delta_mbpd": -1.8, "days": 60},
+                {"type": "inventory", "delta_mmbbl": 60.0, "days": 30},
+            ],
+        }
+    )
+    assert isinstance(req.shocks[0], OpecSupplyShock)
+    assert isinstance(req.shocks[1], GeopoliticalSupplyShock)
+    assert isinstance(req.shocks[2], DemandShock)
+    assert isinstance(req.shocks[3], InventoryShock)

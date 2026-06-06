@@ -53,4 +53,23 @@ describe("ShockBuilder", () => {
     render(<ShockBuilder shocks={shocks} onChange={() => {}} />);
     expect(screen.getByText(/2 \/ 10/)).toBeInTheDocument();
   });
+
+  it("renders a crude (Brent) shock with Mb/d fields", () => {
+    const shocks: Shock[] = [
+      { type: "opec_supply", delta_mbpd: -1.5, days: 90 },
+    ];
+    render(
+      <ShockBuilder shocks={shocks} onChange={() => {}} instrument="BZ" />,
+    );
+    expect(screen.getByDisplayValue("-1.5")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("90")).toBeInTheDocument();
+  });
+
+  it("adds a crude shock type when instrument is Brent", () => {
+    const onChange = vi.fn();
+    render(<ShockBuilder shocks={[]} onChange={onChange} instrument="BZ" />);
+    fireEvent.click(screen.getByText(/\+ Add/));
+    const next = onChange.mock.calls[0][0] as Shock[];
+    expect(next[0].type).toBe("opec_supply");
+  });
 });

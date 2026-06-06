@@ -40,7 +40,13 @@ interface Props {
   initialRuns: RecentRun[];
 }
 
+const INSTRUMENTS: { id: string; label: string }[] = [
+  { id: "NG", label: "Natural Gas" },
+  { id: "BZ", label: "Brent Crude" },
+];
+
 export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
+  const [instrument, setInstrument] = useState<string>("NG");
   const [selected, setSelected] = useState<ScenarioTemplate | null>(null);
   const [shocks, setShocks] = useState<Shock[]>([]);
   const [name, setName] = useState<string>("");
@@ -51,7 +57,7 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
   const mutation = useMutation<ScenarioRunResponse, Error, void>({
     mutationFn: async () => {
       return (await runScenario({
-        instrument: "NG",
+        instrument,
         name: name.trim() || "Untitled scenario",
         shocks: shocks as unknown as Array<Record<string, unknown>>,
       })) as ScenarioRunResponse;
@@ -61,6 +67,21 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
       markStep("scenario");
     },
   });
+
+  // The shock taxonomy is instrument-specific, so switching markets resets the
+  // workspace (a gas shock has no meaning on a crude scenario, and vice versa).
+  const switchInstrument = (id: string) => {
+    if (id === instrument) return;
+    setInstrument(id);
+    setSelected(null);
+    setShocks([]);
+    setName("");
+    setLastResponse(null);
+  };
+
+  const visibleTemplates = initialTemplates.filter(
+    (t) => t.instrument === instrument,
+  );
 
   const loadTemplate = (t: ScenarioTemplate) => {
     setSelected(t);
@@ -77,7 +98,28 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
         icon={FlaskConical}
         title="Scenario Lab"
         subtitle="Stress tests · what-if shocks"
-        right={<HelpTip k="scenarioLab" />}
+        right={
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest">
+              {INSTRUMENTS.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => switchInstrument(m.id)}
+                  aria-pressed={instrument === m.id}
+                  className={`px-2 py-1 border transition-colors ${
+                    instrument === m.id
+                      ? "border-accent text-accent"
+                      : "border-line-1 text-ink-4 hover:text-accent"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+            <HelpTip k="scenarioLab" />
+          </div>
+        }
       />
 
       {/* Templates */}
@@ -87,7 +129,7 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
           <HelpTip k="templates" className="ml-1" />
         </h2>
         <TemplateGallery
-          templates={initialTemplates}
+          templates={visibleTemplates}
           onSelect={loadTemplate}
           selectedId={selected?.id}
         />
@@ -126,7 +168,11 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
                 </div>
               )}
             </div>
-            <ShockBuilder shocks={shocks} onChange={setShocks} />
+            <ShockBuilder
+              shocks={shocks}
+              onChange={setShocks}
+              instrument={instrument}
+            />
             {mutation.isError && (
               <p className="text-xs text-down font-mono">
                 Run failed: {mutation.error?.message ?? "unknown error"}
@@ -138,7 +184,7 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
 
         {/* Right — impact globe, with the preview / narrated result beneath it. */}
         <div className="min-w-0 flex flex-col gap-4">
-          <ScenarioGlobe shocks={shocks} />
+          <ScenarioGlobe shocks={shocks} instrument={instrument} />
           {lastResponse ? (
             <ResultPanel
               result={lastResponse.result}

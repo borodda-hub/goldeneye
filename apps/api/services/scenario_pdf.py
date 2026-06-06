@@ -59,6 +59,16 @@ def _fmt_range(r: Any) -> str:
     return f"{float(lo) * 100:+.2f}% to {float(hi) * 100:+.2f}%"
 
 
+_CRUDE_SHOCK_TYPES = {"opec_supply", "geopolitical_supply", "demand", "inventory"}
+
+
+def _instrument_label(shocks: list[dict[str, Any]]) -> str:
+    """Derive the market label from the shock taxonomy present in the run."""
+    if any(s.get("type") in _CRUDE_SHOCK_TYPES for s in shocks):
+        return "BZ · Brent Crude Oil"
+    return "NG · Henry Hub Natural Gas"
+
+
 def _fmt_shock_magnitude(s: dict[str, Any]) -> str:
     t = s.get("type")
     if t == "weather":
@@ -67,6 +77,13 @@ def _fmt_shock_magnitude(s: dict[str, Any]) -> str:
         return f"{s.get('delta_bcfd', 0):+.2f} Bcf/d"
     if t == "storage":
         return f"{s.get('delta_bcf', 0):+.1f} Bcf vs consensus"
+    # Crude oil shocks.
+    if t == "opec_supply":
+        return f"{s.get('delta_mbpd', 0):+.2f} Mb/d"
+    if t in ("geopolitical_supply", "demand"):
+        return f"{s.get('region', '?')}: {s.get('delta_mbpd', 0):+.2f} Mb/d"
+    if t == "inventory":
+        return f"{s.get('delta_mmbbl', 0):+.1f} MMbbl"
     return "—"
 
 
@@ -277,7 +294,9 @@ def render_scenario_pdf(run: dict[str, Any]) -> bytes:
     story.append(Paragraph("GOLDENEYE · RESEARCH TERMINAL", styles["brand"]))
     story.append(Paragraph("SCENARIO REPORT", styles["brand"]))
     story.append(Paragraph(_esc(name), styles["title"]))
-    instrument_text = f"Instrument: NG · Henry Hub Natural Gas &nbsp;&nbsp;|&nbsp;&nbsp; Generated: {_esc(created_at)}"
+    sep = "&nbsp;&nbsp;|&nbsp;&nbsp;"
+    label = _instrument_label(run.get("shocks") or [])
+    instrument_text = f"Instrument: {label}{sep}Generated: {_esc(created_at)}"
     story.append(Paragraph(instrument_text, styles["subtitle"]))
     story.append(Spacer(1, 0.18 * inch))
 

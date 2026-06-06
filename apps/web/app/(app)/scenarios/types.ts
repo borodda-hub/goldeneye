@@ -1,4 +1,14 @@
-export type ShockType = "weather" | "lng_export" | "production" | "storage";
+export type ShockType =
+  // Natural gas (NG)
+  | "weather"
+  | "lng_export"
+  | "production"
+  | "storage"
+  // Crude oil (Brent / WTI)
+  | "opec_supply"
+  | "geopolitical_supply"
+  | "demand"
+  | "inventory";
 
 export interface WeatherShock {
   type: "weather";
@@ -25,11 +35,41 @@ export interface StorageShock {
   days: number;
 }
 
+export interface OpecSupplyShock {
+  type: "opec_supply";
+  delta_mbpd: number;
+  days: number;
+}
+
+export interface GeopoliticalSupplyShock {
+  type: "geopolitical_supply";
+  region: string;
+  delta_mbpd: number;
+  days: number;
+}
+
+export interface DemandShock {
+  type: "demand";
+  region: string;
+  delta_mbpd: number;
+  days: number;
+}
+
+export interface InventoryShock {
+  type: "inventory";
+  delta_mmbbl: number;
+  days: number;
+}
+
 export type Shock =
   | WeatherShock
   | LngExportShock
   | ProductionShock
-  | StorageShock;
+  | StorageShock
+  | OpecSupplyShock
+  | GeopoliticalSupplyShock
+  | DemandShock
+  | InventoryShock;
 
 export interface ScenarioTemplate {
   id: string;

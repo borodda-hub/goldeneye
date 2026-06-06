@@ -25,17 +25,32 @@ def test_scenario_templates_fixture_exists():
     assert path.exists(), f"Expected fixture at {path}"
 
 
-def test_scenario_templates_fixture_has_six_well_formed_templates():
+def test_scenario_templates_fixture_has_well_formed_templates():
     import json
 
     path = _FIXTURES_DIR / "scenario_templates.json"
     templates = json.loads(path.read_text(encoding="utf-8"))
     assert isinstance(templates, list)
-    assert len(templates) == 6, f"Expected 6 templates, got {len(templates)}"
-    valid_types = {"weather", "lng_export", "production", "storage"}
+    assert len(templates) == 10, f"Expected 10 templates, got {len(templates)}"
+    # Gas + crude oil shock taxonomies.
+    valid_types = {
+        "weather",
+        "lng_export",
+        "production",
+        "storage",
+        "opec_supply",
+        "geopolitical_supply",
+        "demand",
+        "inventory",
+    }
+    by_instrument: dict[str, int] = {}
     for t in templates:
         assert isinstance(t, dict)
         assert "name" in t and isinstance(t["name"], str)
         assert "shocks" in t and isinstance(t["shocks"], list) and t["shocks"]
+        by_instrument[t["instrument"]] = by_instrument.get(t["instrument"], 0) + 1
         for shock in t["shocks"]:
             assert shock.get("type") in valid_types, f"bad shock type: {shock}"
+    # Both natural gas (NG) and Brent crude (BZ) are represented.
+    assert by_instrument.get("NG", 0) == 6
+    assert by_instrument.get("BZ", 0) == 4
