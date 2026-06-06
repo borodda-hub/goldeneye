@@ -513,6 +513,52 @@ def extract_prediction_messages(
     )
 
 
+def devils_advocate_messages(thesis: dict) -> PromptParts:  # type: ignore[type-arg]
+    """Build messages for devils_advocate — an adversarial review that steelmans
+    the OPPOSITE of the thesis, runs a pre-mortem, and names the specific signals
+    that would change the analyst's mind. A discipline layer, not a verdict."""
+    statement = thesis.get("statement", "")
+    supporting = thesis.get("supporting_evidence") or []
+    contradicting = thesis.get("contradicting_evidence") or []
+    conviction_pct = thesis.get("conviction_pct", "N/A")
+
+    def _factors(items: list[dict]) -> str:
+        parts = []
+        for it in items[:5]:
+            factor = str(it.get("factor", "")).strip()
+            note = str(it.get("note", "")).strip()
+            parts.append(f"{factor} — {note}" if note else factor)
+        return "; ".join(p for p in parts if p) or "none"
+
+    task_instructions = (
+        "Task: devils_advocate. Argue the OTHER side. Steelman the strongest "
+        "case AGAINST this thesis, run a pre-mortem (assume it has already failed), "
+        "and name the specific data that would prove it wrong. This institutionalizes "
+        "disconfirmation — do NOT endorse or reject the thesis, and do NOT give advice. "
+        "Return ONLY a valid JSON object, no markdown fences, matching this schema:\n"
+        "{\n"
+        '  "counter_thesis": "<1-2 sentences: the strongest steelmanned case against>",\n'
+        '  "premortem": [<2-3 short strings: "it is weeks later and the thesis failed — '
+        'most likely because ...">],\n'
+        '  "invalidation_signals": [<2-4 short strings: a SPECIFIC datapoint + when to '
+        'check it that would change the analyst\'s mind>]\n'
+        "}\n"
+        "Each list string ≤ 140 chars. Be specific to the inputs; no generic boilerplate."
+    )
+    user_content = (
+        "Thesis to challenge:\n"
+        f'- Statement: "{statement}"\n'
+        f"- Conviction: {conviction_pct}%\n"
+        f"- The analyst's supporting evidence: {_factors(supporting)}\n"
+        f"- Contradicting evidence already noted: {_factors(contradicting)}"
+    )
+
+    return PromptParts(
+        system_blocks=[_persona_block(), _task_block(task_instructions)],
+        user_messages=[{"role": "user", "content": user_content}],
+    )
+
+
 def extract_event_messages(article: dict) -> PromptParts:  # type: ignore[type-arg]
     """Build messages for extract_event."""
     title = article.get("title", "N/A")

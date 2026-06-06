@@ -3,17 +3,24 @@
 import { CollapseToggle } from "@/components/CollapseToggle";
 import { HelpTip } from "@/components/HelpTip";
 import { SkeletonText } from "@/components/Skeleton";
-import type { Thesis, ThesisCritique, ThesisSeed } from "@/lib/api";
+import type {
+  Thesis,
+  ThesisCritique,
+  ThesisDevilsAdvocate,
+  ThesisSeed,
+} from "@/lib/api";
 import { markStep } from "@/lib/onboarding";
 import {
   useCreateThesis,
   useCritiqueThesis,
   useCurrentThesis,
+  useDevilsAdvocate,
   usePatchThesis,
   useThesisSeed,
 } from "@/lib/queries";
 import { useCollapsed } from "@/lib/useCollapsed";
 import { useState } from "react";
+import { DevilsAdvocateDrawer } from "./DevilsAdvocateDrawer";
 import { ThesisCritiqueDrawer } from "./ThesisCritiqueDrawer";
 import { ThesisEditModal } from "./ThesisEditModal";
 
@@ -44,11 +51,15 @@ function ReadView({
   onEdit,
   onCritique,
   critiqueLoading,
+  onDevilsAdvocate,
+  devilsLoading,
 }: {
   thesis: Thesis;
   onEdit: () => void;
   onCritique: () => void;
   critiqueLoading: boolean;
+  onDevilsAdvocate: () => void;
+  devilsLoading: boolean;
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -107,6 +118,14 @@ function ReadView({
             className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-50"
           >
             {critiqueLoading ? "…" : "→ Critique"}
+          </button>
+          <button
+            type="button"
+            onClick={onDevilsAdvocate}
+            disabled={devilsLoading}
+            className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-50"
+          >
+            {devilsLoading ? "…" : "→ Devil's Advocate"}
           </button>
           <button
             type="button"
@@ -187,6 +206,10 @@ export function WorkingThesisCard({
   const [critique, setCritique] = useState<ThesisCritique | null>(null);
   const [critiqueOpen, setCritiqueOpen] = useState(false);
   const [critiqueError, setCritiqueError] = useState<string | null>(null);
+  const devilsMut = useDevilsAdvocate();
+  const [devils, setDevils] = useState<ThesisDevilsAdvocate | null>(null);
+  const [devilsOpen, setDevilsOpen] = useState(false);
+  const [devilsError, setDevilsError] = useState<string | null>(null);
 
   async function handleSave(next: {
     statement: string;
@@ -223,6 +246,20 @@ export function WorkingThesisCard({
     } catch (err) {
       setCritiqueError(
         err instanceof Error ? err.message : "Failed to fetch critique.",
+      );
+    }
+  }
+
+  async function handleDevilsAdvocate() {
+    if (!thesis) return;
+    setDevilsOpen(true);
+    setDevils(null);
+    setDevilsError(null);
+    try {
+      setDevils(await devilsMut.mutateAsync(thesis.id));
+    } catch (err) {
+      setDevilsError(
+        err instanceof Error ? err.message : "Failed to run Devil's Advocate.",
       );
     }
   }
@@ -274,6 +311,8 @@ export function WorkingThesisCard({
           onEdit={() => setEditOpen(true)}
           onCritique={handleCritique}
           critiqueLoading={critiqueMut.isPending}
+          onDevilsAdvocate={handleDevilsAdvocate}
+          devilsLoading={devilsMut.isPending}
         />
       ) : (
         <EmptyView onDraft={handleDraft} />
@@ -296,6 +335,13 @@ export function WorkingThesisCard({
         error={critiqueError}
         critique={critique}
         onClose={() => setCritiqueOpen(false)}
+      />
+      <DevilsAdvocateDrawer
+        open={devilsOpen}
+        loading={devilsMut.isPending}
+        error={devilsError}
+        review={devils}
+        onClose={() => setDevilsOpen(false)}
       />
     </div>
   );

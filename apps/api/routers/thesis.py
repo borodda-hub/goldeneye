@@ -23,6 +23,7 @@ from apps.api.repos import instruments as instruments_repo
 from apps.api.repos import scenarios as scenarios_repo
 from apps.api.repos import theses as theses_repo
 from apps.api.services.llm_explainer import critique_thesis as llm_critique_thesis
+from apps.api.services.llm_explainer import devils_advocate as llm_devils_advocate
 
 router = APIRouter(prefix="/v1/thesis", tags=["thesis"])
 
@@ -176,6 +177,33 @@ async def critique_thesis(
         "missed_risks": critique["missed_risks"],
         "blind_spots": critique["blind_spots"],
         "questions": critique["questions"],
+        "safety": safety.model_dump(mode="json"),
+    }
+
+
+@router.post("/{thesis_id}/devils-advocate")
+async def devils_advocate_thesis(
+    thesis_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Run an adversarial review: a steelmanned counter-case, a pre-mortem, and
+    the specific signals that would change the analyst's mind. The thesis is not
+    modified — this is a discipline probe, not a verdict."""
+    thesis = await theses_repo.get_by_id(session, thesis_id)
+    if thesis is None:
+        raise HTTPException(status_code=404, detail="Thesis not found")
+
+    payload = {
+        "statement": thesis.statement,
+        "supporting_evidence": thesis.supporting_evidence,
+        "contradicting_evidence": thesis.contradicting_evidence,
+        "conviction_pct": thesis.conviction_pct,
+    }
+    review, safety = await llm_devils_advocate(payload)
+    return {
+        "counter_thesis": review["counter_thesis"],
+        "premortem": review["premortem"],
+        "invalidation_signals": review["invalidation_signals"],
         "safety": safety.model_dump(mode="json"),
     }
 

@@ -7,6 +7,7 @@ const useThesisSeedMock = vi.fn();
 const useCreateThesisMock = vi.fn();
 const usePatchThesisMock = vi.fn();
 const useCritiqueThesisMock = vi.fn();
+const useDevilsAdvocateMock = vi.fn();
 
 vi.mock("@/lib/queries", () => ({
   useCurrentThesis: (...args: unknown[]) => useCurrentThesisMock(...args),
@@ -14,6 +15,7 @@ vi.mock("@/lib/queries", () => ({
   useCreateThesis: (...args: unknown[]) => useCreateThesisMock(...args),
   usePatchThesis: (...args: unknown[]) => usePatchThesisMock(...args),
   useCritiqueThesis: (...args: unknown[]) => useCritiqueThesisMock(...args),
+  useDevilsAdvocate: (...args: unknown[]) => useDevilsAdvocateMock(...args),
 }));
 
 import { WorkingThesisCard } from "../WorkingThesisCard";
@@ -64,6 +66,22 @@ beforeEach(() => {
   useCreateThesisMock.mockReset();
   usePatchThesisMock.mockReset();
   useCritiqueThesisMock.mockReset();
+  useDevilsAdvocateMock.mockReset();
+  useDevilsAdvocateMock.mockReturnValue({
+    mutateAsync: vi.fn().mockResolvedValue({
+      counter_thesis: "Deficit may be priced in.",
+      premortem: ["Production rebounds"],
+      invalidation_signals: ["Smaller EIA print Thu"],
+      safety: {
+        confidence: "medium",
+        caveats: ["A probe, not a verdict."],
+        as_of: "2026-05-12T12:00:00Z",
+        disclaimer: "Goldeneye is a research terminal.",
+      },
+    }),
+    isPending: false,
+    error: null,
+  });
 
   useThesisSeedMock.mockReturnValue({ data: undefined, isLoading: false });
   useCreateThesisMock.mockReturnValue({

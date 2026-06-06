@@ -69,7 +69,7 @@ def select_model(task: str, ctx: dict[str, Any] | None = None) -> str:
         if confidence_pct >= _REVIEW_JOURNAL_OPUS_MIN_CONFIDENCE_PCT:
             return settings.llm_model_premium
 
-    if task == "critique_thesis":
+    if task in ("critique_thesis", "devils_advocate"):
         conviction_pct = float(ctx.get("conviction_pct") or 0.0)
         if conviction_pct >= _CRITIQUE_THESIS_OPUS_MIN_CONVICTION_PCT:
             return settings.llm_model_premium

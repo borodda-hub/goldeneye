@@ -7,6 +7,7 @@ import {
   type ThesisPatchBody,
   createThesis,
   critiqueThesis,
+  devilsAdvocateThesis,
   getAlerts,
   getBacktestSummary,
   getCalibration,
@@ -336,6 +337,12 @@ export function usePatchThesis(instrumentCode = "NG") {
 export function useCritiqueThesis() {
   return useMutation({
     mutationFn: (id: string) => critiqueThesis(id),
+  });
+}
+
+export function useDevilsAdvocate() {
+  return useMutation({
+    mutationFn: (id: string) => devilsAdvocateThesis(id),
   });
 }
 

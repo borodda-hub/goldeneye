@@ -28,6 +28,7 @@ from apps.api.services.llm_client import call_llm
 from apps.api.services.llm_prompts import (
     PromptParts,
     critique_thesis_messages,
+    devils_advocate_messages,
     explain_signal_messages,
     extract_event_messages,
     extract_prediction_messages,
@@ -311,6 +312,59 @@ def _parse_critique_json(text: str) -> dict[str, list[str]]:
             stripped[:500],
         )
         return {"missed_risks": [], "blind_spots": [], "questions": []}
+
+
+async def devils_advocate(
+    thesis: dict[str, Any],
+) -> tuple[dict[str, Any], SafetyEnvelope]:
+    """Adversarial review of a Working Thesis: a steelmanned counter-case, a
+    pre-mortem, and the specific signals that would change the analyst's mind.
+    Returns ({"counter_thesis": str, "premortem": [...], "invalidation_signals":
+    [...]}, envelope). Not cached (the value is the fresh probe). Degrades to an
+    empty-but-shaped object on malformed JSON.
+    """
+    prompt = devils_advocate_messages(thesis)
+    routing_ctx = {"conviction_pct": thesis.get("conviction_pct") or 0}
+    model = select_model("devils_advocate", routing_ctx)
+    text = await _call_with_safety_check(
+        "devils_advocate", prompt, model=model, max_tokens=600
+    )
+    parsed = _parse_devils_advocate_json(text)
+    envelope = wrap_with_uncertainty(
+        {},
+        confidence="medium",
+        caveats=[
+            "An adversarial probe to stress-test the thesis, not a verdict on it.",
+            "Model outputs are statistical inferences only, not financial advice.",
+        ],
+        as_of=datetime.utcnow(),
+    )
+    return (parsed, envelope)
+
+
+def _parse_devils_advocate_json(text: str) -> dict[str, Any]:
+    """Parse the adversarial JSON; degrade to empty-but-shaped on failure."""
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        lines = stripped.splitlines()
+        inner = lines[1:-1] if lines[-1].strip().startswith("```") else lines[1:]
+        stripped = "\n".join(inner)
+    try:
+        data = _lenient_json_load(stripped)
+        return {
+            "counter_thesis": str(data.get("counter_thesis", "")).strip(),
+            "premortem": [str(s) for s in (data.get("premortem") or [])][:3],
+            "invalidation_signals": [
+                str(s) for s in (data.get("invalidation_signals") or [])
+            ][:4],
+        }
+    except (json.JSONDecodeError, ValueError, TypeError) as exc:
+        logger.warning(
+            "Failed to parse devils_advocate JSON: %s. Text (first 500): %r",
+            exc,
+            stripped[:500],
+        )
+        return {"counter_thesis": "", "premortem": [], "invalidation_signals": []}
 
 
 async def extract_prediction(

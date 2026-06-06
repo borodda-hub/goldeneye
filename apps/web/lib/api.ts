@@ -393,6 +393,27 @@ export interface ThesisCritique {
   };
 }
 
+export interface ThesisDevilsAdvocate {
+  counter_thesis: string;
+  premortem: string[];
+  invalidation_signals: string[];
+  safety: {
+    confidence: "low" | "medium" | "high";
+    caveats: string[];
+    as_of: string;
+    disclaimer: string;
+  };
+}
+
+export async function devilsAdvocateThesis(
+  id: string,
+): Promise<ThesisDevilsAdvocate> {
+  return apiFetch<ThesisDevilsAdvocate>(
+    `/v1/thesis/${encodeURIComponent(id)}/devils-advocate`,
+    { method: "POST" },
+  );
+}
+
 export interface ThesisCreateBody {
   instrument_code?: string;
   statement: string;

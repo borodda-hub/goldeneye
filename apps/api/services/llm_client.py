@@ -75,6 +75,17 @@ _CANNED: dict[str, str] = {
         '"How does the conviction compare to past similar setups that resolved?"'
         ']}'
     ),
+    "devils_advocate": (
+        '{"counter_thesis": "The storage deficit may already be in the forward '
+        'curve, so incremental cold could disappoint rather than extend the move.",'
+        '"premortem": ['
+        '"Production rebounds faster than expected as associated-gas volumes climb",'
+        '"A warm-pattern revision past day 7 erodes the demand-pull case"'
+        '],"invalidation_signals": ['
+        '"Next EIA storage print smaller than consensus (Thu)",'
+        '"NWS 6-10 day map shifts warmer vs the prior run"'
+        ']}'
+    ),
     "coach_dq": (
         '{"buckets": ['
         '{"label": "60-80",'
