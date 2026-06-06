@@ -394,6 +394,29 @@ body::before {
   }
 }
 
+/* Pulsing accent halo — primary CTAs that aren't a green "go" (e.g. the Paper
+   "Open Trade" ticket). Glows in the active theme's accent. */
+@keyframes cta-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(var(--accent) / 0.4), 0 0 14px 1px
+      rgb(var(--accent) / 0.28);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgb(var(--accent) / 0), 0 0 22px 5px
+      rgb(var(--accent) / 0.5);
+  }
+}
+.cta-glow {
+  animation: cta-glow 2.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cta-glow {
+    animation: none;
+    box-shadow: 0 0 16px 2px rgb(var(--accent) / 0.38);
+  }
+}
+
 /* Watchlist container query — scale row figures as the sidebar widens.
    The aside.watchlist-cq is the named container. Numbers and symbol grow
    when the user drags the right-edge handle wider. */
