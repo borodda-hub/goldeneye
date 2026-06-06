@@ -2,6 +2,7 @@
 
 import type { Shock, ShockType } from "@/app/(app)/scenarios/types";
 import { HelpTip } from "@/components/HelpTip";
+import { leanArrow, leanColor, leanLabel, shockLean } from "@/lib/scenarioLean";
 import { SlidersHorizontal, Zap } from "lucide-react";
 import { useState } from "react";
 
@@ -43,6 +44,12 @@ function ShockRow({
     <div className="flex items-center gap-3 border border-line-1 bg-surface-1 px-3 py-2">
       <span className="font-mono text-xs text-ink-2 uppercase tracking-widest w-24">
         {shock.type.replace("_", " ")}
+      </span>
+      <span
+        className={`font-mono text-[10px] w-20 ${leanColor(shockLean(shock))}`}
+        title="Directional lean from this shock's sign"
+      >
+        {leanArrow(shockLean(shock))} {leanLabel(shockLean(shock))}
       </span>
 
       {shock.type === "weather" && (

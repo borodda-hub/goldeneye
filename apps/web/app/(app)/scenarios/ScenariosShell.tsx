@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { ResultPanel } from "@/components/scenarios/ResultPanel";
 import { RunButton } from "@/components/scenarios/RunButton";
 import { ScenarioHistoryList } from "@/components/scenarios/ScenarioHistoryList";
+import { ScenarioPreview } from "@/components/scenarios/ScenarioPreview";
 import { ShockBuilder } from "@/components/scenarios/ShockBuilder";
 import { TemplateGallery } from "@/components/scenarios/TemplateGallery";
 import { runScenario } from "@/lib/api";
@@ -77,52 +78,59 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
         />
       </section>
 
-      {/* Builder + run */}
-      <section className="flex flex-col gap-2">
-        <div className="relative flex items-center gap-3">
-          <label className="flex items-center gap-2 flex-1">
-            <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
-              Name
-            </span>
-            <input
-              className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2 flex-1"
-              placeholder="Untitled scenario"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+      {/* Build → impact: the workspace (left) sits next to the impact (right),
+          which is always present — a live directional preview while you build,
+          the full narrated result after a run — so the page never reads empty. */}
+      <section className="grid grid-cols-1 xl:grid-cols-[2fr_3fr] gap-4 items-start">
+        {/* Left — build */}
+        <div className="flex flex-col gap-2">
+          <div className="relative flex items-center gap-3">
+            <label className="flex items-center gap-2 flex-1">
+              <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
+                Name
+              </span>
+              <input
+                className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2 flex-1"
+                placeholder="Untitled scenario"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </label>
+            <RunButton
+              disabled={!canRun}
+              running={mutation.isPending}
+              onRun={() => mutation.mutate()}
             />
-          </label>
-          <RunButton
-            disabled={!canRun}
-            running={mutation.isPending}
-            onRun={() => mutation.mutate()}
-          />
-          {mutation.isPending && (
-            <div
-              className="pointer-events-none absolute inset-x-0 -bottom-2 h-[3px] overflow-hidden rounded-full"
-              aria-hidden="true"
-            >
-              <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-accent-bright to-transparent scenario-sweep" />
-            </div>
+            {mutation.isPending && (
+              <div
+                className="pointer-events-none absolute inset-x-0 -bottom-2 h-[3px] overflow-hidden rounded-full"
+                aria-hidden="true"
+              >
+                <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-accent-bright to-transparent scenario-sweep" />
+              </div>
+            )}
+          </div>
+          <ShockBuilder shocks={shocks} onChange={setShocks} />
+          {mutation.isError && (
+            <p className="text-xs text-down font-mono">
+              Run failed: {mutation.error?.message ?? "unknown error"}
+            </p>
           )}
         </div>
-        <ShockBuilder shocks={shocks} onChange={setShocks} />
-        {mutation.isError && (
-          <p className="text-xs text-down font-mono">
-            Run failed: {mutation.error?.message ?? "unknown error"}
-          </p>
-        )}
-      </section>
 
-      {/* Result */}
-      {lastResponse && (
-        <section>
-          <ResultPanel
-            result={lastResponse.result}
-            name={lastResponse.name}
-            runId={lastResponse.run_id}
-          />
-        </section>
-      )}
+        {/* Right — impact (always present) */}
+        <div className="min-w-0">
+          {lastResponse ? (
+            <ResultPanel
+              result={lastResponse.result}
+              name={lastResponse.name}
+              runId={lastResponse.run_id}
+            />
+          ) : (
+            <ScenarioPreview shocks={shocks} />
+          )}
+        </div>
+      </section>
 
       {/* History */}
       <section className="flex flex-col gap-2">
