@@ -30,7 +30,7 @@ _MODELS = [
     "moving_average_directional",
     "prophet_trend",
     "volatility_regime",
-    "xgboost_placeholder",
+    "factor_composite",
 ]
 
 # Days of history to seed (each generated_at = noon UTC that day).
@@ -44,7 +44,7 @@ _MODEL_ACCURACY: dict[str, float] = {
     "moving_average_directional": 0.62,
     "prophet_trend": 0.55,
     "volatility_regime": 0.50,  # this one is mostly regime-only; 50% on direction
-    "xgboost_placeholder": 0.60,
+    "factor_composite": 0.60,
 }
 
 # Confidence distribution per model — biased toward "medium" with a long tail.
@@ -150,7 +150,7 @@ def _supporting_factor(model_name: str) -> str:
         "moving_average_directional": "Short-term SMA crossover",
         "prophet_trend": "Trend component magnitude",
         "volatility_regime": "Regime persistence",
-        "xgboost_placeholder": "Storage delta vs consensus",
+        "factor_composite": "Storage delta vs consensus",
     }[model_name]
 
 
@@ -159,7 +159,7 @@ def _contradicting_factor(model_name: str) -> str:
         "moving_average_directional": "RSI overbought/oversold reading",
         "prophet_trend": "Seasonality cross-current",
         "volatility_regime": "Regime transition risk",
-        "xgboost_placeholder": "Crowded COT positioning",
+        "factor_composite": "Crowded COT positioning",
     }[model_name]
 
 

@@ -1,8 +1,8 @@
 """Real EIA Petroleum adapter — weekly product/stock series per instrument.
 
 Used by the signals path when the active instrument is a petroleum product so
-xgboost has alt-data parity with what NG gets from the natural-gas storage
-adapter. Phase 17 generalized this from Cushing-crude-only to a per-symbol
+the factor composite has alt-data parity with what NG gets from the natural-gas
+storage adapter. Phase 17 generalized this from Cushing-crude-only to a per-symbol
 series table:
 
 - CL → Cushing OK ending stocks (primary) + total Lower-48 ex-SPR (context)
@@ -21,7 +21,7 @@ backfilled history becomes useful.
 Returns the same dict shape as the natural-gas adapter for the fields the
 signals path consumes — `surprise_bcf`, `net_change_bcf`, `actual_bcf`. Values
 are in thousand barrels (mbbl); the `_bcf` suffix is retained only for shape
-compatibility and the xgboost placeholder is unit-agnostic.
+compatibility and the factor composite is unit-agnostic.
 """
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ class EIAPetroleumAdapter:
     Conforms to the slice of EnergyDataAdapter that signals.py actually
     consumes: `get_latest_storage()` returning a dict with `surprise_bcf`,
     `net_change_bcf`, and an `actual_*` field. The bcf naming is preserved so
-    downstream xgboost code doesn't need conditional branches.
+    downstream factor-composite code doesn't need conditional branches.
     """
 
     def __init__(self, symbol: str = "CL") -> None:
@@ -142,7 +142,7 @@ def _pivot(
     Output shape matches the natural-gas adapter so signals.py can read
     `surprise_bcf` and `net_change_bcf` without conditional branches. Values
     are in thousand barrels (mbbl); the `_bcf` field names retain that suffix
-    only for shape compatibility (the xgboost placeholder is unit-agnostic and
+    only for shape compatibility (the factor composite is unit-agnostic and
     uses magnitudes relative to themselves).
     """
     primary_id = series.primary

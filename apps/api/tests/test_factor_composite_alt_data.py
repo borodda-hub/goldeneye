@@ -1,4 +1,4 @@
-from apps.api.services.models.xgboost_placeholder import predict
+from apps.api.services.models.factor_composite import predict
 
 CLOSES = [3.0 + i * 0.01 for i in range(20)]  # upward trending
 

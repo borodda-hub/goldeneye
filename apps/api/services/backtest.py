@@ -22,10 +22,11 @@ calendar date d:
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import UTC, date, datetime, time, timedelta
 from statistics import pstdev
-from typing import Any, Callable
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,13 +37,15 @@ from apps.api.models.orm.prices import PriceBar
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
 from apps.api.services.model_registry import ForecastContext
+from apps.api.services.models.factor_composite import predict as factor_predict
 from apps.api.services.models.moving_average_directional import (
     ForecastResult,
+)
+from apps.api.services.models.moving_average_directional import (
     predict as ma_predict,
 )
 from apps.api.services.models.prophet_trend import predict as prophet_predict
 from apps.api.services.models.volatility_regime import predict as vol_predict
-from apps.api.services.models.xgboost_placeholder import predict as xgb_predict
 from apps.api.services.signal_scoring import score_forecast
 
 logger = logging.getLogger(__name__)
@@ -123,8 +126,8 @@ def _predict(model_name: str, ctx: ForecastContext, horizon: str) -> ForecastRes
         return vol_predict(ctx.closes, horizon)
     if model_name == "prophet_trend":
         return prophet_predict(ctx.closes, horizon)
-    if model_name == "xgboost_placeholder":
-        return xgb_predict(
+    if model_name == "factor_composite":
+        return factor_predict(
             ctx.closes,
             horizon,
             latest_storage=ctx.latest_storage,
@@ -138,7 +141,7 @@ SUPPORTED_MODELS: frozenset[str] = frozenset(
         "moving_average_directional",
         "volatility_regime",
         "prophet_trend",
-        "xgboost_placeholder",
+        "factor_composite",
     }
 )
 
@@ -166,7 +169,7 @@ def _to_naive_utc(dt: datetime | None) -> datetime | None:
     if dt is None:
         return None
     if dt.tzinfo is not None:
-        return dt.astimezone(timezone.utc).replace(tzinfo=None)
+        return dt.astimezone(UTC).replace(tzinfo=None)
     return dt
 
 
@@ -218,7 +221,7 @@ async def _storage_as_of(
     as_of's calendar date. EIA releases Thursdays 10:30 ET — by EOD that
     Thursday the report IS public, so `report_date <= as_of.date()` is correct.
 
-    Returns the dict shape xgboost_placeholder reads (delta_vs_consensus +
+    Returns the dict shape factor_composite reads (delta_vs_consensus +
     actual_bcf), or None if no qualifying report exists.
     """
     as_of_date = as_of.date()
@@ -523,6 +526,7 @@ async def persist_backtest_rows(
         return 0
 
     from sqlalchemy import delete, insert
+
     from apps.api.models.orm.forecasts import ModelForecast
 
     ts_min = min(r.generated_at for r in rows)

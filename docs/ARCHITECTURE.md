@@ -107,7 +107,7 @@ MVP models:
 - `MovingAverageDirectional` (3 horizons)
 - `ProphetTrend` (1w, 1m)
 - `VolatilityRegime` (regime label + transition probability)
-- `XGBoostPlaceholder` (returns deterministic mock signal until trained)
+- `FactorComposite` (transparent rules-based blend of storage surprise, COT positioning, and momentum — hand-set weights, not a trained model)
 
 Signals shown in the Signal Lab are an ensemble vote across these models with explicit "supporting" / "contradicting" attribution per model.
 

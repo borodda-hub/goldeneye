@@ -8,7 +8,7 @@ const models = [
     sample_count_7d: 7,
   },
   {
-    name: "xgboost_placeholder",
+    name: "factor_composite",
     last_forecast_at: "2026-05-09T20:00:00Z",
     sample_count_7d: 5,
   },
@@ -18,7 +18,7 @@ describe("ModelHealthGrid", () => {
   it("renders model names", () => {
     render(<ModelHealthGrid models={models} />);
     expect(screen.getByText("moving_average_directional")).toBeInTheDocument();
-    expect(screen.getByText("xgboost_placeholder")).toBeInTheDocument();
+    expect(screen.getByText("factor_composite")).toBeInTheDocument();
   });
 
   it("renders sample counts", () => {

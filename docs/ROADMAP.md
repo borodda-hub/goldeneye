@@ -32,7 +32,7 @@ A new `apps/api/services/backtest.py` that replays a model registry against hist
 
 ## 5. Real ML training pipeline
 
-Replace `xgboost_placeholder.py` with a trained model. Stack: feature store on top of TimescaleDB (continuous aggregates for rolling features), training jobs in `apps/api/training/` triggered weekly by a worker, models versioned in MLflow or a simple disk-backed registry, the registry-loaded model used in `model_registry.py` instead of the placeholder.
+Replace `factor_composite.py` with a trained model. Stack: feature store on top of TimescaleDB (continuous aggregates for rolling features), training jobs in `apps/api/training/` triggered weekly by a worker, models versioned in MLflow or a simple disk-backed registry, the registry-loaded model used in `model_registry.py` instead of the placeholder.
 
 Features to start: rolling vol, storage-vs-consensus delta, COT managed-money net WoW change, weather HDD-weighted anomaly, calendar features (DOW, month, days-to-expiry).
 
@@ -63,6 +63,6 @@ The whole stack is parameterized by symbol but only `NG` is seeded. Adding WTI c
 - New fixtures (or real adapters) for each domain
 - Instrument-specific tick values in `paper_engine.py` (currently hardcoded $10,000/contract for NG)
 - Re-tune the vol regime thresholds per instrument
-- Re-train (or re-stub) the xgboost model per instrument
+- Re-train (or re-stub) the factor-composite model per instrument
 
 **Why it matters:** The product framing is "commodities desk" not "natural gas desk." Single-instrument is the right MVP scope, but the moment a real user lands they ask "where's oil?"

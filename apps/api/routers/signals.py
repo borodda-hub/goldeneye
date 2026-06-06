@@ -40,8 +40,8 @@ async def get_current_signal(
         n=100,
     )
 
-    # Fetch alt-data for xgboost from the eia + cot repos. The xgboost
-    # placeholder treats either input as optional and falls back to price
+    # Fetch alt-data for the factor composite from the eia + cot repos. The
+    # composite treats either input as optional and falls back to price
     # momentum only when missing.
     latest_storage: dict | None = None
     latest_cot: dict | None = None
@@ -55,12 +55,12 @@ async def get_current_signal(
         # no backfill — ask the registry for the right per-symbol energy adapter:
         # EIA petroleum stocks (24h-cached) for CL/HO/RB, NullEnergyAdapter for
         # metals/other (returns None). Both live and table paths emit the same
-        # {delta_vs_consensus, actual_bcf} shape that xgboost consumes.
+        # {delta_vs_consensus, actual_bcf} shape that the composite consumes.
         if symbol.upper() == "NG":
             storage_row = await eia_repo.get_latest(session)
             if storage_row is not None and storage_row.surprise_bcf is not None:
                 # surprise_bcf = actual net_change - consensus → matches the
-                # xgboost placeholder's "delta_vs_consensus" semantics.
+                # factor composite's "delta_vs_consensus" semantics.
                 latest_storage = {
                     "delta_vs_consensus": float(storage_row.surprise_bcf),
                     "actual_bcf": float(storage_row.net_change_bcf)

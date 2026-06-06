@@ -6,7 +6,7 @@ Resource: Disaggregated Futures-Only Reports (`kh3c-gbw2` per docs/DATA_SOURCES.
 — recheck on the PRE site if Socrata reissues the code).
 
 Returns the same dict shape as MockCFTCAdapter so the rest of the stack
-(services/ensemble.py, services/models/xgboost_placeholder.py, etc.) doesn't
+(services/ensemble.py, services/models/factor_composite.py, etc.) doesn't
 care which path produced the row.
 """
 from __future__ import annotations
