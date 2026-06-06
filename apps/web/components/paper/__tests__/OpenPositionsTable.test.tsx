@@ -68,7 +68,7 @@ describe("OpenPositionsTable", () => {
   it("shows empty state when no trades", () => {
     useChannelMock.mockReturnValue({ data: null, status: "disconnected" });
     render(<OpenPositionsTable trades={[]} />);
-    expect(screen.getByText("No open positions.")).toBeInTheDocument();
+    expect(screen.getByText("No open positions")).toBeInTheDocument();
   });
 
   it('renders "—" for MTM when live price is null', () => {

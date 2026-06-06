@@ -1,4 +1,5 @@
 import type { ScenarioTemplate, Shock } from "@/app/(app)/scenarios/types";
+import { LayoutGrid } from "lucide-react";
 
 interface Props {
   templates: ScenarioTemplate[];
@@ -19,8 +20,11 @@ function summarizeShocks(shocks: Shock[]): string {
 export function TemplateGallery({ templates, onSelect, selectedId }: Props) {
   if (templates.length === 0) {
     return (
-      <div className="text-xs text-ink-4 font-mono border border-line-1 p-3">
-        No scenario templates available.
+      <div className="border border-line-1 bg-surface-1 p-6">
+        <div className="flex flex-col items-center gap-1.5 text-ink-4">
+          <LayoutGrid size={18} strokeWidth={1.5} aria-hidden="true" />
+          <span className="text-[11px]">No scenario templates available</span>
+        </div>
       </div>
     );
   }
@@ -34,7 +38,7 @@ export function TemplateGallery({ templates, onSelect, selectedId }: Props) {
             key={t.id}
             type="button"
             onClick={() => onSelect(t)}
-            className={`text-left border bg-surface-1 p-3 flex flex-col gap-2 transition-colors hover:bg-surface-2 ${
+            className={`card-interactive text-left border bg-surface-1 p-3 flex flex-col gap-2 ${
               selected ? "border-accent" : "border-line-1"
             }`}
           >

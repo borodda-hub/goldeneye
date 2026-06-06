@@ -1,3 +1,5 @@
+import { Cpu } from "lucide-react";
+
 interface Props {
   gitSha?: string;
   buildTime?: string;
@@ -6,8 +8,14 @@ interface Props {
 
 export function EnvironmentBlock({ gitSha, buildTime, envFlags }: Props) {
   return (
-    <div className="border border-line-1 bg-surface-1">
-      <div className="px-3 py-2 border-b border-line-1">
+    <div className="card-interactive border border-line-1 bg-surface-1">
+      <div className="px-3 py-2 border-b border-line-1 flex items-center gap-2">
+        <Cpu
+          size={12}
+          strokeWidth={1.5}
+          aria-hidden="true"
+          className="text-ink-4"
+        />
         <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
           Environment
         </span>

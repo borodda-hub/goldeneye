@@ -1,4 +1,5 @@
 import type { AdapterRollup } from "@/app/(app)/admin/types";
+import { DatabaseZap, Inbox } from "lucide-react";
 
 interface Props {
   adapters: AdapterRollup[];
@@ -35,15 +36,24 @@ function fmtTime(iso: string | null): string {
 export function DataHealthGrid({ adapters }: Props) {
   if (adapters.length === 0) {
     return (
-      <div className="text-xs text-ink-4 font-mono border border-line-1 p-3">
-        No adapter runs recorded yet.
+      <div className="border border-line-1 bg-surface-1 p-3">
+        <div className="flex flex-col items-center gap-1.5 py-6 text-ink-4">
+          <Inbox size={18} strokeWidth={1.5} aria-hidden="true" />
+          <span className="text-[11px]">No adapter runs recorded yet</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="border border-line-1 bg-surface-1">
-      <div className="px-3 py-2 border-b border-line-1">
+    <div className="card-interactive border border-line-1 bg-surface-1">
+      <div className="px-3 py-2 border-b border-line-1 flex items-center gap-2">
+        <DatabaseZap
+          size={12}
+          strokeWidth={1.5}
+          aria-hidden="true"
+          className="text-ink-4"
+        />
         <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
           Adapter Health
         </span>

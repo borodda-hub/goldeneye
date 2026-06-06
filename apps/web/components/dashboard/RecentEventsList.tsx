@@ -3,6 +3,7 @@
 import type { RecentEvent } from "@/app/(app)/dashboard/types";
 import { EventMarker } from "@/components/EventMarker";
 import { HelpTip } from "@/components/HelpTip";
+import { Newspaper } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
@@ -108,9 +109,15 @@ export function RecentEventsList({ events }: Props) {
   const [selected, setSelected] = useState<RecentEvent | null>(null);
 
   return (
-    <div className="relative border border-line-1 rounded-md bg-surface-1 flex flex-col h-full">
+    <div className="card-interactive relative border border-line-1 rounded-md bg-surface-1 flex flex-col h-full">
       <div className="flex items-center justify-between px-3 pt-2 pb-1">
-        <span className="text-xs text-ink-3 uppercase tracking-widest">
+        <span className="inline-flex items-center gap-1.5 text-xs text-ink-3 uppercase tracking-widest">
+          <Newspaper
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           Recent Events
           <HelpTip k="recentEvents" className="ml-1" />
         </span>
@@ -123,7 +130,13 @@ export function RecentEventsList({ events }: Props) {
         </Link>
       </div>
       {events.length === 0 ? (
-        <p className="text-ink-4 text-xs font-mono p-3">No recent events.</p>
+        <div className="flex flex-1 flex-col items-center justify-center gap-1.5 p-3 text-ink-4">
+          <Newspaper size={18} strokeWidth={1.5} aria-hidden="true" />
+          <span className="text-xs font-mono">No recent events.</span>
+          <span className="text-[10px] text-ink-4/70">
+            Fresh market headlines will land here.
+          </span>
+        </div>
       ) : (
         <div className="flex flex-col divide-y divide-line-1 overflow-auto flex-1">
           {events.map((ev) => (

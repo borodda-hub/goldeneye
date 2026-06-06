@@ -2,6 +2,7 @@
 
 import type { Trade, TradesResponse } from "@/app/(app)/paper/types";
 import { usePaperTrades } from "@/lib/queries";
+import { History } from "lucide-react";
 
 type Status = Trade["status"];
 
@@ -68,11 +69,17 @@ export function RecentTradesCard() {
 
   return (
     <div
-      className="border border-line-1 bg-surface-1 rounded-md flex flex-col"
+      className="card-interactive border border-line-1 bg-surface-1 rounded-md flex flex-col"
       aria-label="Recent paper trades"
     >
       <div className="flex items-baseline justify-between px-3 pt-2 pb-1.5 border-b border-line-1">
-        <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+          <History
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           Recent
         </span>
         <span className="font-mono text-[10px] text-ink-4 tabular-nums">
@@ -81,8 +88,9 @@ export function RecentTradesCard() {
       </div>
 
       {recent.length === 0 ? (
-        <div className="px-3 py-4 text-center text-[11px] font-mono text-ink-4">
-          No paper trades yet.
+        <div className="flex flex-col items-center gap-1.5 px-3 py-4 text-center text-ink-4">
+          <History size={18} strokeWidth={1.5} aria-hidden="true" />
+          <span className="text-[11px] font-mono">No paper trades yet.</span>
         </div>
       ) : (
         <table className="w-full text-[11px] font-mono">

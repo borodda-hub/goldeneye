@@ -3,6 +3,7 @@ import { ConfidenceBar } from "@/components/ConfidenceBar";
 import { DirectionChip } from "@/components/DirectionChip";
 import { HelpTip } from "@/components/HelpTip";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
+import { ClipboardCheck } from "lucide-react";
 
 interface Props {
   result: ScenarioResult;
@@ -42,11 +43,17 @@ function NumberedList({
 
 export function ResultPanel({ result, name, runId }: Props) {
   return (
-    <div className="border border-line-1 bg-surface-1 p-4 flex flex-col gap-4">
+    <div className="card-interactive border border-line-1 bg-surface-1 p-4 flex flex-col gap-4">
       {/* Header: name + direction + confidence + timeframe + export */}
       <div className="flex items-start gap-6 flex-wrap">
         <div className="flex flex-col gap-1 min-w-0">
-          <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
+          <span className="flex items-center gap-2 font-mono text-[10px] text-accent uppercase tracking-widest">
+            <ClipboardCheck
+              size={12}
+              strokeWidth={1.5}
+              aria-hidden="true"
+              className="text-ink-4"
+            />
             Result
             <HelpTip k="scenarioResult" className="ml-1" />
           </span>

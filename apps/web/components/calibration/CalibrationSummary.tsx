@@ -1,4 +1,6 @@
+import { NumberCell } from "@/components/NumberCell";
 import type { CalibrationResponse } from "@/lib/api";
+import { Newspaper, Sigma } from "lucide-react";
 
 interface Props {
   data: CalibrationResponse;
@@ -8,10 +10,16 @@ export function CalibrationSummary({ data }: Props) {
   return (
     <section
       aria-label="Calibration summary"
-      className="grid grid-cols-3 gap-6 border border-line-1 bg-surface-1 p-5"
+      className="card-interactive grid grid-cols-3 gap-6 border border-line-1 bg-surface-1 p-5"
     >
       <div className="col-span-2 flex flex-col gap-3 border-r border-line-1 pr-6">
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+        <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+          <Newspaper
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           Headline
         </span>
         {data.summary ? (
@@ -41,7 +49,13 @@ export function CalibrationSummary({ data }: Props) {
       </div>
 
       <div className="flex flex-col gap-3">
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+        <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+          <Sigma
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           Sample
         </span>
         <div className="flex flex-col gap-1.5">

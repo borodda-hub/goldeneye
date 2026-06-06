@@ -1,8 +1,10 @@
 "use client";
 
 import { HelpTip } from "@/components/HelpTip";
+import { Skeleton } from "@/components/Skeleton";
 import type { FundamentalsResponse } from "@/lib/api";
 import { useFundamentals } from "@/lib/queries";
+import { Database } from "lucide-react";
 
 function fmtNum(v: number | null, withSign = false): string {
   if (v === null) return "—";
@@ -33,11 +35,17 @@ export function FundamentalsCard({ symbol = "NG" }: Props) {
 
   return (
     <div
-      className="border border-line-1 bg-surface-1 rounded-md px-3 py-2.5 flex flex-col gap-1 h-full"
+      className="card-interactive border border-line-1 bg-surface-1 rounded-md px-3 py-2.5 flex flex-col gap-1 h-full"
       aria-label="Fundamentals"
     >
       <div className="flex items-baseline justify-between">
-        <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+          <Database
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           {f && f.kind !== "none" ? f.title : "Fundamentals"}
           <HelpTip k="fundamentals" className="ml-1" />
         </span>
@@ -47,11 +55,17 @@ export function FundamentalsCard({ symbol = "NG" }: Props) {
       </div>
 
       {isLoading || !f ? (
-        <p className="text-ink-4 text-xs font-mono p-3">Loading…</p>
+        <div className="flex flex-col gap-2 p-3">
+          <Skeleton className="h-8 w-2/3" />
+          <Skeleton className="h-3 w-1/3" />
+        </div>
       ) : !latest ? (
-        <p className="text-ink-4 text-xs font-mono p-3">
-          {f.empty_reason ?? "No fundamentals."}
-        </p>
+        <div className="flex flex-1 flex-col items-center justify-center gap-1.5 p-3 text-ink-4">
+          <Database size={18} strokeWidth={1.5} aria-hidden="true" />
+          <span className="text-xs font-mono text-center">
+            {f.empty_reason ?? "No fundamentals."}
+          </span>
+        </div>
       ) : (
         <>
           <div className="flex items-baseline gap-2">

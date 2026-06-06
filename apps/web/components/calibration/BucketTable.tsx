@@ -1,4 +1,5 @@
 import type { CalibrationBucket } from "@/lib/api";
+import { Table2 } from "lucide-react";
 
 interface Props {
   buckets: CalibrationBucket[];
@@ -18,9 +19,15 @@ export function BucketTable({ buckets }: Props) {
   return (
     <section
       aria-label="Calibration buckets"
-      className="border border-line-1 bg-surface-1 p-5 flex flex-col gap-3"
+      className="card-interactive border border-line-1 bg-surface-1 p-5 flex flex-col gap-3"
     >
-      <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+      <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+        <Table2
+          size={12}
+          strokeWidth={1.5}
+          aria-hidden="true"
+          className="text-ink-4"
+        />
         Per-bucket detail
       </span>
       <div className="overflow-x-auto">

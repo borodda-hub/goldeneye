@@ -1,6 +1,8 @@
 "use client";
 
 import { HelpTip } from "@/components/HelpTip";
+import { PageHeader } from "@/components/PageHeader";
+import { Skeleton } from "@/components/Skeleton";
 import { BacktestCard } from "@/components/signals/BacktestCard";
 import { EnsembleHeader } from "@/components/signals/EnsembleHeader";
 import { ExplanationPanel } from "@/components/signals/ExplanationPanel";
@@ -10,7 +12,17 @@ import { NewsFeedPanel } from "@/components/signals/NewsFeedPanel";
 import { useCurrentSignal } from "@/lib/queries";
 import { useChannel } from "@/lib/realtime";
 import { useActiveInstrument } from "@/lib/useActiveInstrument";
+import { Radar } from "lucide-react";
 import type { CurrentSignal } from "./types";
+
+const signalsHeader = (
+  <PageHeader
+    icon={Radar}
+    title="Signal Lab"
+    subtitle="Model ensemble · directional signal"
+    right={<HelpTip k="ensemble" />}
+  />
+);
 
 interface Props {
   initialSignal: CurrentSignal | null;
@@ -30,46 +42,25 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
 
   if (!signal) {
     return (
-      <div className="flex flex-col gap-4 h-full">
-        {/* Header — matches Scenario Lab */}
-        <div className="flex items-baseline gap-3">
-          <h1 className="text-xl font-semibold text-accent">
-            Signal Lab
-            <HelpTip k="ensemble" className="ml-2" />
-          </h1>
-          <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">
-            Multi-model forecast ensemble
-          </span>
-        </div>
-        <div className="border border-line-1 bg-surface-1 h-24 animate-pulse" />
+      <div className="stagger flex flex-col gap-4 h-full">
+        {signalsHeader}
+        <Skeleton className="h-24 w-full" />
         <div className="grid grid-cols-4 gap-4">
           {[0, 1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="border border-line-1 bg-surface-1 h-44 animate-pulse"
-            />
+            <Skeleton key={i} className="h-44 w-full" />
           ))}
         </div>
         <div className="flex gap-4 flex-1 min-h-0">
-          <div className="flex-[3] border border-line-1 bg-surface-1 animate-pulse" />
-          <div className="flex-[2] border border-line-1 bg-surface-1 animate-pulse" />
+          <Skeleton className="flex-[3]" />
+          <Skeleton className="flex-[2]" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Header — matches Scenario Lab */}
-      <div className="flex items-baseline gap-3">
-        <h1 className="text-xl font-semibold text-accent">
-          Signal Lab
-          <HelpTip k="ensemble" className="ml-2" />
-        </h1>
-        <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">
-          Multi-model forecast ensemble
-        </span>
-      </div>
+    <div className="stagger flex flex-col gap-4">
+      {signalsHeader}
 
       {/* Row 1: Ensemble headline */}
       <EnsembleHeader ensemble={signal.ensemble} />

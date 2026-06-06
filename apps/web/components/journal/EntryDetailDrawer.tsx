@@ -1,5 +1,6 @@
 "use client";
 
+import { FileText } from "lucide-react";
 import type { JournalEntry } from "../../app/(app)/journal/types";
 import { ConfidenceBar } from "../ConfidenceBar";
 import { SafetyEnvelopeNote } from "../SafetyEnvelopeNote";
@@ -83,13 +84,19 @@ export function EntryDetailDrawer({ entry, onClose }: Props) {
   const stripe = resolutionStripeClass(entry.resolved_direction);
   return (
     <div
-      className={`border border-line-1 bg-surface-1 p-3 flex flex-col gap-3 max-h-[80vh] overflow-auto ${stripe}`}
+      className={`card-interactive border border-line-1 bg-surface-1 p-3 flex flex-col gap-3 max-h-[80vh] overflow-auto ${stripe}`}
       data-testid="entry-detail-drawer"
       data-resolved={entry.resolved_direction ?? "null"}
       aria-label={`Journal entry — ${resolutionLabel(entry.resolved_direction)}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <h2 className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+        <h2 className="flex items-center gap-2 font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+          <FileText
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           Entry Detail
         </h2>
         <button

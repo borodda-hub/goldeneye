@@ -1,6 +1,7 @@
 "use client";
 
 import { useRecentNews } from "@/lib/queries";
+import { Newspaper } from "lucide-react";
 
 interface NewsEvent {
   published_at: string;
@@ -95,11 +96,17 @@ export function NewsFeedPanel({ symbol = "NG" }: NewsFeedPanelProps = {}) {
 
   return (
     <div
-      className="border border-line-1 rounded-md bg-surface-1 flex flex-col h-full"
+      className="card-interactive border border-line-1 rounded-md bg-surface-1 flex flex-col h-full"
       data-testid="news-feed-panel"
     >
       <div className="flex items-center justify-between px-3 pt-2 pb-1">
-        <span className="text-xs text-ink-3 uppercase tracking-widest">
+        <span className="flex items-center gap-2 text-xs text-ink-3 uppercase tracking-widest">
+          <Newspaper
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           Supporting News · Live
         </span>
         <span className="font-mono text-[10px] text-ink-4">
@@ -116,8 +123,11 @@ export function NewsFeedPanel({ symbol = "NG" }: NewsFeedPanelProps = {}) {
           News feed unavailable.
         </div>
       ) : events.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-ink-4 text-xs font-mono">
-          No recent NG-relevant items.
+        <div className="flex-1 flex flex-col items-center justify-center gap-1.5 text-ink-4">
+          <Newspaper size={18} strokeWidth={1.5} aria-hidden="true" />
+          <span className="text-xs font-mono">
+            No recent NG-relevant items.
+          </span>
         </div>
       ) : (
         <ul className="flex-1 overflow-auto divide-y divide-line-1/60">

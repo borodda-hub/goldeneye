@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { FilePlus2 } from "lucide-react";
 import { useState } from "react";
 import type { Evidence, JournalEntry } from "../../app/(app)/journal/types";
 import { createJournalEntry } from "../../lib/api";
@@ -87,9 +88,15 @@ export function NewEntryForm({ onCreated }: Props) {
         e.preventDefault();
         if (valid && !mutation.isPending) mutation.mutate();
       }}
-      className="border border-line-1 bg-surface-1 p-3 flex flex-col gap-3"
+      className="card-interactive border border-line-1 bg-surface-1 p-3 flex flex-col gap-3"
     >
-      <h2 className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+      <h2 className="flex items-center gap-2 font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+        <FilePlus2
+          size={12}
+          strokeWidth={1.5}
+          aria-hidden="true"
+          className="text-ink-4"
+        />
         New Entry
       </h2>
 

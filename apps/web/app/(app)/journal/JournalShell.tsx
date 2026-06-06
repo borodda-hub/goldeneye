@@ -1,6 +1,8 @@
 "use client";
 
+import { NotebookPen } from "lucide-react";
 import { useState } from "react";
+import { PageHeader } from "../../../components/PageHeader";
 import { EntryDetailDrawer } from "../../../components/journal/EntryDetailDrawer";
 import { EntryList } from "../../../components/journal/EntryList";
 import { NewEntryForm } from "../../../components/journal/NewEntryForm";
@@ -23,14 +25,12 @@ export function JournalShell({ initialEntries }: Props) {
   const selected = entries.find((e) => e.id === selectedId) ?? null;
 
   return (
-    <div className="flex flex-col gap-4" data-tour="journal-shell">
-      {/* Header */}
-      <div className="flex items-baseline gap-3">
-        <h1 className="text-xl font-semibold text-ink-1">Decision Journal</h1>
-        <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">
-          Hypothesis log with AI assumption review
-        </span>
-      </div>
+    <div className="stagger flex flex-col gap-4" data-tour="journal-shell">
+      <PageHeader
+        icon={NotebookPen}
+        title="Decision Journal"
+        subtitle="Hypothesis log with AI assumption review"
+      />
 
       {/* Two-column layout */}
       <div className="flex gap-4">

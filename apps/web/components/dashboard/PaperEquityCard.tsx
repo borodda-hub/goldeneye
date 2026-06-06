@@ -1,9 +1,11 @@
 "use client";
 
 import type { EquityCurveResponse, EquityPoint } from "@/app/(app)/paper/types";
+import { FlashOnChange } from "@/components/FlashOnChange";
 import { HelpTip } from "@/components/HelpTip";
 import { colors } from "@/lib/colors";
 import { usePaperEquityCurve } from "@/lib/queries";
+import { Wallet } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { SheenGradient } from "./SheenGradient";
 
@@ -45,11 +47,17 @@ export function PaperEquityCard() {
 
   return (
     <div
-      className="border border-line-1 bg-surface-1 rounded-md px-3 py-2.5 flex flex-col gap-1"
+      className="card-interactive border border-line-1 bg-surface-1 rounded-md px-3 py-2.5 flex flex-col gap-1"
       aria-label="Paper equity"
     >
       <div className="flex items-baseline justify-between">
-        <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+          <Wallet
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           Equity · Paper
           <HelpTip k="paperEquity" className="ml-1" />
         </span>
@@ -58,9 +66,12 @@ export function PaperEquityCard() {
         </span>
       </div>
       <div className="flex items-baseline gap-3">
-        <span className="font-mono text-3xl tabular-nums text-ink-1 leading-none">
+        <FlashOnChange
+          value={last}
+          className="font-mono text-3xl tabular-nums text-ink-1 leading-none"
+        >
           {last !== null ? fmtUsd(last) : "—"}
-        </span>
+        </FlashOnChange>
       </div>
       <div
         className={`flex items-baseline gap-2 font-mono text-xs tabular-nums ${tone}`}

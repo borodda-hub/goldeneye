@@ -1,6 +1,7 @@
 import type { ModelResult } from "@/app/(app)/signals/types";
 import { ConfidenceBar } from "@/components/ConfidenceBar";
 import { DirectionChip } from "@/components/DirectionChip";
+import { Cpu } from "lucide-react";
 
 interface Props {
   model: ModelResult;
@@ -13,11 +14,17 @@ export function ModelCard({ model }: Props) {
 
   return (
     <div
-      className={`border border-line-1 bg-surface-1 p-3 flex flex-col gap-2 ${dimmed ? "opacity-60" : ""}`}
+      className={`card-interactive border border-line-1 bg-surface-1 p-3 flex flex-col gap-2 ${dimmed ? "opacity-60" : ""}`}
     >
       {/* Header: model name + horizon */}
       <div className="flex items-center justify-between">
-        <span className="font-mono text-xs text-ink-2">
+        <span className="flex items-center gap-1.5 font-mono text-xs text-ink-2">
+          <Cpu
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           {model.model_name.replace(/_/g, " ")}
         </span>
         <span className="font-mono text-xs text-ink-4 border border-line-1 px-1">

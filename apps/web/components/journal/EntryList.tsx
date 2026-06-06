@@ -1,5 +1,6 @@
 "use client";
 
+import { NotebookPen } from "lucide-react";
 import type { JournalEntry } from "../../app/(app)/journal/types";
 import { ConfidenceBar } from "../ConfidenceBar";
 import { resolutionLabel, resolutionStripeClass } from "./resolutionStyles";
@@ -23,8 +24,14 @@ function bandFromPct(pct: number): "low" | "medium" | "high" {
 export function EntryList({ entries, selectedId, onSelect }: Props) {
   if (entries.length === 0) {
     return (
-      <div className="border border-line-1 bg-surface-1 p-4 text-xs text-ink-4 font-mono text-center">
-        No journal entries yet. Create one to get started.
+      <div className="border border-line-1 bg-surface-1 p-4">
+        <div className="flex flex-col items-center gap-1.5 py-6 text-ink-4">
+          <NotebookPen size={18} strokeWidth={1.5} aria-hidden="true" />
+          <span className="text-[11px]">No journal entries yet</span>
+          <span className="text-[10px] text-ink-4/70">
+            Create one to get started.
+          </span>
+        </div>
       </div>
     );
   }
@@ -40,7 +47,7 @@ export function EntryList({ entries, selectedId, onSelect }: Props) {
             key={entry.id}
             type="button"
             onClick={() => onSelect(entry.id)}
-            className={`text-left border bg-surface-1 p-3 flex flex-col gap-2 transition-colors hover:bg-surface-2 ${
+            className={`card-interactive text-left border bg-surface-1 p-3 flex flex-col gap-2 hover:bg-surface-2 ${
               selected ? "border-accent" : "border-line-1"
             } ${stripe}`}
             data-testid="journal-entry-card"

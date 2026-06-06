@@ -28,7 +28,7 @@ export function AiThesisCard({ instrument, thesis }: Props) {
   return (
     <section
       aria-label="AI thesis"
-      className="border border-line-1 rounded-md bg-surface-1 px-4 py-3 flex flex-col gap-2"
+      className="card-interactive border border-line-1 rounded-md bg-surface-1 px-4 py-3 flex flex-col gap-2"
     >
       <div className="flex items-baseline justify-between gap-3">
         <div className="flex items-center gap-2">

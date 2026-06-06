@@ -1,5 +1,6 @@
 "use client";
 
+import { Archive, Download, Inbox } from "lucide-react";
 import { useState } from "react";
 import type { Trade } from "../../app/(app)/paper/types";
 
@@ -102,8 +103,14 @@ export function ClosedTradesTable({ trades }: Props) {
     sort.key === key ? (sort.dir === "asc" ? " ▲" : " ▼") : "";
 
   return (
-    <div className="border border-line-1 bg-surface-1 flex flex-col">
-      <div className="px-3 py-2 border-b border-line-1 flex items-center gap-3">
+    <div className="card-interactive border border-line-1 bg-surface-1 flex flex-col">
+      <div className="px-3 py-2 border-b border-line-1 flex items-center gap-2">
+        <Archive
+          size={12}
+          strokeWidth={1.5}
+          aria-hidden="true"
+          className="text-ink-4"
+        />
         <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
           Closed Trades
         </span>
@@ -111,9 +118,10 @@ export function ClosedTradesTable({ trades }: Props) {
           type="button"
           onClick={onExport}
           disabled={trades.length === 0}
-          className="ml-auto font-mono text-[10px] uppercase tracking-widest text-accent disabled:text-ink-4"
+          className="ml-auto flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest text-accent transition-colors hover:text-accent-bright disabled:text-ink-4 disabled:hover:text-ink-4"
           data-testid="export-csv"
         >
+          <Download size={11} strokeWidth={1.5} aria-hidden="true" />
           Export CSV
         </button>
       </div>
@@ -181,8 +189,14 @@ export function ClosedTradesTable({ trades }: Props) {
           <tbody>
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center text-ink-4 py-4">
-                  No closed trades.
+                <td colSpan={7} className="py-6">
+                  <div className="flex flex-col items-center gap-1.5 text-ink-4">
+                    <Inbox size={18} strokeWidth={1.5} aria-hidden="true" />
+                    <span className="text-[11px]">No closed trades yet</span>
+                    <span className="text-[10px] text-ink-4/70">
+                      Closed positions and realized P&amp;L will land here.
+                    </span>
+                  </div>
                 </td>
               </tr>
             )}

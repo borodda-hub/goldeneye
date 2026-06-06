@@ -2,6 +2,7 @@
 
 import type { Shock, ShockType } from "@/app/(app)/scenarios/types";
 import { HelpTip } from "@/components/HelpTip";
+import { SlidersHorizontal, Zap } from "lucide-react";
 import { useState } from "react";
 
 interface Props {
@@ -148,9 +149,15 @@ export function ShockBuilder({ shocks, onChange }: Props) {
   };
 
   return (
-    <div className="border border-line-1 bg-surface-1 flex flex-col">
+    <div className="card-interactive border border-line-1 bg-surface-1 flex flex-col">
       <div className="px-3 py-2 border-b border-line-1 flex items-center justify-between">
-        <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
+        <span className="flex items-center gap-2 font-mono text-[10px] text-accent uppercase tracking-widest">
+          <SlidersHorizontal
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           Shock Builder
           <HelpTip k="shockBuilder" className="ml-1" />
         </span>
@@ -161,8 +168,12 @@ export function ShockBuilder({ shocks, onChange }: Props) {
 
       <div className="flex flex-col gap-2 p-3">
         {shocks.length === 0 && (
-          <div className="text-xs text-ink-4 font-mono py-4 text-center">
-            No shocks. Add one below or load a template.
+          <div className="flex flex-col items-center gap-1.5 py-6 text-ink-4">
+            <Zap size={18} strokeWidth={1.5} aria-hidden="true" />
+            <span className="text-[11px]">No shocks</span>
+            <span className="text-[10px] text-ink-4/70">
+              Add one below or load a template.
+            </span>
           </div>
         )}
         {shocks.map((s, i) => (
