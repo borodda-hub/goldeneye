@@ -72,6 +72,10 @@ interface Props {
   initialSymbol?: string;
 }
 
+// Stable empty array — reused so "no data yet" props keep the same reference
+// across renders and don't churn PriceChart's structural build effect.
+const EMPTY: never[] = [];
+
 const DEFAULT_CONTRACT = "NGM26";
 const FRONT_MONTH_FALLBACK_BY_SYMBOL: Record<string, string> = {
   NG: "NGM26",
@@ -210,7 +214,7 @@ export function ChartShell({
   const { data: curve } = useChartCurve(activeSymbol, today);
   type CurveItem = { contract_code: string; expiry: string; mid: number };
   type CurveData = { curve?: CurveItem[] };
-  const curveItems = (curve as CurveData | undefined)?.curve ?? [];
+  const curveItems = (curve as CurveData | undefined)?.curve ?? EMPTY;
   const liveFrontCode = curveItems[0]?.contract_code;
   const contractCode =
     dbFrontCode ??
@@ -257,8 +261,8 @@ export function ChartShell({
     showPatterns,
   );
   const patterns: CandlestickPattern[] = showPatterns
-    ? (patternsResp?.patterns ?? [])
-    : [];
+    ? (patternsResp?.patterns ?? EMPTY)
+    : EMPTY;
 
   // Auto-TA (support/resistance, trendlines, chart patterns).
   const { data: autoTaResp } = useChartAutoTa(
@@ -429,7 +433,7 @@ export function ChartShell({
               bars={barsData.bars}
               eventMarkers={barsData.event_markers}
               indicators={indicators}
-              indicatorSeries={indicatorsData?.indicators ?? []}
+              indicatorSeries={indicatorsData?.indicators ?? EMPTY}
               chartType={chartType}
               logScale={logScale}
               showCurve={showCurve}
