@@ -191,6 +191,101 @@ function fmtVol(v: number): string {
   return v.toFixed(0);
 }
 
+type Marker = {
+  time: UTCTimestamp;
+  position: "aboveBar" | "belowBar";
+  color: string;
+  shape: "circle" | "arrowUp" | "arrowDown";
+  text: string;
+  size: number;
+};
+
+/** Event markers (above bars) + candlestick-pattern markers (below), sorted by
+ *  time. Shared by the build effect (initial) and the data-update effect. */
+function buildMarkers(
+  eventMarkers: EventMarkerData[],
+  patterns: CandlestickPattern[],
+): Marker[] {
+  return [
+    ...eventMarkers.map((m) => ({
+      time: toUtcEpoch(m.ts),
+      position: "aboveBar" as const,
+      color: colors.accent,
+      shape: "circle" as const,
+      text:
+        m.kind === "eia_storage"
+          ? "EIA"
+          : m.label.substring(0, 3).toUpperCase(),
+      size: 1,
+    })),
+    ...patterns.map((p) => ({
+      time: toUtcEpoch(p.ts),
+      position: "belowBar" as const,
+      color:
+        p.direction === "bullish"
+          ? colors.up
+          : p.direction === "bearish"
+            ? colors.down
+            : colors.flat,
+      shape: (p.direction === "bullish"
+        ? "arrowUp"
+        : p.direction === "bearish"
+          ? "arrowDown"
+          : "circle") as Marker["shape"],
+      text: p.code,
+      size: 1,
+    })),
+  ].sort((a, b) => a.time - b.time);
+}
+
+/** Price-series data + the last bar (for the live-tick effect), per chart type. */
+function priceData(
+  bars: Bar[],
+  chartType: ChartType,
+): { data: unknown[]; lastBar: OhlcPoint | null } {
+  if (isOhlcType(chartType)) {
+    const data =
+      chartType === "heikin-ashi"
+        ? heikinAshi(bars)
+        : bars.map((b) => ({
+            time: toUtcEpoch(b.ts),
+            open: b.o,
+            high: b.h,
+            low: b.l,
+            close: b.c,
+          }));
+    const clean = sortedUnique(data);
+    return { data: clean, lastBar: clean.at(-1) ?? null };
+  }
+  const data = sortedUnique(
+    bars.map((b) => ({ time: toUtcEpoch(b.ts), value: b.c })),
+  );
+  const last = bars.at(-1);
+  return {
+    data,
+    lastBar: last
+      ? {
+          time: toUtcEpoch(last.ts),
+          open: last.o,
+          high: last.h,
+          low: last.l,
+          close: last.c,
+        }
+      : null,
+  };
+}
+
+/** Volume histogram data (up/down colored). */
+function volumeData(bars: Bar[]): unknown[] {
+  return sortedUnique(
+    bars.map((b) => ({
+      time: toUtcEpoch(b.ts),
+      value: b.v,
+      color: b.c >= b.o ? colors.upSoft : colors.downSoft,
+    })),
+  );
+}
+
 /** Apply the user's appearance settings to a live chart via applyOptions —
  *  no rebuild, so color edits update instantly. Candle-color options only
  *  apply to candle/bar series; line/area types keep their accent styling. */
@@ -267,6 +362,12 @@ export function PriceChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const priceSeriesRef = useRef<ISeriesApi<SeriesType> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<SeriesType> | null>(null);
+  // Markers plugin handle (events + candlestick patterns); updated in place so a
+  // bars/pattern refetch doesn't rebuild the chart.
+  const markersRef = useRef<ReturnType<typeof createSeriesMarkers> | null>(
+    null,
+  );
   const lastBarRef = useRef<OhlcPoint | null>(null);
   // In-progress drawing being placed (1st point set, awaiting the 2nd) + its
   // live preview primitive. Persist across renders without retriggering effects.
@@ -294,6 +395,11 @@ export function PriceChart({
   // style edits go through the dedicated applyOptions effect below (no rebuild).
   const styleRef = useRef(style);
   styleRef.current = style;
+  // Latest bars + a time→index map, read by the crosshair handler so the Data
+  // Window stays correct after a bars refetch (which no longer rebuilds the chart).
+  const barsRef = useRef(bars);
+  barsRef.current = bars;
+  const timeToIdxRef = useRef<Map<number, number>>(new Map());
   // Data Window (OHLCV at the crosshair) + scroll-to-realtime affordance.
   const [hover, setHover] = useState<DataRow | null>(null);
   const [atRealtime, setAtRealtime] = useState(true);
@@ -301,8 +407,11 @@ export function PriceChart({
   // its primitives to the fresh series.
   const [chartVersion, setChartVersion] = useState(0);
 
-  // Build / rebuild the chart on any structural or data change. Live ticks are
-  // handled in a separate effect so they don't recreate the chart.
+  // Rebuild the chart only on structural change (chart type, indicator set,
+  // overlays). `bars`/`eventMarkers`/`patterns`/`logScale` are intentionally NOT
+  // deps — bars + markers update in place via the data effect, and logScale via
+  // applyOptions, so a refetch or scale toggle no longer tears down the chart.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: see note above.
   useEffect(() => {
     if (!containerRef.current || bars.length === 0) return;
 
@@ -331,11 +440,9 @@ export function PriceChart({
       handleScale: true,
     });
     chartRef.current = chart;
-    console.log("[dbg] chart rebuild");
 
     // ── Price series (per chart type) ──────────────────────────────────────
     let priceSeries: ISeriesApi<SeriesType>;
-    const ohlc = isOhlcType(chartType);
     if (chartType === "line") {
       priceSeries = chart.addSeries(LineSeries, {
         color: colors.accent,
@@ -375,36 +482,13 @@ export function PriceChart({
     // Paint the user's appearance settings over the just-created series/chart.
     applyChartStyle(chart, priceSeries, chartType, styleRef.current);
 
-    if (ohlc) {
-      const data =
-        chartType === "heikin-ashi"
-          ? heikinAshi(bars)
-          : bars.map((b) => ({
-              time: toUtcEpoch(b.ts),
-              open: b.o,
-              high: b.h,
-              low: b.l,
-              close: b.c,
-            }));
-      const clean = sortedUnique(data);
-      lastBarRef.current = clean.at(-1) ?? null;
-      priceSeries.setData(clean as Parameters<typeof priceSeries.setData>[0]);
-    } else {
-      const data = sortedUnique(
-        bars.map((b) => ({ time: toUtcEpoch(b.ts), value: b.c })),
-      );
-      const last = bars.at(-1);
-      lastBarRef.current = last
-        ? {
-            time: toUtcEpoch(last.ts),
-            open: last.o,
-            high: last.h,
-            low: last.l,
-            close: last.c,
-          }
-        : null;
-      priceSeries.setData(data as Parameters<typeof priceSeries.setData>[0]);
-    }
+    // Initial price data — subsequent bars refetches update this in place via
+    // the data effect below (no chart rebuild).
+    const initial = priceData(bars, chartType);
+    lastBarRef.current = initial.lastBar;
+    priceSeries.setData(
+      initial.data as Parameters<typeof priceSeries.setData>[0],
+    );
 
     // ── Volume ─────────────────────────────────────────────────────────────
     const volumeSeries = chart.addSeries(HistogramSeries, {
@@ -412,17 +496,12 @@ export function PriceChart({
       priceFormat: { type: "volume" },
       priceScaleId: "volume",
     });
+    volumeSeriesRef.current = volumeSeries;
     chart.priceScale("volume").applyOptions({
       scaleMargins: { top: 0.85, bottom: 0 },
     });
     volumeSeries.setData(
-      sortedUnique(
-        bars.map((b) => ({
-          time: toUtcEpoch(b.ts),
-          value: b.v,
-          color: b.c >= b.o ? colors.upSoft : colors.downSoft,
-        })),
-      ) as Parameters<typeof volumeSeries.setData>[0],
+      volumeData(bars) as Parameters<typeof volumeSeries.setData>[0],
     );
 
     // ── Indicators (order-based pairing; multi-line + sub-pane aware) ──────
@@ -536,69 +615,34 @@ export function PriceChart({
     }
 
     // ── Markers: events (above) + candlestick patterns (below) ─────────────
-    type Marker = {
-      time: UTCTimestamp;
-      position: "aboveBar" | "belowBar";
-      color: string;
-      shape: "circle" | "arrowUp" | "arrowDown";
-      text: string;
-      size: number;
-    };
-    const markers: Marker[] = [
-      ...eventMarkers.map((m) => ({
-        time: toUtcEpoch(m.ts),
-        position: "aboveBar" as const,
-        color: colors.accent,
-        shape: "circle" as const,
-        text:
-          m.kind === "eia_storage"
-            ? "EIA"
-            : m.label.substring(0, 3).toUpperCase(),
-        size: 1,
-      })),
-      ...patterns.map((p) => ({
-        time: toUtcEpoch(p.ts),
-        position: "belowBar" as const,
-        color:
-          p.direction === "bullish"
-            ? colors.up
-            : p.direction === "bearish"
-              ? colors.down
-              : colors.flat,
-        shape: (p.direction === "bullish"
-          ? "arrowUp"
-          : p.direction === "bearish"
-            ? "arrowDown"
-            : "circle") as Marker["shape"],
-        text: p.code,
-        size: 1,
-      })),
-    ].sort((a, b) => a.time - b.time);
-    if (markers.length > 0) {
-      createSeriesMarkers(
-        priceSeries as Parameters<typeof createSeriesMarkers>[0],
-        markers as Parameters<typeof createSeriesMarkers>[1],
-      );
-    }
+    // Created once; the data effect updates them via setMarkers on refetch.
+    markersRef.current = createSeriesMarkers(
+      priceSeries as Parameters<typeof createSeriesMarkers>[0],
+      buildMarkers(eventMarkers, patterns) as Parameters<
+        typeof createSeriesMarkers
+      >[1],
+    );
 
     chart.timeScale().fitContent();
 
     // ── Data Window + scroll-to-realtime wiring ───────────────────────────
-    const timeToIdx = new Map<number, number>();
-    bars.forEach((b, i) => timeToIdx.set(toUtcEpoch(b.ts), i));
+    // Reads bars/index via refs so refetches don't need a rebuild to stay live.
+    timeToIdxRef.current = new Map();
+    bars.forEach((b, i) => timeToIdxRef.current.set(toUtcEpoch(b.ts), i));
     setHover(rowFor(bars, bars.length - 1));
     chart.subscribeCrosshairMove((param) => {
+      const cur = barsRef.current;
       const t = typeof param.time === "number" ? param.time : null;
       const idx =
-        t !== null && timeToIdx.has(t)
-          ? (timeToIdx.get(t) as number)
-          : bars.length - 1;
-      setHover(rowFor(bars, idx));
+        t !== null && timeToIdxRef.current.has(t)
+          ? (timeToIdxRef.current.get(t) as number)
+          : cur.length - 1;
+      setHover(rowFor(cur, idx));
     });
     chart
       .timeScale()
       .subscribeVisibleLogicalRangeChange((range) =>
-        setAtRealtime(range ? range.to >= bars.length - 1.5 : true),
+        setAtRealtime(range ? range.to >= barsRef.current.length - 1.5 : true),
       );
 
     if (apiRef) {
@@ -619,25 +663,53 @@ export function PriceChart({
     setChartVersion((v) => v + 1);
 
     return () => {
-      console.log("[dbg] TEARDOWN");
       ro.disconnect();
       chart.remove();
       chartRef.current = null;
       priceSeriesRef.current = null;
+      volumeSeriesRef.current = null;
+      markersRef.current = null;
     };
   }, [
-    bars,
-    eventMarkers,
     indicators,
     indicatorSeries,
     chartType,
-    logScale,
     showCurve,
     curve,
-    patterns,
     autoTa,
     apiRef,
   ]);
+
+  // ── Data update — bars/markers refetch updates series in place (no rebuild) ─
+  useEffect(() => {
+    const series = priceSeriesRef.current;
+    const volume = volumeSeriesRef.current;
+    if (series === null) return;
+    const next = priceData(bars, chartType);
+    lastBarRef.current = next.lastBar;
+    try {
+      series.setData(next.data as Parameters<typeof series.setData>[0]);
+      volume?.setData(volumeData(bars) as Parameters<typeof series.setData>[0]);
+    } catch {
+      // series disposed mid-rebuild — the build effect re-seeds the fresh one.
+    }
+    timeToIdxRef.current = new Map();
+    bars.forEach((b, i) => timeToIdxRef.current.set(toUtcEpoch(b.ts), i));
+    markersRef.current?.setMarkers(
+      buildMarkers(eventMarkers, patterns) as Parameters<
+        NonNullable<typeof markersRef.current>["setMarkers"]
+      >[0],
+    );
+  }, [bars, eventMarkers, patterns, chartType]);
+
+  // ── Log/linear scale toggle — applied in place, no chart rebuild ──────────
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (chart === null) return;
+    chart.priceScale("right").applyOptions({
+      mode: logScale ? PriceScaleMode.Logarithmic : PriceScaleMode.Normal,
+    });
+  }, [logScale]);
 
   // Live tick → update the forming (last) bar without recreating the chart.
   useEffect(() => {
@@ -698,9 +770,10 @@ export function PriceChart({
     };
   }, [drawings, selectedDrawingId, chartVersion]);
 
-  // ── Drawings: pointer/keyboard handlers — subscribed once per chart and
-  // reading the latest state via refs, so data refetches don't churn them
-  // (which would drop an in-progress shape mid-placement). ──────────────────
+  // ── Drawings: pointer/keyboard handlers — subscribed once per chart (re-run
+  // only when the chart is rebuilt, i.e. chartVersion). State is read via refs
+  // so prop changes don't re-subscribe. Data refetches no longer rebuild the
+  // chart, so an in-progress placement is never interrupted mid-flight. ──────
   useEffect(() => {
     const chart = chartRef.current;
     const series = priceSeriesRef.current;
@@ -709,37 +782,12 @@ export function PriceChart({
     const DRAW_COLOR = colors.accent;
     const DRAW_WIDTH = 2;
 
-    // If a chart rebuild interrupted a 2-point placement, re-attach the preview
-    // to the fresh series so the shape keeps following the cursor.
-    const resume = inProgressRef.current;
-    if (
-      resume &&
-      previewRef.current === null &&
-      POINTS_NEEDED[resume.type as DrawingType] === 2
-    ) {
-      const preview = new DrawingPrimitive(
-        {
-          id: "__preview__",
-          type: resume.type as DrawingType,
-          points: [resume.points[0], resume.points[0]],
-          color: DRAW_COLOR,
-          width: DRAW_WIDTH,
-        },
-        false,
-      );
-      try {
-        series.attachPrimitive(preview);
-        previewRef.current = preview;
-      } catch {
-        // ignore
-      }
-    }
-
     const toPoint = (param: MouseEventParams<Time>): DrawingPoint | null => {
       if (!param.point) return null;
       try {
         const price = series.coordinateToPrice(param.point.y);
-        const t = param.time ?? chart.timeScale().coordinateToTime(param.point.x);
+        const t =
+          param.time ?? chart.timeScale().coordinateToTime(param.point.x);
         if (price === null || t === null || t === undefined) return null;
         return { time: Number(t), price: Number(price) };
       } catch {
@@ -778,14 +826,6 @@ export function PriceChart({
 
     const onClick = (param: MouseEventParams<Time>) => {
       const tool = activeToolRef.current;
-      console.log(
-        "[dbg] click tool=",
-        tool,
-        "ipBefore=",
-        inProgressRef.current ? inProgressRef.current.points.length : "none",
-        "hasPoint=",
-        !!param.point,
-      );
       if (tool === "cursor") {
         if (!param.point) return;
         let hit: string | null = null;
@@ -826,14 +866,16 @@ export function PriceChart({
         }
       } else {
         ip.points.push(pt);
-        if (ip.points.length >= POINTS_NEEDED[ip.type as DrawingType]) finalize();
+        if (ip.points.length >= POINTS_NEEDED[ip.type as DrawingType])
+          finalize();
       }
     };
 
     const onMove = (param: MouseEventParams<Time>) => {
       const ip = inProgressRef.current;
       const preview = previewRef.current;
-      if (!ip || !preview || POINTS_NEEDED[ip.type as DrawingType] !== 2) return;
+      if (!ip || !preview || POINTS_NEEDED[ip.type as DrawingType] !== 2)
+        return;
       const pt = toPoint(param);
       if (!pt) return;
       preview.drawing.points = [ip.points[0], pt];
@@ -859,10 +901,8 @@ export function PriceChart({
     chart.subscribeClick(onClick);
     chart.subscribeCrosshairMove(onMove);
     window.addEventListener("keydown", onKey);
-    console.log("[dbg] SUB v=", chartVersion);
 
     return () => {
-      console.log("[dbg] UNSUB v=", chartVersion);
       try {
         chart.unsubscribeClick(onClick);
       } catch {
@@ -874,16 +914,7 @@ export function PriceChart({
         // chart disposed
       }
       window.removeEventListener("keydown", onKey);
-      // Keep the in-progress points so placement survives a chart rebuild; only
-      // drop the preview attached to the (possibly disposed) series.
-      if (previewRef.current) {
-        try {
-          series.detachPrimitive(previewRef.current);
-        } catch {
-          // already disposed
-        }
-        previewRef.current = null;
-      }
+      clearInProgress();
     };
   }, [chartVersion]);
 
