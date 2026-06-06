@@ -1,11 +1,13 @@
 "use client";
 
+import { PageHeader } from "@/components/PageHeader";
 import { AlertsList } from "@/components/admin/AlertsList";
 import { DataHealthGrid } from "@/components/admin/DataHealthGrid";
 import { EnvironmentBlock } from "@/components/admin/EnvironmentBlock";
 import { ModelHealthGrid } from "@/components/admin/ModelHealthGrid";
 import { getAlerts, getDataHealth } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
+import { Server } from "lucide-react";
 import type { AlertsResponse, DataHealth } from "./types";
 
 interface Props {
@@ -40,13 +42,8 @@ export function AdminShell({
   const alerts = (alertsData as AlertsResponse | undefined) ?? initialAlerts;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-baseline gap-3">
-        <h1 className="text-xl font-semibold text-ink-1">Admin</h1>
-        <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">
-          Data health · alerts · environment
-        </span>
-      </div>
+    <div className="stagger flex flex-col gap-4">
+      <PageHeader icon={Server} title="Admin" subtitle="Data & model health" />
 
       <DataHealthGrid adapters={health?.adapters ?? []} />
       <div className="grid grid-cols-2 gap-4">

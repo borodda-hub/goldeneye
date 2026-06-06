@@ -3,6 +3,7 @@
 import type { Alert } from "@/app/(app)/admin/types";
 import { acknowledgeAlert } from "@/lib/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { BellRing, CheckCircle2 } from "lucide-react";
 
 interface Props {
   alerts: Alert[];
@@ -34,14 +35,23 @@ export function AlertsList({ alerts }: Props) {
   });
 
   return (
-    <div className="border border-line-1 bg-surface-1">
-      <div className="px-3 py-2 border-b border-line-1">
+    <div className="card-interactive border border-line-1 bg-surface-1">
+      <div className="px-3 py-2 border-b border-line-1 flex items-center gap-2">
+        <BellRing
+          size={12}
+          strokeWidth={1.5}
+          aria-hidden="true"
+          className="text-ink-4"
+        />
         <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
           Alerts
         </span>
       </div>
       {alerts.length === 0 ? (
-        <p className="text-xs text-ink-4 font-mono p-3">No active alerts.</p>
+        <div className="flex flex-col items-center gap-1.5 py-6 text-ink-4">
+          <CheckCircle2 size={18} strokeWidth={1.5} aria-hidden="true" />
+          <span className="text-[11px]">No active alerts</span>
+        </div>
       ) : (
         <ul>
           {alerts.map((a) => (
