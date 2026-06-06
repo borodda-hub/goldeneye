@@ -1,4 +1,5 @@
 import { AccountControls } from "@/components/AccountControls";
+import { ProfileSync } from "@/components/ProfileSync";
 import { SideNav } from "@/components/SideNav";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { InstrumentSwitcher } from "@/components/instruments/InstrumentSwitcher";
@@ -7,6 +8,7 @@ import { GettingStartedChip } from "@/components/onboarding/GettingStartedChip";
 import { WalkthroughButton } from "@/components/onboarding/WalkthroughButton";
 import { WalkthroughProvider } from "@/components/onboarding/WalkthroughProvider";
 import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
+import { clerkEnabled } from "@/lib/clerk";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import Link from "next/link";
 import { DISCLAIMER } from "../../lib/strings";
@@ -104,6 +106,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
           <WelcomeModal />
           <GettingStarted />
+          {clerkEnabled && <ProfileSync />}
         </WalkthroughProvider>
       </ThemeProvider>
     </Providers>

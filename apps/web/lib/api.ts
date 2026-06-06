@@ -31,6 +31,22 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// ── Account / profile sync ───────────────────────────────────────────────────
+export async function getMySettings(): Promise<{
+  settings: Record<string, string>;
+}> {
+  return apiFetch("/v1/me/settings");
+}
+
+export async function putMySettings(
+  settings: Record<string, string>,
+): Promise<{ settings: Record<string, string> }> {
+  return apiFetch("/v1/me/settings", {
+    method: "PUT",
+    body: JSON.stringify({ settings }),
+  });
+}
+
 // ── Dashboard ──────────────────────────────────────────────────────────────
 export async function getDashboardSummary(symbol = "NG"): Promise<unknown> {
   return apiFetch(`/v1/dashboard/summary?symbol=${encodeURIComponent(symbol)}`);
