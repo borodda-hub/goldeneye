@@ -160,6 +160,126 @@
   --gold-bright: rgb(var(--accent-bright));
 }
 
+[data-theme="indigo"] {
+  --surface-0: 8 8 15;
+  --surface-1: 15 15 26;
+  --surface-2: 21 20 36;
+  --surface-3: 29 28 48;
+  --line-1: 36 35 56;
+  --line-2: 52 50 79;
+  --ink-1: 232 231 242;
+  --ink-1-soft: 208 207 224;
+  --ink-2: 165 163 192;
+  --ink-3: 125 123 156;
+  --ink-4: 90 88 120;
+  --up: 109 213 140;
+  --down: 232 117 117;
+  --flat: 136 132 160;
+  --up-soft: 14 26 18;
+  --down-soft: 28 14 14;
+  --accent: 125 127 240;
+  --accent-bright: 168 170 255;
+  --accent-deep: 79 80 176;
+  --accent-soft: 18 18 42;
+  --conf-low: 224 179 65;
+  --conf-medium: 168 170 255;
+  --conf-high: 109 213 140;
+  --cyan: 125 211 224;
+  --violet: 168 156 219;
+  --gold: rgb(var(--accent));
+  --gold-bright: rgb(var(--accent-bright));
+}
+
+[data-theme="mauve"] {
+  --surface-0: 13 10 12;
+  --surface-1: 23 17 21;
+  --surface-2: 30 23 27;
+  --surface-3: 40 31 36;
+  --line-1: 47 37 43;
+  --line-2: 68 54 66;
+  --ink-1: 240 232 238;
+  --ink-1-soft: 221 208 216;
+  --ink-2: 187 168 180;
+  --ink-3: 153 134 147;
+  --ink-4: 111 94 104;
+  --up: 124 207 154;
+  --down: 232 116 143;
+  --flat: 140 128 136;
+  --up-soft: 18 26 20;
+  --down-soft: 31 14 20;
+  --accent: 207 125 160;
+  --accent-bright: 232 160 189;
+  --accent-deep: 138 79 104;
+  --accent-soft: 28 16 21;
+  --conf-low: 224 168 74;
+  --conf-medium: 232 160 189;
+  --conf-high: 124 207 154;
+  --cyan: 125 200 208;
+  --violet: 176 156 208;
+  --gold: rgb(var(--accent));
+  --gold-bright: rgb(var(--accent-bright));
+}
+
+[data-theme="abyss"] {
+  --surface-0: 5 11 11;
+  --surface-1: 10 20 20;
+  --surface-2: 15 28 28;
+  --surface-3: 21 39 39;
+  --line-1: 27 46 46;
+  --line-2: 41 64 64;
+  --ink-1: 224 240 239;
+  --ink-1-soft: 200 220 219;
+  --ink-2: 157 184 182;
+  --ink-3: 118 145 144;
+  --ink-4: 84 112 111;
+  --up: 79 208 160;
+  --down: 232 117 128;
+  --flat: 126 148 146;
+  --up-soft: 10 26 22;
+  --down-soft: 28 14 16;
+  --accent: 63 208 200;
+  --accent-bright: 110 232 224;
+  --accent-deep: 36 138 132;
+  --accent-soft: 10 28 27;
+  --conf-low: 224 195 65;
+  --conf-medium: 110 232 224;
+  --conf-high: 79 208 160;
+  --cyan: 111 208 216;
+  --violet: 159 176 208;
+  --gold: rgb(var(--accent));
+  --gold-bright: rgb(var(--accent-bright));
+}
+
+[data-theme="nord"] {
+  --surface-0: 20 24 31;
+  --surface-1: 28 33 42;
+  --surface-2: 35 41 52;
+  --surface-3: 46 52 64;
+  --line-1: 59 66 82;
+  --line-2: 76 86 106;
+  --ink-1: 236 239 244;
+  --ink-1-soft: 229 233 240;
+  --ink-2: 216 222 233;
+  --ink-3: 154 165 184;
+  --ink-4: 107 116 136;
+  --up: 163 190 140;
+  --down: 191 97 106;
+  --flat: 136 147 165;
+  --up-soft: 20 28 20;
+  --down-soft: 28 16 18;
+  --accent: 136 192 208;
+  --accent-bright: 143 188 187;
+  --accent-deep: 94 129 172;
+  --accent-soft: 20 28 34;
+  --conf-low: 235 203 139;
+  --conf-medium: 143 188 187;
+  --conf-high: 163 190 140;
+  --cyan: 136 192 208;
+  --violet: 180 142 173;
+  --gold: rgb(var(--accent));
+  --gold-bright: rgb(var(--accent-bright));
+}
+
 html {
   scroll-behavior: smooth;
 }
