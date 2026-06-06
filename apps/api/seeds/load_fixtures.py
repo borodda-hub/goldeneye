@@ -20,7 +20,7 @@ FIXTURES_DIR = Path(__file__).resolve().parents[3] / "packages" / "fixtures"
 
 
 def _load(name: str) -> list[dict]:
-    return json.loads((FIXTURES_DIR / name).read_text())
+    return json.loads((FIXTURES_DIR / name).read_text(encoding="utf-8"))
 
 
 def _d(s: str | None) -> date | None:

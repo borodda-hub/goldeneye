@@ -113,7 +113,7 @@ async def get_templates() -> dict:
     templates_path = _FIXTURES_DIR / "scenario_templates.json"
     if not templates_path.exists():
         return {"templates": []}
-    templates = json.loads(templates_path.read_text())
+    templates = json.loads(templates_path.read_text(encoding="utf-8"))
     return {"templates": templates}
 
 

@@ -8,7 +8,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 _FIXTURE_PATH = _REPO_ROOT / "packages" / "fixtures" / "news_events.json"
 _EVENTS: list[dict] = sorted(
-    json.loads(_FIXTURE_PATH.read_text()),
+    json.loads(_FIXTURE_PATH.read_text(encoding="utf-8")),
     key=lambda e: e["published_at"],
     reverse=True,
 )
