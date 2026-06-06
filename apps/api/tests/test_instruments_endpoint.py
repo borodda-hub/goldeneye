@@ -16,6 +16,18 @@ def client() -> TestClient:
     return TestClient(app)
 
 
+@pytest.fixture(autouse=True)
+def _no_watchlist_cache():
+    """The /v1/instruments route returns a cached Redis 'watchlist:v1' payload
+    before it ever calls the repo. These tests exercise the router's repo →
+    quote-shaping logic via mocks, so disable the cache to keep them hermetic
+    regardless of whatever the local Redis happens to hold."""
+    with patch(
+        "apps.api.routers.instruments._get_cache", return_value=None
+    ):
+        yield
+
+
 def _instr(symbol: str, name: str, meta: dict | None = None) -> Any:
     return type(
         "I",
