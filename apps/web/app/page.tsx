@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LandingAccountControls } from "../components/LandingAccountControls";
 import { GoldItalic } from "../components/typography/GoldItalic";
 
 export const metadata = {
@@ -71,6 +72,7 @@ export default function LandingPage() {
           </span>
         </div>
         <div className="flex items-center gap-6 pointer-events-auto">
+          <LandingAccountControls />
           <Link
             href="/dashboard"
             className="hover:text-accent transition-colors"

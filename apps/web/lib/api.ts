@@ -1,14 +1,50 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
 
+/** The active Clerk session token (client-side), or null when signed out /
+ *  accounts off. Lets the API scope a signed-in user's work; reads still work
+ *  anonymously when absent. */
+async function clerkToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  const clerk = (
+    window as {
+      Clerk?: { session?: { getToken: () => Promise<string | null> } };
+    }
+  ).Clerk;
+  try {
+    return clerk?.session ? await clerk.session.getToken() : null;
+  } catch {
+    return null;
+  }
+}
+
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
+  const token = await clerkToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...((options?.headers as Record<string, string>) ?? {}),
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
   if (!res.ok) {
     throw new Error(`API error ${res.status}: ${res.statusText}`);
   }
   return res.json() as Promise<T>;
+}
+
+// ── Account / profile sync ───────────────────────────────────────────────────
+export async function getMySettings(): Promise<{
+  settings: Record<string, string>;
+}> {
+  return apiFetch("/v1/me/settings");
+}
+
+export async function putMySettings(
+  settings: Record<string, string>,
+): Promise<{ settings: Record<string, string> }> {
+  return apiFetch("/v1/me/settings", {
+    method: "PUT",
+    body: JSON.stringify({ settings }),
+  });
 }
 
 // ── Dashboard ──────────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Resolve .env relative to this file so settings load identically regardless
@@ -47,6 +48,18 @@ class Settings(BaseSettings):
     adapter_news: str = "mock"
     anthropic_api_key: str = ""
     eia_api_key: str = ""
+
+    # Accounts (Clerk) — OPTIONAL. Empty = open/anonymous API (the demo + local
+    # dev work untouched). The publishable key is public; from it we derive the
+    # Clerk Frontend API host → JWKS URL + issuer to verify session tokens. No
+    # secret key required (verification uses the public JWKS). Accepts either the
+    # API name or the web's NEXT_PUBLIC_ name, so one value in .env works for both.
+    clerk_publishable_key: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "CLERK_PUBLISHABLE_KEY", "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
+        ),
+    )
     redis_ttl_market_summary: int = 1800   # 30 min
     redis_ttl_scenario: int = 86400         # 24h
     redis_ttl_chart_indicator: int = 300    # 5 min

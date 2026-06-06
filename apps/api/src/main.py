@@ -32,6 +32,7 @@ from apps.api.routers import (  # noqa: E402
     indicators,
     instruments,
     journal,
+    me,
     news,
     paper,
     patterns,
@@ -91,6 +92,7 @@ app.include_router(chart.router)
 app.include_router(signals.router)
 app.include_router(scenarios.router)
 app.include_router(journal.router)
+app.include_router(me.router)
 app.include_router(paper.router)
 app.include_router(admin.router)
 app.include_router(explain.router)
