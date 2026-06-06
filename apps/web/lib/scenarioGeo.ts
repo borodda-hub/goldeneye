@@ -5,18 +5,18 @@ import { type Lean, shockLean } from "./scenarioLean";
  *  enough to make the shock's mechanism legible (the picture is the thesis). */
 export const HENRY_HUB = { name: "Henry Hub", lat: 29.97, lng: -92.0 };
 
-const GULF_TERMINALS = [
+export const GULF_TERMINALS = [
   { name: "Sabine Pass", lat: 29.73, lng: -93.87 },
   { name: "Freeport", lat: 28.95, lng: -95.31 },
   { name: "Corpus Christi", lat: 27.84, lng: -97.06 },
   { name: "Cameron", lat: 29.78, lng: -93.33 },
 ];
-const EUROPE = [
+export const EUROPE = [
   { name: "UK (NBP)", lat: 51.5, lng: -0.1 },
   { name: "Netherlands (TTF)", lat: 51.9, lng: 4.5 },
 ];
 const BASIN = { name: "Appalachia (Marcellus)", lat: 40.0, lng: -78.0 };
-const STORAGE_HUB = { name: "Interior storage", lat: 38.5, lng: -94.0 };
+export const STORAGE_HUB = { name: "Interior storage", lat: 38.5, lng: -94.0 };
 const REGIONS: Record<string, { name: string; lat: number; lng: number }> = {
   northeast: { name: "Northeast demand", lat: 42.0, lng: -73.5 },
   midwest: { name: "Midwest demand", lat: 41.9, lng: -93.6 },
@@ -39,6 +39,7 @@ export interface GlobePoint {
   label: string;
   color: string;
   size: number;
+  kind: "hub" | "locus" | "infra";
 }
 export interface GlobeArc {
   startLat: number;
@@ -47,6 +48,7 @@ export interface GlobeArc {
   endLng: number;
   color: [string, string];
   label: string;
+  kind: "flow" | "network";
 }
 
 /** Translate the current shocks into glowing points + animated arcs. Every
@@ -65,6 +67,7 @@ export function buildGlobeLayers(
       label: "Henry Hub (NG benchmark)",
       color: palette.neutral,
       size: 0.9,
+      kind: "hub",
     },
   ];
   const arcs: GlobeArc[] = [];
@@ -83,6 +86,7 @@ export function buildGlobeLayers(
       label: p.name,
       color: LEAN_COLOR[lean],
       size,
+      kind: "locus",
     });
   };
   const toHub = (p: { lat: number; lng: number; name: string }, lean: Lean) => {
@@ -93,6 +97,7 @@ export function buildGlobeLayers(
       endLng: HENRY_HUB.lng,
       color: [LEAN_COLOR[lean], palette.neutral],
       label: `${p.name} → Henry Hub`,
+      kind: "flow",
     });
   };
 
@@ -115,6 +120,7 @@ export function buildGlobeLayers(
             endLng: e.lng,
             color: [LEAN_COLOR[lean], LEAN_COLOR[lean]],
             label: `${t.name} → ${e.name}`,
+            kind: "flow",
           });
         }
       }

@@ -1,9 +1,16 @@
 "use client";
 
 import type { Shock } from "@/app/(app)/scenarios/types";
-import { buildGlobeLayers } from "@/lib/scenarioGeo";
+import {
+  EUROPE,
+  GULF_TERMINALS,
+  type GlobeArc,
+  type GlobePoint,
+  STORAGE_HUB,
+  buildGlobeLayers,
+} from "@/lib/scenarioGeo";
 import { rgba, useThemePalette } from "@/lib/useThemePalette";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Globe, { type GlobeMethods } from "react-globe.gl";
 import * as THREE from "three";
 
@@ -14,14 +21,40 @@ const SAT_IMAGE =
   "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg";
 const SAT_BUMP = "https://unpkg.com/three-globe/example/img/earth-topology.png";
 const HEIGHT = 440;
+const DEFAULT_POV = { lat: 38, lng: -45, altitude: 2.0 };
 
 type GlobeStyle = "vector" | "satellite";
+
+/** Real LNG infrastructure (terminals, import hubs, interior storage) shown as
+ *  faint reference loci so the globe has context before a scenario loads. */
+const INFRA: { name: string; lat: number; lng: number; role: string }[] = [
+  ...GULF_TERMINALS.map((t) => ({ ...t, role: "LNG terminal" })),
+  ...EUROPE.map((e) => ({ ...e, role: "import hub" })),
+  { ...STORAGE_HUB, role: "storage" },
+];
+
+/** Center + altitude that frames a set of loci (the active scenario geography). */
+function frameView(pts: GlobePoint[]) {
+  if (pts.length <= 1) return { ...DEFAULT_POV };
+  const lats = pts.map((p) => p.lat);
+  const lngs = pts.map((p) => p.lng);
+  const lat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  const lng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+  const span = Math.max(
+    Math.max(...lats) - Math.min(...lats),
+    Math.max(...lngs) - Math.min(...lngs),
+  );
+  const altitude = Math.min(2.8, Math.max(1.1, span / 45 + 0.9));
+  return { lat, lng, altitude };
+}
 
 /**
  * The scenario impact globe. Renders a scenario's geography — glowing loci and
  * animated arcs colored by each shock's directional lean — in one of two looks:
  * "vector" (soft country outlines on a dark sphere, on-brand) or "satellite"
- * (standard NASA blue-marble imagery). Client-only (parent imports it ssr:false).
+ * (standard NASA blue-marble imagery). View controls (rotate / reset / frame)
+ * and toggleable reference layers (infrastructure, flow network, graticule) let
+ * you read the mechanism. Client-only (parent imports it ssr:false).
  */
 export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -31,6 +64,12 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
   const [countries, setCountries] = useState<{ features: object[] }>({
     features: [],
   });
+
+  // Controls + layer toggles.
+  const [autoRotate, setAutoRotate] = useState(true);
+  const [showInfra, setShowInfra] = useState(true);
+  const [showNetwork, setShowNetwork] = useState(false);
+  const [showGrid, setShowGrid] = useState(false);
 
   const theme = useThemePalette();
   const leanPalette = useMemo(
@@ -45,6 +84,44 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
     () => buildGlobeLayers(shocks, leanPalette),
     [shocks, leanPalette],
   );
+
+  // Faint reference infrastructure, minus any locus the active scenario already
+  // lights up (so they don't double-plot).
+  const infraPoints = useMemo<GlobePoint[]>(() => {
+    if (!showInfra) return [];
+    const active = new Set(points.map((p) => p.label));
+    return INFRA.filter((i) => !active.has(i.name)).map((i) => ({
+      lat: i.lat,
+      lng: i.lng,
+      label: `${i.name} · ${i.role}`,
+      color: rgba(theme.accent, 0.5),
+      size: 0.32,
+      kind: "infra" as const,
+    }));
+  }, [showInfra, points, theme]);
+
+  // Faint static Gulf→Europe LNG corridors — the physical network behind shocks.
+  const networkArcs = useMemo<GlobeArc[]>(() => {
+    if (!showNetwork) return [];
+    const c = rgba(theme.accent, 0.22);
+    return GULF_TERMINALS.flatMap((t) =>
+      EUROPE.map((e) => ({
+        startLat: t.lat,
+        startLng: t.lng,
+        endLat: e.lat,
+        endLng: e.lng,
+        color: [c, c] as [string, string],
+        label: `${t.name} → ${e.name} · LNG corridor`,
+        kind: "network" as const,
+      })),
+    );
+  }, [showNetwork, theme]);
+
+  const allPoints = useMemo(
+    () => [...infraPoints, ...points],
+    [infraPoints, points],
+  );
+  const allArcs = useMemo(() => [...networkArcs, ...arcs], [networkArcs, arcs]);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -69,21 +146,44 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
     [],
   );
 
-  useEffect(() => {
-    const g = globeRef.current;
-    if (!g) return;
+  const applyAutoRotate = useCallback((on: boolean) => {
     try {
-      const controls = g.controls() as {
-        autoRotate: boolean;
-        autoRotateSpeed: number;
-      };
-      controls.autoRotate = true;
-      controls.autoRotateSpeed = 0.5;
-      g.pointOfView({ lat: 38, lng: -45, altitude: 2.0 }, 0);
+      const c = globeRef.current?.controls() as
+        | { autoRotate: boolean; autoRotateSpeed: number }
+        | undefined;
+      if (c) {
+        c.autoRotate = on;
+        c.autoRotateSpeed = 0.5;
+      }
     } catch {}
   }, []);
 
+  const onReady = useCallback(() => {
+    applyAutoRotate(autoRotate);
+    try {
+      globeRef.current?.pointOfView(DEFAULT_POV, 0);
+    } catch {}
+  }, [applyAutoRotate, autoRotate]);
+
+  useEffect(() => {
+    applyAutoRotate(autoRotate);
+  }, [autoRotate, applyAutoRotate]);
+
+  const resetView = useCallback(() => {
+    try {
+      globeRef.current?.pointOfView(DEFAULT_POV, 600);
+    } catch {}
+  }, []);
+
+  const frameScenario = useCallback(() => {
+    try {
+      globeRef.current?.pointOfView(frameView(points), 700);
+    } catch {}
+  }, [points]);
+
   const isVector = style === "vector";
+  const toggleCls = (on: boolean) =>
+    on ? "text-accent" : "text-ink-4 hover:text-accent";
 
   return (
     <div
@@ -93,6 +193,7 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
     >
       <Globe
         ref={globeRef}
+        onGlobeReady={onReady}
         width={width}
         height={HEIGHT}
         backgroundColor="rgba(0,0,0,0)"
@@ -103,6 +204,7 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
         showAtmosphere
         atmosphereColor={isVector ? rgba(theme.accent, 1) : "#7fb0ff"}
         atmosphereAltitude={0.16}
+        showGraticules={showGrid}
         // Thin vector country outlines (vector look only) — no fill, low relief,
         // accent-tinted so they track the active palette.
         polygonsData={isVector ? countries.features : []}
@@ -111,25 +213,88 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
         polygonStrokeColor={() => rgba(theme.accent, 0.7)}
         polygonAltitude={0.004}
         // ── data layers (both looks) ──────────────────────────────────
-        pointsData={points}
+        pointsData={allPoints}
         pointLat="lat"
         pointLng="lng"
         pointColor="color"
         pointAltitude={0.014}
         pointRadius="size"
         pointLabel="label"
-        arcsData={arcs}
+        arcsData={allArcs}
         arcStartLat="startLat"
         arcStartLng="startLng"
         arcEndLat="endLat"
         arcEndLng="endLng"
         arcColor="color"
-        arcStroke={0.55}
-        arcDashLength={0.5}
-        arcDashGap={0.25}
-        arcDashAnimateTime={1700}
+        arcStroke={(d: object) =>
+          (d as GlobeArc).kind === "network" ? 0.2 : 0.5
+        }
+        arcDashLength={(d: object) =>
+          (d as GlobeArc).kind === "network" ? 1 : 0.5
+        }
+        arcDashGap={(d: object) =>
+          (d as GlobeArc).kind === "network" ? 0 : 0.25
+        }
+        arcDashAnimateTime={(d: object) =>
+          (d as GlobeArc).kind === "network" ? 0 : 1700
+        }
         arcLabel="label"
       />
+
+      {/* view controls + layer toggles */}
+      <div className="absolute top-2 left-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[10px] uppercase tracking-widest">
+        <button
+          type="button"
+          onClick={() => setAutoRotate((v) => !v)}
+          aria-pressed={autoRotate}
+          className={toggleCls(autoRotate)}
+        >
+          {autoRotate ? "Spin ⏸" : "Spin ▶"}
+        </button>
+        <span className="text-ink-4">·</span>
+        <button
+          type="button"
+          onClick={resetView}
+          className="text-ink-4 hover:text-accent"
+        >
+          Reset
+        </button>
+        <span className="text-ink-4">·</span>
+        <button
+          type="button"
+          onClick={frameScenario}
+          className="text-ink-4 hover:text-accent"
+        >
+          Frame
+        </button>
+        <span className="text-line-2">|</span>
+        <button
+          type="button"
+          onClick={() => setShowInfra((v) => !v)}
+          aria-pressed={showInfra}
+          className={toggleCls(showInfra)}
+        >
+          Infra
+        </button>
+        <span className="text-ink-4">·</span>
+        <button
+          type="button"
+          onClick={() => setShowNetwork((v) => !v)}
+          aria-pressed={showNetwork}
+          className={toggleCls(showNetwork)}
+        >
+          Network
+        </button>
+        <span className="text-ink-4">·</span>
+        <button
+          type="button"
+          onClick={() => setShowGrid((v) => !v)}
+          aria-pressed={showGrid}
+          className={toggleCls(showGrid)}
+        >
+          Grid
+        </button>
+      </div>
 
       {/* style toggle */}
       <div className="absolute top-2 right-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest">
