@@ -1,4 +1,5 @@
 import type { ModelResult } from "@/app/(app)/signals/types";
+import { CpuIcon } from "lucide-react";
 import { ModelCard } from "./ModelCard";
 
 interface Props {
@@ -8,8 +9,11 @@ interface Props {
 export function ModelGrid({ models }: Props) {
   if (models.length === 0) {
     return (
-      <div className="text-xs text-ink-4 font-mono border border-line-1 p-3">
-        No model results available.
+      <div className="border border-line-1 bg-surface-1 p-6">
+        <div className="flex flex-col items-center gap-1.5 text-ink-4">
+          <CpuIcon size={18} strokeWidth={1.5} aria-hidden="true" />
+          <span className="text-[11px]">No model results available</span>
+        </div>
       </div>
     );
   }

@@ -2,6 +2,7 @@
 
 import { HelpTip } from "@/components/HelpTip";
 import { useBacktestSummary, useRunBacktest } from "@/lib/queries";
+import { Gauge } from "lucide-react";
 
 interface ModelSummary {
   name: string;
@@ -145,11 +146,17 @@ export function BacktestCard({ symbol = "NG" }: BacktestCardProps = {}) {
 
   return (
     <div
-      className="border border-line-1 rounded-md bg-surface-1 flex flex-col"
+      className="card-interactive border border-line-1 rounded-md bg-surface-1 flex flex-col"
       data-testid="backtest-card"
     >
       <div className="flex items-center justify-between px-3 pt-2 pb-1">
-        <span className="text-xs text-ink-3 uppercase tracking-widest">
+        <span className="flex items-center gap-2 text-xs text-ink-3 uppercase tracking-widest">
+          <Gauge
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           Backtest Performance · 1d horizon
           <HelpTip k="backtest" className="ml-1" />
         </span>

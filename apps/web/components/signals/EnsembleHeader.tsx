@@ -26,7 +26,7 @@ export function EnsembleHeader({ ensemble }: Props) {
         : "text-ink-4";
 
   return (
-    <div className="border border-line-1 bg-surface-1 p-4">
+    <div className="card-interactive border border-line-1 bg-surface-1 p-4">
       <div className="flex items-start gap-8">
         {/* Direction + confidence */}
         <div className="flex items-center gap-3">

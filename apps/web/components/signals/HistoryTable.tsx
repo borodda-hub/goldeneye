@@ -2,7 +2,9 @@
 
 import type { HistoryRow, SignalHistory } from "@/app/(app)/signals/types";
 import { HelpTip } from "@/components/HelpTip";
+import { Skeleton } from "@/components/Skeleton";
 import { useSignalHistory } from "@/lib/queries";
+import { History, Inbox } from "lucide-react";
 import { useState } from "react";
 
 function OutcomeGlyph({ outcome }: { outcome: HistoryRow["outcome"] }) {
@@ -43,9 +45,15 @@ export function HistoryTable({ symbol = "NG", initialLimit = 25 }: Props) {
   const rows = (data as SignalHistory | undefined)?.rows ?? [];
 
   return (
-    <div className="border border-line-1 bg-surface-1 flex flex-col h-full">
+    <div className="card-interactive border border-line-1 bg-surface-1 flex flex-col h-full">
       <div className="flex items-center justify-between px-3 py-2 border-b border-line-1">
-        <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+        <span className="flex items-center gap-2 font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+          <History
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           History
           <HelpTip k="signalHistory" className="ml-1" />
         </span>
@@ -75,17 +83,26 @@ export function HistoryTable({ symbol = "NG", initialLimit = 25 }: Props) {
             </tr>
           </thead>
           <tbody>
-            {isLoading && (
-              <tr>
-                <td colSpan={8} className="text-center text-ink-4 py-4">
-                  Loading...
-                </td>
-              </tr>
-            )}
+            {isLoading &&
+              [0, 1, 2, 3, 4].map((i) => (
+                <tr key={i} className="border-b border-line-1">
+                  <td colSpan={8} className="px-3 py-1.5">
+                    <Skeleton className="h-3 w-full" />
+                  </td>
+                </tr>
+              ))}
             {!isLoading && rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="text-center text-ink-4 py-4">
-                  No scored forecasts in range.
+                <td colSpan={8} className="py-6">
+                  <div className="flex flex-col items-center gap-1.5 text-ink-4">
+                    <Inbox size={18} strokeWidth={1.5} aria-hidden="true" />
+                    <span className="text-[11px]">
+                      No scored forecasts in range
+                    </span>
+                    <span className="text-[10px] text-ink-4/70">
+                      Toggle pending or widen the window to see more.
+                    </span>
+                  </div>
                 </td>
               </tr>
             )}
