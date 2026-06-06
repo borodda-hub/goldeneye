@@ -12,6 +12,7 @@ from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
 from apps.api.repos import journal as journal_repo
 from apps.api.repos import theses as theses_repo
+from apps.api.services.auto_resolution import resolve_open_decisions
 from apps.api.services.llm_explainer import extract_prediction, review_journal_entry
 from apps.api.services.price_lookup import get_latest_closes
 
@@ -78,6 +79,21 @@ async def extract_prediction_endpoint(
     price = await _latest_price(session, instrument.id)
     claim = await extract_prediction(req.hypothesis, req.instrument, price)
     return {"prediction": claim, "anchor_price": price}
+
+
+@router.post("/auto-resolve")
+async def auto_resolve(session: AsyncSession = Depends(get_db)) -> dict:
+    """Resolve every open structured decision whose horizon has elapsed, against
+    real market data. Idempotent — only touches still-unresolved entries. Meant
+    to be called on a schedule (or on demand)."""
+    res = await resolve_open_decisions(session)
+    await session.commit()
+    return {
+        "resolved": res.resolved,
+        "still_pending": res.still_pending,
+        "no_price": res.no_price,
+        "by_outcome": res.by_outcome,
+    }
 
 
 @router.post("")
@@ -223,4 +239,8 @@ def _serialize(entry) -> dict:  # type: ignore[type-arg]
         "anchor_price": (
             float(entry.anchor_price) if entry.anchor_price is not None else None
         ),
+        "resolved_at": (
+            entry.resolved_at.isoformat() if entry.resolved_at else None
+        ),
+        "auto_resolved": bool(entry.auto_resolved),
     }

@@ -1,7 +1,16 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import ARRAY, CheckConstraint, ForeignKey, Integer, Numeric, Text, func
+from sqlalchemy import (
+    ARRAY,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    Text,
+    func,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -60,3 +69,6 @@ class UserDecisionJournal(Base):
     horizon_days: Mapped[int | None] = mapped_column(Integer)
     threshold_pct: Mapped[float | None] = mapped_column(Numeric)
     anchor_price: Mapped[float | None] = mapped_column(Numeric)
+    # Phase 3 — auto-resolution provenance (resolved_direction holds the result).
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    auto_resolved: Mapped[bool] = mapped_column(default=False, server_default="false")
