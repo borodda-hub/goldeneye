@@ -20,7 +20,7 @@ export function collectSettings(): Record<string, string> {
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && key.startsWith(PREFIX)) {
+      if (key?.startsWith(PREFIX)) {
         const value = localStorage.getItem(key);
         if (value !== null) out[key] = value;
       }
