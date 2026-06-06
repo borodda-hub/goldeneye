@@ -10,7 +10,7 @@ You are working on **NGTI (Natural Gas Trading Intelligence)** — a research, f
 
 ## Architecture in one paragraph
 
-A Next.js 14 (App Router) + TypeScript frontend talks to a Python FastAPI backend over REST and WebSocket. Postgres with the TimescaleDB extension stores time-series and relational data. Redis caches recent reads and holds live state for WebSocket fan-out. Modular adapter classes ingest market, energy, weather, positioning, and news data — all start as mock adapters returning fixtures, with real-source adapters as drop-in replacements behind the same interface. A model registry exposes baseline forecasts (moving average, ARIMA/Prophet, volatility regime, gradient-boosted placeholder). An LLM layer summarizes events, explains conditions, narrates scenarios, and reviews journal entries. Full detail in `docs/ARCHITECTURE.md`.
+A Next.js 14 (App Router) + TypeScript frontend talks to a Python FastAPI backend over REST and WebSocket. Postgres with the TimescaleDB extension stores time-series and relational data. Redis caches recent reads and holds live state for WebSocket fan-out. Modular adapter classes ingest market, energy, weather, positioning, and news data — all start as mock adapters returning fixtures, with real-source adapters as drop-in replacements behind the same interface. A model registry exposes baseline forecasts (moving average, ARIMA/Prophet, volatility regime, weighted-factor composite). An LLM layer summarizes events, explains conditions, narrates scenarios, and reviews journal entries. Full detail in `docs/ARCHITECTURE.md`.
 
 ## Source-of-truth files (do not duplicate their content)
 

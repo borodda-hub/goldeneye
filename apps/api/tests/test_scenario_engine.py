@@ -123,8 +123,9 @@ def test_apply_storage_shock_updates_latest_storage(baseline_ctx: ForecastContex
     shocks = [{"type": "storage", "delta_bcf": -45.0, "days": 7}]
     shocked, assumptions, max_days = apply(shocks, baseline_ctx)
 
-    # Storage shocks write delta_vs_consensus — that's the key xgboost actually
-    # reads. Negative = smaller build / larger draw vs consensus = bullish.
+    # Storage shocks write delta_vs_consensus — that's the key the factor
+    # composite actually reads. Negative = smaller build / larger draw vs
+    # consensus = bullish.
     assert shocked.latest_storage is not None
     assert shocked.latest_storage["delta_vs_consensus"] == pytest.approx(-45.0)
     # Also nudges closes via heuristic: -45 × -0.0005 × 1.0 = +0.0225.

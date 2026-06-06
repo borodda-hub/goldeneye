@@ -38,10 +38,10 @@ def apply(
                           Scaled by days / 7.
 
     - type="storage":     writes delta_vs_consensus on latest_storage so the
-                          xgboost placeholder sees it (positive = larger build
-                          than expected = bearish in xgboost's logic).
+                          factor composite sees it (positive = larger build
+                          than expected = bearish in the composite's logic).
                           Also accumulates into closes via a small price
-                          heuristic so even non-xgboost models register it.
+                          heuristic so even price-only models register it.
     """
     # Tunable magnitudes — kept in one place so backtests can sweep them.
     WEATHER_PRICE_PER_DEG_F = -0.005   # cold (negative ΔT) → price up
@@ -102,16 +102,16 @@ def apply(
 
         elif shock_type == "storage":
             delta_bcf = float(shock.get("delta_bcf", 0.0))
-            # Field name that xgboost_placeholder actually reads.
+            # Field name that factor_composite actually reads.
             existing = shocked_storage.get("delta_vs_consensus", 0.0) or 0.0
             shocked_storage["delta_vs_consensus"] = existing + delta_bcf
-            # Also nudge closes so non-xgboost models see something.
+            # Also nudge closes so price-only models see something.
             price_impact = delta_bcf * STORAGE_PRICE_PER_BCF * days_factor
             shocked_closes = [c + price_impact for c in shocked_closes]
             assumptions.append(
                 f"Storage delta vs consensus shifts by {delta_bcf:+.1f} Bcf over "
                 f"{days} days, applying a {price_impact:+.4f}/MMBtu price-impact "
-                f"heuristic to closes and surfacing the delta on the xgboost input."
+                f"heuristic to closes and surfacing the delta on the composite input."
             )
 
     shocked_ctx = replace(

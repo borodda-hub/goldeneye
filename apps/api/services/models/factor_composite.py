@@ -1,6 +1,13 @@
 """
-XGBoost placeholder — consumes alt-data (storage delta, COT net) when available.
-Falls back to price momentum only when alt-data is missing.
+Factor Composite — a transparent, rules-based blend of alt-data signals
+(EIA storage surprise, COT managed-money delta) and short-term price momentum,
+combined by weighted voting. Consumes alt-data when available and falls back to
+price momentum only when it's missing.
+
+This is deliberately NOT a trained machine-learning model: every weight and
+threshold below is hand-set and auditable. A learned model replaces it in a
+later phase; until then the output carries an explicit "not a trained model"
+disclaimer so nothing here overstates what it is.
 """
 from __future__ import annotations
 
@@ -19,9 +26,11 @@ def predict(
     supporting: list[dict] = []
     contradicting: list[dict] = [
         {
-            "factor": "Model not trained on real data",
+            "factor": "Not a trained model",
             "weight": 0.8,
-            "note": "Placeholder until training pipeline ships.",
+            "note": "Rules-based composite of storage, positioning, and momentum "
+            "signals — every weight is hand-set, not learned. A trained model "
+            "replaces it in a later phase.",
         }
     ]
 
@@ -102,7 +111,7 @@ def predict(
     expected_pct = 0.005 if direction == "bullish" else (-0.005 if direction == "bearish" else 0.0)
 
     return ForecastResult(
-        model_name="xgboost_placeholder",
+        model_name="factor_composite",
         horizon=horizon,
         direction=direction,
         confidence=confidence,

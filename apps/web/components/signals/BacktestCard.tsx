@@ -30,14 +30,14 @@ const MODEL_ORDER = [
   "moving_average_directional",
   "prophet_trend",
   "volatility_regime",
-  "xgboost_placeholder",
+  "factor_composite",
 ] as const;
 
 const MODEL_LABEL: Record<string, string> = {
   moving_average_directional: "SMA Cross",
   prophet_trend: "Prophet Trend",
   volatility_regime: "Vol Regime",
-  xgboost_placeholder: "XGBoost",
+  factor_composite: "Factor Composite",
 };
 
 function HitRateBar({ value }: { value: number }) {

@@ -12,7 +12,7 @@ Seven screens, all driven by a FastAPI backend and a TimescaleDB/Redis substrate
 |---|---|
 | **Dashboard** | Front-month price, volatility regime, directional bias, futures curve, recent events, live ticks via WebSocket. |
 | **Chart** | OHLCV candles + SMA20/EMA50 overlays + event markers; Lightweight Charts under the hood. |
-| **Signal Lab** | 4-model ensemble (moving average, prophet, volatility regime, gradient-boost placeholder) with agreement, input diversity, confidence rationale, per-model supporting/contradicting factors, LLM explanation, history table with server-side hit/miss scoring. |
+| **Signal Lab** | 4-model ensemble (moving average, prophet, volatility regime, weighted-factor composite) with agreement, input diversity, confidence rationale, per-model supporting/contradicting factors, LLM explanation, history table with server-side hit/miss scoring. |
 | **Scenario Lab** | 6 preset templates (cold snap, LNG export disruption, freeze-off, hurricane, geopolitical, heat wave); strict-typed composable shocks; reruns the model registry against shocked context; LLM narrative with structurally-deterministic assumptions/counterarguments/data-needed-to-validate. |
 | **Decision Journal** | Hypothesis + evidence + confidence + planned action + risk factors + invalidation criteria; LLM review writes assumption-finding feedback, not endorsement. |
 | **Paper Trading** | Long/short with stop and take; live mark-to-market via WS price ticks; PnL math using NG tick value; equity curve with $100k starting equity; 10× leverage cap. |

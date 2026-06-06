@@ -77,7 +77,7 @@ describe("BacktestCard", () => {
     useBacktestSummaryMock.mockReturnValue({
       data: {
         models: [
-          _model("xgboost_placeholder", { hit_rate: 0.5349 }),
+          _model("factor_composite", { hit_rate: 0.5349 }),
           _model("moving_average_directional", { hit_rate: 0.4419 }),
           _model("volatility_regime", { hit_rate: 0.5676, scored: 37 }),
           _model("prophet_trend", { scored: 0, hit_rate: 0.0 }),
@@ -92,7 +92,7 @@ describe("BacktestCard", () => {
     expect(screen.getByText("SMA Cross")).toBeInTheDocument();
     expect(screen.getByText("Prophet Trend")).toBeInTheDocument();
     expect(screen.getByText("Vol Regime")).toBeInTheDocument();
-    expect(screen.getByText("XGBoost")).toBeInTheDocument();
+    expect(screen.getByText("Factor Composite")).toBeInTheDocument();
   });
 
   it("displays hit-rate percentages with one decimal", () => {
@@ -128,7 +128,7 @@ describe("BacktestCard", () => {
   it("fires the run mutation with the right model name on Re-run click", () => {
     useBacktestSummaryMock.mockReturnValue({
       data: {
-        models: [_model("xgboost_placeholder")],
+        models: [_model("factor_composite")],
         horizon: "1d",
         symbol: "NG",
       },
@@ -137,10 +137,10 @@ describe("BacktestCard", () => {
     });
     render(<BacktestCard />);
     const button = screen.getByRole("button", {
-      name: /Re-run backtest for XGBoost/i,
+      name: /Re-run backtest for Factor Composite/i,
     });
     fireEvent.click(button);
-    expect(mutateMock).toHaveBeenCalledWith("xgboost_placeholder");
+    expect(mutateMock).toHaveBeenCalledWith("factor_composite");
   });
 
   it("disables the running model's button while its mutation is pending", () => {
@@ -153,7 +153,7 @@ describe("BacktestCard", () => {
       data: {
         models: [
           _model("moving_average_directional"),
-          _model("xgboost_placeholder"),
+          _model("factor_composite"),
         ],
         horizon: "1d",
         symbol: "NG",
@@ -167,7 +167,7 @@ describe("BacktestCard", () => {
       b.getAttribute("aria-label")?.includes("SMA Cross"),
     );
     const xgbButton = buttons.find((b) =>
-      b.getAttribute("aria-label")?.includes("XGBoost"),
+      b.getAttribute("aria-label")?.includes("Factor Composite"),
     );
     expect(maButton).toBeDisabled();
     expect(maButton?.textContent).toMatch(/running/);
@@ -183,7 +183,7 @@ describe("BacktestCard", () => {
             from_date: "2026-02-11",
             to_date: "2026-05-12",
           }),
-          _model("xgboost_placeholder", {
+          _model("factor_composite", {
             from_date: "2026-01-01",
             to_date: "2026-04-30",
           }),

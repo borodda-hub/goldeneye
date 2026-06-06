@@ -459,7 +459,7 @@ const CAPABILITIES = [
       "Four models, weighted reasoning steps, an honest hit-rate against history.",
     body: "The ensemble reads weather, storage, positioning, and price-only signals. Each model's directional call carries its supporting + contradicting factors with weights. A backtest engine replays the same models against real history under strict look-ahead controls — the hit rates are honest.",
     bullets: [
-      "Moving Average · Volatility Regime · Prophet · XGBoost placeholder",
+      "Moving Average · Volatility Regime · Prophet · Factor Composite",
       "Look-ahead-safe replay with cheating-model property tests",
       "Per-model hit rates displayed inline with the live signal",
     ],
