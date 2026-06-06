@@ -172,6 +172,15 @@ export interface JournalEvidenceItem {
   weight: number;
 }
 
+export type PredictionDirection = "bullish" | "bearish" | "neutral";
+
+export interface PredictionClaim {
+  direction: PredictionDirection;
+  horizon_days: number;
+  threshold_pct: number;
+  rationale?: string;
+}
+
 export interface JournalCreateBody {
   instrument?: string;
   hypothesis: string;
@@ -180,6 +189,20 @@ export interface JournalCreateBody {
   planned_action?: string | null;
   risk_factors?: string[];
   invalidation_criteria?: string | null;
+  // Phase 2 — the confirmed machine-resolvable claim (optional).
+  predicted_direction?: PredictionDirection;
+  horizon_days?: number;
+  threshold_pct?: number;
+}
+
+export async function extractPrediction(
+  hypothesis: string,
+  instrument = "NG",
+): Promise<{ prediction: PredictionClaim; anchor_price: number | null }> {
+  return apiFetch("/v1/journal/extract-prediction", {
+    method: "POST",
+    body: JSON.stringify({ instrument, hypothesis }),
+  });
 }
 
 export async function createJournalEntry(

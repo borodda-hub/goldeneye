@@ -1,10 +1,14 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FilePlus2 } from "lucide-react";
+import { FilePlus2, Sparkles } from "lucide-react";
 import { useState } from "react";
 import type { Evidence, JournalEntry } from "../../app/(app)/journal/types";
-import { createJournalEntry } from "../../lib/api";
+import {
+  type PredictionClaim,
+  createJournalEntry,
+  extractPrediction,
+} from "../../lib/api";
 import { markStep } from "../../lib/onboarding";
 import { queryKeys } from "../../lib/queries";
 
@@ -19,6 +23,7 @@ interface FormState {
   planned_action: string;
   risk_factors: string;
   invalidation_criteria: string;
+  prediction: PredictionClaim | null;
 }
 
 const initial: FormState = {
@@ -28,14 +33,29 @@ const initial: FormState = {
   planned_action: "",
   risk_factors: "",
   invalidation_criteria: "",
+  prediction: null,
 };
 
 export function NewEntryForm({ onCreated }: Props) {
   const [form, setForm] = useState<FormState>(initial);
   const queryClient = useQueryClient();
 
+  const extractMutation = useMutation<PredictionClaim, Error, void>({
+    mutationFn: async () => {
+      const { prediction } = await extractPrediction(form.hypothesis.trim());
+      return prediction;
+    },
+    onSuccess: (prediction) => setForm((f) => ({ ...f, prediction })),
+  });
+
+  const setClaim = (patch: Partial<PredictionClaim>) =>
+    setForm((f) =>
+      f.prediction ? { ...f, prediction: { ...f.prediction, ...patch } } : f,
+    );
+
   const mutation = useMutation<JournalEntry, Error, void>({
     mutationFn: async () => {
+      const p = form.prediction;
       const body = {
         instrument: "NG",
         hypothesis: form.hypothesis.trim(),
@@ -47,6 +67,13 @@ export function NewEntryForm({ onCreated }: Props) {
           .map((s) => s.trim())
           .filter(Boolean),
         invalidation_criteria: form.invalidation_criteria.trim() || undefined,
+        ...(p
+          ? {
+              predicted_direction: p.direction,
+              horizon_days: p.horizon_days,
+              threshold_pct: p.threshold_pct,
+            }
+          : {}),
       };
       return (await createJournalEntry(body)) as JournalEntry;
     },
@@ -115,6 +142,119 @@ export function NewEntryForm({ onCreated }: Props) {
           }
         />
       </label>
+
+      {/* Phase 2 — turn the prose thesis into a machine-resolvable claim so it
+          can be auto-scored later (LLM proposes, you confirm/edit). Optional. */}
+      <div className="flex flex-col gap-1.5 border border-line-1 bg-surface-2/40 p-2">
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+            Resolvable Claim
+          </span>
+          <button
+            type="button"
+            onClick={() => extractMutation.mutate()}
+            disabled={
+              form.hypothesis.trim().length === 0 || extractMutation.isPending
+            }
+            className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest text-accent disabled:text-ink-4 disabled:cursor-not-allowed"
+          >
+            <Sparkles size={11} strokeWidth={1.5} aria-hidden="true" />
+            {extractMutation.isPending ? "Reading…" : "Extract from thesis"}
+          </button>
+        </div>
+
+        {form.prediction === null ? (
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] text-ink-4 font-mono">
+              Optional — extract a direction, horizon, and threshold so this
+              decision can be scored against the market later.
+            </p>
+            <button
+              type="button"
+              onClick={() =>
+                setForm((f) => ({
+                  ...f,
+                  prediction: {
+                    direction: "neutral",
+                    horizon_days: 14,
+                    threshold_pct: 2,
+                  },
+                }))
+              }
+              className="shrink-0 font-mono text-[10px] uppercase tracking-widest text-ink-3 hover:text-accent"
+            >
+              + Manual
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-2">
+              <select
+                aria-label="Predicted direction"
+                value={form.prediction.direction}
+                onChange={(e) =>
+                  setClaim({
+                    direction: e.target.value as PredictionClaim["direction"],
+                  })
+                }
+                className="bg-surface-1 border border-line-1 px-1 py-0.5 font-mono text-[11px] text-ink-2"
+              >
+                <option value="bullish">bullish</option>
+                <option value="bearish">bearish</option>
+                <option value="neutral">neutral</option>
+              </select>
+              <label className="flex items-center gap-1 font-mono text-[10px] text-ink-3">
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  aria-label="Horizon in days"
+                  value={form.prediction.horizon_days}
+                  onChange={(e) =>
+                    setClaim({ horizon_days: Number(e.target.value) })
+                  }
+                  className="bg-surface-1 border border-line-1 px-1 py-0.5 text-[11px] text-ink-2 w-14 tabular-nums"
+                />
+                d
+              </label>
+              <label className="flex items-center gap-1 font-mono text-[10px] text-ink-3">
+                ±
+                <input
+                  type="number"
+                  min={0.1}
+                  max={100}
+                  step={0.1}
+                  aria-label="Threshold percent"
+                  value={form.prediction.threshold_pct}
+                  onChange={(e) =>
+                    setClaim({ threshold_pct: Number(e.target.value) })
+                  }
+                  className="bg-surface-1 border border-line-1 px-1 py-0.5 text-[11px] text-ink-2 w-14 tabular-nums"
+                />
+                %
+              </label>
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, prediction: null }))}
+                className="ml-auto font-mono text-[10px] text-ink-4 hover:text-down uppercase"
+                aria-label="Clear claim"
+              >
+                ×
+              </button>
+            </div>
+            {form.prediction.rationale && (
+              <p className="text-[10px] text-ink-4 font-mono italic">
+                {form.prediction.rationale}
+              </p>
+            )}
+          </div>
+        )}
+        {extractMutation.isError && (
+          <p className="text-[10px] text-down font-mono">
+            Couldn’t extract a claim — fill it in manually or skip.
+          </p>
+        )}
+      </div>
 
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">

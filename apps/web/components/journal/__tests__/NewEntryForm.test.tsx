@@ -55,4 +55,26 @@ describe("NewEntryForm", () => {
     render(<NewEntryForm />);
     expect(screen.getByText("50%")).toBeInTheDocument();
   });
+
+  it("shows the Resolvable Claim section with an extract action", () => {
+    render(<NewEntryForm />);
+    expect(screen.getByText("Resolvable Claim")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Extract from thesis/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("'+ Manual' reveals editable direction / horizon / threshold fields", () => {
+    render(<NewEntryForm />);
+    // empty state — no claim fields yet
+    expect(
+      screen.queryByLabelText("Predicted direction"),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /\+ Manual/i }));
+    expect(screen.getByLabelText("Predicted direction")).toBeInTheDocument();
+    expect(screen.getByLabelText("Horizon in days")).toBeInTheDocument();
+    expect(screen.getByLabelText("Threshold percent")).toBeInTheDocument();
+    // defaults from the manual seed
+    expect(screen.getByLabelText("Horizon in days")).toHaveValue(14);
+  });
 });
