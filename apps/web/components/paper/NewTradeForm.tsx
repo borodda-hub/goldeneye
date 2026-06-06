@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { JournalEntry } from "../../app/(app)/journal/types";
 import type { Trade } from "../../app/(app)/paper/types";
 import { openPaperTrade } from "../../lib/api";
+import { markStep } from "../../lib/onboarding";
 import { queryKeys } from "../../lib/queries";
 
 interface Props {
@@ -63,6 +64,7 @@ export function NewTradeForm({ journalEntries }: Props) {
       });
       queryClient.invalidateQueries({ queryKey: ["paper", "equity-curve"] });
       setForm(initial);
+      markStep("paper");
     },
     onError: (err) => {
       const msg = err?.message ?? "unknown error";

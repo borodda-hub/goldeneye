@@ -7,9 +7,11 @@ import { CalibrationSummary } from "@/components/calibration/CalibrationSummary"
 import { DQCoachPanel } from "@/components/calibration/DQCoachPanel";
 import { ReliabilityDiagram } from "@/components/calibration/ReliabilityDiagram";
 import type { CalibrationResponse } from "@/lib/api";
+import { markStep } from "@/lib/onboarding";
 import { useCalibration } from "@/lib/queries";
 import { useActiveInstrument } from "@/lib/useActiveInstrument";
 import { Gauge } from "lucide-react";
+import { useEffect } from "react";
 
 interface Props {
   initialData: CalibrationResponse | null;
@@ -18,6 +20,8 @@ interface Props {
 
 export function CalibrationShell({ initialData, initialSymbol = "NG" }: Props) {
   const { activeSymbol } = useActiveInstrument();
+  // Visiting Calibration closes the onboarding decision loop.
+  useEffect(() => markStep("calibration"), []);
   const { data: fetched, isLoading } = useCalibration(activeSymbol, 5);
   const fromQuery = fetched as CalibrationResponse | undefined;
   const data =

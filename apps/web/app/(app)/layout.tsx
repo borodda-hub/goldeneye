@@ -1,8 +1,11 @@
 import { SideNav } from "@/components/SideNav";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { InstrumentSwitcher } from "@/components/instruments/InstrumentSwitcher";
+import { GettingStarted } from "@/components/onboarding/GettingStarted";
+import { GettingStartedChip } from "@/components/onboarding/GettingStartedChip";
 import { WalkthroughButton } from "@/components/onboarding/WalkthroughButton";
 import { WalkthroughProvider } from "@/components/onboarding/WalkthroughProvider";
+import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import Link from "next/link";
 import { DISCLAIMER } from "../../lib/strings";
@@ -49,6 +52,7 @@ function TopBar() {
       <Wordmark />
       <InstrumentSwitcher className="ml-auto" />
       <ThemeSwitcher />
+      <GettingStartedChip />
       <WalkthroughButton />
       <button
         type="button"
@@ -96,6 +100,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
             <DisclaimerFooter />
           </div>
+          <WelcomeModal />
+          <GettingStarted />
         </WalkthroughProvider>
       </ThemeProvider>
     </Providers>
