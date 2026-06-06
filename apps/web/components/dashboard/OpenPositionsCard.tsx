@@ -2,9 +2,11 @@
 
 import type { PriceTick, Trade, TradesResponse } from "@/app/(app)/paper/types";
 import { NG_TICK_VALUE_USD } from "@/app/(app)/paper/types";
+import { FlashOnChange } from "@/components/FlashOnChange";
 import { computeMtm } from "@/components/paper/OpenPositionsTable";
 import { usePaperTrades } from "@/lib/queries";
 import { useChannel } from "@/lib/realtime";
+import { Layers } from "lucide-react";
 
 function fmtUsd(v: number): string {
   const abs = Math.abs(v);
@@ -25,11 +27,17 @@ export function OpenPositionsCard() {
 
   return (
     <div
-      className="border border-line-1 bg-surface-1 rounded-md flex flex-col"
+      className="card-interactive border border-line-1 bg-surface-1 rounded-md flex flex-col"
       aria-label="Open positions"
     >
       <div className="flex items-baseline justify-between px-3 pt-2 pb-1.5 border-b border-line-1">
-        <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+          <Layers
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           Positions
         </span>
         <span className="font-mono text-[10px] text-ink-4 tabular-nums">
@@ -38,8 +46,9 @@ export function OpenPositionsCard() {
       </div>
 
       {trades.length === 0 ? (
-        <div className="px-3 py-4 text-center text-[11px] font-mono text-ink-4">
-          No open positions.
+        <div className="flex flex-col items-center gap-1.5 px-3 py-4 text-center text-ink-4">
+          <Layers size={18} strokeWidth={1.5} aria-hidden="true" />
+          <span className="text-[11px] font-mono">No open positions.</span>
         </div>
       ) : (
         <table className="w-full text-[11px] font-mono">
@@ -92,7 +101,9 @@ export function OpenPositionsCard() {
                     className={`px-3 py-1.5 text-right tabular-nums ${tone}`}
                     data-testid="dash-mtm"
                   >
-                    {arrow} {mtm === null ? "—" : fmtUsd(mtm)}
+                    <FlashOnChange value={mtm}>
+                      {arrow} {mtm === null ? "—" : fmtUsd(mtm)}
+                    </FlashOnChange>
                   </td>
                 </tr>
               );

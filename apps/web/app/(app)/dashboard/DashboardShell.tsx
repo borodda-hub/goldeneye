@@ -1,7 +1,9 @@
 "use client";
 
+import { PageHeader } from "@/components/PageHeader";
 import { ResizableColumn } from "@/components/ResizableColumn";
 import { ResizableSplit } from "@/components/ResizableSplit";
+import { Skeleton } from "@/components/Skeleton";
 import { AiThesisCard } from "@/components/dashboard/AiThesisCard";
 import { DashboardLiveBar } from "@/components/dashboard/DashboardLiveBar";
 import { DashboardTicker } from "@/components/dashboard/DashboardTicker";
@@ -21,6 +23,7 @@ import { WatchlistSidebar } from "@/components/instruments/WatchlistSidebar";
 import { useDashboardSummary } from "@/lib/queries";
 import { useChannel } from "@/lib/realtime";
 import { useActiveInstrument } from "@/lib/useActiveInstrument";
+import { LayoutDashboard } from "lucide-react";
 import type { DashboardSummary } from "./types";
 
 interface Props {
@@ -29,11 +32,7 @@ interface Props {
 }
 
 function SkeletonCard({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`border border-line-1 rounded-md bg-surface-1 animate-pulse ${className}`}
-    />
-  );
+  return <Skeleton className={`rounded-md ${className}`} />;
 }
 
 export function DashboardShell({ initialData, initialSymbol }: Props) {
@@ -69,7 +68,12 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
       </ResizableColumn>
 
       {/* Main column */}
-      <div className="flex-1 min-w-0 flex flex-col gap-3 px-4">
+      <div className="stagger flex-1 min-w-0 flex flex-col gap-3 px-4">
+        <PageHeader
+          icon={LayoutDashboard}
+          title="Dashboard"
+          subtitle="Market intelligence · live"
+        />
         {!summary ? (
           <>
             <SkeletonCard className="h-10" />

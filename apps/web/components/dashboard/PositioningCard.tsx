@@ -1,8 +1,10 @@
 "use client";
 
 import { HelpTip } from "@/components/HelpTip";
+import { Skeleton } from "@/components/Skeleton";
 import type { PositioningResponse } from "@/lib/api";
 import { usePositioning } from "@/lib/queries";
+import { Users } from "lucide-react";
 
 function fmtInt(v: number | null, withSign = false): string {
   if (v === null) return "—";
@@ -32,11 +34,17 @@ export function PositioningCard({ symbol = "NG" }: Props) {
 
   return (
     <div
-      className="border border-line-1 bg-surface-1 rounded-md px-3 py-2.5 flex flex-col gap-1 h-full"
+      className="card-interactive border border-line-1 bg-surface-1 rounded-md px-3 py-2.5 flex flex-col gap-1 h-full"
       aria-label="Positioning"
     >
       <div className="flex items-baseline justify-between">
-        <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+          <Users
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           Positioning · MM Net
           <HelpTip k="positioning" className="ml-1" />
         </span>
@@ -46,11 +54,17 @@ export function PositioningCard({ symbol = "NG" }: Props) {
       </div>
 
       {isLoading || !p ? (
-        <p className="text-ink-4 text-xs font-mono p-3">Loading…</p>
+        <div className="flex flex-col gap-2 p-3">
+          <Skeleton className="h-8 w-2/3" />
+          <Skeleton className="h-3 w-1/3" />
+        </div>
       ) : !available ? (
-        <p className="text-ink-4 text-xs font-mono p-3">
-          No CFTC positioning for this instrument.
-        </p>
+        <div className="flex flex-1 flex-col items-center justify-center gap-1.5 p-3 text-ink-4">
+          <Users size={18} strokeWidth={1.5} aria-hidden="true" />
+          <span className="text-xs font-mono text-center">
+            No CFTC positioning for this instrument.
+          </span>
+        </div>
       ) : (
         <>
           <div className="flex items-baseline gap-2">

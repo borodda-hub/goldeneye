@@ -2,6 +2,7 @@
 
 import { CollapseToggle } from "@/components/CollapseToggle";
 import { HelpTip } from "@/components/HelpTip";
+import { SkeletonText } from "@/components/Skeleton";
 import type { Thesis, ThesisCritique, ThesisSeed } from "@/lib/api";
 import {
   useCreateThesis,
@@ -242,7 +243,7 @@ export function WorkingThesisCard({
 
   return (
     <div
-      className="border border-line-1 bg-surface-1 px-5 py-4 flex flex-col gap-3"
+      className="card-interactive border border-line-1 bg-surface-1 px-5 py-4 flex flex-col gap-3"
       data-tour="working-thesis"
     >
       <div className="flex items-center justify-between">
@@ -262,7 +263,9 @@ export function WorkingThesisCard({
       </div>
 
       {collapsed ? null : isLoading ? (
-        <p className="text-xs text-ink-4 font-mono">Loading thesis…</p>
+        <div data-testid="thesis-loading">
+          <SkeletonText lines={3} />
+        </div>
       ) : thesis ? (
         <ReadView
           thesis={thesis}

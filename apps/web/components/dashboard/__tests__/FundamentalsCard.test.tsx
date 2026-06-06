@@ -63,7 +63,7 @@ describe("FundamentalsCard", () => {
 
   it("renders a loading state", () => {
     useFundamentalsMock.mockReturnValue({ data: undefined, isLoading: true });
-    render(<FundamentalsCard symbol="NG" />);
-    expect(screen.getByText(/Loading/)).toBeInTheDocument();
+    const { container } = render(<FundamentalsCard symbol="NG" />);
+    expect(container.querySelector(".skeleton")).toBeInTheDocument();
   });
 });

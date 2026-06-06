@@ -62,7 +62,7 @@ describe("PositioningCard", () => {
 
   it("renders a loading state", () => {
     usePositioningMock.mockReturnValue({ data: undefined, isLoading: true });
-    render(<PositioningCard symbol="NG" />);
-    expect(screen.getByText(/Loading/)).toBeInTheDocument();
+    const { container } = render(<PositioningCard symbol="NG" />);
+    expect(container.querySelector(".skeleton")).toBeInTheDocument();
   });
 });

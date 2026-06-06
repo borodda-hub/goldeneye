@@ -5,6 +5,7 @@ import type {
 import { ConfidenceBar } from "@/components/ConfidenceBar";
 import { HelpTip } from "@/components/HelpTip";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
+import { Compass } from "lucide-react";
 
 interface Props {
   bias: DirectionalBias;
@@ -33,9 +34,15 @@ const DIRECTION_GLYPH: Record<DirectionalBias["direction"], string> = {
 export function DirectionalBiasCard({ bias, aiSummary, safety }: Props) {
   const tone = DIRECTION_TONE[bias.direction];
   return (
-    <div className="border border-line-1 rounded-md p-4 bg-surface-1 flex flex-col gap-4 h-full">
+    <div className="card-interactive border border-line-1 rounded-md p-4 bg-surface-1 flex flex-col gap-4 h-full">
       <div className="flex items-baseline justify-between">
-        <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+          <Compass
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           Directional Bias
           <HelpTip k="directionalBias" className="ml-1" />
         </span>

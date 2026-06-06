@@ -130,10 +130,10 @@ describe("WorkingThesisCard", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows the loading copy while the query is fetching", () => {
+  it("shows a loading skeleton while the query is fetching", () => {
     useCurrentThesisMock.mockReturnValue({ data: undefined, isLoading: true });
     renderCard();
-    expect(screen.getByText(/Loading thesis/)).toBeInTheDocument();
+    expect(screen.getByTestId("thesis-loading")).toBeInTheDocument();
   });
 
   it("opens the edit modal when the Edit button is clicked", () => {
