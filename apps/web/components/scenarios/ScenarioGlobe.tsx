@@ -8,17 +8,25 @@ import * as THREE from "three";
 
 const COUNTRIES_URL =
   "https://unpkg.com/three-globe/example/datasets/ne_110m_admin_0_countries.geojson";
+// Standard satellite imagery (NASA blue-marble) + topology bump for relief.
+const SAT_IMAGE =
+  "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg";
+const SAT_BUMP = "https://unpkg.com/three-globe/example/img/earth-topology.png";
 const HEIGHT = 440;
 
+type GlobeStyle = "vector" | "satellite";
+
 /**
- * Prototype: a dark, on-brand globe that renders the *geography* of a scenario —
- * glowing loci (terminals/basins/regions/Henry Hub) and animated arcs colored by
- * each shock's directional lean. Client-only (parent imports it ssr:false).
+ * The scenario impact globe. Renders a scenario's geography — glowing loci and
+ * animated arcs colored by each shock's directional lean — in one of two looks:
+ * "vector" (soft country outlines on a dark sphere, on-brand) or "satellite"
+ * (standard NASA blue-marble imagery). Client-only (parent imports it ssr:false).
  */
 export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const globeRef = useRef<GlobeMethods | undefined>(undefined);
   const [width, setWidth] = useState(640);
+  const [style, setStyle] = useState<GlobeStyle>("vector");
   const [countries, setCountries] = useState<{ features: object[] }>({
     features: [],
   });
@@ -39,12 +47,11 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
     fetch(COUNTRIES_URL)
       .then((r) => r.json())
       .then((d) => setCountries(d))
-      .catch(() => {
-        /* offline — globe still shows points/arcs over a bare sphere */
-      });
+      .catch(() => {});
   }, []);
 
-  const globeMaterial = useMemo(
+  // Dark sphere for the vector look (transparent in satellite mode so imagery shows).
+  const vectorMaterial = useMemo(
     () => new THREE.MeshPhongMaterial({ color: "#0b0b0a", shininess: 6 }),
     [],
   );
@@ -58,13 +65,12 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
         autoRotateSpeed: number;
       };
       controls.autoRotate = true;
-      controls.autoRotateSpeed = 0.55;
-      // Centre on the Atlantic so the US gas system + Europe are both in frame.
-      g.pointOfView({ lat: 38, lng: -45, altitude: 2.1 }, 0);
-    } catch {
-      /* controls not ready yet */
-    }
+      controls.autoRotateSpeed = 0.5;
+      g.pointOfView({ lat: 38, lng: -45, altitude: 2.0 }, 0);
+    } catch {}
   }, []);
+
+  const isVector = style === "vector";
 
   return (
     <div
@@ -77,20 +83,25 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
         width={width}
         height={HEIGHT}
         backgroundColor="rgba(0,0,0,0)"
-        globeMaterial={globeMaterial}
+        // ── look ──────────────────────────────────────────────────────
+        globeMaterial={isVector ? vectorMaterial : undefined}
+        globeImageUrl={isVector ? undefined : SAT_IMAGE}
+        bumpImageUrl={isVector ? undefined : SAT_BUMP}
         showAtmosphere
-        atmosphereColor="#c9a35c"
+        atmosphereColor={isVector ? "#c9a35c" : "#7fb0ff"}
         atmosphereAltitude={0.16}
-        hexPolygonsData={countries.features}
-        hexPolygonResolution={3}
-        hexPolygonMargin={0.45}
-        hexPolygonAltitude={0.005}
-        hexPolygonColor={() => "rgba(201,163,92,0.22)"}
+        // Soft vector country outlines (vector look only).
+        polygonsData={isVector ? countries.features : []}
+        polygonCapColor={() => "rgba(0,0,0,0)"}
+        polygonSideColor={() => "rgba(0,0,0,0)"}
+        polygonStrokeColor={() => "rgba(201,163,92,0.55)"}
+        polygonAltitude={0.006}
+        // ── data layers (both looks) ──────────────────────────────────
         pointsData={points}
         pointLat="lat"
         pointLng="lng"
         pointColor="color"
-        pointAltitude={0.012}
+        pointAltitude={0.014}
         pointRadius="size"
         pointLabel="label"
         arcsData={arcs}
@@ -99,14 +110,35 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
         arcEndLat="endLat"
         arcEndLng="endLng"
         arcColor="color"
-        arcStroke={0.5}
+        arcStroke={0.55}
         arcDashLength={0.5}
         arcDashGap={0.25}
-        arcDashAnimateTime={1800}
+        arcDashAnimateTime={1700}
         arcLabel="label"
       />
 
-      {/* legend / hint overlay */}
+      {/* style toggle */}
+      <div className="absolute top-2 right-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest">
+        <button
+          type="button"
+          onClick={() => setStyle("vector")}
+          aria-pressed={isVector}
+          className={isVector ? "text-accent" : "text-ink-4 hover:text-accent"}
+        >
+          Vector
+        </button>
+        <span className="text-ink-4">·</span>
+        <button
+          type="button"
+          onClick={() => setStyle("satellite")}
+          aria-pressed={!isVector}
+          className={!isVector ? "text-accent" : "text-ink-4 hover:text-accent"}
+        >
+          Satellite
+        </button>
+      </div>
+
+      {/* legend */}
       <div className="absolute bottom-2 left-3 flex items-center gap-3 font-mono text-[9px] uppercase tracking-widest text-ink-4 pointer-events-none">
         <span>
           <span className="text-up">●</span> bullish
@@ -119,7 +151,7 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
         </span>
       </div>
       {arcs.length === 0 && (
-        <div className="absolute top-2 left-3 font-mono text-[10px] text-ink-4 pointer-events-none">
+        <div className="absolute bottom-2 right-3 font-mono text-[10px] text-ink-4 pointer-events-none">
           Load a scenario to trace its impact flows.
         </div>
       )}
