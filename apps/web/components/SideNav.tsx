@@ -1,45 +1,58 @@
 "use client";
 
+import {
+  CandlestickChart,
+  FlaskConical,
+  Gauge,
+  LayoutDashboard,
+  type LucideIcon,
+  NotebookPen,
+  Radar,
+  Server,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/chart", label: "Chart" },
-  { href: "/signals", label: "Signal Lab" },
-  { href: "/scenarios", label: "Scenario Lab" },
-  { href: "/journal", label: "Journal" },
-  { href: "/paper", label: "Paper Trading" },
-  { href: "/calibration", label: "Calibration" },
-  { href: "/admin", label: "Admin" },
+const NAV_ITEMS: { href: string; label: string; Icon: LucideIcon }[] = [
+  { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
+  { href: "/chart", label: "Chart", Icon: CandlestickChart },
+  { href: "/signals", label: "Signal Lab", Icon: Radar },
+  { href: "/scenarios", label: "Scenario Lab", Icon: FlaskConical },
+  { href: "/journal", label: "Journal", Icon: NotebookPen },
+  { href: "/paper", label: "Paper Trading", Icon: Wallet },
+  { href: "/calibration", label: "Calibration", Icon: Gauge },
+  { href: "/admin", label: "Admin", Icon: Server },
 ];
 
 export function SideNav() {
   const pathname = usePathname();
   return (
     <nav className="flex w-44 shrink-0 flex-col border-r border-line-1 bg-surface-1 pt-6">
-      {NAV_ITEMS.map((item, idx) => {
-        const active =
-          pathname === item.href || pathname.startsWith(`${item.href}/`);
+      {NAV_ITEMS.map(({ href, label, Icon }) => {
+        const active = pathname === href || pathname.startsWith(`${href}/`);
         return (
           <Link
-            key={item.href}
-            href={item.href}
+            key={href}
+            href={href}
             aria-current={active ? "page" : undefined}
-            className={`flex items-center gap-3 px-5 py-2.5 text-[13px] transition-colors ${
+            className={`group flex items-center gap-3 border-l-2 px-5 py-2.5 text-[13px] transition-colors ${
               active
-                ? "bg-surface-2 text-accent"
-                : "text-ink-2 hover:bg-surface-2 hover:text-ink-1"
+                ? "border-accent bg-surface-2 text-accent"
+                : "border-transparent text-ink-2 hover:bg-surface-2 hover:text-ink-1"
             }`}
           >
-            <span
-              className={`font-mono text-[9px] tabular-nums tracking-eyebrow ${
-                active ? "text-accent" : "text-ink-4"
-              }`}
-            >
-              {String(idx + 1).padStart(2, "0")}
-            </span>
-            {item.label}
+            <Icon
+              size={15}
+              strokeWidth={1.5}
+              aria-hidden="true"
+              className={
+                active
+                  ? "text-accent"
+                  : "text-ink-4 transition-colors group-hover:text-ink-2"
+              }
+            />
+            {label}
           </Link>
         );
       })}

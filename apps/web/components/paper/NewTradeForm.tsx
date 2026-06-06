@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader2, Plus, PlusCircle } from "lucide-react";
 import { useState } from "react";
 import type { JournalEntry } from "../../app/(app)/journal/types";
 import type { Trade } from "../../app/(app)/paper/types";
@@ -81,9 +82,15 @@ export function NewTradeForm({ journalEntries }: Props) {
         e.preventDefault();
         if (valid && !mutation.isPending) mutation.mutate();
       }}
-      className="border border-line-1 bg-surface-1 p-3 flex flex-col gap-3"
+      className="card-interactive border border-line-1 bg-surface-1 p-3 flex flex-col gap-3"
     >
-      <h2 className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+      <h2 className="flex items-center gap-2 font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+        <PlusCircle
+          size={12}
+          strokeWidth={1.5}
+          aria-hidden="true"
+          className="text-ink-4"
+        />
         New Trade
       </h2>
 
@@ -236,10 +243,20 @@ export function NewTradeForm({ journalEntries }: Props) {
       <button
         type="submit"
         disabled={!valid || mutation.isPending}
-        className="border border-accent text-accent font-mono text-xs uppercase tracking-widest py-1.5 disabled:border-line-1 disabled:text-ink-4 disabled:cursor-not-allowed"
+        className="flex items-center justify-center gap-1.5 border border-accent text-accent font-mono text-xs uppercase tracking-widest py-1.5 transition-colors hover:bg-accent-soft disabled:border-line-1 disabled:text-ink-4 disabled:cursor-not-allowed disabled:hover:bg-transparent"
         data-testid="open-trade-submit"
       >
-        {mutation.isPending ? "Opening…" : "Open Trade"}
+        {mutation.isPending ? (
+          <>
+            <Loader2 size={13} strokeWidth={2} className="animate-spin" />
+            Opening…
+          </>
+        ) : (
+          <>
+            <Plus size={13} strokeWidth={2} aria-hidden="true" />
+            Open Trade
+          </>
+        )}
       </button>
 
       {errorMsg && <p className="text-xs text-down font-mono">{errorMsg}</p>}

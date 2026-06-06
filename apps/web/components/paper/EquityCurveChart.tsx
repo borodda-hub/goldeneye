@@ -1,10 +1,11 @@
 "use client";
 
 import { colors } from "@/lib/colors";
+import { LineChart as LineChartIcon } from "lucide-react";
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -26,8 +27,14 @@ export function EquityCurveChart({ series }: Props) {
   const stroke = isUp ? colors.up : colors.down;
 
   return (
-    <div className="border border-line-1 bg-surface-1 flex flex-col h-full">
-      <div className="px-3 py-2 border-b border-line-1 flex items-center gap-3">
+    <div className="card-interactive border border-line-1 bg-surface-1 flex flex-col h-full">
+      <div className="px-3 py-2 border-b border-line-1 flex items-center gap-2">
+        <LineChartIcon
+          size={12}
+          strokeWidth={1.5}
+          aria-hidden="true"
+          className="text-ink-4"
+        />
         <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
           Equity Curve · 90D
         </span>
@@ -46,10 +53,16 @@ export function EquityCurveChart({ series }: Props) {
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
+            <AreaChart
               data={series}
               margin={{ top: 8, right: 16, bottom: 4, left: 8 }}
             >
+              <defs>
+                <linearGradient id="equityFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={stroke} stopOpacity={0.22} />
+                  <stop offset="100%" stopColor={stroke} stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid
                 stroke={colors.line1}
                 strokeDasharray="2 2"
@@ -84,14 +97,15 @@ export function EquityCurveChart({ series }: Props) {
                 strokeDasharray="3 3"
                 ifOverflow="extendDomain"
               />
-              <Line
+              <Area
                 dataKey="equity"
                 type="monotone"
                 stroke={stroke}
                 strokeWidth={1.5}
+                fill="url(#equityFill)"
                 dot={false}
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         )}
       </div>

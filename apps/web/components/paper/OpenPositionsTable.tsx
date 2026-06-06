@@ -1,11 +1,13 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Activity, Inbox } from "lucide-react";
 import type { PriceTick, Trade } from "../../app/(app)/paper/types";
 import { NG_TICK_VALUE_USD } from "../../app/(app)/paper/types";
 import { closePaperTrade } from "../../lib/api";
 import { queryKeys } from "../../lib/queries";
 import { useChannel } from "../../lib/realtime";
+import { FlashOnChange } from "../FlashOnChange";
 
 interface Props {
   trades: Trade[];
@@ -47,14 +49,23 @@ export function OpenPositionsTable({ trades }: Props) {
   });
 
   return (
-    <div className="border border-line-1 bg-surface-1 flex flex-col">
-      <div className="px-3 py-2 border-b border-line-1 flex items-center gap-3">
+    <div className="card-interactive border border-line-1 bg-surface-1 flex flex-col">
+      <div className="px-3 py-2 border-b border-line-1 flex items-center gap-2">
+        <Activity
+          size={12}
+          strokeWidth={1.5}
+          aria-hidden="true"
+          className="text-ink-4"
+        />
         <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
           Open Positions
         </span>
-        <span className="font-mono text-[10px] text-ink-4 tabular-nums ml-auto">
+        <FlashOnChange
+          value={livePrice}
+          className="font-mono text-[10px] text-ink-4 tabular-nums ml-auto"
+        >
           live {livePrice !== null ? `$${livePrice.toFixed(3)}` : "—"}
-        </span>
+        </FlashOnChange>
       </div>
       <div className="overflow-auto">
         <table className="w-full text-xs font-mono">
@@ -74,8 +85,14 @@ export function OpenPositionsTable({ trades }: Props) {
           <tbody>
             {trades.length === 0 && (
               <tr>
-                <td colSpan={9} className="text-center text-ink-4 py-4">
-                  No open positions.
+                <td colSpan={9} className="py-6">
+                  <div className="flex flex-col items-center gap-1.5 text-ink-4">
+                    <Inbox size={18} strokeWidth={1.5} aria-hidden="true" />
+                    <span className="text-[11px]">No open positions</span>
+                    <span className="text-[10px] text-ink-4/70">
+                      Log a paper trade to start marking to market.
+                    </span>
+                  </div>
                 </td>
               </tr>
             )}
@@ -124,9 +141,11 @@ export function OpenPositionsTable({ trades }: Props) {
                     className={`px-3 py-1.5 tabular-nums text-right ${pnlClass}`}
                     data-testid="mtm-pnl"
                   >
-                    {mtm === null
-                      ? "—"
-                      : `${mtm >= 0 ? "+" : "-"}$${Math.abs(mtm).toFixed(0)}`}
+                    <FlashOnChange value={mtm}>
+                      {mtm === null
+                        ? "—"
+                        : `${mtm >= 0 ? "+" : "-"}$${Math.abs(mtm).toFixed(0)}`}
+                    </FlashOnChange>
                   </td>
                   <td className="px-3 py-1.5 text-center">
                     <button

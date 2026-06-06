@@ -1,9 +1,12 @@
 "use client";
 
+import { Wallet } from "lucide-react";
+import { PageHeader } from "../../../components/PageHeader";
 import { ClosedTradesTable } from "../../../components/paper/ClosedTradesTable";
 import { EquityCurveChart } from "../../../components/paper/EquityCurveChart";
 import { NewTradeForm } from "../../../components/paper/NewTradeForm";
 import { OpenPositionsTable } from "../../../components/paper/OpenPositionsTable";
+import { PaperStatStrip } from "../../../components/paper/PaperStatStrip";
 import { usePaperEquityCurve, usePaperTrades } from "../../../lib/queries";
 import { useActiveInstrument } from "../../../lib/useActiveInstrument";
 import type { JournalEntry } from "../journal/types";
@@ -48,13 +51,14 @@ export function PaperShell({
     initialEquity;
 
   return (
-    <div className="flex flex-col gap-4" data-tour="paper-shell">
-      <div className="flex items-baseline gap-3">
-        <h1 className="text-xl font-semibold text-ink-1">Paper Trading</h1>
-        <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">
-          Simulated execution · mark-to-market
-        </span>
-      </div>
+    <div className="stagger flex flex-col gap-4" data-tour="paper-shell">
+      <PageHeader
+        icon={Wallet}
+        title="Paper Trading"
+        subtitle="Simulated execution · mark-to-market"
+      />
+
+      <PaperStatStrip open={openTrades} closed={closedTrades} equity={equity} />
 
       <section className="h-48">
         <EquityCurveChart series={equity} />
