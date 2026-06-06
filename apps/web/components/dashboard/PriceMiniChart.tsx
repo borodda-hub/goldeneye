@@ -8,6 +8,7 @@ import { useState } from "react";
 import {
   Area,
   AreaChart,
+  CartesianGrid,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -194,6 +195,11 @@ export function PriceMiniChart({ contractCode, symbol = "NG" }: Props) {
               data={chartData}
               margin={{ top: 4, right: 8, bottom: 4, left: 0 }}
             >
+              <CartesianGrid
+                stroke={colors.line1}
+                strokeDasharray="2 2"
+                vertical={false}
+              />
               <XAxis
                 dataKey="ts"
                 tick={{ fontSize: 10, fill: colors.ink3 }}
@@ -220,7 +226,23 @@ export function PriceMiniChart({ contractCode, symbol = "NG" }: Props) {
                 labelFormatter={(label: string) =>
                   formatTooltipTs(label, spec.showTime)
                 }
-                formatter={(v: number) => [v.toFixed(3), "Close"]}
+                formatter={(v: number | number[]) =>
+                  Array.isArray(v)
+                    ? [`${v[0].toFixed(3)}–${v[1].toFixed(3)}`, "Range"]
+                    : [v.toFixed(3), "Close"]
+                }
+              />
+              {/* Daily high–low envelope — shows the real range behind the
+                  close line, so the chart conveys volatility not just a curve. */}
+              <Area
+                dataKey={(d: { l: number; h: number }) => [d.l, d.h]}
+                type="monotone"
+                stroke="none"
+                fill={chartColor.stroke}
+                fillOpacity={0.12}
+                isAnimationActive={false}
+                dot={false}
+                activeDot={false}
               />
               <Area
                 dataKey="c"
@@ -228,6 +250,7 @@ export function PriceMiniChart({ contractCode, symbol = "NG" }: Props) {
                 stroke={chartColor.stroke}
                 strokeWidth={1.5}
                 fill="url(#price-mini-fill)"
+                isAnimationActive={false}
                 dot={false}
               />
               <defs>

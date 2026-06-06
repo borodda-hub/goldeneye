@@ -25,7 +25,7 @@ import {
   newDrawingId,
 } from "@/lib/chart/drawings";
 import type { IndicatorSpec } from "@/lib/chart/indicatorRegistry";
-import type { ThemeColors } from "@/lib/theme/palette";
+import { type ThemeColors, hexToTriplet } from "@/lib/theme/palette";
 import { useThemeColors } from "@/lib/theme/useThemeColors";
 import {
   AreaSeries,
@@ -277,13 +277,21 @@ function priceData(
   };
 }
 
-/** Volume histogram data (up/down colored). */
+/** A theme hex at a given alpha, for canvas/LWC fills. */
+function withAlpha(hex: string, a: number): string {
+  const [r, g, b] = hexToTriplet(hex).split(" ");
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+/** Volume histogram data — semi-transparent up/down so the bars stay legible on
+ *  the dark canvas (the `*-soft` tokens were near-black and disappeared). */
 function volumeData(bars: Bar[], colors: ThemeColors): unknown[] {
   return sortedUnique(
     bars.map((b) => ({
       time: toUtcEpoch(b.ts),
       value: b.v,
-      color: b.c >= b.o ? colors.upSoft : colors.downSoft,
+      color:
+        b.c >= b.o ? withAlpha(colors.up, 0.5) : withAlpha(colors.down, 0.5),
     })),
   );
 }
