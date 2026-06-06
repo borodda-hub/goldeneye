@@ -4,6 +4,7 @@ import { CollapseToggle } from "@/components/CollapseToggle";
 import { HelpTip } from "@/components/HelpTip";
 import { SkeletonText } from "@/components/Skeleton";
 import type { Thesis, ThesisCritique, ThesisSeed } from "@/lib/api";
+import { markStep } from "@/lib/onboarding";
 import {
   useCreateThesis,
   useCritiqueThesis,
@@ -205,6 +206,7 @@ export function WorkingThesisCard({
       }
       setEditOpen(false);
       setSeedFetching(false);
+      markStep("thesis");
     } catch {
       // Mutation hooks expose error state; modal will re-render.
     }

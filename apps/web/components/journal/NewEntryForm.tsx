@@ -5,6 +5,7 @@ import { FilePlus2 } from "lucide-react";
 import { useState } from "react";
 import type { Evidence, JournalEntry } from "../../app/(app)/journal/types";
 import { createJournalEntry } from "../../lib/api";
+import { markStep } from "../../lib/onboarding";
 import { queryKeys } from "../../lib/queries";
 
 interface Props {
@@ -53,6 +54,7 @@ export function NewEntryForm({ onCreated }: Props) {
       queryClient.invalidateQueries({ queryKey: queryKeys.journalEntries() });
       onCreated?.(entry.id);
       setForm(initial);
+      markStep("journal");
     },
   });
 

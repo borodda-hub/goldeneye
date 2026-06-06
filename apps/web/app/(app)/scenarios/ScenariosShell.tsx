@@ -8,6 +8,7 @@ import { ScenarioHistoryList } from "@/components/scenarios/ScenarioHistoryList"
 import { ShockBuilder } from "@/components/scenarios/ShockBuilder";
 import { TemplateGallery } from "@/components/scenarios/TemplateGallery";
 import { runScenario } from "@/lib/api";
+import { markStep } from "@/lib/onboarding";
 import { useMutation } from "@tanstack/react-query";
 import { FlaskConical } from "lucide-react";
 import { useState } from "react";
@@ -39,7 +40,10 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
         shocks: shocks as unknown as Array<Record<string, unknown>>,
       })) as ScenarioRunResponse;
     },
-    onSuccess: (data) => setLastResponse(data),
+    onSuccess: (data) => {
+      setLastResponse(data);
+      markStep("scenario");
+    },
   });
 
   const loadTemplate = (t: ScenarioTemplate) => {
