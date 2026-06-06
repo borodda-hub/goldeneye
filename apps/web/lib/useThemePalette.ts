@@ -55,7 +55,9 @@ export function useThemePalette(): ThemePalette {
   return palette;
 }
 
-/** "R G B" triplet → "rgb(R G B / a)". */
+/** "R G B" triplet → "rgba(R, G, B, a)" — comma form, since three.js / three-globe
+ *  do not parse the modern space-slash `rgb(R G B / a)` syntax. */
 export function rgba(triplet: string, alpha: number): string {
-  return `rgb(${triplet} / ${alpha})`;
+  const [r, g, b] = triplet.trim().split(/[\s,]+/);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
