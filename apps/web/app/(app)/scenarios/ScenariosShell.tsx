@@ -1,6 +1,7 @@
 "use client";
 
 import { HelpTip } from "@/components/HelpTip";
+import { PageHeader } from "@/components/PageHeader";
 import { ResultPanel } from "@/components/scenarios/ResultPanel";
 import { RunButton } from "@/components/scenarios/RunButton";
 import { ScenarioHistoryList } from "@/components/scenarios/ScenarioHistoryList";
@@ -8,6 +9,7 @@ import { ShockBuilder } from "@/components/scenarios/ShockBuilder";
 import { TemplateGallery } from "@/components/scenarios/TemplateGallery";
 import { runScenario } from "@/lib/api";
 import { useMutation } from "@tanstack/react-query";
+import { FlaskConical } from "lucide-react";
 import { useState } from "react";
 import type {
   RecentRun,
@@ -50,17 +52,13 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
   const canRun = shocks.length > 0 && !mutation.isPending;
 
   return (
-    <div className="flex flex-col gap-4" data-tour="scenario-shell">
-      {/* Header */}
-      <div className="flex items-baseline gap-3">
-        <h1 className="text-xl font-semibold text-accent">
-          Scenario Lab
-          <HelpTip k="scenarioLab" className="ml-2" />
-        </h1>
-        <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">
-          Counterfactual model rerun
-        </span>
-      </div>
+    <div className="stagger flex flex-col gap-4" data-tour="scenario-shell">
+      <PageHeader
+        icon={FlaskConical}
+        title="Scenario Lab"
+        subtitle="Stress tests · what-if shocks"
+        right={<HelpTip k="scenarioLab" />}
+      />
 
       {/* Templates */}
       <section className="flex flex-col gap-2">

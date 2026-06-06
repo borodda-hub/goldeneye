@@ -1,5 +1,6 @@
 import type { RecentRun } from "@/app/(app)/scenarios/types";
 import { HelpTip } from "@/components/HelpTip";
+import { History, Inbox } from "lucide-react";
 
 interface Props {
   runs: RecentRun[];
@@ -12,18 +13,25 @@ function fmtDate(iso: string): string {
 
 export function ScenarioHistoryList({ runs, onSelect }: Props) {
   return (
-    <div className="border border-line-1 bg-surface-1 flex flex-col">
+    <div className="card-interactive border border-line-1 bg-surface-1 flex flex-col">
       <div className="px-3 py-2 border-b border-line-1">
-        <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
+        <span className="flex items-center gap-2 font-mono text-[10px] text-accent uppercase tracking-widest">
+          <History
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           Recent Runs
           <HelpTip k="recentRuns" className="ml-1" />
         </span>
       </div>
       <div className="flex flex-col">
         {runs.length === 0 && (
-          <p className="text-xs text-ink-4 px-3 py-4 text-center">
-            No scenario runs in range.
-          </p>
+          <div className="flex flex-col items-center gap-1.5 px-3 py-6 text-ink-4">
+            <Inbox size={18} strokeWidth={1.5} aria-hidden="true" />
+            <span className="text-[11px]">No scenario runs in range</span>
+          </div>
         )}
         {runs.map((r) => (
           <button
