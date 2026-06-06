@@ -63,22 +63,20 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
     <div className="stagger flex flex-col gap-4">
       {signalsHeader}
 
-      {/* Row 1: Ensemble headline */}
+      {/* Row 1 — THE CALL (hero): direction, confidence, expected move. */}
       <EnsembleHeader ensemble={signal.ensemble} />
 
-      {/* Row 2: Model cards */}
+      {/* Row 2 — THE EVIDENCE: the per-model ensemble vote. */}
       <ModelGrid models={signal.models} />
 
-      {/* Row 2.5: Backtest performance — per-model hit rates from persisted
-          backtest forecasts. Sits above explanation+history because it sets
-          the credibility frame ("these are the hit rates against real
-          historical prices") before the live explanation prose. */}
-      <BacktestCard symbol={activeSymbol} />
-
-      {/* Row 2.6: Model calibration — reliability + Brier per model. Extends the
-          credibility frame from "hit rate" to "is the model's confidence
-          honest?" — the differentiating decision-quality view. */}
-      <ModelCalibrationCard symbol={activeSymbol} />
+      {/* Row 3 — THE TRACK RECORD (side by side): "did it work?" (backtest
+          hit-rates) + "is its confidence honest?" (calibration + Brier). Paired
+          so the credibility story reads as one, and to use the horizontal space
+          instead of two stacked full-width bands. */}
+      <div className="grid grid-cols-1 xl:grid-cols-[2fr_3fr] gap-4 items-start">
+        <BacktestCard symbol={activeSymbol} />
+        <ModelCalibrationCard symbol={activeSymbol} />
+      </div>
 
       {/* Row 3: Explanation + History */}
       <div className="flex gap-4 min-h-0 h-[40vh]">

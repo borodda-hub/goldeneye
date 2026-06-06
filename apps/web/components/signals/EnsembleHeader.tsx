@@ -1,6 +1,5 @@
 import type { EnsembleData } from "@/app/(app)/signals/types";
 import { ConfidenceBar } from "@/components/ConfidenceBar";
-import { DirectionChip } from "@/components/DirectionChip";
 
 interface Props {
   ensemble: EnsembleData;
@@ -18,6 +17,23 @@ export function EnsembleHeader({ ensemble }: Props) {
     caveats,
   } = ensemble;
 
+  const dir = direction.toLowerCase();
+  const dirColor =
+    dir === "bullish"
+      ? "text-up"
+      : dir === "bearish"
+        ? "text-down"
+        : "text-ink-2";
+  const arrow = dir === "bullish" ? "▲" : dir === "bearish" ? "▼" : "◆";
+  const label = dir.charAt(0).toUpperCase() + dir.slice(1);
+
+  const moveColor =
+    expected_pct == null
+      ? "text-ink-3"
+      : expected_pct >= 0
+        ? "text-up"
+        : "text-down";
+
   const diversityColor =
     agreement.input_diversity === "high"
       ? "text-up"
@@ -26,69 +42,100 @@ export function EnsembleHeader({ ensemble }: Props) {
         : "text-ink-4";
 
   return (
-    <div className="card-interactive border border-line-1 bg-surface-1 p-4">
-      <div className="flex items-start gap-8">
-        {/* Direction + confidence */}
-        <div className="flex items-center gap-3">
-          <DirectionChip direction={direction} />
-          <ConfidenceBar confidence={confidence} />
+    <div className="card-interactive border border-line-1 bg-surface-1 px-5 py-4">
+      {/* ── Hero: the call leads ─────────────────────────────────────── */}
+      <div className="flex items-center gap-x-8 gap-y-3 flex-wrap">
+        {/* Direction — the visual anchor */}
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+            Ensemble signal · 1-day
+          </span>
+          <span
+            className={`font-serif font-light text-[40px] leading-none tracking-[-0.02em] ${dirColor}`}
+            style={{ fontVariationSettings: '"opsz" 72, "SOFT" 40' }}
+          >
+            <span className="text-[26px] align-middle mr-1.5">{arrow}</span>
+            {label}
+          </span>
         </div>
 
-        {/* Vol regime + expected range */}
-        <div className="flex flex-col gap-1">
-          {vol_regime && (
-            <span className="font-mono text-xs text-ink-3 uppercase tracking-widest">
-              {vol_regime}
-            </span>
-          )}
+        {/* Expected move */}
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+            Expected move
+          </span>
           {expected_pct !== null && expected_pct !== undefined ? (
-            <span className="font-mono tabular-nums text-sm text-ink-2">
-              {expected_pct >= 0 ? "+" : ""}
-              {(expected_pct * 100).toFixed(2)}%
+            <>
+              <span
+                className={`font-mono font-medium tabular-nums text-2xl leading-none ${moveColor}`}
+              >
+                {expected_pct >= 0 ? "+" : ""}
+                {(expected_pct * 100).toFixed(2)}%
+              </span>
               {range && (
-                <span className="text-ink-4 text-xs ml-2">
-                  [{(range.low_pct * 100).toFixed(2)}% –{" "}
-                  {(range.high_pct * 100).toFixed(2)}%]
+                <span className="font-mono text-[10px] text-ink-4 tabular-nums mt-0.5">
+                  range {(range.low_pct * 100).toFixed(2)}% –{" "}
+                  {(range.high_pct * 100).toFixed(2)}%
                 </span>
               )}
-            </span>
+            </>
           ) : (
-            <span className="font-mono text-xs text-ink-4">— no range</span>
+            <span className="font-mono text-sm text-ink-4">— no range</span>
           )}
         </div>
 
-        {/* Agreement — right-aligned */}
-        <div className="ml-auto flex flex-col items-end gap-1">
-          <span className="font-mono text-xs text-ink-3">
-            {agreement.bullish} bull · {agreement.bearish} bear ·{" "}
-            {agreement.neutral} neutral of {agreement.total} · diversity:{" "}
+        {/* Confidence */}
+        <div className="flex flex-col gap-1">
+          <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+            Confidence
+          </span>
+          <div className="flex items-center gap-2">
+            <ConfidenceBar confidence={confidence} />
+            <span className="font-mono text-xs uppercase tracking-widest text-ink-2">
+              {confidence}
+            </span>
+          </div>
+          {vol_regime && (
+            <span className="font-mono text-[10px] uppercase tracking-widest text-ink-4">
+              {vol_regime} regime
+            </span>
+          )}
+        </div>
+
+        {/* Agreement — right-aligned support */}
+        <div className="ml-auto flex flex-col items-end gap-1 text-right">
+          <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+            Model agreement
+          </span>
+          <span className="font-mono text-sm tabular-nums text-ink-2">
+            <span className="text-up">{agreement.bullish}▲</span>{" "}
+            <span className="text-down">{agreement.bearish}▼</span>{" "}
+            <span className="text-ink-3">{agreement.neutral}◆</span>
+            <span className="text-ink-4"> of {agreement.total}</span>
+          </span>
+          <span className="font-mono text-[10px] text-ink-4">
+            input diversity:{" "}
             <span className={diversityColor}>{agreement.input_diversity}</span>
           </span>
         </div>
       </div>
 
-      {/* Confidence rationale */}
-      {confidence_rationale.length > 0 && (
-        <ul className="mt-3 space-y-0.5">
+      {/* ── Supporting: rationale + caveats ──────────────────────────── */}
+      {(confidence_rationale.length > 0 || caveats.length > 0) && (
+        <div className="mt-3 pt-3 border-t border-line-1 flex flex-col gap-0.5">
           {confidence_rationale.map((r, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
-            <li key={i} className="text-xs text-ink-3 font-mono">
+            <p key={`r${i}`} className="text-xs text-ink-3 font-mono">
               · {r}
-            </li>
+            </p>
           ))}
-        </ul>
-      )}
-
-      {/* Caveats */}
-      {caveats.length > 0 && (
-        <ul className="mt-2 space-y-0.5">
           {caveats.map((c, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: static render-only list, no stable id
-            <li key={i} className="text-xs text-conf-low font-mono">
+            <p key={`c${i}`} className="text-xs text-conf-low font-mono">
               ⚠ {c}
-            </li>
+            </p>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

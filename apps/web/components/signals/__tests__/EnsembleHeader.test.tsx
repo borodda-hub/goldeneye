@@ -39,7 +39,8 @@ describe("EnsembleHeader", () => {
 
   it("renders agreement counts", () => {
     render(<EnsembleHeader ensemble={base} />);
-    expect(screen.getByText(/3 bull/)).toBeInTheDocument();
+    expect(screen.getByText("Model agreement")).toBeInTheDocument();
+    expect(screen.getByText("3▲")).toBeInTheDocument();
   });
 
   it("renders caveats when present", () => {
@@ -64,7 +65,7 @@ describe("EnsembleHeader", () => {
 
   it("renders vol regime label", () => {
     render(<EnsembleHeader ensemble={base} />);
-    expect(screen.getByText("elevated")).toBeInTheDocument();
+    expect(screen.getByText(/elevated regime/i)).toBeInTheDocument();
   });
 
   it("renders input diversity tag", () => {
