@@ -2,6 +2,7 @@
 
 import type { Shock } from "@/app/(app)/scenarios/types";
 import { buildGlobeLayers } from "@/lib/scenarioGeo";
+import { rgba, useThemePalette } from "@/lib/useThemePalette";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Globe, { type GlobeMethods } from "react-globe.gl";
 import * as THREE from "three";
@@ -31,7 +32,19 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
     features: [],
   });
 
-  const { points, arcs } = useMemo(() => buildGlobeLayers(shocks), [shocks]);
+  const theme = useThemePalette();
+  const leanPalette = useMemo(
+    () => ({
+      bullish: rgba(theme.up, 1),
+      bearish: rgba(theme.down, 1),
+      neutral: rgba(theme.accent, 1),
+    }),
+    [theme],
+  );
+  const { points, arcs } = useMemo(
+    () => buildGlobeLayers(shocks, leanPalette),
+    [shocks, leanPalette],
+  );
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -88,14 +101,15 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
         globeImageUrl={isVector ? undefined : SAT_IMAGE}
         bumpImageUrl={isVector ? undefined : SAT_BUMP}
         showAtmosphere
-        atmosphereColor={isVector ? "#c9a35c" : "#7fb0ff"}
+        atmosphereColor={isVector ? rgba(theme.accent, 1) : "#7fb0ff"}
         atmosphereAltitude={0.16}
-        // Soft vector country outlines (vector look only).
+        // Thin vector country outlines (vector look only) — no fill, low relief,
+        // accent-tinted so they track the active palette.
         polygonsData={isVector ? countries.features : []}
-        polygonCapColor={() => "rgba(201,163,92,0.08)"}
+        polygonCapColor={() => "rgba(0,0,0,0)"}
         polygonSideColor={() => "rgba(0,0,0,0)"}
-        polygonStrokeColor={() => "rgba(201,163,92,0.9)"}
-        polygonAltitude={0.008}
+        polygonStrokeColor={() => rgba(theme.accent, 0.7)}
+        polygonAltitude={0.004}
         // ── data layers (both looks) ──────────────────────────────────
         pointsData={points}
         pointLat="lat"
@@ -147,7 +161,7 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
           <span className="text-down">●</span> bearish
         </span>
         <span>
-          <span style={{ color: "#c9a35c" }}>●</span> Henry Hub
+          <span style={{ color: rgba(theme.accent, 1) }}>●</span> Henry Hub
         </span>
       </div>
       {arcs.length === 0 && (

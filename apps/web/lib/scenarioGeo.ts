@@ -24,7 +24,10 @@ const REGIONS: Record<string, { name: string; lat: number; lng: number }> = {
   west: { name: "West demand", lat: 39.5, lng: -119.8 },
 };
 
-const LEAN_COLOR: Record<Lean, string> = {
+/** Lean → color. Defaults are the brand palette; the globe passes the active
+ *  theme's tokens so the picture tracks palette changes. */
+export type LeanPalette = Record<Lean, string>;
+const DEFAULT_LEAN_COLOR: LeanPalette = {
   bullish: "#41d18b", // up
   bearish: "#f0616d", // down
   neutral: "#c9a35c", // gold accent
@@ -48,15 +51,19 @@ export interface GlobeArc {
 
 /** Translate the current shocks into glowing points + animated arcs. Every
  *  element is driven by a real shock + its sign-derived lean. */
-export function buildGlobeLayers(shocks: Shock[]): {
+export function buildGlobeLayers(
+  shocks: Shock[],
+  palette: LeanPalette = DEFAULT_LEAN_COLOR,
+): {
   points: GlobePoint[];
   arcs: GlobeArc[];
 } {
+  const LEAN_COLOR = palette;
   const points: GlobePoint[] = [
     {
       ...HENRY_HUB,
       label: "Henry Hub (NG benchmark)",
-      color: "#c9a35c",
+      color: palette.neutral,
       size: 0.9,
     },
   ];
@@ -84,7 +91,7 @@ export function buildGlobeLayers(shocks: Shock[]): {
       startLng: p.lng,
       endLat: HENRY_HUB.lat,
       endLng: HENRY_HUB.lng,
-      color: [LEAN_COLOR[lean], "#c9a35c"],
+      color: [LEAN_COLOR[lean], palette.neutral],
       label: `${p.name} → Henry Hub`,
     });
   };
