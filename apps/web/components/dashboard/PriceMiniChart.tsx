@@ -1,8 +1,8 @@
 "use client";
 
 import type { ChartBarsResponse } from "@/app/(app)/chart/types";
-import { colors } from "@/lib/colors";
 import { useChartBars } from "@/lib/queries";
+import { useThemeColors } from "@/lib/theme/useThemeColors";
 import { useChartColor } from "@/lib/useChartColor";
 import { useState } from "react";
 import {
@@ -93,6 +93,7 @@ function formatAxisTs(iso: string, showTime: boolean): string {
 }
 
 export function PriceMiniChart({ contractCode, symbol = "NG" }: Props) {
+  const colors = useThemeColors();
   const [timeframe, setTimeframe] = useState<TimeframeKey>("1M");
   const [chartColor, setChartColor] = useChartColor();
   const spec = TIMEFRAMES[timeframe];

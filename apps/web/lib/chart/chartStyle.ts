@@ -1,5 +1,7 @@
 "use client";
 
+import type { ThemeColors } from "@/lib/theme/palette";
+
 /**
  * User-customizable chart appearance — the cosmetic settings exposed by the
  * Chart Settings panel. Persisted globally (across symbols) to localStorage.
@@ -112,4 +114,30 @@ export function saveChartStyle(style: ChartStyle): void {
   } catch {
     // ignore — incognito / quota.
   }
+}
+
+/**
+ * When the chart uses the default "dark" appearance, inherit the active global
+ * theme's colors so the canvas/candles follow the app theme. An explicitly
+ * chosen chart theme (light/gold) or a custom appearance is left untouched, so
+ * per-chart overrides still win. (For the default "goldeneye" theme this is a
+ * no-op — its tokens already equal the DARK preset.)
+ */
+export function themedChartStyle(
+  style: ChartStyle,
+  colors: ThemeColors,
+): ChartStyle {
+  if (style.theme !== "dark") return style;
+  return {
+    ...style,
+    upColor: colors.up,
+    downColor: colors.down,
+    wickUpColor: colors.up,
+    wickDownColor: colors.down,
+    background: colors.bg,
+    backgroundBottom: colors.bg,
+    gridColor: colors.line1,
+    textColor: colors.ink2,
+    crosshairColor: colors.ink3,
+  };
 }

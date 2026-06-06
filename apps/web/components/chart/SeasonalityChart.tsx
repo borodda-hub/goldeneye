@@ -1,7 +1,7 @@
 "use client";
 
 import type { SeasonalityResponse } from "@/lib/api";
-import { colors } from "@/lib/colors";
+import { useThemeColors } from "@/lib/theme/useThemeColors";
 import {
   ColorType,
   CrosshairMode,
@@ -47,6 +47,7 @@ function sortedUnique(
 }
 
 export function SeasonalityChart({ data }: { data: SeasonalityResponse }) {
+  const colors = useThemeColors();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,7 +78,9 @@ export function SeasonalityChart({ data }: { data: SeasonalityResponse }) {
       const t = n > 1 ? i / (n - 1) : 1; // older → newer
       const recent = i === n - 1;
       const series = chart.addSeries(LineSeries, {
-        color: recent ? colors.accentBright : lerpHex("#4a4a44", "#c9a35c", t),
+        color: recent
+          ? colors.accentBright
+          : lerpHex(colors.ink4, colors.accent, t),
         lineWidth: recent ? 2 : 1,
         priceLineVisible: false,
         lastValueVisible: true,
@@ -117,7 +120,7 @@ export function SeasonalityChart({ data }: { data: SeasonalityResponse }) {
       ro.disconnect();
       chart.remove();
     };
-  }, [data]);
+  }, [data, colors]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 }

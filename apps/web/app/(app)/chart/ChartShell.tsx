@@ -13,6 +13,7 @@ import {
   DEFAULT_CHART_STYLE,
   loadChartStyle,
   saveChartStyle,
+  themedChartStyle,
 } from "@/lib/chart/chartStyle";
 import {
   type Drawing,
@@ -35,6 +36,7 @@ import {
   useInstruments,
 } from "@/lib/queries";
 import { useChannel } from "@/lib/realtime";
+import { useThemeColors } from "@/lib/theme/useThemeColors";
 import { useActiveInstrument } from "@/lib/useActiveInstrument";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -153,6 +155,9 @@ export function ChartShell({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [style, setStyle] = useState<ChartStyle>(DEFAULT_CHART_STYLE);
+  // Global theme colors — fed into the chart's default appearance (the modal
+  // still edits the raw `style`).
+  const themeColors = useThemeColors();
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [drawings, setDrawings] = useState<Drawing[]>([]);
   const [activeTool, setActiveTool] = useState<DrawingTool>("cursor");
@@ -441,7 +446,7 @@ export function ChartShell({
               patterns={patterns}
               autoTa={autoTa}
               livePrice={livePrice}
-              style={style}
+              style={themedChartStyle(style, themeColors)}
               drawings={drawings}
               activeTool={activeTool}
               selectedDrawingId={selectedDrawingId}
