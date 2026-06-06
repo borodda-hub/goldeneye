@@ -2,6 +2,7 @@
 
 import type { CalibrationBucket } from "@/lib/api";
 import { colors } from "@/lib/colors";
+import { ScatterChart as ScatterIcon } from "lucide-react";
 import {
   CartesianGrid,
   Line,
@@ -77,10 +78,16 @@ export function ReliabilityDiagram({ buckets }: Props) {
     <section
       aria-label="Reliability diagram"
       data-tour="reliability-diagram"
-      className="border border-line-1 bg-surface-1 p-5 flex flex-col gap-3"
+      className="card-interactive border border-line-1 bg-surface-1 p-5 flex flex-col gap-3"
     >
       <div className="flex items-baseline justify-between">
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+        <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+          <ScatterIcon
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
           Reliability diagram
         </span>
         {hasPoints ? (
@@ -92,9 +99,12 @@ export function ReliabilityDiagram({ buckets }: Props) {
 
       <div className="h-[48vh] min-h-[300px]">
         {!hasPoints ? (
-          <div className="h-full flex items-center justify-center text-sm text-ink-4 font-mono">
-            No buckets have ≥ 3 resolved entries yet. Log + resolve more journal
-            entries to populate the diagram.
+          <div className="h-full flex flex-col items-center justify-center gap-1.5 text-ink-4">
+            <ScatterIcon size={18} strokeWidth={1.5} aria-hidden="true" />
+            <span className="text-[11px]">No buckets with ≥ 3 entries yet</span>
+            <span className="text-[10px] text-ink-4/70 max-w-xs text-center">
+              Log + resolve more journal entries to populate the diagram.
+            </span>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">

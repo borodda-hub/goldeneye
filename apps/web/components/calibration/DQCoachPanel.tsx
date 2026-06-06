@@ -45,7 +45,7 @@ function PatternList({
 
 function BucketCard({ bucket }: { bucket: DqCoachingBucket }) {
   return (
-    <article className="border border-line-1 bg-surface-2 p-4 flex flex-col gap-3">
+    <article className="card-interactive border border-line-1 bg-surface-2 p-4 flex flex-col gap-3">
       <header className="flex items-baseline justify-between border-b border-line-1 pb-2">
         <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
           Bucket {bucket.label}%
@@ -166,7 +166,7 @@ export function DQCoachPanel({ instrumentCode = "NG" }: Props) {
 
   return (
     <section aria-label="DQ Coach" className="flex flex-col gap-4">
-      <div className="border border-line-1 bg-surface-1 p-5 flex flex-col gap-3">
+      <div className="card-interactive border border-line-1 bg-surface-1 p-5 flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
           <span className="inline-flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
             <span
