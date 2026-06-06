@@ -25,7 +25,8 @@ import {
   newDrawingId,
 } from "@/lib/chart/drawings";
 import type { IndicatorSpec } from "@/lib/chart/indicatorRegistry";
-import { colors } from "@/lib/colors";
+import { type ThemeColors, hexToTriplet } from "@/lib/theme/palette";
+import { useThemeColors } from "@/lib/theme/useThemeColors";
 import {
   AreaSeries,
   BarSeries,
@@ -101,7 +102,7 @@ function sortedUnique<T extends { time: UTCTimestamp }>(rows: T[]): T[] {
 
 /** Color per indicator line role. Single-line roles use the spec's color;
  *  secondary lines (signal/hist/mid/%D) get muted/contrast tokens. */
-function roleColor(base: string, role: string): string {
+function roleColor(base: string, role: string, colors: ThemeColors): string {
   switch (role) {
     case "signal":
       return colors.down;
@@ -205,6 +206,7 @@ type Marker = {
 function buildMarkers(
   eventMarkers: EventMarkerData[],
   patterns: CandlestickPattern[],
+  colors: ThemeColors,
 ): Marker[] {
   return [
     ...eventMarkers.map((m) => ({
@@ -275,13 +277,21 @@ function priceData(
   };
 }
 
-/** Volume histogram data (up/down colored). */
-function volumeData(bars: Bar[]): unknown[] {
+/** A theme hex at a given alpha, for canvas/LWC fills. */
+function withAlpha(hex: string, a: number): string {
+  const [r, g, b] = hexToTriplet(hex).split(" ");
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+/** Volume histogram data — semi-transparent up/down so the bars stay legible on
+ *  the dark canvas (the `*-soft` tokens were near-black and disappeared). */
+function volumeData(bars: Bar[], colors: ThemeColors): unknown[] {
   return sortedUnique(
     bars.map((b) => ({
       time: toUtcEpoch(b.ts),
       value: b.v,
-      color: b.c >= b.o ? colors.upSoft : colors.downSoft,
+      color:
+        b.c >= b.o ? withAlpha(colors.up, 0.5) : withAlpha(colors.down, 0.5),
     })),
   );
 }
@@ -359,6 +369,7 @@ export function PriceChart({
   onToolChange,
   apiRef,
 }: Props) {
+  const colors = useThemeColors();
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const priceSeriesRef = useRef<ISeriesApi<SeriesType> | null>(null);
@@ -501,7 +512,7 @@ export function PriceChart({
       scaleMargins: { top: 0.85, bottom: 0 },
     });
     volumeSeries.setData(
-      volumeData(bars) as Parameters<typeof volumeSeries.setData>[0],
+      volumeData(bars, colors) as Parameters<typeof volumeSeries.setData>[0],
     );
 
     // ── Indicators (order-based pairing; multi-line + sub-pane aware) ──────
@@ -520,7 +531,7 @@ export function PriceChart({
             .filter((p) => p.v !== null)
             .map((p) => ({ time: toUtcEpoch(p.t), value: p.v as number })),
         );
-        const color = roleColor(spec.color, ln.role);
+        const color = roleColor(spec.color, ln.role, colors);
         if (ln.role === "hist") {
           const hist = chart.addSeries(
             HistogramSeries,
@@ -618,7 +629,7 @@ export function PriceChart({
     // Created once; the data effect updates them via setMarkers on refetch.
     markersRef.current = createSeriesMarkers(
       priceSeries as Parameters<typeof createSeriesMarkers>[0],
-      buildMarkers(eventMarkers, patterns) as Parameters<
+      buildMarkers(eventMarkers, patterns, colors) as Parameters<
         typeof createSeriesMarkers
       >[1],
     );
@@ -678,6 +689,7 @@ export function PriceChart({
     curve,
     autoTa,
     apiRef,
+    colors,
   ]);
 
   // ── Data update — bars/markers refetch updates series in place (no rebuild) ─
@@ -689,18 +701,20 @@ export function PriceChart({
     lastBarRef.current = next.lastBar;
     try {
       series.setData(next.data as Parameters<typeof series.setData>[0]);
-      volume?.setData(volumeData(bars) as Parameters<typeof series.setData>[0]);
+      volume?.setData(
+        volumeData(bars, colors) as Parameters<typeof series.setData>[0],
+      );
     } catch {
       // series disposed mid-rebuild — the build effect re-seeds the fresh one.
     }
     timeToIdxRef.current = new Map();
     bars.forEach((b, i) => timeToIdxRef.current.set(toUtcEpoch(b.ts), i));
     markersRef.current?.setMarkers(
-      buildMarkers(eventMarkers, patterns) as Parameters<
+      buildMarkers(eventMarkers, patterns, colors) as Parameters<
         NonNullable<typeof markersRef.current>["setMarkers"]
       >[0],
     );
-  }, [bars, eventMarkers, patterns, chartType]);
+  }, [bars, eventMarkers, patterns, chartType, colors]);
 
   // ── Log/linear scale toggle — applied in place, no chart rebuild ──────────
   useEffect(() => {
@@ -774,6 +788,7 @@ export function PriceChart({
   // only when the chart is rebuilt, i.e. chartVersion). State is read via refs
   // so prop changes don't re-subscribe. Data refetches no longer rebuild the
   // chart, so an in-progress placement is never interrupted mid-flight. ──────
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `colors` is captured fresh on each rebuild — chartVersion bumps when the theme changes — so DRAW_COLOR tracks the theme without re-subscribing handlers.
   useEffect(() => {
     const chart = chartRef.current;
     const series = priceSeriesRef.current;

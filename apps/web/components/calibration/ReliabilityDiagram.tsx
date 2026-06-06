@@ -1,7 +1,7 @@
 "use client";
 
 import type { CalibrationBucket } from "@/lib/api";
-import { colors } from "@/lib/colors";
+import { useThemeColors } from "@/lib/theme/useThemeColors";
 import { ScatterChart as ScatterIcon } from "lucide-react";
 import {
   CartesianGrid,
@@ -71,6 +71,7 @@ function PointTooltip({
 }
 
 export function ReliabilityDiagram({ buckets }: Props) {
+  const colors = useThemeColors();
   const points = bucketsToPoints(buckets);
   const hasPoints = points.length > 0;
 

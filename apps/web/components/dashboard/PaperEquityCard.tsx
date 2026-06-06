@@ -3,8 +3,8 @@
 import type { EquityCurveResponse, EquityPoint } from "@/app/(app)/paper/types";
 import { FlashOnChange } from "@/components/FlashOnChange";
 import { HelpTip } from "@/components/HelpTip";
-import { colors } from "@/lib/colors";
 import { usePaperEquityCurve } from "@/lib/queries";
+import { useThemeColors } from "@/lib/theme/useThemeColors";
 import { Wallet } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { SheenGradient } from "./SheenGradient";
@@ -23,6 +23,7 @@ function fmtUsd(v: number, withSign = false): string {
 }
 
 export function PaperEquityCard() {
+  const colors = useThemeColors();
   const since = isoDaysAgo(30);
   const { data } = usePaperEquityCurve(since);
   const series: EquityPoint[] =

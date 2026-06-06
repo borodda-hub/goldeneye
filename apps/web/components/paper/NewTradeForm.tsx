@@ -82,184 +82,196 @@ export function NewTradeForm({ journalEntries }: Props) {
         e.preventDefault();
         if (valid && !mutation.isPending) mutation.mutate();
       }}
-      className="card-interactive border border-line-1 bg-surface-1 p-3 flex flex-col gap-3"
+      className="flex flex-col overflow-hidden rounded-md border border-accent/40 bg-surface-1 shadow-lg"
     >
-      <h2 className="flex items-center gap-2 font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+      <div className="flex items-center gap-2 border-b border-line-1 bg-accent-soft px-3 py-2">
         <PlusCircle
-          size={12}
-          strokeWidth={1.5}
+          size={14}
+          strokeWidth={2}
           aria-hidden="true"
-          className="text-ink-4"
+          className="text-accent"
         />
-        New Trade
-      </h2>
-
-      <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
-          Contract Code
+        <h2 className="font-mono text-[11px] font-semibold text-accent uppercase tracking-widest">
+          New Trade
+        </h2>
+        <span className="ml-auto font-mono text-[9px] text-ink-4 uppercase tracking-eyebrow">
+          Paper
         </span>
-        <input
-          className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2"
-          placeholder="e.g. NGF26"
-          value={form.contract_code}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, contract_code: e.target.value }))
-          }
-        />
-      </label>
+      </div>
+      <div className="flex flex-col gap-3 p-3">
+        <label className="flex flex-col gap-1">
+          <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+            Contract Code
+          </span>
+          <input
+            className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2"
+            placeholder="e.g. NGF26"
+            value={form.contract_code}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, contract_code: e.target.value }))
+            }
+          />
+        </label>
 
-      <div className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
-          Side
-        </span>
-        <div className="flex gap-0 border border-line-1">
-          <button
-            type="button"
-            onClick={() => setForm((f) => ({ ...f, side: "long" }))}
-            className={`flex-1 font-mono text-xs uppercase tracking-widest py-1.5 ${
-              form.side === "long"
-                ? "bg-up-soft text-up"
-                : "text-ink-3 hover:bg-surface-2"
-            }`}
-            aria-pressed={form.side === "long"}
-          >
-            Long
-          </button>
-          <button
-            type="button"
-            onClick={() => setForm((f) => ({ ...f, side: "short" }))}
-            className={`flex-1 font-mono text-xs uppercase tracking-widest py-1.5 ${
-              form.side === "short"
-                ? "bg-down-soft text-down"
-                : "text-ink-3 hover:bg-surface-2"
-            }`}
-            aria-pressed={form.side === "short"}
-          >
-            Short
-          </button>
+        <div className="flex flex-col gap-1">
+          <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+            Side
+          </span>
+          <div className="flex gap-0 border border-line-1">
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, side: "long" }))}
+              className={`flex-1 font-mono text-xs uppercase tracking-widest py-1.5 ${
+                form.side === "long"
+                  ? "bg-up-soft text-up"
+                  : "text-ink-3 hover:bg-surface-2"
+              }`}
+              aria-pressed={form.side === "long"}
+            >
+              Long
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, side: "short" }))}
+              className={`flex-1 font-mono text-xs uppercase tracking-widest py-1.5 ${
+                form.side === "short"
+                  ? "bg-down-soft text-down"
+                  : "text-ink-3 hover:bg-surface-2"
+              }`}
+              aria-pressed={form.side === "short"}
+            >
+              Short
+            </button>
+          </div>
         </div>
-      </div>
 
-      <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
-          Size (contracts)
-        </span>
-        <input
-          type="number"
-          step="0.1"
-          min={0.1}
-          className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2 tabular-nums"
-          value={form.size_contracts}
-          onChange={(e) =>
-            setForm((f) => ({
-              ...f,
-              size_contracts: Number(e.target.value),
-            }))
-          }
-        />
-      </label>
-
-      <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
-          Entry Price
-        </span>
-        <input
-          type="number"
-          step="0.001"
-          min={0}
-          className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2 tabular-nums"
-          value={form.entry_price}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, entry_price: Number(e.target.value) }))
-          }
-        />
-      </label>
-
-      <div className="grid grid-cols-2 gap-2">
         <label className="flex flex-col gap-1">
           <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
-            Stop
+            Size (contracts)
+          </span>
+          <input
+            type="number"
+            step="0.1"
+            min={0.1}
+            className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2 tabular-nums"
+            value={form.size_contracts}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                size_contracts: Number(e.target.value),
+              }))
+            }
+          />
+        </label>
+
+        <label className="flex flex-col gap-1">
+          <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+            Entry Price
           </span>
           <input
             type="number"
             step="0.001"
+            min={0}
             className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2 tabular-nums"
-            value={form.stop_loss}
+            value={form.entry_price}
             onChange={(e) =>
-              setForm((f) => ({ ...f, stop_loss: e.target.value }))
+              setForm((f) => ({ ...f, entry_price: Number(e.target.value) }))
             }
           />
         </label>
+
+        <div className="grid grid-cols-2 gap-2">
+          <label className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+              Stop
+            </span>
+            <input
+              type="number"
+              step="0.001"
+              className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2 tabular-nums"
+              value={form.stop_loss}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, stop_loss: e.target.value }))
+              }
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+              Take
+            </span>
+            <input
+              type="number"
+              step="0.001"
+              className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2 tabular-nums"
+              value={form.take_profit}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, take_profit: e.target.value }))
+              }
+            />
+          </label>
+        </div>
+
         <label className="flex flex-col gap-1">
           <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
-            Take
+            Rationale
           </span>
-          <input
-            type="number"
-            step="0.001"
-            className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2 tabular-nums"
-            value={form.take_profit}
+          <textarea
+            className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2 min-h-[48px]"
+            placeholder="Why this trade?"
+            value={form.rationale}
             onChange={(e) =>
-              setForm((f) => ({ ...f, take_profit: e.target.value }))
+              setForm((f) => ({ ...f, rationale: e.target.value }))
             }
           />
         </label>
-      </div>
 
-      <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
-          Rationale
-        </span>
-        <textarea
-          className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2 min-h-[48px]"
-          placeholder="Why this trade?"
-          value={form.rationale}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, rationale: e.target.value }))
-          }
-        />
-      </label>
+        <label className="flex flex-col gap-1">
+          <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+            Linked Journal Entry
+          </span>
+          <select
+            className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2"
+            value={form.journal_ref}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, journal_ref: e.target.value }))
+            }
+          >
+            <option value="">None</option>
+            {journalEntries.map((j) => (
+              <option key={j.id} value={j.id}>
+                {j.hypothesis.slice(0, 60)}
+              </option>
+            ))}
+          </select>
+        </label>
 
-      <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
-          Linked Journal Entry
-        </span>
-        <select
-          className="bg-surface-2 border border-line-1 px-2 py-1 font-mono text-xs text-ink-2"
-          value={form.journal_ref}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, journal_ref: e.target.value }))
-          }
+        <button
+          type="submit"
+          disabled={!valid || mutation.isPending}
+          className={`mt-1 flex items-center justify-center gap-2 rounded-sm border py-2.5 font-mono text-[13px] font-semibold uppercase tracking-widest transition-all ${
+            valid && !mutation.isPending
+              ? "border-accent bg-accent text-surface-0 hover:brightness-110 cta-glow"
+              : mutation.isPending
+                ? "border-accent/60 bg-accent/15 text-accent"
+                : "border-line-1 text-ink-4 cursor-not-allowed"
+          }`}
+          data-testid="open-trade-submit"
         >
-          <option value="">None</option>
-          {journalEntries.map((j) => (
-            <option key={j.id} value={j.id}>
-              {j.hypothesis.slice(0, 60)}
-            </option>
-          ))}
-        </select>
-      </label>
+          {mutation.isPending ? (
+            <>
+              <Loader2 size={14} strokeWidth={2.5} className="animate-spin" />
+              Opening…
+            </>
+          ) : (
+            <>
+              <Plus size={14} strokeWidth={2.5} aria-hidden="true" />
+              Open Trade
+            </>
+          )}
+        </button>
 
-      <button
-        type="submit"
-        disabled={!valid || mutation.isPending}
-        className="flex items-center justify-center gap-1.5 border border-accent text-accent font-mono text-xs uppercase tracking-widest py-1.5 transition-colors hover:bg-accent-soft disabled:border-line-1 disabled:text-ink-4 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-        data-testid="open-trade-submit"
-      >
-        {mutation.isPending ? (
-          <>
-            <Loader2 size={13} strokeWidth={2} className="animate-spin" />
-            Opening…
-          </>
-        ) : (
-          <>
-            <Plus size={13} strokeWidth={2} aria-hidden="true" />
-            Open Trade
-          </>
-        )}
-      </button>
-
-      {errorMsg && <p className="text-xs text-down font-mono">{errorMsg}</p>}
+        {errorMsg && <p className="text-xs text-down font-mono">{errorMsg}</p>}
+      </div>
     </form>
   );
 }

@@ -1,5 +1,5 @@
 import type { ScenarioTemplate, Shock } from "@/app/(app)/scenarios/types";
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, Zap } from "lucide-react";
 
 interface Props {
   templates: ScenarioTemplate[];
@@ -38,16 +38,24 @@ export function TemplateGallery({ templates, onSelect, selectedId }: Props) {
             key={t.id}
             type="button"
             onClick={() => onSelect(t)}
-            className={`card-interactive text-left border bg-surface-1 p-3 flex flex-col gap-2 ${
-              selected ? "border-accent" : "border-line-1"
+            className={`group card-interactive text-left border rounded-sm p-3 flex flex-col gap-2 ${
+              selected
+                ? "border-accent bg-accent-soft"
+                : "border-line-1 bg-surface-1"
             }`}
           >
             <div className="flex items-start justify-between gap-2">
-              <span className="font-mono text-xs text-ink-2 leading-tight">
+              <span
+                className={`text-[13px] font-semibold leading-snug ${
+                  selected
+                    ? "text-accent"
+                    : "text-ink-1 group-hover:text-accent-bright"
+                }`}
+              >
                 {t.name}
               </span>
               {selected && (
-                <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
+                <span className="shrink-0 font-mono text-[9px] text-accent uppercase tracking-eyebrow">
                   loaded
                 </span>
               )}
@@ -55,7 +63,8 @@ export function TemplateGallery({ templates, onSelect, selectedId }: Props) {
             <p className="text-xs text-ink-3 line-clamp-3 leading-relaxed">
               {t.description}
             </p>
-            <span className="font-mono text-[10px] text-ink-4 mt-auto">
+            <span className="mt-auto flex items-center gap-1.5 font-mono text-[10px] text-ink-4">
+              <Zap size={11} strokeWidth={1.5} aria-hidden="true" />
               {summarizeShocks(t.shocks)}
             </span>
           </button>

@@ -1,8 +1,8 @@
 "use client";
 
 import type { Bar, ChartBarsResponse } from "@/app/(app)/chart/types";
-import { colors } from "@/lib/colors";
 import { useChartBars } from "@/lib/queries";
+import { useThemeColors } from "@/lib/theme/useThemeColors";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
 
 interface Props {
@@ -21,6 +21,7 @@ export function WatchlistSparkline({
   changePct,
   height = 18,
 }: Props) {
+  const colors = useThemeColors();
   const today = toISODate(new Date());
   const from = toISODate(new Date(Date.now() - 30 * 86400_000));
   const { data } = useChartBars(contractCode ?? "", "1d", from, today);

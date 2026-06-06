@@ -1,7 +1,9 @@
 import { SideNav } from "@/components/SideNav";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { InstrumentSwitcher } from "@/components/instruments/InstrumentSwitcher";
 import { WalkthroughButton } from "@/components/onboarding/WalkthroughButton";
 import { WalkthroughProvider } from "@/components/onboarding/WalkthroughProvider";
+import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import Link from "next/link";
 import { DISCLAIMER } from "../../lib/strings";
 import { Providers } from "../providers";
@@ -46,6 +48,7 @@ function TopBar() {
     <header className="flex h-12 items-center justify-between border-b border-line-1 bg-surface-1 px-6 gap-4">
       <Wordmark />
       <InstrumentSwitcher className="ml-auto" />
+      <ThemeSwitcher />
       <WalkthroughButton />
       <button
         type="button"
@@ -83,16 +86,18 @@ function DisclaimerFooter() {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <Providers>
-      <WalkthroughProvider>
-        <div className="flex h-screen flex-col bg-surface-0 text-ink-1">
-          <TopBar />
-          <div className="flex flex-1 overflow-hidden">
-            <SideNav />
-            <main className="flex-1 overflow-auto p-6">{children}</main>
+      <ThemeProvider>
+        <WalkthroughProvider>
+          <div className="flex h-screen flex-col bg-surface-0 text-ink-1">
+            <TopBar />
+            <div className="flex flex-1 overflow-hidden">
+              <SideNav />
+              <main className="flex-1 overflow-auto p-6">{children}</main>
+            </div>
+            <DisclaimerFooter />
           </div>
-          <DisclaimerFooter />
-        </div>
-      </WalkthroughProvider>
+        </WalkthroughProvider>
+      </ThemeProvider>
     </Providers>
   );
 }

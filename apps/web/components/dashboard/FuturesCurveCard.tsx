@@ -2,7 +2,7 @@
 
 import type { FuturesCurvePoint } from "@/app/(app)/dashboard/types";
 import { HelpTip } from "@/components/HelpTip";
-import { colors } from "@/lib/colors";
+import { useThemeColors } from "@/lib/theme/useThemeColors";
 import { LineChart as LineChartIcon } from "lucide-react";
 import {
   Line,
@@ -18,6 +18,7 @@ interface Props {
 }
 
 export function FuturesCurveCard({ curve }: Props) {
+  const colors = useThemeColors();
   return (
     <div className="card-interactive border border-line-1 rounded-md bg-surface-1 flex flex-col h-full">
       <div className="flex items-center gap-1.5 px-3 pt-2 pb-1 text-xs text-ink-3 uppercase tracking-widest">

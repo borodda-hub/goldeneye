@@ -4,25 +4,280 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Theme palettes — generated from lib/theme/themes.ts (drift-tested) ──────
+   Tokens are RGB-channel triplets so Tailwind opacity utilities work via
+   rgb(var(--token) / <alpha-value>). Default (goldeneye) lives in :root;
+   alternates apply via <html data-theme="…">. Add a theme by adding a palette
+   to themes.ts and a matching block here (the drift test enforces parity). */
 :root {
-  --bg: #0a0a09;
-  --bg-2: #0e0e0c;
-  --surface: #131311;
-  --surface-2: #1a1a17;
-  --surface-3: #222220;
-  --border: #2a2a26;
-  --border-bright: #3a3a34;
-  --text: #efece3;
-  --text-dim: #88857c;
-  --text-faint: #55514a;
-  --gold: #c9a35c;
-  --gold-bright: #e8c074;
-  --gold-deep: #8a6f3a;
-  --amber: #f0b429;
-  --up: #6dd58c;
-  --down: #e87575;
-  --cyan: #7dd3e0;
-  --violet: #a89cdb;
+  --surface-0: 10 10 9;
+  --surface-1: 19 19 17;
+  --surface-2: 26 26 23;
+  --surface-3: 34 34 32;
+  --line-1: 42 42 38;
+  --line-2: 58 58 52;
+  --ink-1: 239 236 227;
+  --ink-1-soft: 215 212 204;
+  --ink-2: 180 175 164;
+  --ink-3: 151 146 129;
+  --ink-4: 114 109 98;
+  --up: 109 213 140;
+  --down: 232 117 117;
+  --flat: 136 133 124;
+  --up-soft: 14 26 18;
+  --down-soft: 28 14 14;
+  --accent: 201 163 92;
+  --accent-bright: 232 192 116;
+  --accent-deep: 138 111 58;
+  --accent-soft: 26 20 10;
+  --conf-low: 240 180 41;
+  --conf-medium: 232 192 116;
+  --conf-high: 109 213 140;
+  --cyan: 125 211 224;
+  --violet: 168 156 219;
+  /* legacy aliases (auto-theme via the canonical vars) */
+  --gold: rgb(var(--accent));
+  --gold-bright: rgb(var(--accent-bright));
+}
+
+[data-theme="slate"] {
+  --surface-0: 10 11 13;
+  --surface-1: 18 21 25;
+  --surface-2: 24 28 34;
+  --surface-3: 33 38 46;
+  --line-1: 39 45 53;
+  --line-2: 56 64 74;
+  --ink-1: 230 235 240;
+  --ink-1-soft: 207 214 221;
+  --ink-2: 166 176 187;
+  --ink-3: 127 138 150;
+  --ink-4: 92 102 112;
+  --up: 94 200 160;
+  --down: 227 115 127;
+  --flat: 128 138 148;
+  --up-soft: 12 26 23;
+  --down-soft: 28 15 18;
+  --accent: 95 179 201;
+  --accent-bright: 143 214 230;
+  --accent-deep: 58 125 143;
+  --accent-soft: 12 23 27;
+  --conf-low: 224 179 65;
+  --conf-medium: 143 214 230;
+  --conf-high: 94 200 160;
+  --cyan: 125 211 224;
+  --violet: 159 176 224;
+  --gold: rgb(var(--accent));
+  --gold-bright: rgb(var(--accent-bright));
+}
+
+[data-theme="phosphor"] {
+  --surface-0: 8 10 8;
+  --surface-1: 15 19 15;
+  --surface-2: 20 25 20;
+  --surface-3: 28 35 28;
+  --line-1: 35 42 35;
+  --line-2: 50 59 50;
+  --ink-1: 228 240 228;
+  --ink-1-soft: 205 217 205;
+  --ink-2: 163 179 163;
+  --ink-3: 125 140 125;
+  --ink-4: 90 102 90;
+  --up: 95 208 122;
+  --down: 224 117 117;
+  --flat: 133 148 133;
+  --up-soft: 12 26 15;
+  --down-soft: 28 14 14;
+  --accent: 79 208 106;
+  --accent-bright: 130 232 154;
+  --accent-deep: 47 138 68;
+  --accent-soft: 12 26 15;
+  --conf-low: 224 195 65;
+  --conf-medium: 130 232 154;
+  --conf-high: 95 208 122;
+  --cyan: 111 208 192;
+  --violet: 159 176 208;
+  --gold: rgb(var(--accent));
+  --gold-bright: rgb(var(--accent-bright));
+}
+
+[data-theme="ember"] {
+  --surface-0: 12 10 8;
+  --surface-1: 22 19 16;
+  --surface-2: 29 24 20;
+  --surface-3: 38 32 27;
+  --line-1: 46 38 32;
+  --line-2: 65 53 44;
+  --ink-1: 240 233 224;
+  --ink-1-soft: 221 210 198;
+  --ink-2: 184 170 154;
+  --ink-3: 151 134 118;
+  --ink-4: 110 95 80;
+  --up: 124 207 122;
+  --down: 232 116 95;
+  --flat: 140 131 120;
+  --up-soft: 18 26 14;
+  --down-soft: 31 15 11;
+  --accent: 207 138 74;
+  --accent-bright: 237 176 106;
+  --accent-deep: 138 90 47;
+  --accent-soft: 28 20 12;
+  --conf-low: 240 165 46;
+  --conf-medium: 237 176 106;
+  --conf-high: 124 207 122;
+  --cyan: 125 200 192;
+  --violet: 176 156 208;
+  --gold: rgb(var(--accent));
+  --gold-bright: rgb(var(--accent-bright));
+}
+
+[data-theme="onyx"] {
+  --surface-0: 10 10 10;
+  --surface-1: 20 20 20;
+  --surface-2: 27 27 27;
+  --surface-3: 36 36 36;
+  --line-1: 43 43 43;
+  --line-2: 59 59 59;
+  --ink-1: 237 237 237;
+  --ink-1-soft: 212 212 212;
+  --ink-2: 171 171 171;
+  --ink-3: 138 138 138;
+  --ink-4: 99 99 99;
+  --up: 121 201 143;
+  --down: 217 120 124;
+  --flat: 136 136 136;
+  --up-soft: 18 26 20;
+  --down-soft: 26 16 17;
+  --accent: 200 194 180;
+  --accent-bright: 224 220 207;
+  --accent-deep: 138 133 120;
+  --accent-soft: 26 25 22;
+  --conf-low: 217 178 74;
+  --conf-medium: 224 220 207;
+  --conf-high: 121 201 143;
+  --cyan: 132 196 204;
+  --violet: 169 163 192;
+  --gold: rgb(var(--accent));
+  --gold-bright: rgb(var(--accent-bright));
+}
+
+[data-theme="indigo"] {
+  --surface-0: 8 8 15;
+  --surface-1: 15 15 26;
+  --surface-2: 21 20 36;
+  --surface-3: 29 28 48;
+  --line-1: 36 35 56;
+  --line-2: 52 50 79;
+  --ink-1: 232 231 242;
+  --ink-1-soft: 208 207 224;
+  --ink-2: 165 163 192;
+  --ink-3: 125 123 156;
+  --ink-4: 90 88 120;
+  --up: 109 213 140;
+  --down: 232 117 117;
+  --flat: 136 132 160;
+  --up-soft: 14 26 18;
+  --down-soft: 28 14 14;
+  --accent: 125 127 240;
+  --accent-bright: 168 170 255;
+  --accent-deep: 79 80 176;
+  --accent-soft: 18 18 42;
+  --conf-low: 224 179 65;
+  --conf-medium: 168 170 255;
+  --conf-high: 109 213 140;
+  --cyan: 125 211 224;
+  --violet: 168 156 219;
+  --gold: rgb(var(--accent));
+  --gold-bright: rgb(var(--accent-bright));
+}
+
+[data-theme="mauve"] {
+  --surface-0: 13 10 12;
+  --surface-1: 23 17 21;
+  --surface-2: 30 23 27;
+  --surface-3: 40 31 36;
+  --line-1: 47 37 43;
+  --line-2: 68 54 66;
+  --ink-1: 240 232 238;
+  --ink-1-soft: 221 208 216;
+  --ink-2: 187 168 180;
+  --ink-3: 153 134 147;
+  --ink-4: 111 94 104;
+  --up: 124 207 154;
+  --down: 232 116 143;
+  --flat: 140 128 136;
+  --up-soft: 18 26 20;
+  --down-soft: 31 14 20;
+  --accent: 207 125 160;
+  --accent-bright: 232 160 189;
+  --accent-deep: 138 79 104;
+  --accent-soft: 28 16 21;
+  --conf-low: 224 168 74;
+  --conf-medium: 232 160 189;
+  --conf-high: 124 207 154;
+  --cyan: 125 200 208;
+  --violet: 176 156 208;
+  --gold: rgb(var(--accent));
+  --gold-bright: rgb(var(--accent-bright));
+}
+
+[data-theme="abyss"] {
+  --surface-0: 5 11 11;
+  --surface-1: 10 20 20;
+  --surface-2: 15 28 28;
+  --surface-3: 21 39 39;
+  --line-1: 27 46 46;
+  --line-2: 41 64 64;
+  --ink-1: 224 240 239;
+  --ink-1-soft: 200 220 219;
+  --ink-2: 157 184 182;
+  --ink-3: 118 145 144;
+  --ink-4: 84 112 111;
+  --up: 79 208 160;
+  --down: 232 117 128;
+  --flat: 126 148 146;
+  --up-soft: 10 26 22;
+  --down-soft: 28 14 16;
+  --accent: 63 208 200;
+  --accent-bright: 110 232 224;
+  --accent-deep: 36 138 132;
+  --accent-soft: 10 28 27;
+  --conf-low: 224 195 65;
+  --conf-medium: 110 232 224;
+  --conf-high: 79 208 160;
+  --cyan: 111 208 216;
+  --violet: 159 176 208;
+  --gold: rgb(var(--accent));
+  --gold-bright: rgb(var(--accent-bright));
+}
+
+[data-theme="nord"] {
+  --surface-0: 20 24 31;
+  --surface-1: 28 33 42;
+  --surface-2: 35 41 52;
+  --surface-3: 46 52 64;
+  --line-1: 59 66 82;
+  --line-2: 76 86 106;
+  --ink-1: 236 239 244;
+  --ink-1-soft: 229 233 240;
+  --ink-2: 216 222 233;
+  --ink-3: 154 165 184;
+  --ink-4: 107 116 136;
+  --up: 163 190 140;
+  --down: 191 97 106;
+  --flat: 136 147 165;
+  --up-soft: 20 28 20;
+  --down-soft: 28 16 18;
+  --accent: 108 194 222;
+  --accent-bright: 151 218 234;
+  --accent-deep: 94 129 172;
+  --accent-soft: 20 28 34;
+  --conf-low: 235 203 139;
+  --conf-medium: 151 218 234;
+  --conf-high: 163 190 140;
+  --cyan: 136 192 208;
+  --violet: 180 142 173;
+  --gold: rgb(var(--accent));
+  --gold-bright: rgb(var(--accent-bright));
 }
 
 html {
@@ -32,15 +287,15 @@ html {
 body {
   background: radial-gradient(
       ellipse 1200px 700px at 50% -10%,
-      rgba(201, 163, 92, 0.05),
+      rgb(var(--accent) / 0.05),
       transparent
     ),
     radial-gradient(
       ellipse 800px 500px at 90% 110%,
-      rgba(125, 211, 224, 0.025),
+      rgb(var(--cyan) / 0.025),
       transparent
-    ), var(--bg);
-  color: var(--text);
+    ), rgb(var(--surface-0));
+  color: rgb(var(--ink-1));
   font-family: "Hanken Grotesk", system-ui, -apple-system, sans-serif;
   font-size: 14px;
   line-height: 1.5;
@@ -65,12 +320,12 @@ body::before {
     display: none;
   }
   body {
-    background: var(--bg);
+    background: rgb(var(--surface-0));
   }
 }
 
 *:focus-visible {
-  outline: 1px solid var(--gold);
+  outline: 1px solid rgb(var(--accent));
   outline-offset: 2px;
 }
 
@@ -78,13 +333,13 @@ body::before {
 @keyframes accent-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(201, 163, 92, 0.55), 0 0 6px 1px
-      rgba(201, 163, 92, 0.25);
+    box-shadow: 0 0 0 0 rgb(var(--accent) / 0.55), 0 0 6px 1px
+      rgb(var(--accent) / 0.25);
     opacity: 0.85;
   }
   50% {
-    box-shadow: 0 0 0 4px rgba(201, 163, 92, 0), 0 0 14px 3px
-      rgba(201, 163, 92, 0.6);
+    box-shadow: 0 0 0 4px rgb(var(--accent) / 0), 0 0 14px 3px
+      rgb(var(--accent) / 0.6);
     opacity: 1;
   }
 }
@@ -118,24 +373,47 @@ body::before {
   }
 }
 
-/* Pulsing gold text glow — Scenario Lab Run button when it's ready to run. */
-@keyframes run-glow {
+/* Pulsing green halo — Scenario Lab "Run" CTA when it's ready to run. Uses the
+   theme's up/green token so it glows on-palette in every theme. */
+@keyframes run-cta {
   0%,
   100% {
-    text-shadow: 0 0 6px rgba(201, 163, 92, 0.35);
+    box-shadow: 0 0 0 0 rgb(var(--up) / 0.45), 0 0 14px 1px rgb(var(--up) / 0.3);
   }
   50% {
-    text-shadow: 0 0 12px rgba(232, 192, 116, 0.75), 0 0 4px
-      rgba(201, 163, 92, 0.5);
+    box-shadow: 0 0 0 3px rgb(var(--up) / 0), 0 0 22px 5px rgb(var(--up) / 0.55);
   }
 }
-.run-glow {
-  animation: run-glow 2.6s ease-in-out infinite;
+.run-cta {
+  animation: run-cta 2.4s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .run-glow {
+  .run-cta {
     animation: none;
-    text-shadow: 0 0 8px rgba(201, 163, 92, 0.5);
+    box-shadow: 0 0 16px 2px rgb(var(--up) / 0.4);
+  }
+}
+
+/* Pulsing accent halo — primary CTAs that aren't a green "go" (e.g. the Paper
+   "Open Trade" ticket). Glows in the active theme's accent. */
+@keyframes cta-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(var(--accent) / 0.4), 0 0 14px 1px
+      rgb(var(--accent) / 0.28);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgb(var(--accent) / 0), 0 0 22px 5px
+      rgb(var(--accent) / 0.5);
+  }
+}
+.cta-glow {
+  animation: cta-glow 2.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cta-glow {
+    animation: none;
+    box-shadow: 0 0 16px 2px rgb(var(--accent) / 0.38);
   }
 }
 
@@ -204,10 +482,10 @@ body::before {
   }
 }
 
-/* Scrollbars — transparent track, soft grey thumb. Webkit + Firefox. */
+/* Scrollbars — transparent track, theme-tinted thumb. Webkit + Firefox. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #565249 transparent;
+  scrollbar-color: rgb(var(--line-2)) transparent;
 }
 ::-webkit-scrollbar {
   width: 8px;
@@ -217,13 +495,13 @@ body::before {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #565249;
+  background: rgb(var(--line-2));
   border-radius: 4px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #6b665c;
+  background: rgb(var(--ink-4));
   background-clip: padding-box;
   border: 2px solid transparent;
 }
@@ -280,7 +558,7 @@ body::before {
   font-style: italic;
   font-variation-settings: "opsz" 72, "SOFT" 80;
   font-weight: 300;
-  color: var(--gold-bright);
+  color: rgb(var(--accent-bright));
 }
 
 /* ── Polish primitives — value-flash, skeleton, entrance, card-hover ──── */
@@ -288,7 +566,7 @@ body::before {
 /* Value flash — a brief tint when a live number ticks up or down. */
 @keyframes flash-up {
   0% {
-    background-color: rgba(109, 213, 140, 0.3);
+    background-color: rgb(var(--up) / 0.3);
   }
   100% {
     background-color: transparent;
@@ -296,7 +574,7 @@ body::before {
 }
 @keyframes flash-down {
   0% {
-    background-color: rgba(232, 117, 117, 0.3);
+    background-color: rgb(var(--down) / 0.3);
   }
   100% {
     background-color: transparent;
@@ -321,11 +599,11 @@ body::before {
   }
 }
 .skeleton {
-  background-color: var(--surface-2);
+  background-color: rgb(var(--surface-2));
   background-image: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(201, 163, 92, 0.08) 50%,
+    rgb(var(--accent) / 0.08) 50%,
     transparent 100%
   );
   background-size: 200% 100%;
@@ -384,9 +662,9 @@ body::before {
     ease;
 }
 .card-interactive:hover {
-  border-color: var(--border-bright);
+  border-color: rgb(var(--line-2));
   box-shadow: 0 8px 24px -14px rgba(0, 0, 0, 0.7), 0 0 0 1px
-    rgba(201, 163, 92, 0.04);
+    rgb(var(--accent) / 0.04);
   transform: translateY(-1px);
 }
 

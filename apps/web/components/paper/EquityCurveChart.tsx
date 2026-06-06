@@ -1,6 +1,6 @@
 "use client";
 
-import { colors } from "@/lib/colors";
+import { useThemeColors } from "@/lib/theme/useThemeColors";
 import { LineChart as LineChartIcon } from "lucide-react";
 import {
   Area,
@@ -21,6 +21,7 @@ interface Props {
 const STARTING_EQUITY = 100_000;
 
 export function EquityCurveChart({ series }: Props) {
+  const colors = useThemeColors();
   const last =
     series.length > 0 ? series[series.length - 1].equity : STARTING_EQUITY;
   const isUp = last >= STARTING_EQUITY;
