@@ -34,12 +34,10 @@ export function WelcomeModal() {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <button
-        type="button"
-        aria-label="Dismiss welcome"
-        className="absolute inset-0 bg-black/60"
-        onClick={markSeen}
-      />
+      {/* Non-dismissing dim: an accidental click on the backdrop shouldn't lose
+          the welcome (and with it the offer to take the tour). Dismiss is a
+          deliberate choice — "Explore on my own", "Take the tour", or Esc. */}
+      <div aria-hidden="true" className="absolute inset-0 bg-black/60" />
       {/* biome-ignore lint/a11y/useSemanticElements: custom overlay modal; matches ChartSettingsModal/WalkthroughOverlay which manage their own backdrop + Escape. */}
       <div
         role="dialog"
