@@ -27,6 +27,40 @@ export async function getBacktestSummary(params: {
   return apiFetch(`/v1/backtest/summary?${q.toString()}`);
 }
 
+export interface ModelReliabilityBucket {
+  confidence: string;
+  claimed_prob: number;
+  actual_rate: number | null;
+  n: number;
+}
+export interface ModelCalibration {
+  name: string;
+  brier: number | null;
+  hit_rate: number | null;
+  n: number;
+  buckets: ModelReliabilityBucket[];
+  by_regime?: Record<
+    string,
+    { brier: number | null; hit_rate: number | null; n: number }
+  >;
+}
+export interface ModelCalibrationResponse {
+  models: ModelCalibration[];
+  confidence_prob: Record<string, number>;
+}
+
+export async function getModelCalibration(params: {
+  symbol?: string;
+  horizon?: string;
+  byRegime?: boolean;
+}): Promise<ModelCalibrationResponse> {
+  const q = new URLSearchParams();
+  if (params.symbol) q.set("symbol", params.symbol);
+  if (params.horizon) q.set("horizon", params.horizon);
+  if (params.byRegime) q.set("by_regime", "true");
+  return apiFetch(`/v1/backtest/calibration?${q.toString()}`);
+}
+
 export async function runBacktest(params: {
   model: string;
   symbol?: string;

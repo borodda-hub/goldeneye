@@ -7,6 +7,7 @@ import { BacktestCard } from "@/components/signals/BacktestCard";
 import { EnsembleHeader } from "@/components/signals/EnsembleHeader";
 import { ExplanationPanel } from "@/components/signals/ExplanationPanel";
 import { HistoryTable } from "@/components/signals/HistoryTable";
+import { ModelCalibrationCard } from "@/components/signals/ModelCalibrationCard";
 import { ModelGrid } from "@/components/signals/ModelGrid";
 import { NewsFeedPanel } from "@/components/signals/NewsFeedPanel";
 import { useCurrentSignal } from "@/lib/queries";
@@ -73,6 +74,11 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
           the credibility frame ("these are the hit rates against real
           historical prices") before the live explanation prose. */}
       <BacktestCard symbol={activeSymbol} />
+
+      {/* Row 2.6: Model calibration — reliability + Brier per model. Extends the
+          credibility frame from "hit rate" to "is the model's confidence
+          honest?" — the differentiating decision-quality view. */}
+      <ModelCalibrationCard symbol={activeSymbol} />
 
       {/* Row 3: Explanation + History */}
       <div className="flex gap-4 min-h-0 h-[40vh]">

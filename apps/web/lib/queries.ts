@@ -24,6 +24,7 @@ import {
   getFundamentals,
   getInstruments,
   getJournalEntry,
+  getModelCalibration,
   getPaperEquityCurve,
   getPositioning,
   getRecentNews,
@@ -254,6 +255,19 @@ export function useBacktestSummary(symbol = "NG", horizon = "1d") {
     queryKey: ["backtest", "summary", symbol, horizon],
     queryFn: () => getBacktestSummary({ symbol, horizon }),
     // Aggregate is cheap; refresh every minute so re-runs reflect quickly.
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+}
+
+export function useModelCalibration(
+  symbol = "NG",
+  byRegime = false,
+  horizon = "1d",
+) {
+  return useQuery({
+    queryKey: ["backtest", "calibration", symbol, horizon, byRegime],
+    queryFn: () => getModelCalibration({ symbol, horizon, byRegime }),
     staleTime: 30_000,
     refetchInterval: 60_000,
   });

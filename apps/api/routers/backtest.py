@@ -21,11 +21,12 @@ from apps.api.models.orm.forecasts import ModelForecast
 from apps.api.repos import instruments as instr_repo
 from apps.api.services.backtest import (
     BACKTEST_SOURCE_MARKER,
-    BacktestConfig,
     SUPPORTED_MODELS,
+    BacktestConfig,
     persist_backtest_rows,
     run_backtest,
 )
+from apps.api.services.model_calibration import compute_model_calibration
 
 router = APIRouter(prefix="/v1/backtest", tags=["backtest"])
 
@@ -127,6 +128,28 @@ async def run_backtest_endpoint(
         "summary": asdict(summary),
         "rows": [_row_to_json(r) for r in rows],
     }
+
+
+@router.get("/calibration")
+async def model_calibration_endpoint(
+    symbol: str = Query("NG"),
+    horizon: str = Query("1d"),
+    by_regime: bool = Query(False),
+    session: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Per-model reliability (claimed confidence vs realized hit-rate) + Brier
+    score over persisted backtest rows; optionally split by volatility regime."""
+    if horizon not in _SUPPORTED_HORIZONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported horizon {horizon!r}; supported: {sorted(_SUPPORTED_HORIZONS)}",
+        )
+    instrument = await instr_repo.get_by_symbol(session, symbol)
+    if instrument is None:
+        raise HTTPException(status_code=404, detail=f"Instrument {symbol!r} not found")
+    return await compute_model_calibration(
+        session, instrument.id, horizon, by_regime=by_regime
+    )
 
 
 @router.get("/summary")
