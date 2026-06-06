@@ -11,9 +11,19 @@ from apps.api.services.calibration import (
     CalibrationResult,
     compute_calibration,
 )
+from apps.api.services.desk_calibration import compute_desk_calibration
 from apps.api.services.dq_coach import coach_decision_quality
 
 router = APIRouter(prefix="/v1/calibration", tags=["calibration"])
+
+
+@router.get("/desk")
+async def get_desk_calibration(
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    """Per-analyst calibration (decision-quality Brier + hit-rate) across all
+    resolved decisions, ranked best-calibrated first, with a significance gate."""
+    return await compute_desk_calibration(session)
 
 
 def _serialize_bucket(b: CalibrationBucket) -> dict:

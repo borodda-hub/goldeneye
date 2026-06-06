@@ -5,6 +5,7 @@ import { Skeleton, SkeletonText } from "@/components/Skeleton";
 import { BucketTable } from "@/components/calibration/BucketTable";
 import { CalibrationSummary } from "@/components/calibration/CalibrationSummary";
 import { DQCoachPanel } from "@/components/calibration/DQCoachPanel";
+import { DeskCalibrationCard } from "@/components/calibration/DeskCalibrationCard";
 import { ReliabilityDiagram } from "@/components/calibration/ReliabilityDiagram";
 import type { CalibrationResponse } from "@/lib/api";
 import { markStep } from "@/lib/onboarding";
@@ -118,6 +119,10 @@ export function CalibrationShell({ initialData, initialSymbol = "NG" }: Props) {
           <DQCoachPanel instrumentCode={data.instrument_code} />
         </aside>
       </div>
+
+      {/* Desk-wide: per-analyst skill-vs-luck across all decisions. Spans the
+          full width because it's cross-instrument, not NG-specific. */}
+      <DeskCalibrationCard />
     </div>
   );
 }

@@ -21,6 +21,7 @@ import {
   getCurrentThesis,
   getDashboardSummary,
   getDataHealth,
+  getDeskCalibration,
   getDqCoaching,
   getFundamentals,
   getInstruments,
@@ -343,6 +344,14 @@ export function useCritiqueThesis() {
 export function useDevilsAdvocate() {
   return useMutation({
     mutationFn: (id: string) => devilsAdvocateThesis(id),
+  });
+}
+
+export function useDeskCalibration() {
+  return useQuery({
+    queryKey: ["calibration", "desk"],
+    queryFn: () => getDeskCalibration(),
+    staleTime: 30_000,
   });
 }
 

@@ -601,6 +601,25 @@ export async function getCalibration(
   );
 }
 
+export interface DeskAnalyst {
+  user_id: string | null;
+  n: number;
+  brier: number | null;
+  hit_rate: number | null;
+  mean_conviction: number | null;
+  calibration_gap: number | null;
+  qualifies: boolean;
+}
+
+export interface DeskCalibrationResponse {
+  analysts: DeskAnalyst[];
+  min_resolved: number;
+}
+
+export async function getDeskCalibration(): Promise<DeskCalibrationResponse> {
+  return apiFetch<DeskCalibrationResponse>("/v1/calibration/desk");
+}
+
 export interface DqCoachingBucket {
   label: string;
   effective_patterns: string[];
