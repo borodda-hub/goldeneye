@@ -373,24 +373,24 @@ body::before {
   }
 }
 
-/* Pulsing gold text glow — Scenario Lab Run button when it's ready to run. */
-@keyframes run-glow {
+/* Pulsing green halo — Scenario Lab "Run" CTA when it's ready to run. Uses the
+   theme's up/green token so it glows on-palette in every theme. */
+@keyframes run-cta {
   0%,
   100% {
-    text-shadow: 0 0 6px rgb(var(--accent) / 0.35);
+    box-shadow: 0 0 0 0 rgb(var(--up) / 0.45), 0 0 14px 1px rgb(var(--up) / 0.3);
   }
   50% {
-    text-shadow: 0 0 12px rgb(var(--accent-bright) / 0.75), 0 0 4px
-      rgb(var(--accent) / 0.5);
+    box-shadow: 0 0 0 3px rgb(var(--up) / 0), 0 0 22px 5px rgb(var(--up) / 0.55);
   }
 }
-.run-glow {
-  animation: run-glow 2.6s ease-in-out infinite;
+.run-cta {
+  animation: run-cta 2.4s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .run-glow {
+  .run-cta {
     animation: none;
-    text-shadow: 0 0 8px rgb(var(--accent) / 0.5);
+    box-shadow: 0 0 16px 2px rgb(var(--up) / 0.4);
   }
 }
 
