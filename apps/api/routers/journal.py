@@ -8,10 +8,12 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.db.session import get_db
+from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
 from apps.api.repos import journal as journal_repo
 from apps.api.repos import theses as theses_repo
-from apps.api.services.llm_explainer import review_journal_entry
+from apps.api.services.llm_explainer import extract_prediction, review_journal_entry
+from apps.api.services.price_lookup import get_latest_closes
 
 router = APIRouter(prefix="/v1/journal", tags=["journal"])
 
@@ -22,6 +24,9 @@ class EvidenceItem(BaseModel):
     weight: float = 0.5
 
 
+Direction = Literal["bullish", "bearish", "neutral"]
+
+
 class JournalCreateRequest(BaseModel):
     instrument: str = "NG"
     hypothesis: str
@@ -30,12 +35,49 @@ class JournalCreateRequest(BaseModel):
     planned_action: str | None = None
     risk_factors: list[str] = Field(default_factory=list)
     invalidation_criteria: str | None = None
+    # Phase 2 — the confirmed machine-resolvable claim (LLM-extract + confirm).
+    # Optional so prose-only decisions still save; when present, the entry is
+    # auto-resolvable (Phase 3) against the anchor price captured at write time.
+    predicted_direction: Direction | None = None
+    horizon_days: int | None = Field(default=None, gt=0, le=365)
+    threshold_pct: float | None = Field(default=None, gt=0, le=100)
+
+
+class PredictionExtractRequest(BaseModel):
+    instrument: str = "NG"
+    hypothesis: str
 
 
 class JournalPatchRequest(BaseModel):
     outcome: str | None = None
     reflection: str | None = None
     resolved_direction: Literal["hit", "miss", "neutral", "unresolved"] | None = None
+
+
+async def _latest_price(session: AsyncSession, instrument_id: uuid.UUID) -> float | None:
+    """Front-month latest close — the anchor a prediction's move is measured from."""
+    front = await contract_repo.get_front_month(session, instrument_id)
+    if front is None:
+        return None
+    closes = await get_latest_closes(
+        session, contract_id=front.id, contract_code=front.contract_code, n=1
+    )
+    return float(closes[-1]) if closes else None
+
+
+@router.post("/extract-prediction")
+async def extract_prediction_endpoint(
+    req: PredictionExtractRequest,
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    """Propose a machine-resolvable claim from a prose thesis (LLM-extract). The
+    UI shows this for the analyst to confirm/edit before saving the entry."""
+    instrument = await instr_repo.get_by_symbol(session, req.instrument)
+    if instrument is None:
+        raise HTTPException(status_code=404, detail=f"Instrument {req.instrument!r} not found")
+    price = await _latest_price(session, instrument.id)
+    claim = await extract_prediction(req.hypothesis, req.instrument, price)
+    return {"prediction": claim, "anchor_price": price}
 
 
 @router.post("")
@@ -66,6 +108,14 @@ async def create_entry(
     if active_thesis is not None:
         data["thesis_id_at_write"] = active_thesis.id
         data["thesis_conviction_at_write"] = active_thesis.conviction_pct
+
+    # Phase 2: persist the confirmed claim + anchor the move to the price the
+    # analyst saw at decision time, so Phase 3 can auto-resolve it.
+    if req.predicted_direction is not None:
+        data["predicted_direction"] = req.predicted_direction
+        data["horizon_days"] = req.horizon_days
+        data["threshold_pct"] = req.threshold_pct
+        data["anchor_price"] = await _latest_price(session, instrument.id)
 
     entry = await journal_repo.create(session, instrument.id, data)
 
@@ -165,4 +215,12 @@ def _serialize(entry) -> dict:  # type: ignore[type-arg]
             str(entry.thesis_id_at_write) if entry.thesis_id_at_write else None
         ),
         "thesis_conviction_at_write": entry.thesis_conviction_at_write,
+        "predicted_direction": entry.predicted_direction,
+        "horizon_days": entry.horizon_days,
+        "threshold_pct": (
+            float(entry.threshold_pct) if entry.threshold_pct is not None else None
+        ),
+        "anchor_price": (
+            float(entry.anchor_price) if entry.anchor_price is not None else None
+        ),
     }

@@ -30,6 +30,7 @@ from apps.api.services.llm_prompts import (
     critique_thesis_messages,
     explain_signal_messages,
     extract_event_messages,
+    extract_prediction_messages,
     generate_thesis_messages,
     narrate_scenario_messages,
     review_journal_entry_messages,
@@ -310,6 +311,52 @@ def _parse_critique_json(text: str) -> dict[str, list[str]]:
             stripped[:500],
         )
         return {"missed_risks": [], "blind_spots": [], "questions": []}
+
+
+async def extract_prediction(
+    hypothesis: str, instrument: str, current_price: float | None
+) -> dict[str, Any]:
+    """Distill a prose thesis into a machine-resolvable claim:
+    {direction, horizon_days, threshold_pct, rationale}. The output is structured
+    fields (not prose), so it skips the forbidden-phrase gate. Degrades to a safe
+    neutral default on malformed JSON so the UI can always render a proposal.
+    """
+    prompt = extract_prediction_messages(hypothesis, instrument, current_price)
+    model = select_model("extract_prediction", {})
+    text = await call_llm(task="extract_prediction", prompt=prompt, model=model)
+    return _parse_prediction_json(text)
+
+
+def _parse_prediction_json(text: str) -> dict[str, Any]:
+    """Parse + clamp the prediction JSON; safe neutral default on failure."""
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        lines = stripped.splitlines()
+        inner = lines[1:-1] if lines[-1].strip().startswith("```") else lines[1:]
+        stripped = "\n".join(inner)
+    try:
+        data = _lenient_json_load(stripped)
+        direction = str(data.get("direction", "neutral")).lower()
+        if direction not in {"bullish", "bearish", "neutral"}:
+            direction = "neutral"
+        horizon = max(1, min(int(data.get("horizon_days") or 14), 90))
+        threshold = max(0.1, min(float(data.get("threshold_pct") or 2.0), 50.0))
+        return {
+            "direction": direction,
+            "horizon_days": horizon,
+            "threshold_pct": round(threshold, 2),
+            "rationale": str(data.get("rationale", "")).strip()[:200],
+        }
+    except (json.JSONDecodeError, ValueError, TypeError) as exc:
+        logger.warning(
+            "Failed to parse extract_prediction JSON: %s. Text: %r", exc, text[:200]
+        )
+        return {
+            "direction": "neutral",
+            "horizon_days": 14,
+            "threshold_pct": 2.0,
+            "rationale": "",
+        }
 
 
 async def extract_event(article: dict[str, Any]) -> dict[str, Any]:

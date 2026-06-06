@@ -18,7 +18,9 @@ from typing import Any
 from apps.api.src.settings import settings
 
 # Tasks that default to the fast model.
-_FAST_TASKS: frozenset[str] = frozenset({"summarize_market", "extract_event"})
+_FAST_TASKS: frozenset[str] = frozenset(
+    {"summarize_market", "extract_event", "extract_prediction"}
+)
 
 # Thresholds for escalating to the premium model.
 _NARRATE_SCENARIO_OPUS_MIN_SHOCKS: int = 4

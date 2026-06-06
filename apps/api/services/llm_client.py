@@ -58,6 +58,11 @@ _CANNED: dict[str, str] = {
         '{"category": "demand", "sentiment": 0.2, "impact_score": 0.4, '
         '"affected_regions": [], "entities": []}'
     ),
+    "extract_prediction": (
+        '{"direction": "bullish", "horizon_days": 14, "threshold_pct": 2.0, '
+        '"rationale": "Thesis reads as a near-term bullish lean on a '
+        'storage-deficit setup."}'
+    ),
     "critique_thesis": (
         '{"missed_risks": ['
         '"LNG export tail-risk if a major terminal trips during peak demand",'

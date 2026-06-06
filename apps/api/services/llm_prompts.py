@@ -482,6 +482,37 @@ def critique_thesis_messages(thesis: dict) -> PromptParts:  # type: ignore[type-
     )
 
 
+def extract_prediction_messages(
+    hypothesis: str, instrument: str, current_price: float | None
+) -> PromptParts:
+    """Build messages for extract_prediction — distill a prose thesis into the
+    machine-resolvable claim it implies. Returns strict JSON only."""
+    price_line = (
+        f"- Current {instrument} price: {current_price}"
+        if current_price is not None
+        else f"- Current {instrument} price: unknown"
+    )
+    task_instructions = (
+        "Task: extract_prediction. Read the analyst's thesis and distill the "
+        "machine-resolvable directional claim it implies. Return ONLY a valid "
+        "JSON object, no other text:\n"
+        "{\n"
+        '  "direction": "<bullish|bearish|neutral>",\n'
+        '  "horizon_days": <integer days until it resolves, 1-90>,\n'
+        '  "threshold_pct": <float percent move that confirms the call, e.g. 2.0>,\n'
+        '  "rationale": "<one short sentence: what in the thesis implies this>"\n'
+        "}\n"
+        "Infer sensible defaults when the thesis is vague: a 14-day horizon and a "
+        "2.0% threshold. 'neutral' means range-bound / no directional edge. Do not "
+        "invent specifics the thesis does not support."
+    )
+    user_content = f"Instrument: {instrument}\n{price_line}\nThesis:\n{hypothesis}"
+    return PromptParts(
+        system_blocks=[_persona_block(), _task_block(task_instructions)],
+        user_messages=[{"role": "user", "content": user_content}],
+    )
+
+
 def extract_event_messages(article: dict) -> PromptParts:  # type: ignore[type-arg]
     """Build messages for extract_event."""
     title = article.get("title", "N/A")

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import ARRAY, CheckConstraint, ForeignKey, Integer, Text, func
+from sqlalchemy import ARRAY, CheckConstraint, ForeignKey, Integer, Numeric, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -21,6 +21,15 @@ class UserDecisionJournal(Base):
             "thesis_conviction_at_write IS NULL OR "
             "thesis_conviction_at_write BETWEEN 0 AND 100",
             name="ck_journal_thesis_conviction_at_write",
+        ),
+        CheckConstraint(
+            "predicted_direction IS NULL OR "
+            "predicted_direction IN ('bullish', 'bearish', 'neutral')",
+            name="ck_journal_predicted_direction",
+        ),
+        CheckConstraint(
+            "horizon_days IS NULL OR horizon_days > 0",
+            name="ck_journal_horizon_days",
         ),
     )
 
@@ -43,3 +52,11 @@ class UserDecisionJournal(Base):
         UUID(as_uuid=True), ForeignKey("theses.id", ondelete="SET NULL")
     )
     thesis_conviction_at_write: Mapped[int | None] = mapped_column(Integer)
+    # Phase 2 (Calibration Platform) — structured ex-ante claim, machine-resolvable.
+    # The directional call extracted from the prose thesis (LLM-extract + confirm),
+    # the horizon it resolves over, the move magnitude that counts as a hit, and the
+    # instrument price at decision time the move is measured from.
+    predicted_direction: Mapped[str | None] = mapped_column(Text)
+    horizon_days: Mapped[int | None] = mapped_column(Integer)
+    threshold_pct: Mapped[float | None] = mapped_column(Numeric)
+    anchor_price: Mapped[float | None] = mapped_column(Numeric)
