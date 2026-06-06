@@ -6,8 +6,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Globe, { type GlobeMethods } from "react-globe.gl";
 import * as THREE from "three";
 
-const COUNTRIES_URL =
-  "https://unpkg.com/three-globe/example/datasets/ne_110m_admin_0_countries.geojson";
+// Bundled same-origin (the unpkg dataset URL 404s) so outlines always load.
+const COUNTRIES_URL = "/geo/countries-110m.geojson";
 // Standard satellite imagery (NASA blue-marble) + topology bump for relief.
 const SAT_IMAGE =
   "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg";
@@ -92,10 +92,10 @@ export function ScenarioGlobe({ shocks }: { shocks: Shock[] }) {
         atmosphereAltitude={0.16}
         // Soft vector country outlines (vector look only).
         polygonsData={isVector ? countries.features : []}
-        polygonCapColor={() => "rgba(0,0,0,0)"}
+        polygonCapColor={() => "rgba(201,163,92,0.08)"}
         polygonSideColor={() => "rgba(0,0,0,0)"}
-        polygonStrokeColor={() => "rgba(201,163,92,0.55)"}
-        polygonAltitude={0.006}
+        polygonStrokeColor={() => "rgba(201,163,92,0.9)"}
+        polygonAltitude={0.008}
         // ── data layers (both looks) ──────────────────────────────────
         pointsData={points}
         pointLat="lat"
