@@ -12,7 +12,22 @@ import { runScenario } from "@/lib/api";
 import { markStep } from "@/lib/onboarding";
 import { useMutation } from "@tanstack/react-query";
 import { FlaskConical } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useState } from "react";
+
+// WebGL globe — client-only (touches window + three.js).
+const ScenarioGlobe = dynamic(
+  () =>
+    import("@/components/scenarios/ScenarioGlobe").then((m) => m.ScenarioGlobe),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="border border-line-1 bg-surface-1 h-[440px] flex items-center justify-center font-mono text-[10px] text-ink-4">
+        Loading globe…
+      </div>
+    ),
+  },
+);
 import type {
   RecentRun,
   ScenarioRunResponse,
@@ -32,6 +47,7 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
   const [lastResponse, setLastResponse] = useState<ScenarioRunResponse | null>(
     null,
   );
+  const [view, setView] = useState<"panel" | "globe">("panel");
 
   const mutation = useMutation<ScenarioRunResponse, Error, void>({
     mutationFn: async () => {
@@ -118,9 +134,38 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
           )}
         </div>
 
-        {/* Right — impact (always present) */}
-        <div className="min-w-0">
-          {lastResponse ? (
+        {/* Right — impact (always present); Preview/Result or the impact globe. */}
+        <div className="min-w-0 flex flex-col gap-2">
+          <div className="flex items-center justify-end gap-2 font-mono text-[10px] uppercase tracking-widest">
+            <button
+              type="button"
+              onClick={() => setView("panel")}
+              aria-pressed={view === "panel"}
+              className={
+                view === "panel"
+                  ? "text-accent"
+                  : "text-ink-4 hover:text-accent"
+              }
+            >
+              {lastResponse ? "Result" : "Preview"}
+            </button>
+            <span className="text-ink-4">·</span>
+            <button
+              type="button"
+              onClick={() => setView("globe")}
+              aria-pressed={view === "globe"}
+              className={
+                view === "globe"
+                  ? "text-accent"
+                  : "text-ink-4 hover:text-accent"
+              }
+            >
+              Globe
+            </button>
+          </div>
+          {view === "globe" ? (
+            <ScenarioGlobe shocks={shocks} />
+          ) : lastResponse ? (
             <ResultPanel
               result={lastResponse.result}
               name={lastResponse.name}
