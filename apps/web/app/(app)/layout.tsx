@@ -1,3 +1,4 @@
+import { AccountControls } from "@/components/AccountControls";
 import { SideNav } from "@/components/SideNav";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { InstrumentSwitcher } from "@/components/instruments/InstrumentSwitcher";
@@ -75,6 +76,7 @@ function TopBar() {
           <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
         </svg>
       </button>
+      <AccountControls />
     </header>
   );
 }

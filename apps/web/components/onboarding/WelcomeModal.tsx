@@ -1,6 +1,8 @@
 "use client";
 
+import { clerkEnabled } from "@/lib/clerk";
 import { useOnboarding } from "@/lib/onboarding";
+import { SignUpButton } from "@clerk/nextjs";
 import { useEffect } from "react";
 import { useWalkthrough } from "./WalkthroughProvider";
 
@@ -79,6 +81,20 @@ export function WelcomeModal() {
             Take the 2-min tour
           </button>
         </div>
+
+        {clerkEnabled && (
+          <div className="mt-3 border-t border-line-1 pt-3 text-center">
+            <SignUpButton mode="modal">
+              <button
+                type="button"
+                onClick={markSeen}
+                className="font-mono text-[10px] uppercase tracking-eyebrow text-accent-deep transition-colors hover:text-accent"
+              >
+                or create an account to save your work →
+              </button>
+            </SignUpButton>
+          </div>
+        )}
       </div>
     </div>
   );

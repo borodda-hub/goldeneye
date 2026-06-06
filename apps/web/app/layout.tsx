@@ -1,3 +1,5 @@
+import { clerkEnabled } from "@/lib/clerk";
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -17,7 +19,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
+  const tree = (
     <html lang="en">
       <head>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static, no user data */}
@@ -26,4 +28,7 @@ export default function RootLayout({
       <body>{children}</body>
     </html>
   );
+  // Accounts are optional: only mount ClerkProvider when keys are configured, so
+  // the app runs fully open/anonymous without them.
+  return clerkEnabled ? <ClerkProvider>{tree}</ClerkProvider> : tree;
 }
