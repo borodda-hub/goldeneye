@@ -38,6 +38,7 @@ def test_supported_models_lists_all_four():
             "volatility_regime",
             "prophet_trend",
             "factor_composite",
+            "logreg_directional",
         }
     )
 

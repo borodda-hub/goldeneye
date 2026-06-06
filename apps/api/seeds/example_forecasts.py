@@ -31,6 +31,7 @@ _MODELS = [
     "prophet_trend",
     "volatility_regime",
     "factor_composite",
+    "logreg_directional",
 ]
 
 # Days of history to seed (each generated_at = noon UTC that day).
@@ -45,6 +46,7 @@ _MODEL_ACCURACY: dict[str, float] = {
     "prophet_trend": 0.55,
     "volatility_regime": 0.50,  # this one is mostly regime-only; 50% on direction
     "factor_composite": 0.60,
+    "logreg_directional": 0.58,
 }
 
 # Confidence distribution per model — biased toward "medium" with a long tail.
@@ -151,6 +153,7 @@ def _supporting_factor(model_name: str) -> str:
         "prophet_trend": "Trend component magnitude",
         "volatility_regime": "Regime persistence",
         "factor_composite": "Storage delta vs consensus",
+        "logreg_directional": "Learned momentum signal",
     }[model_name]
 
 
@@ -160,6 +163,7 @@ def _contradicting_factor(model_name: str) -> str:
         "prophet_trend": "Seasonality cross-current",
         "volatility_regime": "Regime transition risk",
         "factor_composite": "Crowded COT positioning",
+        "logreg_directional": "Short training window",
     }[model_name]
 
 

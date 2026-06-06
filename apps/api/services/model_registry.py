@@ -1,11 +1,12 @@
 """
-Model registry. Runs all four models and returns individual + ensemble results.
+Model registry. Runs all five models and returns individual + ensemble results.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
 from apps.api.services.models.factor_composite import predict as factor_predict
+from apps.api.services.models.logreg_directional import predict as logreg_predict
 from apps.api.services.models.moving_average_directional import ForecastResult
 from apps.api.services.models.moving_average_directional import predict as ma_predict
 from apps.api.services.models.prophet_trend import predict as prophet_predict
@@ -24,7 +25,7 @@ class ForecastContext:
 
 async def run_all(ctx: ForecastContext) -> list[ForecastResult]:
     """
-    Run all four forecasting models and return the results.
+    Run all five forecasting models and return the results.
 
     If ctx.closes has fewer than 55 values, return a single fallback ForecastResult
     indicating insufficient data.
@@ -41,6 +42,7 @@ async def run_all(ctx: ForecastContext) -> list[ForecastResult]:
             vol_predict(ctx.closes, "1d"),
             prophet_predict(ctx.closes, "1w"),
             factor_predict(ctx.closes, "1d", latest_storage=ctx.latest_storage, latest_cot=ctx.latest_cot),
+            logreg_predict(ctx.closes, "1d"),
         ]
     else:
         results = [

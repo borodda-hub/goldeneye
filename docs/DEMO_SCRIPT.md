@@ -37,7 +37,7 @@ The aesthetic: hairlines, no shadows, mono numbers. Bloomberg / Palantir / Tradi
 `/signals`
 
 - **Ensemble header:** direction + confidence + vol regime + agreement count ("3 bull · 0 bear · 1 neutral of 4 · diversity: high"). Below: the confidence rationale — three short bullets that explain *why* the band is what it is.
-- **Model grid:** 4 cards, one per model (moving average, prophet, volatility regime, weighted-factor composite). Each card shows direction, confidence, expected %, **inputs_used** tags (`closes` / `latest_storage` / `latest_cot`), top supporting factor (green border-left), top contradicting factor (red border-left).
+- **Model grid:** 5 cards, one per model (moving average, prophet, volatility regime, weighted-factor composite, trained logistic-regression). Each card shows direction, confidence, expected %, **inputs_used** tags (`closes` / `latest_storage` / `latest_cot`), top supporting factor (green border-left), top contradicting factor (red border-left).
 - **Explanation panel:** LLM prose explaining the ensemble. Reads as institutional desk note — *appears*, *suggests*, *reads as*. Includes the SafetyEnvelopeNote (open by default) showing caveats and the disclaimer.
 - **History table:** server-side hit/miss scoring with a ±0.3% deadband. Glyphs: ▲ hit, ▼ miss, ◇ indeterminate, — neutral (model called flat), ··· pending.
 

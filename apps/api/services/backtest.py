@@ -38,6 +38,7 @@ from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
 from apps.api.services.model_registry import ForecastContext
 from apps.api.services.models.factor_composite import predict as factor_predict
+from apps.api.services.models.logreg_directional import predict as logreg_predict
 from apps.api.services.models.moving_average_directional import (
     ForecastResult,
 )
@@ -133,6 +134,8 @@ def _predict(model_name: str, ctx: ForecastContext, horizon: str) -> ForecastRes
             latest_storage=ctx.latest_storage,
             latest_cot=ctx.latest_cot,
         )
+    if model_name == "logreg_directional":
+        return logreg_predict(ctx.closes, horizon)
     raise ValueError(f"Unknown model_name: {model_name!r}")
 
 
@@ -142,6 +145,7 @@ SUPPORTED_MODELS: frozenset[str] = frozenset(
         "volatility_regime",
         "prophet_trend",
         "factor_composite",
+        "logreg_directional",
     }
 )
 

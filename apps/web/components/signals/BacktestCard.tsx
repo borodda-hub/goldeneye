@@ -31,6 +31,7 @@ const MODEL_ORDER = [
   "prophet_trend",
   "volatility_regime",
   "factor_composite",
+  "logreg_directional",
 ] as const;
 
 const MODEL_LABEL: Record<string, string> = {
@@ -38,6 +39,7 @@ const MODEL_LABEL: Record<string, string> = {
   prophet_trend: "Prophet Trend",
   volatility_regime: "Vol Regime",
   factor_composite: "Factor Composite",
+  logreg_directional: "LogReg (trained)",
 };
 
 function HitRateBar({ value }: { value: number }) {

@@ -108,6 +108,7 @@ MVP models:
 - `ProphetTrend` (1w, 1m)
 - `VolatilityRegime` (regime label + transition probability)
 - `FactorComposite` (transparent rules-based blend of storage surprise, COT positioning, and momentum — hand-set weights, not a trained model)
+- `LogRegDirectional` (genuinely *trained* logistic regression on price features; fit walk-forward on each call from only past closes, so it's look-ahead-safe by construction — numpy, no heavy ML dep)
 
 Signals shown in the Signal Lab are an ensemble vote across these models with explicit "supporting" / "contradicting" attribution per model.
 
