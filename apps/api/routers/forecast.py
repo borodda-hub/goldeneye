@@ -16,7 +16,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from apps.api.db.session import get_db
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
-from apps.api.services.models.vol_range import predict, walk_forward_coverage
+from apps.api.services.models.vol_range import (
+    forecast_vol_correlation,
+    predict,
+    walk_forward_coverage,
+)
 from apps.api.services.price_lookup import get_latest_closes
 from apps.api.services.safety import wrap_with_uncertainty
 
@@ -28,6 +32,9 @@ _RANGE_CAVEATS = [
     "The 80% band is the calibrated surface; the 95% band runs light due to fat tails "
     "(returns are more extreme than a normal distribution).",
     "Coverage shown is realized walk-forward over available history, not a guarantee.",
+    "Use the band width, not the central vol level, as the estimate: the point-forecast "
+    "vol level is not reliable out-of-sample (R² is negative). The band is what is "
+    "calibrated.",
 ]
 
 
@@ -61,11 +68,21 @@ async def get_range_forecast(
             detail="Insufficient price history for a range forecast (need ~30 closes).",
         )
     coverage = walk_forward_coverage(closes, horizon)
+    fwd_vol_corr = forecast_vol_correlation(closes, horizon)
 
     caveats = list(_RANGE_CAVEATS)
     cov80 = coverage.get("cov80")
+    n_eff = coverage.get("n_eff") or 0
     if cov80 is not None:
-        caveats.append(f"Realized 80% coverage on this series: {cov80:.0%}.")
+        caveats.append(
+            f"Realized 80% coverage on this series: {cov80:.0%} over ~{int(n_eff)} "
+            "independent windows."
+        )
+    if fwd_vol_corr is not None:
+        caveats.append(
+            f"Forecast-vs-realized forward-vol correlation: {fwd_vol_corr:+.2f} "
+            "(overlapping-window estimate; read the magnitude, not a t-stat)."
+        )
     safety = wrap_with_uncertainty(
         forecast, confidence="medium", caveats=caveats, as_of=datetime.now(UTC)
     )
@@ -75,5 +92,6 @@ async def get_range_forecast(
         "horizon": horizon,
         "range": asdict(forecast),
         "coverage": coverage,
+        "forward_vol_corr": fwd_vol_corr,
         "safety": safety.model_dump(mode="json"),
     }

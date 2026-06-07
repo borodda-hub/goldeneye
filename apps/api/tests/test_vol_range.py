@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient
 
 from apps.api.services.models.vol_range import (
     RangeForecast,
+    forecast_vol_correlation,
     predict,
     walk_forward_coverage,
 )
@@ -34,6 +35,41 @@ def _gbm(n: int, sigma: float = 0.02, seed: int = 7, start: float = 100.0) -> li
     rng = np.random.default_rng(seed)
     rets = rng.normal(0.0, sigma, n)
     return (start * np.exp(np.cumsum(rets))).tolist()
+
+
+def _garch(
+    n: int,
+    omega: float = 4e-6,
+    alpha: float = 0.08,
+    beta: float = 0.90,
+    seed: int = 3,
+    start: float = 100.0,
+) -> list[float]:
+    """GARCH(1,1) series with volatility *clustering* — the regime a real commodity has.
+
+    Unlike ``_gbm`` (constant vol), forward vol is partly predictable here, so the EWMA
+    forecaster's forward-vol correlation should be clearly positive.
+    """
+    rng = np.random.default_rng(seed)
+    var = omega / (1.0 - alpha - beta)
+    rets = np.empty(n)
+    for i in range(n):
+        r = float(np.sqrt(var)) * rng.normal()
+        rets[i] = r
+        var = omega + alpha * r * r + beta * var
+    return (start * np.exp(np.cumsum(rets))).tolist()
+
+
+def _seeded_ng_daily_closes() -> list[float]:
+    """The actual seeded NG front-month daily closes (regime-switching GBM, deterministic).
+
+    Locking calibration against the real series we ship — not a proxy — so a change to the
+    seed generator that breaks the vol model's calibration assumption fails here.
+    """
+    from apps.api.seeds.price_generator import generate
+
+    bars = generate()["bars"]
+    return [b["close"] for b in bars if b["resolution"] == "1d"]
 
 
 # ── Forecaster ──────────────────────────────────────────────────────────────
@@ -80,11 +116,53 @@ def test_walk_forward_coverage_near_nominal_on_constant_vol():
     # fat-tail penalty, so 95% should also be close).
     assert 0.73 <= cov["cov80"] <= 0.87
     assert cov["cov95"] >= 0.88
+    # n_eff reports independent (non-overlapping) windows, < the overlapping trial count.
+    assert isinstance(cov["n_eff"], int) and cov["n_eff"] > 0
 
 
 def test_coverage_thin_history_returns_none_levels():
     cov = walk_forward_coverage([100.0] * 12, "1w")
-    assert cov == {"cov80": None, "cov95": None}
+    assert cov == {"cov80": None, "cov95": None, "n_eff": 0}
+
+
+# ── Calibration + edge, on the REAL seeded NG series (not a proxy) ─────────────
+
+
+def test_coverage_and_correlation_on_real_seeded_ng():
+    """The headline Phase-30a claim, locked against the actual shipped NG series."""
+    closes = _seeded_ng_daily_closes()
+    assert len(closes) > 500
+    cov = walk_forward_coverage(closes, "1w")
+    # 80% band genuinely covers ~80% of moves (measured 0.80 → tolerance band).
+    assert cov["cov80"] is not None and 0.76 <= cov["cov80"] <= 0.84
+    # The forecaster carries real forward-vol information (measured ≈0.42).
+    corr = forecast_vol_correlation(closes, "1w")
+    assert corr is not None and corr > 0.2
+
+
+# ── The edge is a real mechanism, not a fitting artifact ──────────────────────
+
+
+def test_forward_vol_correlation_positive_under_clustering():
+    """Clustering (GARCH) → forecast correlates with realized forward vol across seeds."""
+    for seed in (1, 2, 3, 4, 5):
+        corr = forecast_vol_correlation(_garch(1500, seed=seed), "1w")
+        assert corr is not None and corr > 0.2, f"seed {seed}: {corr}"
+
+
+def test_forward_vol_correlation_near_zero_on_constant_vol():
+    """Constant vol → no forward-vol info → correlation near zero (no spurious edge)."""
+    for seed in (7, 11, 21):
+        corr = forecast_vol_correlation(_gbm(1500, seed=seed), "1w")
+        assert corr is not None and abs(corr) < 0.15, f"seed {seed}: {corr}"
+
+
+def test_coverage_robust_across_vol_regimes():
+    """80% coverage stays near nominal across diverse clustering regimes (cross-commodity
+    robustness proxy — the live NG/CL/HO/RB/GC/SI numbers are validated via the endpoint)."""
+    for seed in (1, 2, 3, 4, 5):
+        cov = walk_forward_coverage(_garch(1500, seed=seed), "1w")
+        assert cov["cov80"] is not None and 0.74 <= cov["cov80"] <= 0.86, f"seed {seed}: {cov}"
 
 
 # ── Endpoint (hermetic — DB calls patched so tests don't depend on a live DB) ──
@@ -125,6 +203,10 @@ def test_range_endpoint_happy_path(client: TestClient):
     rng = body["range"]
     assert rng["band95_high_pct"] > rng["band80_high_pct"] > 0
     assert "cov80" in body["coverage"]
+    assert "n_eff" in body["coverage"]  # honest effective-sample-size readout
+    assert "forward_vol_corr" in body  # forward-vol correlation readout
+    # the honest point-forecast caveat is surfaced
+    assert any("not reliable out-of-sample" in c for c in body["safety"]["caveats"])
     assert body["safety"]["disclaimer"]  # safety envelope present
 
 

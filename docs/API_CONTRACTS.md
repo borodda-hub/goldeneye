@@ -167,6 +167,43 @@ Scoring logic (`services/signal_scoring.py`):
 - `hit` — direction matches sign of realized move
 - `miss` — direction opposes sign of realized move
 
+### Forecast — Range / Volatility (Phase 30a)
+
+`GET /v1/forecast/range?symbol=NG&horizon=1w`
+
+Calibrated **range** forecast — a symmetric expected-price band over `horizon`. Makes **no
+directional claim** (direction is near-random per Phase 26; volatility is not). Source:
+`services/models/vol_range.py` (RiskMetrics EWMA λ=0.94, ±z·σ·√h bands), safety-wrapped.
+
+Query params:
+- `horizon` — `"1d"` | `"1w"` (default) | `"1m"`. Other values → `422`.
+- Unknown `symbol` → `404`; insufficient price history (<~30 closes) → `422`.
+
+```jsonc
+{
+  "symbol": "NG",
+  "horizon": "1w",
+  "range": {
+    "horizon": "1w",
+    "sigma_daily": 0.0231,       // EWMA daily log-return vol
+    "sigma_horizon": 0.0516,     // scaled to the horizon (σ·√h)
+    "band80_low_pct": -0.0661, "band80_high_pct": 0.0661,   // calibrated surface
+    "band95_low_pct": -0.1011, "band95_high_pct": 0.1011,   // reported; runs light (fat tails)
+    "method": "ewma",
+    "note": "string"
+  },
+  "coverage": { "cov80": 0.80, "cov95": 0.94, "n_eff": 140 }, // realized walk-forward; n_eff = independent windows
+  "forward_vol_corr": 0.42,      // walk-forward corr(forecast σ, realized forward vol); null if thin
+  "safety": { ... }              // caveats include the negative point-forecast-R² honesty note
+}
+```
+
+Honesty contract (enforced by `tests/test_vol_range.py`, locked as regressions):
+- `cov80` near nominal walk-forward (≈0.80 on the seeded NG series; gate [0.76, 0.84]).
+- `forward_vol_corr` > 0 under volatility clustering, ≈0 on constant-vol data (no spurious edge).
+- The **band** is the calibrated output; the central σ **level** is not a reliable point forecast
+  (OOS R² negative) — surfaced as a caveat in the safety envelope.
+
 ### Scenarios
 
 `POST /v1/scenarios/run`
