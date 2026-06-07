@@ -5,7 +5,12 @@ to survive a capital firm's diligence.** Reviewed and prioritized with the owner
 
 ## Decision (2026-06-06)
 - **Open with Phase 26 — Model Intelligence v2.** Run the full phase (26a→26b→26c),
-  promote, then reassess before picking the next phase.
+  promote, then reassess before picking the next phase. ✅ Done + promoted to live.
+- **NEXT SESSION = full project audit + plan reassessment** (owner-requested
+  2026-06-06). Before more building: audit real-vs-placeholder across the stack, review
+  the Phase 26 honest findings (no OOS directional edge) + the vol/range edge, and
+  re-prioritise the whole roadmap. Treat phases below 30 as provisional pending that
+  reassessment.
 
 ## Why this first — current-state honest assessment
 A code-grounded map of the forecasting layer found:
@@ -140,13 +145,20 @@ The honesty harness transfers directly: **interval coverage IS the calibration g
 culture maps onto proper scoring rules for vol.
 
 ### 30a — Range/interval forecast (ship the calibrated 80% band first)
-- Backend: `services/models/vol_range.py` — a walk-forward vol forecaster emitting σ +
-  interval bands (80% / 95%) per horizon; pure-numpy EWMA to start (it already passes
-  80% coverage). Endpoint `GET /v1/forecast/range` (safety-wrapped per AI_BEHAVIOR).
-- Frontend: expected-range band overlay on the chart + an "Expected Range" card with a
-  **live walk-forward coverage readout** (the band's honesty, shown not asserted).
+- Backend: ✅ SHIPPED (`53266b7`, develop). `services/models/vol_range.py` — walk-forward
+  EWMA vol forecaster emitting σ + 80%/95% bands per horizon; `GET /v1/forecast/range`
+  (safety-wrapped); `walk_forward_coverage` locked as a calibration test. **Multi-commodity
+  calibration confirmed** (2026-06-06 probe): 80%/1W coverage 76–84% across NG/CL/HO/RB/GC/SI
+  with zero tuning; 95% runs ~90% (fat tails → 30c); metals-monthly weaker (→ 30c regime).
+- Frontend: **DEFERRED — desirable feature, not yet built.** An "Expected Range" card was
+  attempted and **removed** (`8dd15b6`→reverted): it shipped 3× without visual verification
+  and had an `h-full` layout bug that filled the screen. **Lesson: run the app and look
+  before placing any UI.** Rebuild later WITH visual verification; owner chooses placement;
+  frontend + backend must promote to live together (else the card calls a missing endpoint).
+  Component design (80% band + 95% band + daily vol + live walk-forward coverage readout +
+  "range only, no directional claim", instrument-following) is sound — re-use it.
 - **Gate:** walk-forward 80% coverage within [77, 83]%; 95% reported (tails fixed in
-  30c); documented. (Already met for 80% on NG — lock it as a test.)
+  30c); documented. (Met for 80% across 6 commodities — locked as a test.)
 
 ### 30b — Better estimator (flip point-forecast R² positive)
 - EWMA → recalibrated-EWMA → **HAR-RV** (pure-numpy OLS on daily/weekly/monthly realized

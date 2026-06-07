@@ -5,7 +5,6 @@ import { PageHeader } from "@/components/PageHeader";
 import { Skeleton } from "@/components/Skeleton";
 import { BacktestCard } from "@/components/signals/BacktestCard";
 import { EnsembleHeader } from "@/components/signals/EnsembleHeader";
-import { ExpectedRangeCard } from "@/components/signals/ExpectedRangeCard";
 import { ExplanationPanel } from "@/components/signals/ExplanationPanel";
 import { HistoryTable } from "@/components/signals/HistoryTable";
 import { ModelCalibrationCard } from "@/components/signals/ModelCalibrationCard";
@@ -66,10 +65,6 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
 
       {/* Row 1 — THE CALL (hero): direction, confidence, expected move. */}
       <EnsembleHeader ensemble={signal.ensemble} />
-
-      {/* Row 1b — THE RANGE (how far): calibrated volatility band. Complements the
-          directional call above; this is the forecast the system can stand behind. */}
-      <ExpectedRangeCard symbol={activeSymbol} />
 
       {/* Row 2 — THE EVIDENCE: the per-model ensemble vote. */}
       <ModelGrid models={signal.models} />
