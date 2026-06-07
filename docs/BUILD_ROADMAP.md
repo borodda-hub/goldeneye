@@ -198,13 +198,22 @@ culture maps onto proper scoring rules for vol.
   estimator that is *calibrated* and say so (same honest-gate culture as 26b/26c).
 
 ### 30c — Fat tails + regime conditioning
-- Student-t / empirical quantiles → 95% coverage near nominal (probe showed ~90% → fat
-  tails). Regime-conditional vol (reuse the existing `volatility_regime` context).
-- **Gate:** 95% coverage within [93, 97]% walk-forward.
+- **✅ SHIPPED + real-OOS validated (2026-06-07).** Replaced the fixed normal-z band
+  multipliers with **empirical quantiles of past realized standardized moves** (walk-forward,
+  look-ahead-safe, normal-z fallback while thin) in `vol_range.py`. Real returns are
+  fat-tailed → the 95% multiplier runs above 1.96 and the band reaches nominal.
+- **Gate MET on real data:** 95% coverage now **93–95%** across NG/CL/HO/RB/GC/SI (was 92–94%
+  under normal-z); 80% stays 78–81%. Locked in `tests/test_vol_range.py`; re-checked via
+  `seeds/validate_vol_real.py`. Endpoint + `API_CONTRACTS.md` updated.
+- **Remaining (optional):** regime-conditional vol (reuse `volatility_regime` context) — the
+  empirical-quantile fix already meets the coverage gate, so this is a refinement, not a
+  blocker.
 
 ### 30d — Mode selection / views (informed choice, not false equivalence)
 The user picks the **view**, never a "which model is right" toggle — direction and range
-answer different questions and must not be presented as co-equal (direction has no edge).
+answer different questions and must not be presented as co-equal (direction has no edge —
+**confirmed real-OOS 2026-06-07**: price-only models score ≈45–57% decisive, below a
+drift-aware naive baseline in all 36 commodity×model×horizon cells; see `MODEL_DILIGENCE.md`).
 - **Range · Direction · Both** view selector (default Both, range primary; direction
   shown with its existing no-edge caveat).
 - Estimator selector *within* vol mode (EWMA · HAR-RV · GARCH-lite).
@@ -241,6 +250,16 @@ time). Ties into existing `desk_calibration` + `auto_resolution`.
 Spread/ratio charts (crack spread, gold/silver, CL/NG), multi-symbol compare, manual
 drawing tools (LWC v5 primitives), pattern-credibility backtest (reuse Phase-10
 engine to show which patterns actually paid).
+
+### Phase 31 (DEFERRED) — Real feature-history ingestion (the structural diligence gap)
+The remaining substrate gap surfaced by the 2026-06-07 diligence pass. Backtests +
+calibration currently run on the synthetic seed, whose COT/storage/weather are causally
+independent of the price path — so `logreg_directional` and `factor_composite` **cannot be
+validated** and their directional output is `unvalidated` in `MODEL_DILIGENCE.md`. Closing it:
+ingest **real historical COT (CFTC, free) + EIA storage history**, persist them, and re-run
+the backtests on real features→price. Only then can the multimodal models earn a real-OOS
+verdict. Multi-day effort; deferred consciously so the roadmap can proceed — but it is the
+one thing standing between "we think these models work" and "we checked." Not forgotten.
 
 ## Parallel quick-wins (fold in opportunistically)
 - **Scenario fidelity:** make shocks move recent-return *momentum*, not just price

@@ -11,14 +11,22 @@ Engine** (30a complete + hardened, promoted). The honest finding from 26 —
 product, and 30 found the platform's first genuine, calibrated edge in the
 opposite place: **volatility/range** (80% interval coverage holds across 6
 commodities with zero tuning, now locked as regression tests). A WS4 pass
-synced the stale source-of-truth docs to code reality. On 2026-06-07 that
-vol/range edge was **validated out-of-sample on ~10y of REAL data across all
-six commodities** (6/6 pass the 80% gate; forward-vol correlation 0.44–0.59,
-*stronger* than synthetic) — it survived an adversarial test built to break it,
-so it is a real edge, not a seed artifact. Caveats that stand: the *directional*
-"no edge" finding is still synthetic-only; the 95% band is confirmed
-miscalibrated on real data too (fat tails → 30c); and it's a table-stakes vol
-fact, so the moat is honest calibration, not a proprietary signal.
+synced the stale source-of-truth docs to code reality.
+
+**2026-06-07 diligence wrap-up (complete).** A code-grounded audit found that every
+predictive claim rested on the synthetic seed. We closed it:
+- **Vol/range edge — validated out-of-sample on ~10y REAL data, 6/6 commodities**
+  (80% coverage 78–81%; forward-vol corr 0.44–0.59, *stronger* than synthetic). It
+  survived an adversarial test built to break it → real edge, not a seed artifact.
+- **Phase 30c shipped** — empirical fat-tail band quantiles replaced normal-z; **95%
+  coverage now reaches nominal on real data (93–95%)**, locked in tests.
+- **Direction tested on real data — no edge, confirmed.** Price-only models
+  (`moving_average_directional`, `holt_trend`) score ≈45–57% decisive across 6
+  commodities, below a drift-aware naive baseline in all 36 cells; no confidence
+  gradient. Phase 26's finding holds on real data, not just synthetic.
+- **`logreg`/`factor` stay unvalidated** (need real COT/EIA → deferred Phase 31).
+- Provenance now governed by `docs/MODEL_DILIGENCE.md`. The one real edge is
+  vol/range; it's table-stakes, so the moat is honest calibration, not alpha.
 
 Everything is in sync: `master == develop == origin/master == origin/develop
 == 3d63888`, clean working tree. **895 backend tests** passing; web tests
