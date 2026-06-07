@@ -28,6 +28,7 @@ from apps.api.routers import (  # noqa: E402
     chart,
     dashboard,
     explain,
+    forecast,
     fundamentals,
     indicators,
     instruments,
@@ -96,6 +97,7 @@ app.include_router(me.router)
 app.include_router(paper.router)
 app.include_router(admin.router)
 app.include_router(explain.router)
+app.include_router(forecast.router)
 app.include_router(news.router)
 app.include_router(backtest.router)
 app.include_router(realtime.router)
