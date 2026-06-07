@@ -158,9 +158,27 @@ culture maps onto proper scoring rules for vol.
 ### 30a — Range/interval forecast (ship the calibrated 80% band first)
 - Backend: ✅ SHIPPED (`53266b7`, develop). `services/models/vol_range.py` — walk-forward
   EWMA vol forecaster emitting σ + 80%/95% bands per horizon; `GET /v1/forecast/range`
-  (safety-wrapped); `walk_forward_coverage` locked as a calibration test. **Multi-commodity
-  calibration confirmed** (2026-06-06 probe): 80%/1W coverage 76–84% across NG/CL/HO/RB/GC/SI
-  with zero tuning; 95% runs ~90% (fat tails → 30c); metals-monthly weaker (→ 30c regime).
+  (safety-wrapped); `walk_forward_coverage` locked as a calibration test.
+- **✅ VALIDATED OUT-OF-SAMPLE ON REAL DATA (2026-06-07).** Every prior 30a number was
+  measured on the *synthetic* regime-switching seed — which has vol clustering injected by
+  construction, so an EWMA "finding" it was partly circular. An adversarial real-data
+  harness (`seeds/validate_vol_real.py`, manual diagnostic — not CI, needs live network)
+  fetched ~10y real daily history for all six commodities through the production Yahoo path
+  and ran the **unchanged locked functions** on real returns:
+  - **80% coverage holds on real data: 6/6 commodities pass [77,83]% at 1w** (NG 81.2 · CL
+    81.2 · HO 79.0 · RB 81.3 · GC 79.5 · SI 79.3), n_eff ≈ 497 independent windows.
+  - **Forward-vol correlation is *stronger* on real data than synthetic** (1w: 0.44–0.59;
+    NG 0.444, CL 0.572, HO 0.589) — with large n_eff the significance is genuine. This,
+    not the coverage level, is the real evidence of skill (the 80% level is somewhat
+    forgiving; correlation cannot be).
+  - The edge survived an adversarial test built to break it → it is a **real, validated
+    out-of-sample, cross-commodity** calibration of the range band, not a seed artifact.
+  - **Honest scope of the claim:** (1) it validates the *range/vol* edge only — the
+    "no directional edge" finding is still synthetic-only and remains artifact-suspect
+    until tested on real features→price; (2) it's a **table-stakes** edge (vol
+    autocorrelation, the GARCH/HAR fact every vol desk has) — the moat is honest
+    calibration + presentation, not a proprietary signal; (3) the **95% band is confirmed
+    miscalibrated on real data too** (92–94%, fat tails) → 30c is necessary, not optional.
 - Frontend: **DEFERRED — desirable feature, not yet built.** An "Expected Range" card was
   attempted and **removed** (`8dd15b6`→reverted): it shipped 3× without visual verification
   and had an `h-full` layout bug that filled the screen. **Lesson: run the app and look
@@ -169,7 +187,8 @@ culture maps onto proper scoring rules for vol.
   Component design (80% band + 95% band + daily vol + live walk-forward coverage readout +
   "range only, no directional claim", instrument-following) is sound — re-use it.
 - **Gate:** walk-forward 80% coverage within [77, 83]%; 95% reported (tails fixed in
-  30c); documented. (Met for 80% across 6 commodities — locked as a test.)
+  30c); documented. **Met on REAL out-of-sample data, 6/6 commodities** (synthetic locked
+  as a regression test; real-data check re-runnable via `seeds/validate_vol_real.py`).
 
 ### 30b — Better estimator (flip point-forecast R² positive)
 - EWMA → recalibrated-EWMA → **HAR-RV** (pure-numpy OLS on daily/weekly/monthly realized
