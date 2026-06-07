@@ -12,6 +12,17 @@ to survive a capital firm's diligence.** Reviewed and prioritized with the owner
   re-prioritise the whole roadmap. Treat phases below 30 as provisional pending that
   reassessment.
 
+### Audit agenda — to be discussed next session (note, 2026-06-06)
+A structured pass (Claude can drive it on request):
+1. **Real-vs-placeholder inventory across the stack** — what is genuinely built and
+   working vs. mock/stub/hand-set, end to end (adapters, models, ensemble, LLM, UI).
+2. **What the honest findings mean for the product's core claim** — reconcile the
+   "decision intelligence" pitch with: no out-of-sample *directional* edge at any
+   horizon (Phase 26), but a real, calibrated, multi-commodity *vol/range* edge.
+3. **Re-rank everything against that** — 30b (HAR-RV), 30c (fat tails + regime), Brent
+   parity, the deferred Expected Range card, and the queued Phase 27 (concierge) /
+   28 (accounts + decision ledger) / 29 (charting differentiators).
+
 ## Why this first — current-state honest assessment
 A code-grounded map of the forecasting layer found:
 - **Only 1 of 5 models is genuinely trained** (`logreg_directional`, walk-forward
