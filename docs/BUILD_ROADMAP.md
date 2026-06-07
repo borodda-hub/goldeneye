@@ -43,7 +43,7 @@ plus the machinery to see when they're wrong."
 
 ### 26a — Model diagnostics & error/bias detection ✅ SHIPPED (`847bcf2`)
 Build the X-ray before adding models.
-- `services/model_diagnostics.py` + `GET /v1/models/diagnostics`:
+- `services/model_diagnostics.py` + `GET /v1/backtest/diagnostics`:
   - per-model **directional bias** (chronically too bullish/bearish),
   - **regime-conditional accuracy** (e.g. logreg in crisis vol),
   - **Brier decomposition** (calibration vs sharpness, not just the scalar),
