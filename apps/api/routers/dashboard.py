@@ -16,6 +16,7 @@ from apps.api.services.price_lookup import get_latest_closes
 from apps.api.adapters.registry import get_market
 from apps.api.services.model_registry import ForecastContext, run_all
 from apps.api.services.ensemble import compute_ensemble
+from apps.api.services.model_calibration import model_weights_for
 from apps.api.services.llm_explainer import generate_thesis, summarize_market
 
 
@@ -94,7 +95,8 @@ async def get_summary(
     )
     ctx = ForecastContext(symbol=symbol, closes=closes)
     results = await run_all(ctx)
-    ensemble = compute_ensemble(results)
+    weights = await model_weights_for(session, instrument.id, "1d")
+    ensemble = compute_ensemble(results, model_weights=weights)
 
     # AI summary
     market_ctx = {

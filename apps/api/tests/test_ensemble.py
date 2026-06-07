@@ -1,4 +1,4 @@
-from apps.api.services.ensemble import compute_ensemble
+from apps.api.services.ensemble import compute_ensemble, model_weights_from_brier
 from apps.api.services.models.moving_average_directional import ForecastResult
 
 
@@ -107,3 +107,58 @@ def test_empty_results_returns_safe_default():
     out = compute_ensemble([])
     assert out["direction"] == "neutral"
     assert out["confidence"] == "low"
+
+
+# ── Phase 26c — calibration weighting ───────────────────────────────────────
+
+
+def test_model_weights_lower_brier_gets_higher_weight():
+    w = model_weights_from_brier(
+        {"good": 0.20, "ok": 0.25, "bad": 0.34}
+    )
+    assert w["good"] > w["ok"] > w["bad"]
+    # Normalised to mean ~1.0 (before clamping these all sit in-range).
+    assert abs(sum(w.values()) / len(w) - 1.0) < 0.15
+
+
+def test_model_weights_clamped_to_bounds():
+    # An extreme spread would push weights past the bounds without clamping.
+    w = model_weights_from_brier({"great": 0.001, "awful": 0.95})
+    assert 0.4 <= w["great"] <= 2.0
+    assert 0.4 <= w["awful"] <= 2.0
+
+
+def test_model_weights_missing_score_is_neutral():
+    w = model_weights_from_brier({"a": 0.25, "b": None})
+    assert w["b"] == 1.0
+
+
+def test_model_weights_all_none_uniform():
+    w = model_weights_from_brier({"a": None, "b": None})
+    assert w == {"a": 1.0, "b": 1.0}
+
+
+def test_calibration_weighting_can_flip_a_confidence_tie():
+    # Two bearish 'low' votes vs one bullish 'high' vote: by confidence weight the
+    # bullish high (3) ties the two bearish lows (1+1=2)→ bullish wins. But if the
+    # bullish model is badly calibrated (down-weighted) and the bearish ones are
+    # well-calibrated (up-weighted), the bearish side should take over.
+    results = [
+        _make_result("bullish", "high", model_name="bad"),
+        _make_result("bearish", "low", model_name="good1"),
+        _make_result("bearish", "low", model_name="good2"),
+    ]
+    plain = compute_ensemble(results)
+    assert plain["direction"] == "bullish"
+
+    weights = model_weights_from_brier(
+        {"bad": 0.34, "good1": 0.20, "good2": 0.20}
+    )
+    weighted = compute_ensemble(results, model_weights=weights)
+    assert weighted["direction"] == "bearish"
+
+
+def test_calibration_weighting_adds_rationale_line():
+    results = [_make_result("bullish", "high", model_name="m1")]
+    out = compute_ensemble(results, model_weights={"m1": 1.5})
+    assert any("calibration" in r.lower() for r in out["confidence_rationale"])

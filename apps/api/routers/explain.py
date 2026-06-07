@@ -15,6 +15,7 @@ from apps.api.repos import scenarios as scenario_repo
 from apps.api.repos import journal as journal_repo
 from apps.api.services.model_registry import ForecastContext, run_all
 from apps.api.services.ensemble import compute_ensemble
+from apps.api.services.model_calibration import model_weights_for
 from apps.api.services.llm_explainer import (
     summarize_market,
     explain_signal,
@@ -69,7 +70,8 @@ async def explain_signal_endpoint(
     )
     ctx = ForecastContext(symbol=req.symbol, closes=closes)
     results = await run_all(ctx)
-    ensemble = compute_ensemble(results)
+    weights = await model_weights_for(session, instrument.id, "1d")
+    ensemble = compute_ensemble(results, model_weights=weights)
 
     signal = {
         "direction": ensemble["direction"],

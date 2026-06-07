@@ -9,6 +9,7 @@ from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
 from apps.api.repos import price_bars as price_repo
 from apps.api.services.ensemble import compute_ensemble
+from apps.api.services.model_calibration import model_weights_for
 from apps.api.services.model_registry import ForecastContext, run_all
 from apps.api.services.price_lookup import get_latest_closes
 from apps.api.services.signal_quality import compute_grade
@@ -35,7 +36,8 @@ async def get_signal_quality(
 
     ctx = ForecastContext(symbol=symbol, closes=closes)
     results = await run_all(ctx)
-    ensemble = compute_ensemble(results)
+    weights = await model_weights_for(session, instrument.id, "1d")
+    ensemble = compute_ensemble(results, model_weights=weights)
 
     grade = await compute_grade(session, instrument_id=instrument.id, ensemble=ensemble)
     return {

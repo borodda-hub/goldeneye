@@ -176,10 +176,15 @@ async def run_scenario(
     instrument: str,
     shocks: list[dict],  # type: ignore[type-arg]
     baseline_ctx: ForecastContext,
+    model_weights: dict[str, float] | None = None,
 ) -> dict:  # type: ignore[type-arg]
     """
     Apply shocks to a baseline ForecastContext, re-run the model suite, compute the ensemble,
     and generate a narrative.
+
+    `model_weights` (Phase 26c) are the calibration-derived per-model voting weights;
+    both the baseline and shocked ensembles use the same weights so the comparison is
+    apples-to-apples. None → pre-26c agreement-by-confidence behaviour.
 
     Returns a result dict per docs/API_CONTRACTS.md §scenarios.
     """
@@ -190,8 +195,8 @@ async def run_scenario(
     baseline_results = await run_all(baseline_ctx)
     shocked_results = await run_all(shocked_ctx)
 
-    baseline_ensemble = compute_ensemble(baseline_results)
-    shocked_ensemble = compute_ensemble(shocked_results)
+    baseline_ensemble = compute_ensemble(baseline_results, model_weights=model_weights)
+    shocked_ensemble = compute_ensemble(shocked_results, model_weights=model_weights)
 
     # Delta in direction
     b_dir = baseline_ensemble["direction"]

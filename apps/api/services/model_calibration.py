@@ -150,3 +150,22 @@ async def compute_model_calibration(
         out_models.append(card)
 
     return {"models": out_models, "confidence_prob": CONFIDENCE_PROB}
+
+
+async def model_weights_for(
+    session: AsyncSession,
+    instrument_id: Any,
+    horizon: str,
+) -> dict[str, float]:
+    """Phase 26c: per-model ensemble voting weights from measured Brier.
+
+    Reads the persisted-backtest calibration scorecard and maps each model's Brier
+    to a voting weight via ``ensemble.model_weights_from_brier``. Returns
+    {model_name: weight}; an empty/unscored history yields an empty dict (the
+    ensemble then falls back to its pre-26c agreement-by-confidence behaviour).
+    """
+    from apps.api.services.ensemble import model_weights_from_brier
+
+    cal = await compute_model_calibration(session, instrument_id, horizon)
+    brier = {m["name"]: m.get("brier") for m in cal.get("models", [])}
+    return model_weights_from_brier(brier)

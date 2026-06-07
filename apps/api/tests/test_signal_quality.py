@@ -238,7 +238,7 @@ def test_endpoint_happy_path_returns_grade_and_subscores(client: TestClient):
         new=AsyncMock(return_value=[]),
     ), patch(
         "apps.api.routers.signal_quality.compute_ensemble",
-        new=lambda results: {"agreement": {"input_diversity": "high"}},
+        new=lambda results, **kwargs: {"agreement": {"input_diversity": "high"}},
     ), patch(
         "apps.api.routers.signal_quality.compute_grade",
         new=AsyncMock(return_value=fake_result),

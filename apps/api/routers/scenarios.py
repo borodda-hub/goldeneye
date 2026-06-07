@@ -16,6 +16,7 @@ from apps.api.repos import instruments as instr_repo
 from apps.api.repos import scenarios as scenario_repo
 from apps.api.services.model_registry import ForecastContext
 from apps.api.services.price_lookup import get_latest_closes
+from apps.api.services.model_calibration import model_weights_for
 from apps.api.services.scenario_engine import run_scenario
 from apps.api.services.scenario_pdf import render_scenario_pdf
 
@@ -122,12 +123,14 @@ async def run_scenario_endpoint(
 
     baseline_ctx = ForecastContext(symbol=req.instrument, closes=closes)
     shocks_dicts = [s.model_dump() for s in req.shocks]
+    weights = await model_weights_for(session, instrument.id, "1d")
 
     result = await run_scenario(
         name=req.name,
         instrument=req.instrument,
         shocks=shocks_dicts,
         baseline_ctx=baseline_ctx,
+        model_weights=weights,
     )
 
     run = await scenario_repo.create(

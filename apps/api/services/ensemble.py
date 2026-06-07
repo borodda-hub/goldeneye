@@ -1,5 +1,20 @@
 """
 Combines ForecastResult objects from multiple models into an ensemble signal.
+
+Phase 26c — the ensemble is now *calibration-weighted*: each model's vote is scaled
+by a weight derived from its measured historical Brier score (lower Brier = better
+calibration = larger weight), not just by its self-reported confidence. The weight
+mapping is ``model_weights_from_brier`` below; callers pass the resulting dict into
+``compute_ensemble(..., model_weights=...)``. With no weights supplied the function
+falls back to the pre-26c agreement-by-confidence behaviour (backward-compatible).
+
+Honest scope (26c finding): this weighting is justified as **down-weighting
+demonstrably-miscalibrated models** (e.g. the MA model's chronically overconfident
+"high" calls). It does **not** claim to produce a calibrated ensemble *confidence
+gradient* — the walk-forward harness in ``ensemble_calibration.py`` showed no reliable
+gradient at any tested horizon (daily is near-random; the apparent 1w/1m gradients
+were in-sample overfitting). Treat ensemble confidence as relative, not as a
+realized-hit-rate promise.
 """
 from __future__ import annotations
 
@@ -9,6 +24,39 @@ CONFIDENCE_WEIGHTS: dict[str, int] = {"high": 3, "medium": 2, "low": 1}
 
 _ALT_DATA_INPUTS = {"latest_storage", "latest_cot", "weather_anomaly"}
 _NON_PRICE_INPUTS = {"vol_regime_signal"}  # signals derived from prices but not raw prices
+
+# Calibration-weight bounds: no single model may count less than 0.4× or more than
+# 2.0× the average, so a great score can't dominate and a poor one can't be silenced.
+_WEIGHT_FLOOR = 0.4
+_WEIGHT_CAP = 2.0
+_BRIER_EPS = 1e-3
+
+
+def model_weights_from_brier(
+    brier_by_model: dict[str, float | None],
+) -> dict[str, float]:
+    """Map measured per-model Brier scores to ensemble voting weights.
+
+    Lower Brier (better calibration) → higher weight. Uses inverse-Brier normalised
+    to mean 1.0 across the models that have a score, then clamps each to
+    ``[_WEIGHT_FLOOR, _WEIGHT_CAP]``. Models with no score (None) get a neutral 1.0.
+    Inverse-Brier is a standard, untuned mapping — no thresholds fit to a target.
+
+    Returns a {model_name: weight} dict; an all-None / empty input yields all-1.0.
+    """
+    scored = {k: v for k, v in brier_by_model.items() if v is not None}
+    if not scored:
+        return {k: 1.0 for k in brier_by_model}
+    inv = {k: 1.0 / max(v, _BRIER_EPS) for k, v in scored.items()}
+    mean_inv = sum(inv.values()) / len(inv)
+    weights: dict[str, float] = {}
+    for name in brier_by_model:
+        if name in inv and mean_inv > 0:
+            w = inv[name] / mean_inv
+            weights[name] = min(_WEIGHT_CAP, max(_WEIGHT_FLOOR, w))
+        else:
+            weights[name] = 1.0
+    return weights
 
 
 def _input_diversity(results: list[ForecastResult]) -> str:
@@ -23,8 +71,18 @@ def _input_diversity(results: list[ForecastResult]) -> str:
 
 
 def compute_ensemble(
-    results: list[ForecastResult], *, vol_regime: str | None = None
+    results: list[ForecastResult],
+    *,
+    vol_regime: str | None = None,
+    model_weights: dict[str, float] | None = None,
 ) -> dict:
+    # Effective voting weight = self-reported confidence weight × the model's
+    # calibration weight (Brier-derived). model_weights=None → all 1.0 (pre-26c).
+    def _voter_weight(r: ForecastResult) -> float:
+        cw = float(CONFIDENCE_WEIGHTS.get(r.confidence, 1))
+        mw = (model_weights or {}).get(r.model_name, 1.0)
+        return cw * mw
+
     if not results:
         return {
             "direction": "neutral",
@@ -43,11 +101,11 @@ def compute_ensemble(
         d = r.direction if r.direction in agree_counts else "neutral"
         agree_counts[d] += 1
 
-    # Weighted vote
+    # Weighted vote (confidence × calibration weight)
     vote_buckets: dict[str, float] = {"bullish": 0.0, "bearish": 0.0, "neutral": 0.0}
     total_weight = 0.0
     for result in results:
-        w = float(CONFIDENCE_WEIGHTS.get(result.confidence, 1))
+        w = _voter_weight(result)
         direction = result.direction if result.direction in vote_buckets else "neutral"
         vote_buckets[direction] += w
         total_weight += w
@@ -109,7 +167,7 @@ def compute_ensemble(
     rh_sum = 0.0
     range_weight = 0.0
     for result in results:
-        w = float(CONFIDENCE_WEIGHTS.get(result.confidence, 1))
+        w = _voter_weight(result)
         if result.expected_pct is not None:
             ep_sum += result.expected_pct * w
             ep_weight += w
@@ -138,6 +196,27 @@ def compute_ensemble(
         rationale.append("Includes volatility-regime derived signals (medium input diversity).")
     else:
         rationale.append("All models read price series only (low input diversity).")
+
+    # Calibration weighting note (26c): surface that votes are accuracy-weighted,
+    # and name the models pulled up/down so the weighting is transparent.
+    if model_weights:
+        up = sorted(
+            (n for n, w in model_weights.items() if w > 1.05),
+            key=lambda n: -model_weights[n],
+        )
+        down = sorted(
+            (n for n, w in model_weights.items() if w < 0.95),
+            key=lambda n: model_weights[n],
+        )
+        msg = "Votes weighted by measured calibration (Brier)"
+        if up or down:
+            parts = []
+            if up:
+                parts.append("up: " + ", ".join(up))
+            if down:
+                parts.append("down: " + ", ".join(down))
+            msg += " — " + "; ".join(parts)
+        rationale.append(msg + ".")
 
     # Check if any model had alt-data missing
     all_contradicting_factors: list[str] = []

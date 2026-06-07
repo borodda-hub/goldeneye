@@ -93,11 +93,38 @@ diagnostics/calibration show the new lineup; (7) update registry/ensemble tests.
   `factor_learned` beats `factor_composite` on out-of-sample Brier, or we keep the
   honest baseline and say so; `pnpm health` green; re-seed verified.
 
-### 26c — Ensemble v2 (calibration-weighted)
-- Weight models by measured historical accuracy (Brier), not just agreement;
-  ensemble confidence should track realized hit-rate.
-- **Gate:** ensemble confidence buckets are demonstrably calibrated on the backtest
-  (high-confidence calls actually hit more).
+### 26c — Ensemble v2 (calibration-weighted) ✅ SHIPPED (2026-06-06)
+- **Shipped:** `compute_ensemble(..., model_weights=...)` — each model's vote is now
+  scaled by `model_weights_from_brier` (inverse-Brier, normalised to mean 1.0, clamped
+  [0.4, 2.0]). `model_weights_for(session, instrument_id, horizon)` derives the weights
+  from the persisted-backtest calibration; wired into all live ensemble call sites
+  (signals / dashboard / explain / signal_quality / scenarios). Live weights are
+  full-history (no look-ahead at serve time).
+- **Gate OUTCOME (the honest "say so"):** the literal gate — *high-confidence ensemble
+  calls demonstrably hit more* — was **NOT met out-of-sample at any horizon.** A
+  walk-forward harness (`services/ensemble_calibration.py`, weights from resolved
+  priors only) found: **1d** flat (high 0.48 ≈ med 0.50, near-random); **1w** the clean
+  in-sample gradient (0.58 > 0.52) *inverts* walk-forward (high 0.53 < med 0.69);
+  **1m** in-sample 0.52 > 0.33 collapses to walk-forward 0.48 < 0.50 (high still below
+  coin-flip). The in-sample gradients were **overfitting** — which is exactly what the
+  harness exists to catch.
+- **Decision (owner-approved):** ship the mechanism anyway, **reframed**: it is
+  justified as *down-weighting demonstrably-miscalibrated models* (the MA model fires
+  246 "high" calls at 42.7%), **not** as achieving a calibrated confidence gradient.
+  The docstrings + the ensemble rationale string say so; ensemble confidence is
+  relative, not a realized-hit-rate promise. The walk-forward harness is **locked as a
+  permanent test** (`tests/test_ensemble_calibration.py`) so no future change can
+  re-introduce an in-sample illusion unchallenged. `pnpm health` backend green.
+- **Phase 26 honest headline:** across 1d/1w/1m the models have **no reliable
+  out-of-sample directional confidence gradient**; the system correctly declines to
+  manufacture one. The durable assets of Phase 26 are the *diagnostics* (26a) and this
+  *walk-forward honesty harness*, not a predictive edge.
+
+### Post-26 strategic note (not yet scheduled)
+Since the lineup shows no OOS directional edge at any horizon, future real value is
+likelier in: (a) **volatility / range forecasting** (vol clusters → genuinely
+predictable), or (b) **selective abstention** (emit a directional call only when a
+configuration has *historically* paid), than in more directional-ensemble work.
 
 ---
 
