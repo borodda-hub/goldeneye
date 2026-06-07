@@ -237,6 +237,12 @@ def test_endpoint_happy_path_returns_grade_and_subscores(client: TestClient):
         "apps.api.routers.signal_quality.run_all",
         new=AsyncMock(return_value=[]),
     ), patch(
+        # Keeps the endpoint test hermetic — model_weights_for hits the DB (added
+        # when 26c wired calibration weights here); without this it opens a real
+        # connection (works locally with Postgres up, fails CI on :5432).
+        "apps.api.routers.signal_quality.model_weights_for",
+        new=AsyncMock(return_value={}),
+    ), patch(
         "apps.api.routers.signal_quality.compute_ensemble",
         new=lambda results, **kwargs: {"agreement": {"input_diversity": "high"}},
     ), patch(
