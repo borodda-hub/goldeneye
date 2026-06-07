@@ -41,7 +41,7 @@ This gap is exactly what diligence probes, so we close it first.
 Turn "5 models, 1 real" into "4 genuinely distinct models, each with a clear driver,
 plus the machinery to see when they're wrong."
 
-### 26a — Model diagnostics & error/bias detection (start here)
+### 26a — Model diagnostics & error/bias detection ✅ SHIPPED (`847bcf2`)
 Build the X-ray before adding models.
 - `services/model_diagnostics.py` + `GET /v1/models/diagnostics`:
   - per-model **directional bias** (chronically too bullish/bearish),
@@ -52,16 +52,31 @@ Build the X-ray before adding models.
 - **Gate:** diagnostics reproduce known truths on seeded data (e.g. vol_regime's
   weak direction signal shows as low sharpness); tests; honest in-sample labels.
 
-### 26b — Four distinct, honest models
-- Settle the 4-model lineup with non-overlapping theses: ① technical/momentum,
-  ② statistical time-series (make Prophet/ARIMA non-optional so it isn't a prod
-  stub), ③ **learned multimodal factor** (replace `factor_composite` hand-set
-  weights with a trained model over storage+COT+momentum), ④ ML directional
-  (`logreg`, possibly upgraded). Fold `volatility_regime` into a regime *context*
-  input rather than a directional voter.
-- **Gate:** each model passes the look-ahead-safe backtest; the learned factor
-  model beats its hand-set predecessor on out-of-sample Brier, or we keep the
-  honest baseline and say so explicitly.
+### 26b — Four distinct, honest models (NEXT — decisions locked 2026-06-06)
+Lineup, grounded in 26a's diagnostics:
+- ① **MA crossover** (`moving_average_directional`) — technical/momentum. 26a showed
+  calib err 0.102 (overconfident) → recalibrate its confidence→prob mapping.
+- ② **Statistical time-series** — NEW pure-numpy **Holt/AR linear-trend** model
+  (`holt_trend`), always-on (Prophet stays an optional upgrade, not the prod slot).
+- ③ **Learned multimodal factor** — NEW `factor_learned`: **pure-numpy** walk-forward
+  logistic over [storage Δ, COT Δ, momentum], replacing `factor_composite`'s hand-set
+  weights (no new deps; same approach as `logreg_directional`).
+- ④ **Logistic (ML)** (`logreg_directional`) — real; 26a showed ~zero sharpness +
+  momentum-importance drift → add the regime feature, address sharpness.
+- **`volatility_regime` demoted to a CONTEXT input** — keeps its regime
+  classification (feeds the other models + ensemble + diagnostics) but stops casting
+  a directional vote. Lineup becomes 4 voters.
+
+Build sequence: (1) `holt_trend` model + tests; (2) `factor_learned` model + tests
+(walk-forward safe, alt-data-optional fallback); (3) refactor `model_registry.run_all`
+to the 4 voters + vol_regime-as-context; (4) update `ensemble.compute_ensemble` to take
+regime as explicit context (not a voter); (5) backtest `_predict`/`SUPPORTED_MODELS` +
+`refresh_backtests` seed for the new model names; (6) re-seed backtests locally so
+diagnostics/calibration show the new lineup; (7) update registry/ensemble tests.
+
+- **Gate:** every model passes the look-ahead-safe backtest (cheating-model proof);
+  `factor_learned` beats `factor_composite` on out-of-sample Brier, or we keep the
+  honest baseline and say so; `pnpm health` green; re-seed verified.
 
 ### 26c — Ensemble v2 (calibration-weighted)
 - Weight models by measured historical accuracy (Brier), not just agreement;
