@@ -27,6 +27,7 @@ import {
   getInstruments,
   getJournalEntry,
   getModelCalibration,
+  getModelDiagnostics,
   getPaperEquityCurve,
   getPositioning,
   getRecentNews,
@@ -270,6 +271,15 @@ export function useModelCalibration(
   return useQuery({
     queryKey: ["backtest", "calibration", symbol, horizon, byRegime],
     queryFn: () => getModelCalibration({ symbol, horizon, byRegime }),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+}
+
+export function useModelDiagnostics(symbol = "NG", horizon = "1d") {
+  return useQuery({
+    queryKey: ["backtest", "diagnostics", symbol, horizon],
+    queryFn: () => getModelDiagnostics({ symbol, horizon }),
     staleTime: 30_000,
     refetchInterval: 60_000,
   });

@@ -97,6 +97,58 @@ export async function getModelCalibration(params: {
   return apiFetch(`/v1/backtest/calibration?${q.toString()}`);
 }
 
+// ── Model diagnostics (Phase 26a) ────────────────────────────────────────────
+export interface ModelBrierDecomposition {
+  n: number;
+  base_rate: number | null;
+  reliability: number | null;
+  resolution: number | null;
+  uncertainty: number | null;
+  brier: number | null;
+}
+export interface ModelDirectionalBias {
+  bullish_calls: number;
+  bearish_calls: number;
+  call_skew: number | null;
+  bullish_hit_rate: number | null;
+  bearish_hit_rate: number | null;
+  hit_rate_gap: number | null;
+}
+export interface ModelFeatureDriftShift {
+  factor: string;
+  early_share: number;
+  late_share: number;
+  delta: number;
+}
+export interface ModelFeatureDrift {
+  n_early: number;
+  n_late: number;
+  early_top: { factor: string; share: number }[];
+  late_top: { factor: string; share: number }[];
+  shifts: ModelFeatureDriftShift[];
+}
+export interface ModelDiagnostic {
+  name: string;
+  directional_bias: ModelDirectionalBias;
+  brier_decomposition: ModelBrierDecomposition;
+  regime_accuracy: Record<string, { hit_rate: number | null; n: number }>;
+  feature_drift?: ModelFeatureDrift | null;
+}
+export interface ModelDiagnosticsResponse {
+  models: ModelDiagnostic[];
+  confidence_prob: Record<string, number>;
+}
+
+export async function getModelDiagnostics(params: {
+  symbol?: string;
+  horizon?: string;
+}): Promise<ModelDiagnosticsResponse> {
+  const q = new URLSearchParams();
+  if (params.symbol) q.set("symbol", params.symbol);
+  if (params.horizon) q.set("horizon", params.horizon);
+  return apiFetch(`/v1/backtest/diagnostics?${q.toString()}`);
+}
+
 export async function runBacktest(params: {
   model: string;
   symbol?: string;

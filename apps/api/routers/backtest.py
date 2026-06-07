@@ -27,6 +27,7 @@ from apps.api.services.backtest import (
     run_backtest,
 )
 from apps.api.services.model_calibration import compute_model_calibration
+from apps.api.services.model_diagnostics import compute_model_diagnostics
 
 router = APIRouter(prefix="/v1/backtest", tags=["backtest"])
 
@@ -150,6 +151,27 @@ async def model_calibration_endpoint(
     return await compute_model_calibration(
         session, instrument.id, horizon, by_regime=by_regime
     )
+
+
+@router.get("/diagnostics")
+async def model_diagnostics_endpoint(
+    symbol: str = Query("NG"),
+    horizon: str = Query("1d"),
+    session: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Per-model failure diagnostics over persisted backtest rows: directional
+    bias, Brier (Murphy) decomposition (reliability vs resolution), regime-
+    conditional accuracy, and logreg feature-importance drift. Descriptive,
+    in-sample over the backtest window."""
+    if horizon not in _SUPPORTED_HORIZONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported horizon {horizon!r}; supported: {sorted(_SUPPORTED_HORIZONS)}",
+        )
+    instrument = await instr_repo.get_by_symbol(session, symbol)
+    if instrument is None:
+        raise HTTPException(status_code=404, detail=f"Instrument {symbol!r} not found")
+    return await compute_model_diagnostics(session, instrument.id, horizon)
 
 
 @router.get("/summary")
