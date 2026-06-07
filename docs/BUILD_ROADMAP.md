@@ -120,15 +120,70 @@ diagnostics/calibration show the new lineup; (7) update registry/ensemble tests.
   manufacture one. The durable assets of Phase 26 are the *diagnostics* (26a) and this
   *walk-forward honesty harness*, not a predictive edge.
 
-### Post-26 strategic note (not yet scheduled)
-Since the lineup shows no OOS directional edge at any horizon, future real value is
-likelier in: (a) **volatility / range forecasting** (vol clusters → genuinely
-predictable), or (b) **selective abstention** (emit a directional call only when a
-configuration has *historically* paid), than in more directional-ensemble work.
+---
+
+## Phase 30 — Volatility & Range Engine (RECOMMENDED NEXT — the edge has an address)
+
+**Why this, why now.** Phase 26 proved daily *direction* is near-random (no OOS
+gradient at 1d/1w/1m). A walk-forward vol-predictability probe (2026-06-06) found the
+opposite for *volatility*: on NG front-month, EWMA-vol forecasts show **+0.246
+correlation** with realized forward 5-day vol (~3.7 SE, real signal — mild
+overlapping-window caveat) and **80% interval coverage of 79.6% / 80.1%** at 5d/10d
+walk-forward, essentially perfect with zero tuning. Point-forecast OOS R² is negative
+(crude EWMA *level* is over-reactive/mis-scaled) — but corr>0 means the information is
+present and the level is *calibratable*, unlike direction where the signal was absent.
+This is the platform's first genuine, calibrated edge. **Recommend sequencing this
+before Phases 27–29.**
+
+The honesty harness transfers directly: **interval coverage IS the calibration gate**
+(reuse the `ensemble_calibration` walk-forward pattern), and the Brier/decomposition
+culture maps onto proper scoring rules for vol.
+
+### 30a — Range/interval forecast (ship the calibrated 80% band first)
+- Backend: `services/models/vol_range.py` — a walk-forward vol forecaster emitting σ +
+  interval bands (80% / 95%) per horizon; pure-numpy EWMA to start (it already passes
+  80% coverage). Endpoint `GET /v1/forecast/range` (safety-wrapped per AI_BEHAVIOR).
+- Frontend: expected-range band overlay on the chart + an "Expected Range" card with a
+  **live walk-forward coverage readout** (the band's honesty, shown not asserted).
+- **Gate:** walk-forward 80% coverage within [77, 83]%; 95% reported (tails fixed in
+  30c); documented. (Already met for 80% on NG — lock it as a test.)
+
+### 30b — Better estimator (flip point-forecast R² positive)
+- EWMA → recalibrated-EWMA → **HAR-RV** (pure-numpy OLS on daily/weekly/monthly realized
+  vol — no new deps; preferred) → optional GARCH-lite (flag `arch` as an optional dep,
+  not required). Same walk-forward acceptance test.
+- **Gate:** OOS R² > 0 vs the mean benchmark AND beats persistence; or keep the simplest
+  estimator that is *calibrated* and say so (same honest-gate culture as 26b/26c).
+
+### 30c — Fat tails + regime conditioning
+- Student-t / empirical quantiles → 95% coverage near nominal (probe showed ~90% → fat
+  tails). Regime-conditional vol (reuse the existing `volatility_regime` context).
+- **Gate:** 95% coverage within [93, 97]% walk-forward.
+
+### 30d — Mode selection / views (informed choice, not false equivalence)
+The user picks the **view**, never a "which model is right" toggle — direction and range
+answer different questions and must not be presented as co-equal (direction has no edge).
+- **Range · Direction · Both** view selector (default Both, range primary; direction
+  shown with its existing no-edge caveat).
+- Estimator selector *within* vol mode (EWMA · HAR-RV · GARCH-lite).
+- **Guardrail:** every mode/estimator carries its own live walk-forward calibration
+  readout (coverage for range, the honest "no reliable gradient" label for direction).
+  You can choose the view; you can't escape its track record. Prevents bias-confirming
+  cherry-picking — the core "decision intelligence, honest enough for diligence" stance.
+
+- **Cross-cutting gate (all of 30):** walk-forward coverage/skill is the acceptance test
+  (extend the `ensemble_calibration` harness to vol); honest framing per AI_BEHAVIOR;
+  `pnpm health` green; the 80%-coverage result locked as a regression test.
+
+### Also still on the table (post-26 strategic)
+**Selective abstention** — emit a directional call only when a configuration has
+*historically* paid (extreme regime + strong agreement + catalyst), abstaining
+otherwise. Harvests residual directional edge honestly; complements Phase 30. Lower
+priority than the vol engine but a natural follow-on.
 
 ---
 
-## Later phases (sequence TBD after Phase 26 reassessment)
+## Later phases (sequence TBD — Phase 30 recommended ahead of these)
 
 ### Phase 27 — Concierge copilot (wow + utility)
 Floating agentic assistant: navigates screens, explains any feature/number, greets
