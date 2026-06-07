@@ -154,22 +154,61 @@ CREATE TABLE scenario_runs (
   baseline_ref  UUID REFERENCES model_forecasts(id)
 );
 
--- Decision Journal entries (decision-quality framework)
-CREATE TABLE user_decision_journals (
-  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
-  user_id               UUID,
-  instrument_id         UUID NOT NULL REFERENCES instruments(id),
-  hypothesis            TEXT NOT NULL,
-  evidence              JSONB NOT NULL DEFAULT '[]',  -- [{source, summary, weight}]
-  confidence_pct        INT NOT NULL CHECK (confidence_pct BETWEEN 0 AND 100),
-  planned_action        TEXT,                          -- e.g. 'paper-long 2 contracts'
-  risk_factors          TEXT[],
-  invalidation_criteria TEXT,
-  outcome               TEXT,                          -- filled later
-  reflection            TEXT,                          -- filled later
-  llm_review            JSONB                          -- assumption-finding feedback
+-- Working Thesis (Phase 12, migration 005) — the active thesis per instrument,
+-- snapshotted into journal entries at write time for calibration.
+CREATE TABLE theses (
+  id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  instrument_code         TEXT NOT NULL DEFAULT 'NG',
+  statement               TEXT NOT NULL CHECK (char_length(statement) > 0),
+  supporting_evidence     JSONB NOT NULL DEFAULT '[]',  -- [{factor, weight, note, source}]
+  contradicting_evidence  JSONB NOT NULL DEFAULT '[]',
+  missing_data            JSONB NOT NULL DEFAULT '[]',
+  conviction_pct          INT NOT NULL CHECK (conviction_pct BETWEEN 0 AND 100),
+  created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+  active                  BOOLEAN NOT NULL DEFAULT true
 );
+-- Only one active thesis per instrument.
+CREATE UNIQUE INDEX one_active_thesis_per_instrument
+  ON theses (instrument_code) WHERE active;
+CREATE INDEX theses_instrument_time_idx ON theses (instrument_code, created_at DESC);
+
+-- Decision Journal entries (decision-quality framework).
+-- Calibration columns added in migrations 006 (Phase 13), 007_decision_capture
+-- (Phase 2), and 008_auto_resolution (Phase 3).
+CREATE TABLE user_decision_journals (
+  id                          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at                  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  user_id                     UUID,
+  instrument_id               UUID NOT NULL REFERENCES instruments(id),
+  hypothesis                  TEXT NOT NULL,
+  evidence                    JSONB NOT NULL DEFAULT '[]',  -- [{source, summary, weight}]
+  confidence_pct              INT NOT NULL CHECK (confidence_pct BETWEEN 0 AND 100),
+  planned_action              TEXT,                          -- e.g. 'paper-long 2 contracts'
+  risk_factors                TEXT[],
+  invalidation_criteria       TEXT,
+  outcome                     TEXT,                          -- filled later
+  reflection                  TEXT,                          -- filled later
+  llm_review                  JSONB,                         -- assumption-finding feedback
+  -- Decision-quality / calibration (migration 006)
+  resolved_direction          TEXT CHECK (resolved_direction IS NULL OR
+                                resolved_direction IN ('hit','miss','neutral','unresolved')),
+  thesis_id_at_write          UUID REFERENCES theses(id) ON DELETE SET NULL,
+  thesis_conviction_at_write  INT CHECK (thesis_conviction_at_write IS NULL OR
+                                thesis_conviction_at_write BETWEEN 0 AND 100),
+  -- Machine-resolvable claim, ex-ante capture (migration 007_decision_capture)
+  predicted_direction         TEXT CHECK (predicted_direction IS NULL OR
+                                predicted_direction IN ('bullish','bearish','neutral')),
+  horizon_days                INT CHECK (horizon_days IS NULL OR horizon_days > 0),
+  threshold_pct               NUMERIC,                       -- |move| %% that counts as a hit
+  anchor_price                NUMERIC,                       -- price at decision time
+  -- Auto-resolution provenance (migration 008_auto_resolution)
+  resolved_at                 TIMESTAMPTZ,
+  auto_resolved               BOOLEAN NOT NULL DEFAULT false -- machine-resolved vs. manual mark
+);
+CREATE INDEX journal_calibration_idx
+  ON user_decision_journals (thesis_conviction_at_write, resolved_direction)
+  WHERE resolved_direction IS NOT NULL;
 
 -- Paper trading (simulated only)
 CREATE TABLE paper_trades (
@@ -216,6 +255,24 @@ CREATE TABLE adapter_runs (
   error           TEXT
 );
 CREATE INDEX adapter_runs_name_time_idx ON adapter_runs (adapter_name, started_at DESC);
+
+-- Optional accounts layer (Clerk, migration 007_users). Absent keys → app runs
+-- anonymously; personal-artifact tables already carry a nullable user_id.
+CREATE TABLE users (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  clerk_user_id TEXT NOT NULL,
+  email         TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX ix_users_clerk_user_id ON users (clerk_user_id);
+
+-- Per-user UI preferences (the `goldeneye:` settings payload), synced across devices.
+CREATE TABLE user_settings (
+  user_id    UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  settings   JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 ```
 
 ## §hypertables
@@ -325,3 +382,4 @@ Pydantic models in `apps/api/models/` mirror these tables. The OpenAPI schema ge
 - Squash-style "init" migration is allowed only for Phase 01. After Phase 01, all changes are forward-only.
 - Hypertable creation goes in a separate migration step from `CREATE TABLE` (TimescaleDB requirement).
 - Generated columns and check constraints documented inline in this file are part of the contract; tests in `tests/db/test_constraints.py` enforce them.
+- **Current head: `009`** (`009_merge_heads`). Migrations `006` (journal calibration) and the accounts branch `007_users` both revise off their parents and produced two heads (`008_auto_resolution` and `007_users`); `009_merge_heads` unifies them. New migrations revise from `009`.

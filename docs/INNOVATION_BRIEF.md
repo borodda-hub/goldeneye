@@ -25,7 +25,7 @@ Bloomberg measures the market. Goldeneye measures the analyst.
 | **Backtest engine** | Genuinely look-ahead-safe: 3-layer defense (SQL cutoff, runtime assertion, property tests) + a *cheating-model proof* test that fails if future data leaks. This is hard and done right. | Single front-month contract (no rollover); early-window gaps. Prod `price_bars` are **seeded GBM**, not real history — no vendor backfill wired. |
 | **Forecast ensemble** | 3 real models (MA cross, volatility-regime, Prophet). Dynamic confidence-weighted voting, honest input-diversity flag. | The "4th model" (XGBoost) is a **hardcoded heuristic, not trained ML**. Hit-rate uses a ±0.3% deadband that can flatter the numbers. |
 | **AI / LLM layer** | 7 wired Claude features (market summary, signal explain, scenario narrate, journal review, thesis gen, thesis critique, DQ coach). Real per-task model routing (Haiku→Sonnet→Opus escalation), persona prompt-caching (~90% token savings), graceful degradation. | **Single-shot only** — no tool use, no RAG, no agentic loop. Confidence bands are **hardcoded "medium"**, not derived from model agreement. Default `LLM_MODE=fake`. |
-| **Decision-quality engine** | The crown jewel. Captures **conviction-at-decision-time** (snapshot), then on resolution plots a real reliability diagram with sample-size guardrails. Per-bucket LLM coaching over *your* entries. Genuinely rare. | Cold-start (weeks before a bucket fills). **Manual** hit/miss resolution. Evidence-weight captured but unused. Thesis backlink stored but not analyzed. |
+| **Decision-quality engine** | The crown jewel. Captures **conviction-at-decision-time** (snapshot), then on resolution plots a real reliability diagram with sample-size guardrails. Per-bucket LLM coaching over *your* entries. **Auto-resolution from real market data is built** (`services/auto_resolution.py` + `POST /v1/journal/auto-resolve`, tested). Genuinely rare. | Cold-start (weeks before a bucket fills). Auto-resolution exists but is **not yet scheduled** — so resolution is manual *in practice* until a driver runs it. Evidence-weight captured but unused. Thesis backlink stored but not analyzed. |
 | **Data** | Real official-source adapters live in prod across **5 domains** — EIA (storage/petroleum), CFTC (COT positioning), NWS (weather), Yahoo (delayed prices), RSS (news). 6 commodities (NG/CL/HO/RB/GC/SI), no vendor lock-in, all free/public APIs. | "Real-time" is a stretch: prices 15-min delayed, fundamentals weekly. Adapters are read-through + in-memory cache — **not persisted** to the Timescale hypertables (which exist, correctly configured, but unfed in prod). No tick/order-book data. |
 | **Frontend** | Credible terminal: 8 full screens, ~149 components, 9 themes, deep chart stack (6 chart types, 15+ indicators, auto-S/R + trendlines, candlestick patterns, seasonality, drawing tools), WebSocket live updates, onboarding. No dead links, no "coming soon." | Scenario/paper forms are plain inputs; admin is static tables. Minor polish gaps, not structural. |
 
@@ -78,8 +78,9 @@ market data (kills the manual-resolution gap), give every analyst a live calibra
 Brier score, desk leaderboards, and **alpha-attribution: skill vs. luck.**
 - *Defensible:* the calibration ledger is the data moat; switching cost rises monthly.
 - *Extends:* the already-real conviction-at-write + reliability engine.
-- *Lift:* medium. Auto-resolution + scoring + a leaderboard view. The hard part (the
-  conviction snapshot) is done.
+- *Lift:* low-medium. **The auto-resolution engine already exists** (`auto_resolution.py`)
+  — the remaining lift is *scheduling* it + the live Brier scoring + a leaderboard view.
+  The hard part (the conviction snapshot) is done.
 
 ### X2 — Agentic research copilot (the concierge, elevated)
 Replace single-shot LLM with a **tool-using agent** that can actually query the data,
@@ -175,7 +176,7 @@ WHAT IT REALLY IS (verified against the codebase):
   confidence bands are currently hardcoded not derived; the LLM is single-shot (no tool
   use/agentic loop yet); prices are 15-min delayed and fundamentals weekly (not tick/
   real-time); production price history is currently seeded, not real backfill; calibration
-  resolution is manual and has a cold-start.
+  auto-resolution is built but not yet scheduled (manual in practice) and has a cold-start.
 
 MY STRATEGIC THESIS: stop competing on price prediction (commoditized, can't promise) and
 position as DECISION INTELLIGENCE — "Bloomberg measures the market; Goldeneye measures

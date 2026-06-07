@@ -57,7 +57,7 @@ A regex check enforces the first; the second and third are prompted heavily but 
 
 The standard disclaimer string, surfaced on every screen that displays forecasts, signals, scenarios, or paper-trading content:
 
-> NGTI is a research and decision-support prototype. It does not provide personalized financial advice, does not execute trades against real brokers, and does not guarantee any forecast or scenario. Paper trading is simulated. For research, education, and decision-quality practice only.
+> Goldeneye is a research and decision-support terminal. It does not provide personalized financial advice, does not execute trades against real brokers, and does not guarantee any forecast or scenario. Paper trading is simulated. For research, education, and decision-quality practice only.
 
 Stored as `services.safety.DISCLAIMER`. UI imports it from the contracts package and renders it in a fixed footer slot.
 
