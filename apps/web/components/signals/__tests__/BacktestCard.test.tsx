@@ -79,8 +79,8 @@ describe("BacktestCard", () => {
         models: [
           _model("factor_composite", { hit_rate: 0.5349 }),
           _model("moving_average_directional", { hit_rate: 0.4419 }),
-          _model("volatility_regime", { hit_rate: 0.5676, scored: 37 }),
-          _model("prophet_trend", { scored: 0, hit_rate: 0.0 }),
+          _model("holt_trend", { hit_rate: 0.5025 }),
+          _model("logreg_directional", { hit_rate: 0.4767 }),
         ],
         horizon: "1d",
         symbol: "NG",
@@ -90,9 +90,9 @@ describe("BacktestCard", () => {
     });
     render(<BacktestCard />);
     expect(screen.getByText("SMA Cross")).toBeInTheDocument();
-    expect(screen.getByText("Prophet Trend")).toBeInTheDocument();
-    expect(screen.getByText("Vol Regime")).toBeInTheDocument();
+    expect(screen.getByText("Holt Trend")).toBeInTheDocument();
     expect(screen.getByText("Factor Composite")).toBeInTheDocument();
+    expect(screen.getByText("LogReg (trained)")).toBeInTheDocument();
   });
 
   it("displays hit-rate percentages with one decimal", () => {
@@ -112,7 +112,7 @@ describe("BacktestCard", () => {
   it("shows empty-state message for a model with zero scored rows", () => {
     useBacktestSummaryMock.mockReturnValue({
       data: {
-        models: [_model("prophet_trend", { scored: 0, hit_rate: 0.0 })],
+        models: [_model("holt_trend", { scored: 0, hit_rate: 0.0 })],
         horizon: "1d",
         symbol: "NG",
       },

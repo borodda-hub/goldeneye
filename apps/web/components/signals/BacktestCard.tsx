@@ -26,18 +26,17 @@ interface SummaryResponse {
 }
 
 // Stable ordering so models don't reshuffle when one finishes a re-run.
+// Lineup is the Phase 26b four voters; volatility_regime is shared context, not a voter.
 const MODEL_ORDER = [
   "moving_average_directional",
-  "prophet_trend",
-  "volatility_regime",
+  "holt_trend",
   "factor_composite",
   "logreg_directional",
 ] as const;
 
 const MODEL_LABEL: Record<string, string> = {
   moving_average_directional: "SMA Cross",
-  prophet_trend: "Prophet Trend",
-  volatility_regime: "Vol Regime",
+  holt_trend: "Holt Trend",
   factor_composite: "Factor Composite",
   logreg_directional: "LogReg (trained)",
 };

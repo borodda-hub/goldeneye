@@ -35,8 +35,7 @@ def test_supported_models_lists_all_four():
     assert SUPPORTED_MODELS == frozenset(
         {
             "moving_average_directional",
-            "volatility_regime",
-            "prophet_trend",
+            "holt_trend",
             "factor_composite",
             "logreg_directional",
         }

@@ -38,6 +38,7 @@ from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
 from apps.api.services.model_registry import ForecastContext
 from apps.api.services.models.factor_composite import predict as factor_predict
+from apps.api.services.models.holt_trend import predict as holt_predict
 from apps.api.services.models.logreg_directional import predict as logreg_predict
 from apps.api.services.models.moving_average_directional import (
     ForecastResult,
@@ -45,8 +46,7 @@ from apps.api.services.models.moving_average_directional import (
 from apps.api.services.models.moving_average_directional import (
     predict as ma_predict,
 )
-from apps.api.services.models.prophet_trend import predict as prophet_predict
-from apps.api.services.models.volatility_regime import predict as vol_predict
+from apps.api.services.models.volatility_regime import classify as classify_regime
 from apps.api.services.signal_scoring import score_forecast
 
 logger = logging.getLogger(__name__)
@@ -122,28 +122,32 @@ class BacktestSummary:
 # adapter. Adding a model later means one new entry here plus a runtime check.
 def _predict(model_name: str, ctx: ForecastContext, horizon: str) -> ForecastResult:
     if model_name == "moving_average_directional":
-        return ma_predict(ctx.closes, horizon)
-    if model_name == "volatility_regime":
-        return vol_predict(ctx.closes, horizon)
-    if model_name == "prophet_trend":
-        return prophet_predict(ctx.closes, horizon)
-    if model_name == "factor_composite":
-        return factor_predict(
+        result = ma_predict(ctx.closes, horizon)
+    elif model_name == "holt_trend":
+        result = holt_predict(ctx.closes, horizon)
+    elif model_name == "factor_composite":
+        result = factor_predict(
             ctx.closes,
             horizon,
             latest_storage=ctx.latest_storage,
             latest_cot=ctx.latest_cot,
         )
-    if model_name == "logreg_directional":
-        return logreg_predict(ctx.closes, horizon)
-    raise ValueError(f"Unknown model_name: {model_name!r}")
+    elif model_name == "logreg_directional":
+        result = logreg_predict(ctx.closes, horizon)
+    else:
+        raise ValueError(f"Unknown model_name: {model_name!r}")
+    # Stamp the shared volatility regime as context onto every model's row so the
+    # diagnostics' regime-conditional accuracy works for all four voters, not just
+    # the MA model that happens to classify it internally (Phase 26b).
+    if ctx.closes:
+        result.vol_regime = classify_regime(ctx.closes)
+    return result
 
 
 SUPPORTED_MODELS: frozenset[str] = frozenset(
     {
         "moving_average_directional",
-        "volatility_regime",
-        "prophet_trend",
+        "holt_trend",
         "factor_composite",
         "logreg_directional",
     }

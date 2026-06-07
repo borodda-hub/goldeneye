@@ -28,8 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # Same four models compute_ensemble polls. Keep names in sync with services/models/*.
 _MODELS = [
     "moving_average_directional",
-    "prophet_trend",
-    "volatility_regime",
+    "holt_trend",
     "factor_composite",
     "logreg_directional",
 ]
@@ -43,8 +42,7 @@ _HISTORY_DAYS = 60
 # the data is synthetic.
 _MODEL_ACCURACY: dict[str, float] = {
     "moving_average_directional": 0.62,
-    "prophet_trend": 0.55,
-    "volatility_regime": 0.50,  # this one is mostly regime-only; 50% on direction
+    "holt_trend": 0.57,
     "factor_composite": 0.60,
     "logreg_directional": 0.58,
 }
@@ -150,8 +148,7 @@ def _build_forecast_row(
 def _supporting_factor(model_name: str) -> str:
     return {
         "moving_average_directional": "Short-term SMA crossover",
-        "prophet_trend": "Trend component magnitude",
-        "volatility_regime": "Regime persistence",
+        "holt_trend": "Smoothed linear trend",
         "factor_composite": "Storage delta vs consensus",
         "logreg_directional": "Learned momentum signal",
     }[model_name]
@@ -160,8 +157,7 @@ def _supporting_factor(model_name: str) -> str:
 def _contradicting_factor(model_name: str) -> str:
     return {
         "moving_average_directional": "RSI overbought/oversold reading",
-        "prophet_trend": "Seasonality cross-current",
-        "volatility_regime": "Regime transition risk",
+        "holt_trend": "Trend extrapolation risk",
         "factor_composite": "Crowded COT positioning",
         "logreg_directional": "Short training window",
     }[model_name]

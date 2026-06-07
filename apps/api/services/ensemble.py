@@ -22,7 +22,9 @@ def _input_diversity(results: list[ForecastResult]) -> str:
     return "low"
 
 
-def compute_ensemble(results: list[ForecastResult]) -> dict:
+def compute_ensemble(
+    results: list[ForecastResult], *, vol_regime: str | None = None
+) -> dict:
     if not results:
         return {
             "direction": "neutral",
@@ -81,12 +83,9 @@ def compute_ensemble(results: list[ForecastResult]) -> dict:
     else:
         ensemble_confidence = "low"
 
-    # vol_regime from volatility_regime model
-    vol_regime: str | None = None
-    for result in results:
-        if result.model_name == "volatility_regime" and result.vol_regime is not None:
-            vol_regime = result.vol_regime
-            break
+    # vol_regime is shared CONTEXT, not a voter (Phase 26b): prefer the regime
+    # passed in explicitly; otherwise read the regime stamped onto the results
+    # by the registry. No model casts a directional vote on regime any more.
     if vol_regime is None:
         for result in results:
             if result.vol_regime is not None:

@@ -52,8 +52,23 @@ Build the X-ray before adding models.
 - **Gate:** diagnostics reproduce known truths on seeded data (e.g. vol_regime's
   weak direction signal shows as low sharpness); tests; honest in-sample labels.
 
-### 26b — Four distinct, honest models (NEXT — decisions locked 2026-06-06)
-Lineup, grounded in 26a's diagnostics:
+### 26b — Four distinct, honest models ✅ SHIPPED (2026-06-06)
+**Final shipped lineup:** ① `moving_average_directional` · ② `holt_trend` (NEW) ·
+③ `factor_composite` (hand-set baseline **retained** — see gate outcome) ·
+④ `logreg_directional`. `volatility_regime` demoted to shared context.
+
+**26b gate outcome (the honest "say so"):** the NEW pure-numpy `factor_learned`
+(walk-forward logistic + theory-signed alt-data tilt) was built and fully tested,
+but on the re-seeded NG backtest it did **not** beat `factor_composite` on
+out-of-sample Brier (0.278 vs 0.259 over n≈190–250 — a ~1 SE difference, i.e. a
+statistical tie, with `factor_learned` mildly overconfident). Per the pre-registered
+gate, we **kept the honest baseline**: `factor_composite` stays in the prod voter
+slot; `factor_learned` is benched (code + tests retained) for 26c to revisit once the
+ensemble is calibration-weighted (which would naturally down-weight an overconfident
+voter). `holt_trend` ships as the always-on statistical slot (no baseline competitor;
+it replaces the Prophet-stub prod slot). `pnpm health` backend green; re-seed verified.
+
+Original lineup plan, grounded in 26a's diagnostics:
 - ① **MA crossover** (`moving_average_directional`) — technical/momentum. 26a showed
   calib err 0.102 (overconfident) → recalibrate its confidence→prob mapping.
 - ② **Statistical time-series** — NEW pure-numpy **Holt/AR linear-trend** model

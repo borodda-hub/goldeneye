@@ -7,9 +7,8 @@ import { Stethoscope } from "lucide-react";
 const MODEL_LABELS: Record<string, string> = {
   logreg_directional: "Logistic (trained)",
   moving_average_directional: "MA crossover",
-  volatility_regime: "Volatility regime",
+  holt_trend: "Holt trend",
   factor_composite: "Factor composite",
-  prophet_trend: "Prophet trend",
 };
 
 const pct = (v: number | null | undefined): string =>

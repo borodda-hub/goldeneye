@@ -1,16 +1,19 @@
 """
-Model registry. Runs all five models and returns individual + ensemble results.
+Model registry. Runs the four directional voter models and returns individual
+results. The volatility regime is computed once as shared *context* (stamped onto
+every result and consumed by the ensemble) rather than casting its own weak
+directional vote — see docs/BUILD_ROADMAP.md §26b.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
 from apps.api.services.models.factor_composite import predict as factor_predict
+from apps.api.services.models.holt_trend import predict as holt_predict
 from apps.api.services.models.logreg_directional import predict as logreg_predict
 from apps.api.services.models.moving_average_directional import ForecastResult
 from apps.api.services.models.moving_average_directional import predict as ma_predict
-from apps.api.services.models.prophet_trend import predict as prophet_predict
-from apps.api.services.models.volatility_regime import predict as vol_predict
+from apps.api.services.models.volatility_regime import classify as classify_regime
 
 
 @dataclass
@@ -25,25 +28,34 @@ class ForecastContext:
 
 async def run_all(ctx: ForecastContext) -> list[ForecastResult]:
     """
-    Run all five forecasting models and return the results.
+    Run the four directional voter models and return the results.
 
-    If ctx.closes has fewer than 55 values, return a single fallback ForecastResult
-    indicating insufficient data.
+    The volatility regime is classified once and stamped onto every result as
+    shared context (it no longer casts its own directional vote). If ctx.closes
+    has fewer than 55 values, return a single fallback ForecastResult indicating
+    insufficient data.
 
     Args:
         ctx: ForecastContext with symbol, closes, and optional enrichment data.
 
     Returns:
-        List of ForecastResult objects (4 models, or 1 fallback).
+        List of ForecastResult objects (4 voters, or 1 fallback).
     """
     if len(ctx.closes) >= 55:
+        regime = classify_regime(ctx.closes)
         results: list[ForecastResult] = [
             ma_predict(ctx.closes, "1d"),
-            vol_predict(ctx.closes, "1d"),
-            prophet_predict(ctx.closes, "1w"),
-            factor_predict(ctx.closes, "1d", latest_storage=ctx.latest_storage, latest_cot=ctx.latest_cot),
+            holt_predict(ctx.closes, "1d"),
+            factor_predict(
+                ctx.closes, "1d", latest_storage=ctx.latest_storage, latest_cot=ctx.latest_cot
+            ),
             logreg_predict(ctx.closes, "1d"),
         ]
+        # vol_regime as shared context: stamp the single classification onto each
+        # voter so the ensemble + diagnostics read one consistent regime.
+        for r in results:
+            r.vol_regime = regime
+        return results
     else:
         results = [
             ForecastResult(
