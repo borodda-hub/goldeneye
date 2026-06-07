@@ -149,6 +149,40 @@ export async function getModelDiagnostics(params: {
   return apiFetch(`/v1/backtest/diagnostics?${q.toString()}`);
 }
 
+// ── Range forecast (Phase 30a) ───────────────────────────────────────────────
+export interface RangeForecastBands {
+  horizon: string;
+  sigma_daily: number;
+  sigma_horizon: number;
+  band80_low_pct: number;
+  band80_high_pct: number;
+  band95_low_pct: number;
+  band95_high_pct: number;
+  method: string;
+  note: string;
+}
+export interface RangeForecastResponse {
+  symbol: string;
+  horizon: string;
+  range: RangeForecastBands;
+  coverage: { cov80: number | null; cov95: number | null };
+  safety: {
+    confidence: string;
+    caveats: string[];
+    as_of: string;
+    disclaimer: string;
+  };
+}
+export async function getRangeForecast(params: {
+  symbol?: string;
+  horizon?: string;
+}): Promise<RangeForecastResponse> {
+  const q = new URLSearchParams();
+  if (params.symbol) q.set("symbol", params.symbol);
+  if (params.horizon) q.set("horizon", params.horizon);
+  return apiFetch(`/v1/forecast/range?${q.toString()}`);
+}
+
 export async function runBacktest(params: {
   model: string;
   symbol?: string;

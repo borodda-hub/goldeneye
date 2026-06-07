@@ -30,6 +30,7 @@ import {
   getModelDiagnostics,
   getPaperEquityCurve,
   getPositioning,
+  getRangeForecast,
   getRecentNews,
   getScenarioRuns,
   getScenarioTemplates,
@@ -280,6 +281,15 @@ export function useModelDiagnostics(symbol = "NG", horizon = "1d") {
   return useQuery({
     queryKey: ["backtest", "diagnostics", symbol, horizon],
     queryFn: () => getModelDiagnostics({ symbol, horizon }),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+}
+
+export function useRangeForecast(symbol = "NG", horizon = "1w") {
+  return useQuery({
+    queryKey: ["forecast", "range", symbol, horizon],
+    queryFn: () => getRangeForecast({ symbol, horizon }),
     staleTime: 30_000,
     refetchInterval: 60_000,
   });

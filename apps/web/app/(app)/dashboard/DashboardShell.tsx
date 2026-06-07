@@ -8,6 +8,7 @@ import { AiThesisCard } from "@/components/dashboard/AiThesisCard";
 import { DashboardLiveBar } from "@/components/dashboard/DashboardLiveBar";
 import { DashboardTicker } from "@/components/dashboard/DashboardTicker";
 import { DirectionalBiasCard } from "@/components/dashboard/DirectionalBiasCard";
+import { ExpectedRangeCard } from "@/components/dashboard/ExpectedRangeCard";
 import { FundamentalsCard } from "@/components/dashboard/FundamentalsCard";
 import { FuturesCurveCard } from "@/components/dashboard/FuturesCurveCard";
 import { HeaderRow } from "@/components/dashboard/HeaderRow";
@@ -176,6 +177,11 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
                 </div>
               }
             />
+
+            {/* Row 4c: Expected Range — calibrated volatility band (Phase 30a) */}
+            <div className="h-[112px]">
+              <ExpectedRangeCard symbol={symbol} />
+            </div>
 
             {/* Row 5: Live bar */}
             <DashboardLiveBar />
