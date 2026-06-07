@@ -190,7 +190,7 @@ culture maps onto proper scoring rules for vol.
   30c); documented. **Met on REAL out-of-sample data, 6/6 commodities** (synthetic locked
   as a regression test; real-data check re-runnable via `seeds/validate_vol_real.py`).
 
-### 30b — Better estimator (flip point-forecast R² positive) ✅ SHIPPED (opt-in)
+### 30b — Better estimator (flip point-forecast R² positive) ✅ SHIPPED + PROMOTED (`6f71827`, live 2026-06-08)
 **Outcome: log-HAR beats the EWMA incumbent OOS on real data → shipped opt-in.** Default
 stays EWMA (cheap single pass; the validated-calibrated 30a band). `estimator=har_log` is the
 new opt-in path on `predict()` + `GET /v1/forecast/range`.
@@ -229,7 +229,12 @@ new opt-in path on `predict()` + `GET /v1/forecast/range`.
   empirical-quantile fix already meets the coverage gate, so this is a refinement, not a
   blocker.
 
-### 30d — Mode selection / views (informed choice, not false equivalence)
+### 30d — Mode selection / views (informed choice, not false equivalence) — ⭐ RECOMMENDED NEXT
+With 30a/30b/30c shipped + promoted, 30d is the recommended next move: the first *visible*
+payoff of the vol/range arc, and where 30b's deferred follow-through lands (make log-HAR the
+default after a perf pass — periodic refit, not per-step OLS — + re-validation; rebuild the
+Expected Range card WITH visual verification; run the frontend contract regen). Frontend-inclusive.
+
 The user picks the **view**, never a "which model is right" toggle — direction and range
 answer different questions and must not be presented as co-equal (direction has no edge —
 **confirmed real-OOS 2026-06-07**: price-only models score ≈45–57% decisive, below a

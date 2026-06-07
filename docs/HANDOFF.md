@@ -6,7 +6,7 @@ _Last updated: 2026-06-07. Read this first to pick up where we left off._
 
 Two strategic arcs landed since the charting overhaul: **Phase 26 — Model
 Intelligence v2** (complete, promoted) and **Phase 30 — Volatility & Range
-Engine** (30a complete + hardened, promoted). The honest finding from 26 —
+Engine** (30a + 30b + 30c complete, **promoted to live**). The honest finding from 26 —
 **no reliable out-of-sample _directional_ edge at 1d/1w/1m** — reframed the
 product, and 30 found the platform's first genuine, calibrated edge in the
 opposite place: **volatility/range** (80% interval coverage holds across 6
@@ -29,8 +29,9 @@ predictive claim rested on the synthetic seed. We closed it:
   vol/range; it's table-stakes, so the moat is honest calibration, not alpha.
 
 Everything is in sync: `master == develop == origin/master == origin/develop
-== 3d63888`, clean working tree. **895 backend tests** passing; web tests
-green. `pnpm health` green end-to-end.
+== 6f71827`, clean working tree (Phase 30b promoted to live 2026-06-08 by clean
+fast-forward; CI green). **904 backend + 398 web tests** passing; `pnpm health`
+green end-to-end.
 
 The single-sentence product story has correctly pivoted from "we predict
 price" to **"we calibrate uncertainty honestly."**
@@ -107,6 +108,22 @@ genuine, calibrated edge.
   bug). Renders nothing until the endpoint answers, so a not-yet-deployed backend
   can't break the page.
 
+### Phase 30c — Fat tails ✅ + Phase 30b — log-HAR estimator ✅ (promoted `6f71827`)
+- **30c (`5b0726d`)** — band multipliers became **empirical quantiles of past realized
+  standardized moves** (walk-forward, look-ahead-safe; normal-z fallback while thin), so the
+  95% band reaches nominal on real fat tails. Real-OOS 95% coverage 93–95% (was 92–94%); 80%
+  holds 78–81%. Locked in `tests/test_vol_range.py`.
+- **30b (`6f71827`)** — opt-in **log-HAR** vol estimator (`estimator=har_log` on `predict()` +
+  `GET /v1/forecast/range`). Walk-forward HAR-RV (Corsi 2009) on **log** realized variance with
+  a causal Jensen back-transform. It **beat the EWMA incumbent on real OOS point-forecast R²**
+  (mean +0.25 vs +0.20 @1w, +0.21 vs +0.16 @1m across 6 commodities; wins NG decisively) and
+  fixed the raw-variance HAR's vol-explosion blow-up (real CL R² −1.06 → +0.14). **Default stays
+  EWMA** — opt-in only, so promotion was behavior-preserving. Raw-variance HAR **benched** (code
+  + tests retained) per the honest-gate culture. `estimator_skill()` is the acceptance harness;
+  the real-OOS verdict is re-runnable via `seeds/validate_estimator_30b.py`. Bands/coverage
+  recompute against the chosen estimator → calibration preserved (verified live: cov80 ~0.81 for
+  both; `?estimator=har_log` returns the wider log-HAR band). Provenance in `MODEL_DILIGENCE.md`.
+
 ### WS4 — trust hygiene ✅ (`3d63888`)
 Synced stale source-of-truth docs to code:
 - **SCHEMA.md** — added 3 tables missing since Phase 12/14 (theses, users,
@@ -123,17 +140,21 @@ Synced stale source-of-truth docs to code:
 
 ## Current state
 
-- **Sync:** `master == develop == origin/* == 3d63888`. Nothing un-promoted.
+- **Sync:** `master == develop == origin/* == 6f71827`. Nothing un-promoted.
   Clean working tree.
-- **Tests:** backend **895** passing; web green; `pnpm health` GREEN end-to-end
-  (ruff → mypy → pytest → web lint → typecheck → test).
+- **Tests:** backend **904** passing; web **398** green; `pnpm health` GREEN
+  end-to-end (ruff → mypy → pytest → web lint → typecheck → test).
 - **Models:** 4 voters (MA · holt_trend · factor_composite · logreg) +
   `volatility_regime` as context. Calibration-weighted ensemble. `factor_learned`
-  benched.
-- **Forecast surfaces:** `GET /v1/forecast/range` (calibrated vol band, live);
-  Signal Lab shows the honest Agreement framing + Expected Range strip.
+  + raw-variance HAR benched.
+- **Forecast surfaces:** `GET /v1/forecast/range` (calibrated vol band, live;
+  `estimator=ewma` default | `har_log` opt-in — 30b); Signal Lab shows the honest
+  Agreement framing + Expected Range strip.
+- **Vol estimators:** EWMA (default) + log-HAR (opt-in, better real-OOS point
+  forecast). Default-swap + perf pass + UI selector deferred to 30d.
 - **Honest posture, codified:** the directional "no OOS edge" and the vol/range
-  "real calibrated edge" are both *tested claims*, not narrative.
+  "real calibrated edge" are both *tested claims*, not narrative; provenance per
+  `docs/MODEL_DILIGENCE.md`.
 
 ### Key architecture notes (vol/range engine)
 - **`services/models/vol_range.py`** — pure-numpy walk-forward EWMA vol
@@ -180,26 +201,31 @@ The owner-requested **full project audit + plan reassessment** (agenda in
 `docs/BUILD_ROADMAP.md`) is the formal next decision point. The recommended
 build, if proceeding, continues Phase 30 — the one place with a real edge.
 
-### Recommended first move: Phase 30b — Better estimator
-Flip the out-of-sample point-forecast R² positive while keeping the calibrated
-band.
-- EWMA → recalibrated-EWMA → **HAR-RV** (pure-numpy OLS on daily/weekly/monthly
-  realized vol — no new deps, preferred) → optional GARCH-lite (flag `arch` as
-  an *optional* dep, not required).
-- Same walk-forward acceptance test as 30a.
-- **Gate:** OOS R² > 0 vs the mean benchmark AND beats persistence; or keep the
-  simplest *calibrated* estimator and say so (same honest-gate culture as
-  26b/26c). Clean, self-contained, no-new-deps increment.
+**30a + 30b + 30c are shipped and promoted to live.** The remaining Phase-30
+work is **30d**, which is also where 30b's deferred follow-through lands. It is
+the recommended next move — the first *visible* payoff of the whole vol/range arc.
 
-### Then, in Phase 30 order
-- **30c — Fat tails + regime.** Student-t / empirical quantiles to pull 95%
-  coverage from ~90% to nominal; regime-conditional vol reusing the
-  `volatility_regime` context. Gate: 95% coverage within [93, 97]%
-  walk-forward.
-- **30d — Mode / views.** Range · Direction · Both selector; estimator selector
-  within vol mode (EWMA · HAR-RV · GARCH-lite). **Guardrail:** every mode carries
-  its own live walk-forward calibration readout so users can't cherry-pick around
-  a bad track record. This is the UX payoff of the honesty stance.
+### Recommended next move: Phase 30d — Mode / views (the visible payoff)
+A frontend-inclusive session (deliberate switch from the backend-only 30b session).
+- **Range · Direction · Both** view selector (default Both, range primary; direction
+  shown with its existing no-edge caveat). Direction and range answer different
+  questions — never presented as co-equal.
+- **Estimator selector** within vol mode (EWMA · log-HAR), each carrying its own live
+  walk-forward calibration readout. You can choose the view/estimator; you can't escape
+  its track record — the core "decision intelligence, honest enough for diligence" stance.
+- **Rebuild the Expected Range card** (30a frontend, previously removed for an `h-full`
+  bug) **with visual verification** — run the app and look before placing UI.
+- **Fold in 30b's deferred follow-through:** make log-HAR the *default* — but only after a
+  **perf pass** (the estimator refits OLS per step, O(n); switch to a periodic refit) **and
+  re-validation** that the cheaper version still beats EWMA on `seeds/validate_estimator_30b.py`.
+  Then run the **frontend contract regen** (the `estimator` query param is additive/optional,
+  so nothing is broken meanwhile).
+- **Gate:** `pnpm health` green incl. web; every mode/estimator surfaces its live coverage /
+  no-edge readout; visual verification of the card; honest framing per AI_BEHAVIOR.
+
+### Optional 30 refinement (not a blocker)
+- **30c regime-conditional vol** — condition the band on the `volatility_regime` context. The
+  empirical-quantile fix already meets the coverage gate, so this is polish, not required.
 
 ### Queued strategic phases (sequence TBD, all below 30)
 - **Phase 27 — Concierge copilot.** Floating agentic assistant (navigates
