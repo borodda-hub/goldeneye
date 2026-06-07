@@ -112,10 +112,10 @@ def test_walk_forward_coverage_near_nominal_on_constant_vol():
     closes = _gbm(1500, sigma=0.02, seed=11)
     cov = walk_forward_coverage(closes, "1w")
     assert cov["cov80"] is not None and cov["cov95"] is not None
-    # Bands must actually contain the move near their nominal rate (normal data → no
-    # fat-tail penalty, so 95% should also be close).
+    # Bands must actually contain the move near their nominal rate. On normal (constant-vol)
+    # data the empirical tail quantiles ≈ the normal z, so both bands sit near nominal.
     assert 0.73 <= cov["cov80"] <= 0.87
-    assert cov["cov95"] >= 0.88
+    assert 0.90 <= cov["cov95"] <= 0.98
     # n_eff reports independent (non-overlapping) windows, < the overlapping trial count.
     assert isinstance(cov["n_eff"], int) and cov["n_eff"] > 0
 
@@ -133,8 +133,13 @@ def test_coverage_and_correlation_on_real_seeded_ng():
     closes = _seeded_ng_daily_closes()
     assert len(closes) > 500
     cov = walk_forward_coverage(closes, "1w")
-    # 80% band genuinely covers ~80% of moves (measured 0.80 → tolerance band).
-    assert cov["cov80"] is not None and 0.76 <= cov["cov80"] <= 0.84
+    # 80% band genuinely covers ~80% of moves. The 30c empirical-tail band runs a touch
+    # wider than the old normal-z on this short (n≈729) regime-switching series, so the
+    # upper tolerance is a little looser here than on the long real series.
+    assert cov["cov80"] is not None and 0.76 <= cov["cov80"] <= 0.86
+    # 30c lock: the 95% band reaches near-nominal coverage via empirical fat-tail
+    # quantiles (the old normal-z version ran light at ~0.92 on real fat tails).
+    assert cov["cov95"] is not None and 0.90 <= cov["cov95"] <= 0.99
     # The forecaster carries real forward-vol information (measured ≈0.42).
     corr = forecast_vol_correlation(closes, "1w")
     assert corr is not None and corr > 0.2
@@ -163,6 +168,9 @@ def test_coverage_robust_across_vol_regimes():
     for seed in (1, 2, 3, 4, 5):
         cov = walk_forward_coverage(_garch(1500, seed=seed), "1w")
         assert cov["cov80"] is not None and 0.74 <= cov["cov80"] <= 0.86, f"seed {seed}: {cov}"
+        # 30c lock: even with fat-tailed clustering, the empirical-tail 95% band stays
+        # near nominal (the old normal-z band under-covered here).
+        assert cov["cov95"] is not None and cov["cov95"] >= 0.90, f"seed {seed}: {cov}"
 
 
 # ── Endpoint (hermetic — DB calls patched so tests don't depend on a live DB) ──

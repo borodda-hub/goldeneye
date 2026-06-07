@@ -1,9 +1,9 @@
 """Forecast endpoints (Phase 30) — calibrated price-range forecasting.
 
-`GET /v1/forecast/range` returns a symmetric expected-price range over a horizon (the
-calibrated 80% band + a reported 95% band) plus the band's *measured* walk-forward
-coverage — the honest track record, shown not asserted. Makes no directional claim
-(direction is near-random per Phase 26; volatility is not).
+`GET /v1/forecast/range` returns a symmetric expected-price range over a horizon
+(empirically fat-tail-calibrated 80% and 95% bands — Phase 30c) plus the band's
+*measured* walk-forward coverage — the honest track record, shown not asserted. Makes no
+directional claim (direction is near-random per Phase 26; volatility is not).
 """
 from __future__ import annotations
 
@@ -29,8 +29,9 @@ router = APIRouter(prefix="/v1/forecast", tags=["forecast"])
 _VALID_HORIZONS = ("1d", "1w", "1m")
 _RANGE_CAVEATS = [
     "Range forecast only — no directional (up/down) claim is made.",
-    "The 80% band is the calibrated surface; the 95% band runs light due to fat tails "
-    "(returns are more extreme than a normal distribution).",
+    "Both the 80% and 95% bands are calibrated with empirical fat-tail quantiles "
+    "(returns are more extreme than a normal distribution); validated out-of-sample on "
+    "~10y of real data across six commodities.",
     "Coverage shown is realized walk-forward over available history, not a guarantee.",
     "Use the band width, not the central vol level, as the estimate: the point-forecast "
     "vol level is not reliable out-of-sample (R² is negative). The band is what is "
@@ -72,11 +73,13 @@ async def get_range_forecast(
 
     caveats = list(_RANGE_CAVEATS)
     cov80 = coverage.get("cov80")
+    cov95 = coverage.get("cov95")
     n_eff = coverage.get("n_eff") or 0
     if cov80 is not None:
+        cov95_txt = f" / 95%: {cov95:.0%}" if cov95 is not None else ""
         caveats.append(
-            f"Realized 80% coverage on this series: {cov80:.0%} over ~{int(n_eff)} "
-            "independent windows."
+            f"Realized coverage on this series — 80%: {cov80:.0%}{cov95_txt} over "
+            f"~{int(n_eff)} independent windows."
         )
     if fwd_vol_corr is not None:
         caveats.append(
