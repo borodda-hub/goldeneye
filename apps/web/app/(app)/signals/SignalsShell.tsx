@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Skeleton } from "@/components/Skeleton";
 import { BacktestCard } from "@/components/signals/BacktestCard";
 import { EnsembleHeader } from "@/components/signals/EnsembleHeader";
+import { ExpectedRange } from "@/components/signals/ExpectedRange";
 import { ExplanationPanel } from "@/components/signals/ExplanationPanel";
 import { HistoryTable } from "@/components/signals/HistoryTable";
 import { ModelCalibrationCard } from "@/components/signals/ModelCalibrationCard";
@@ -63,8 +64,11 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
     <div className="stagger flex flex-col gap-4">
       {signalsHeader}
 
-      {/* Row 1 — THE CALL (hero): direction, confidence, expected move. */}
+      {/* Row 1 — THE CALL (hero): direction + honest agreement framing. */}
       <EnsembleHeader ensemble={signal.ensemble} />
+
+      {/* Row 1b — THE CALIBRATED EDGE: volatility range (direction has none). */}
+      <ExpectedRange symbol={activeSymbol} />
 
       {/* Row 2 — THE EVIDENCE: the per-model ensemble vote. */}
       <ModelGrid models={signal.models} />

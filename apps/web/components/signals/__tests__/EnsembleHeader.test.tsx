@@ -43,6 +43,21 @@ describe("EnsembleHeader", () => {
     expect(screen.getByText("3▲")).toBeInTheDocument();
   });
 
+  it("frames the vote as agreement, not confidence", () => {
+    render(<EnsembleHeader ensemble={base} />);
+    // honest label + winning-vote fraction, never a "Confidence: HIGH" claim
+    expect(screen.getByText("Agreement")).toBeInTheDocument();
+    expect(screen.getByText("3 of 4")).toBeInTheDocument();
+    expect(screen.queryByText("Confidence")).not.toBeInTheDocument();
+  });
+
+  it("always shows the honest no-edge note", () => {
+    render(<EnsembleHeader ensemble={base} />);
+    expect(
+      screen.getByText(/No proven directional edge at this 1-day horizon/),
+    ).toBeInTheDocument();
+  });
+
   it("renders caveats when present", () => {
     const withCaveat = {
       ...base,

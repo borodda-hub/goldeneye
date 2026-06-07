@@ -27,6 +27,16 @@ export function EnsembleHeader({ ensemble }: Props) {
   const arrow = dir === "bullish" ? "▲" : dir === "bearish" ? "▼" : "◆";
   const label = dir.charAt(0).toUpperCase() + dir.slice(1);
 
+  // Honest readout: how many models voted the winning way. This is *agreement*,
+  // not a calibrated hit-rate — Phase 26's walk-forward harness found no reliable
+  // out-of-sample directional confidence gradient, so we never call it "confidence".
+  const winning =
+    dir === "bullish"
+      ? agreement.bullish
+      : dir === "bearish"
+        ? agreement.bearish
+        : agreement.neutral;
+
   const moveColor =
     expected_pct == null
       ? "text-ink-3"
@@ -84,15 +94,15 @@ export function EnsembleHeader({ ensemble }: Props) {
           )}
         </div>
 
-        {/* Confidence */}
+        {/* Agreement — honest framing of the vote, NOT a confidence/hit-rate claim */}
         <div className="flex flex-col gap-1">
           <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
-            Confidence
+            Agreement
           </span>
           <div className="flex items-center gap-2">
             <ConfidenceBar confidence={confidence} />
-            <span className="font-mono text-xs uppercase tracking-widest text-ink-2">
-              {confidence}
+            <span className="font-mono text-xs tabular-nums text-ink-2">
+              {winning} of {agreement.total}
             </span>
           </div>
           {vol_regime && (
@@ -119,6 +129,14 @@ export function EnsembleHeader({ ensemble }: Props) {
           </span>
         </div>
       </div>
+
+      {/* ── Honest framing: the direction has no proven OOS edge (Phase 26) ── */}
+      <p className="mt-3 font-mono text-[11px] leading-snug text-ink-3">
+        <span className="text-conf-medium">ⓘ</span> No proven directional edge
+        at this 1-day horizon (walk-forward testing). Read this as a view to
+        reason about, not a probability — the calibrated edge is the volatility
+        range below.
+      </p>
 
       {/* ── Supporting: rationale + caveats ──────────────────────────── */}
       {(confidence_rationale.length > 0 || caveats.length > 0) && (

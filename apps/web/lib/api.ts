@@ -165,7 +165,14 @@ export interface RangeForecastResponse {
   symbol: string;
   horizon: string;
   range: RangeForecastBands;
-  coverage: { cov80: number | null; cov95: number | null };
+  coverage: {
+    cov80: number | null;
+    cov95: number | null;
+    /** Independent (non-overlapping) walk-forward windows behind the coverage estimate. */
+    n_eff?: number | null;
+  };
+  /** Walk-forward corr(forecast σ, realized forward vol); >0 = real signal, null if thin. */
+  forward_vol_corr?: number | null;
   safety: {
     confidence: string;
     caveats: string[];
