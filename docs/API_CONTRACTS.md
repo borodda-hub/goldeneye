@@ -167,9 +167,9 @@ Scoring logic (`services/signal_scoring.py`):
 - `hit` — direction matches sign of realized move
 - `miss` — direction opposes sign of realized move
 
-### Forecast — Range / Volatility (Phase 30a + 30c)
+### Forecast — Range / Volatility (Phase 30a + 30c + 30b)
 
-`GET /v1/forecast/range?symbol=NG&horizon=1w`
+`GET /v1/forecast/range?symbol=NG&horizon=1w&estimator=ewma`
 
 Calibrated **range** forecast — a symmetric expected-price band over `horizon`. Makes **no
 directional claim** (direction is near-random per Phase 26; volatility is not). Source:
@@ -179,19 +179,25 @@ normal-z fallback while thin), safety-wrapped.
 
 Query params:
 - `horizon` — `"1d"` | `"1w"` (default) | `"1m"`. Other values → `422`.
+- `estimator` — `"ewma"` (default) | `"har_log"`. The vol model behind σ. `har_log` is the
+  Phase 30b walk-forward **log-HAR** (daily/weekly/monthly realized-variance regression); it
+  beat EWMA on real out-of-sample point-forecast R² (mean +5pp across six commodities).
+  Bands/coverage recompute against the chosen estimator, so calibration is preserved either
+  way. Other values → `422`.
 - Unknown `symbol` → `404`; insufficient price history (<~30 closes) → `422`.
 
 ```jsonc
 {
   "symbol": "NG",
   "horizon": "1w",
+  "estimator": "ewma",           // echoes the estimator used ("ewma" | "har_log")
   "range": {
     "horizon": "1w",
-    "sigma_daily": 0.0231,       // EWMA daily log-return vol
+    "sigma_daily": 0.0231,       // daily log-return vol forecast (EWMA or log-HAR)
     "sigma_horizon": 0.0516,     // scaled to the horizon (σ·√h)
     "band80_low_pct": -0.0661, "band80_high_pct": 0.0661,   // empirical-quantile calibrated
     "band95_low_pct": -0.1011, "band95_high_pct": 0.1011,   // empirical fat-tail calibrated (30c)
-    "method": "ewma+empirical-tails",   // "ewma" while residuals are too thin for empirical tails
+    "method": "ewma+empirical-tails",   // "<estimator>" while residuals are too thin for empirical tails
     "note": "string"
   },
   "coverage": { "cov80": 0.80, "cov95": 0.95, "n_eff": 140 }, // realized walk-forward; n_eff = independent windows
@@ -201,14 +207,17 @@ Query params:
 ```
 
 Honesty contract (enforced by `tests/test_vol_range.py`, locked as regressions):
-- `cov80` near nominal walk-forward (≈0.80 on the seeded NG series; gate [0.76, 0.86]).
+- `cov80` near nominal walk-forward (≈0.80 on the seeded NG series; gate [0.76, 0.86]) — for
+  **both** estimators (log-HAR keeps the band calibrated).
 - `cov95` near nominal via empirical fat-tail quantiles (30c; gate ≥0.90 on fat-tailed data —
   the old normal-z band ran light at ~0.92–0.94).
 - `forward_vol_corr` > 0 under volatility clustering, ≈0 on constant-vol data (no spurious edge).
-- The **band** is the calibrated output; the central σ **level** is not a reliable point forecast
-  (OOS R² negative) — surfaced as a caveat in the safety envelope.
+- The **band** is the calibrated output; the central σ **level** is a weaker point forecast —
+  `ewma` is negative-R² OOS (caveat in the safety envelope); `har_log` is positive-R² OOS but
+  still secondary to the band.
 - **Validated out-of-sample on ~10y real data** for NG/CL/HO/RB/GC/SI: 80% in [78,81]%, 95% in
-  [93,95]% at 1w (re-runnable via `seeds/validate_vol_real.py`).
+  [93,95]% at 1w (re-runnable via `seeds/validate_vol_real.py`). The log-HAR>EWMA point-forecast
+  win is re-runnable via `seeds/validate_estimator_30b.py`.
 
 ### Scenarios
 

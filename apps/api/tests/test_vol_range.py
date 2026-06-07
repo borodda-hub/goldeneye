@@ -17,7 +17,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from apps.api.services.models.vol_range import (
+    ESTIMATORS,
     RangeForecast,
+    _har_rv_sigma,
+    estimator_skill,
     forecast_vol_correlation,
     predict,
     walk_forward_coverage,
@@ -173,6 +176,74 @@ def test_coverage_robust_across_vol_regimes():
         assert cov["cov95"] is not None and cov["cov95"] >= 0.90, f"seed {seed}: {cov}"
 
 
+# ── Phase 30b — log-HAR estimator (opt-in) ───────────────────────────────────
+
+
+def test_predict_har_log_returns_valid_bands():
+    """The opt-in log-HAR estimator produces the same well-formed symmetric band."""
+    out = predict(_garch(300), "1w", estimator="har_log")
+    assert isinstance(out, RangeForecast)
+    assert out.method.startswith("har_log")
+    assert out.sigma_daily > 0 and out.sigma_horizon > out.sigma_daily
+    assert out.band80_low_pct == pytest.approx(-out.band80_high_pct)
+    assert out.band95_high_pct > out.band80_high_pct > 0
+
+
+def test_predict_unknown_estimator_falls_back_to_ewma():
+    closes = _garch(300)
+    bogus = predict(closes, "1w", estimator="nope")
+    ewma = predict(closes, "1w", estimator="ewma")
+    assert bogus is not None and ewma is not None
+    assert bogus.method == ewma.method and bogus.sigma_daily == ewma.sigma_daily
+
+
+def test_log_har_is_look_ahead_safe():
+    """The lock that matters most: the forecast at index d must be identical whether or not
+    any future data exists — i.e. log-HAR never peeks ahead (refit + features both causal)."""
+    closes = np.asarray(_garch(700, seed=4))
+    rets = np.diff(np.log(closes))
+    for h in (5, 21):
+        full = _har_rv_sigma(rets, h, log=True)
+        d = rets.size - 40  # a decision point well inside the fitted region
+        trunc = _har_rv_sigma(rets[: d + 1], h, log=True)
+        assert np.isclose(trunc[-1], full[d]), f"h={h}: {trunc[-1]} != {full[d]}"
+
+
+def test_log_har_bounded_and_finite_under_stress():
+    """Log-HAR is bounded-multiplicative, so a vol explosion can't produce an absurd or
+    non-finite forecast (the raw-variance HAR's failure mode — see validate_estimator_30b)."""
+    rng = np.random.default_rng(0)
+    rets = np.concatenate([rng.normal(0, 0.01, 400), rng.normal(0, 0.15, 120)])
+    sigma = _har_rv_sigma(rets, 21, log=True)
+    assert np.all(np.isfinite(sigma))
+    assert np.all(sigma > 0)
+    assert sigma.max() < 1.0  # < 100%/day — no blow-up
+
+
+def test_coverage_near_nominal_under_har_log():
+    """Swapping to log-HAR keeps the band calibrated — coverage recomputes against the
+    chosen estimator's sigma, so the 80%/95% bands stay near nominal."""
+    for seed in (1, 2, 3, 4, 5):
+        cov = walk_forward_coverage(_garch(1500, seed=seed), "1w", estimator="har_log")
+        assert cov["cov80"] is not None and 0.74 <= cov["cov80"] <= 0.86, f"seed {seed}: {cov}"
+        assert cov["cov95"] is not None and cov["cov95"] >= 0.90, f"seed {seed}: {cov}"
+
+
+def test_estimator_skill_wellformed():
+    """The Phase 30b acceptance harness returns finite metrics for every estimator. (The
+    real-OOS verdict that log-HAR beats EWMA is validated via seeds/validate_estimator_30b.)"""
+    r = estimator_skill(_garch(900, seed=2), "1w")
+    assert r is not None
+    for model in ("persistence", "ewma", "har_rv", "har_log"):
+        cell = r[model]
+        assert isinstance(cell["rmse"], float) and cell["rmse"] > 0
+        assert cell["r2"] is None or isinstance(cell["r2"], float)
+
+
+def test_estimators_constant_advertises_har_log():
+    assert "ewma" in ESTIMATORS and "har_log" in ESTIMATORS
+
+
 # ── Endpoint (hermetic — DB calls patched so tests don't depend on a live DB) ──
 
 _FAKE_INSTR = SimpleNamespace(id=uuid.uuid4())
@@ -216,6 +287,26 @@ def test_range_endpoint_happy_path(client: TestClient):
     # the honest point-forecast caveat is surfaced
     assert any("not reliable out-of-sample" in c for c in body["safety"]["caveats"])
     assert body["safety"]["disclaimer"]  # safety envelope present
+
+
+def test_range_endpoint_accepts_har_log_estimator(client: TestClient):
+    with _patch_db(_gbm(200)):
+        resp = client.get(
+            "/v1/forecast/range",
+            params={"symbol": "NG", "horizon": "1w", "estimator": "har_log"},
+        )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["estimator"] == "har_log"
+    assert body["range"]["method"].startswith("har_log")
+    assert any("log-HAR" in c for c in body["safety"]["caveats"])
+
+
+def test_range_endpoint_rejects_bad_estimator(client: TestClient):
+    resp = client.get(
+        "/v1/forecast/range", params={"symbol": "NG", "estimator": "garch_supreme"}
+    )
+    assert resp.status_code == 422
 
 
 def test_range_endpoint_rejects_bad_horizon(client: TestClient):

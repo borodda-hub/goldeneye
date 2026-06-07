@@ -17,6 +17,7 @@ from apps.api.db.session import get_db
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
 from apps.api.services.models.vol_range import (
+    ESTIMATORS,
     forecast_vol_correlation,
     predict,
     walk_forward_coverage,
@@ -43,12 +44,18 @@ _RANGE_CAVEATS = [
 async def get_range_forecast(
     symbol: str = Query(default="NG"),
     horizon: str = Query(default="1w"),
+    estimator: str = Query(default="ewma"),
     session: AsyncSession = Depends(get_db),
 ) -> dict:
     if horizon not in _VALID_HORIZONS:
         raise HTTPException(
             status_code=422,
             detail=f"Unsupported horizon {horizon!r}; supported: {list(_VALID_HORIZONS)}",
+        )
+    if estimator not in ESTIMATORS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unsupported estimator {estimator!r}; supported: {list(ESTIMATORS)}",
         )
     instrument = await instr_repo.get_by_symbol(session, symbol)
     if instrument is None:
@@ -62,14 +69,14 @@ async def get_range_forecast(
         n=250,
     )
 
-    forecast = predict(closes, horizon)
+    forecast = predict(closes, horizon, estimator)
     if forecast is None:
         raise HTTPException(
             status_code=422,
             detail="Insufficient price history for a range forecast (need ~30 closes).",
         )
-    coverage = walk_forward_coverage(closes, horizon)
-    fwd_vol_corr = forecast_vol_correlation(closes, horizon)
+    coverage = walk_forward_coverage(closes, horizon, estimator=estimator)
+    fwd_vol_corr = forecast_vol_correlation(closes, horizon, estimator=estimator)
 
     caveats = list(_RANGE_CAVEATS)
     cov80 = coverage.get("cov80")
@@ -86,6 +93,12 @@ async def get_range_forecast(
             f"Forecast-vs-realized forward-vol correlation: {fwd_vol_corr:+.2f} "
             "(overlapping-window estimate; read the magnitude, not a t-stat)."
         )
+    if estimator == "har_log":
+        caveats.append(
+            "Estimator: log-HAR — a richer vol model (daily/weekly/monthly realized "
+            "variance) that beat the default EWMA on real out-of-sample point-forecast "
+            "accuracy across six commodities. The calibrated band is what to trade off."
+        )
     safety = wrap_with_uncertainty(
         forecast, confidence="medium", caveats=caveats, as_of=datetime.now(UTC)
     )
@@ -93,6 +106,7 @@ async def get_range_forecast(
     return {
         "symbol": symbol,
         "horizon": horizon,
+        "estimator": estimator,
         "range": asdict(forecast),
         "coverage": coverage,
         "forward_vol_corr": fwd_vol_corr,

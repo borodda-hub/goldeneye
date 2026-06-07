@@ -46,6 +46,15 @@ _Z = {0.80: 1.2816, 0.90: 1.6449, 0.95: 1.9600}
 # tail quantile estimated from a handful of points is noise). ~40 ≈ the smallest sample
 # whose 95th percentile is meaningful.
 _MIN_TAIL = 40
+# HAR-RV (Corsi 2009) realized-variance components, in trading days.
+_HAR_W = 5  # weekly component
+_HAR_M = 22  # monthly component
+# Minimum look-ahead-safe (features, target) pairs before HAR replaces the EWMA fallback.
+# 4 free params → a few dozen rows is the floor for a non-degenerate OLS fit.
+_HAR_MIN_TRAIN = 60
+# Variance floor for log-HAR so ``log(RV)`` is finite on (near-)zero-return days. 1e-6 ≈ a
+# 0.1%/day move²; it only bites on genuinely tiny moves and has low leverage (daily component).
+_HAR_FLOOR = 1e-6
 
 
 @dataclass
@@ -70,6 +79,97 @@ def _wf_sigma(rets: np.ndarray) -> np.ndarray:
         v = _LAMBDA * v + (1.0 - _LAMBDA) * float(rets[t]) ** 2
         sigma[t] = np.sqrt(v)
     return sigma
+
+
+def _har_features(rv: np.ndarray) -> np.ndarray:
+    """HAR design rows ``[1, RV_d, RV_w, RV_m]`` from a realized-variance proxy ``rv``.
+
+    ``RV_d`` = today's 1-day realized variance; ``RV_w`` / ``RV_m`` = trailing 5- / 22-day
+    means (Corsi's daily/weekly/monthly cascade). Row ``t`` uses only ``rv[:t+1]``
+    (look-ahead-safe); rows before ``_HAR_M-1`` are NaN (insufficient trailing history).
+    """
+    n = rv.size
+    x = np.full((n, 4), np.nan)
+    csum = np.concatenate(([0.0], np.cumsum(rv)))  # csum[i] = sum(rv[:i])
+    for t in range(_HAR_M - 1, n):
+        x[t, 0] = 1.0
+        x[t, 1] = rv[t]
+        x[t, 2] = (csum[t + 1] - csum[t + 1 - _HAR_W]) / _HAR_W
+        x[t, 3] = (csum[t + 1] - csum[t + 1 - _HAR_M]) / _HAR_M
+    return x
+
+
+def _har_rv_sigma(rets: np.ndarray, h: int, *, log: bool = False) -> np.ndarray:
+    """Walk-forward HAR-RV (Corsi 2009) forecast of forward h-day average daily vol.
+
+    ``sigma[t]`` is the forecast *made at t* — using only ``rets[:t+1]`` — of the average
+    daily volatility over the next ``h`` days. It is fit by OLS of realized forward-h-day
+    variance on the [daily, weekly, monthly] realized-variance components, **refit at each
+    step** on only the ``(features, target)`` pairs whose target window closed strictly
+    before ``t`` (so no future variance leaks into the fit or the forecast). Until
+    ``_HAR_MIN_TRAIN`` such pairs exist it falls back to the EWMA nowcast, so the array is a
+    drop-in for :func:`_wf_sigma` — same shape, same look-ahead contract, same "forecast at
+    t of forward daily vol" semantics — and feeds the existing band / coverage / correlation
+    machinery unchanged.
+
+    ``log=True`` is **log-HAR**: the regression runs on ``log`` realized variance (components
+    and target), and the forecast is back-transformed with the causal Jensen correction
+    ``E[RV] = exp(μ̂ + ½·resid_var)``. Linear HAR on *raw* variance extrapolates wildly during
+    vol explosions (it forecast a negative-R² blow-up on real CL across the 2020 crash); the
+    log form is bounded-multiplicative and is the standard robust variant for exactly this.
+
+    Cost note: the per-step refit is O(n) OLS solves over growing data. Fine for the manual
+    real-data validator and the locked test; the live endpoint keeps EWMA as the default.
+    """
+    n = rets.size
+    sigma = _wf_sigma(rets)  # EWMA fallback for the warm-up region
+    if n < _HAR_M + h + _HAR_MIN_TRAIN:
+        return sigma  # never enough history to fit — stay pure EWMA
+    rv = np.maximum(rets**2, _HAR_FLOOR) if log else rets**2
+    x = _har_features(rv)
+    if log:
+        x = x.copy()
+        x[:, 1:] = np.log(x[:, 1:])  # log the three RV components; the intercept stays 1
+    # Forward h-day average variance (logged for the log model); realized by index t+h.
+    csum = np.concatenate(([0.0], np.cumsum(rv)))
+    ytar = np.full(n, np.nan)
+    for t in range(n - h):
+        mean_rv = (csum[t + 1 + h] - csum[t + 1]) / h
+        ytar[t] = np.log(mean_rv) if log else mean_rv
+    # First decision point with >= _HAR_MIN_TRAIN training pairs (rows _HAR_M-1 .. d-1-h).
+    d_start = _HAR_MIN_TRAIN + h + _HAR_M - 1
+    for d in range(d_start, n):
+        t_max = d - 1 - h  # last t whose target window closed strictly before d
+        xtr = x[_HAR_M - 1 : t_max + 1]
+        ytr = ytar[_HAR_M - 1 : t_max + 1]
+        beta, *_ = np.linalg.lstsq(xtr, ytr, rcond=None)
+        pred = float(x[d] @ beta)
+        if log:
+            resid = ytr - xtr @ beta
+            var = float(np.exp(pred + 0.5 * float(np.mean(resid**2))))  # Jensen back-transform
+        else:
+            var = pred
+        if np.isfinite(var) and var > 0.0:
+            sigma[d] = np.sqrt(var)  # else keep the EWMA fallback for this step
+    return sigma
+
+
+# Selectable vol estimators. EWMA is the default (cheap, single recursive pass, the
+# validated-calibrated band of Phase 30a). ``har_log`` is the opt-in Phase 30b log-HAR — it
+# beats EWMA on real out-of-sample point-forecast R² (mean +5pp across 6 commodities, fixes
+# the raw-HAR vol-explosion blow-up; see seeds/validate_estimator_30b.py + MODEL_DILIGENCE.md).
+ESTIMATORS = ("ewma", "har_log")
+
+
+def _sigma_path(rets: np.ndarray, h: int, estimator: str) -> np.ndarray:
+    """Walk-forward daily-vol forecast array for the chosen estimator (look-ahead-safe).
+
+    Both options share the same contract — ``sigma[t]`` is the forecast made at ``t`` of
+    forward daily vol — so the band / coverage / correlation machinery is estimator-agnostic.
+    """
+    if estimator == "har_log":
+        return _har_rv_sigma(rets, h, log=True)
+    return _wf_sigma(rets)
 
 
 def _standardized_abs(rets: np.ndarray, sigma: np.ndarray, h: int) -> tuple[np.ndarray, np.ndarray]:
@@ -106,15 +206,25 @@ def _multiplier(abs_u: np.ndarray, level: float) -> float:
     return _Z[level]
 
 
-def predict(closes: list[float], horizon: str = "1w") -> RangeForecast | None:
-    """Forecast the symmetric price range over `horizon`. None on thin/bad input."""
+def predict(
+    closes: list[float], horizon: str = "1w", estimator: str = "ewma"
+) -> RangeForecast | None:
+    """Forecast the symmetric price range over `horizon`. None on thin/bad input.
+
+    ``estimator`` selects the vol path: ``"ewma"`` (default — Phase 30a) or ``"har_log"``
+    (Phase 30b log-HAR, opt-in — better real-OOS point forecast). The fat-tail band
+    multipliers are recomputed against whichever estimator's sigma, so coverage stays
+    self-consistent for either choice.
+    """
     h = _HORIZON_TDAYS.get(horizon, 5)
+    if estimator not in ESTIMATORS:
+        estimator = "ewma"
     c = np.asarray(closes, dtype=float)
     if c.size < _MIN_CLOSES or np.any(c <= 0):
         return None
     rets = np.diff(np.log(c))
-    sigma = _wf_sigma(rets)
-    sig_d = float(sigma[-1])  # current EWMA daily vol = the final walk-forward step
+    sigma = _sigma_path(rets, h, estimator)
+    sig_d = float(sigma[-1])  # current daily vol forecast = the final walk-forward step
     sig_h = sig_d * float(np.sqrt(h))
     # Fat-tailed band multipliers: the empirical quantiles of past realized standardized
     # moves (full history = look-ahead-safe at serve time), falling back to the normal z
@@ -124,6 +234,8 @@ def predict(closes: list[float], horizon: str = "1w") -> RangeForecast | None:
     m80 = _multiplier(abs_u, 0.80)
     m95 = _multiplier(abs_u, 0.95)
     empirical = abs_u.size >= _MIN_TAIL
+    tail = "+empirical-tails" if empirical else ""
+    label = "log-HAR" if estimator == "har_log" else f"EWMA(λ={_LAMBDA})"
     return RangeForecast(
         horizon=horizon,
         sigma_daily=round(sig_d, 6),
@@ -132,9 +244,9 @@ def predict(closes: list[float], horizon: str = "1w") -> RangeForecast | None:
         band80_high_pct=round(m80 * sig_h, 5),
         band95_low_pct=round(-m95 * sig_h, 5),
         band95_high_pct=round(m95 * sig_h, 5),
-        method="ewma+empirical-tails" if empirical else "ewma",
+        method=f"{estimator}{tail}",
         note=(
-            f"EWMA(λ={_LAMBDA}) daily vol {sig_d * 100:.2f}% scaled to {horizon} "
+            f"{label} daily vol {sig_d * 100:.2f}% scaled to {horizon} "
             f"(±q·σ·√h, q from {'empirical fat-tail' if empirical else 'normal'} quantiles; "
             f"95%×{m95:.2f}). Symmetric range — no directional claim."
         ),
@@ -145,6 +257,7 @@ def walk_forward_coverage(
     closes: list[float],
     horizon: str = "1w",
     levels: tuple[float, ...] = (0.80, 0.95),
+    estimator: str = "ewma",
 ) -> dict[str, float | None]:
     """Realized interval coverage of the EWMA bands over the series, walk-forward.
 
@@ -168,7 +281,7 @@ def walk_forward_coverage(
     if n <= _WARMUP + h:
         return out
 
-    sigma = _wf_sigma(rets)
+    sigma = _sigma_path(rets, h, estimator)
     # Fat-tail multipliers estimated walk-forward: at each decision t the band uses only
     # standardized residuals already *realized* by t (``realized_by <= t``), so no future
     # tail information leaks into the band. Thin early windows fall back to the normal z.
@@ -191,7 +304,9 @@ def walk_forward_coverage(
     return res
 
 
-def forecast_vol_correlation(closes: list[float], horizon: str = "1w") -> float | None:
+def forecast_vol_correlation(
+    closes: list[float], horizon: str = "1w", estimator: str = "ewma"
+) -> float | None:
     """Walk-forward correlation between the vol *forecast* and realized forward vol.
 
     At each t the forecast σ uses only ``closes[:t+1]``; we correlate it against the
@@ -213,7 +328,7 @@ def forecast_vol_correlation(closes: list[float], horizon: str = "1w") -> float 
     n = rets.size
     if n <= _WARMUP + h:
         return None
-    sigma = _wf_sigma(rets)
+    sigma = _sigma_path(rets, h, estimator)
     fc = sigma[_WARMUP : n - h]
     rz = np.array(
         [float(np.sqrt(np.mean(rets[t + 1 : t + 1 + h] ** 2))) for t in range(_WARMUP, n - h)]
@@ -221,3 +336,65 @@ def forecast_vol_correlation(closes: list[float], horizon: str = "1w") -> float 
     if fc.size < 3 or float(np.std(fc)) == 0.0 or float(np.std(rz)) == 0.0:
         return None
     return round(float(np.corrcoef(fc, rz)[0, 1]), 4)
+
+
+def estimator_skill(closes: list[float], horizon: str = "1w") -> dict[str, object] | None:
+    """Walk-forward OOS skill of each vol estimator — the Phase 30b acceptance readout.
+
+    All estimators forecast the **same** target — realized forward h-day daily volatility
+    (RMS of the next ``h`` returns) — at the **same** look-ahead-safe decision points (those
+    where HAR is genuinely fitting, so the three are scored on an identical sample). For each:
+      - ``r2``   : ``1 − SS_res/SS_tot`` against the in-window mean of the target (the constant
+        "mean benchmark"). ``r2 > 0`` means the estimator beats that benchmark out-of-sample.
+      - ``rmse`` : root-mean-square forecast error, in daily-vol units.
+
+    The gate: HAR-RV clears ``r2 > 0`` **and** a lower RMSE than ``persistence`` (the last
+    h-day realized vol — the random-walk vol benchmark). If it only ties persistence within
+    noise, the honest call is to keep the simpler EWMA band and bench HAR — the same posture
+    as 26b/26c. The 30a result that EWMA point-forecast R² is negative OOS shows up here too;
+    this harness exists to see whether HAR flips it positive.
+
+    Honest caveat (as elsewhere here): decision windows overlap, so the metrics are stable
+    point estimates whose significance is overstated relative to ``n_eff``. None on thin input.
+    """
+    h = _HORIZON_TDAYS.get(horizon, 5)
+    c = np.asarray(closes, dtype=float)
+    if c.size < _MIN_CLOSES or np.any(c <= 0):
+        return None
+    rets = np.diff(np.log(c))
+    n = rets.size
+    start = _HAR_MIN_TRAIN + h + _HAR_M - 1  # first index where HAR is genuinely fitting
+    if n - h <= start + 2:
+        return None  # too little post-warm-up data to score
+    ts = range(start, n - h)
+    # Shared target: realized forward h-day daily vol (RMS of the next h returns).
+    y = np.array([float(np.sqrt(np.mean(rets[t + 1 : t + 1 + h] ** 2))) for t in ts])
+    ewma = _wf_sigma(rets)
+    har = _har_rv_sigma(rets, h)
+    har_log = _har_rv_sigma(rets, h, log=True)
+    forecasts: dict[str, np.ndarray] = {
+        "ewma": np.array([ewma[t] for t in ts]),
+        # persistence = trailing h-day realized vol (the random-walk vol forecast).
+        "persistence": np.array(
+            [float(np.sqrt(np.mean(rets[t + 1 - h : t + 1] ** 2))) for t in ts]
+        ),
+        "har_rv": np.array([har[t] for t in ts]),
+        "har_log": np.array([har_log[t] for t in ts]),
+    }
+    ss_tot = float(np.sum((y - y.mean()) ** 2))
+
+    def _score(f: np.ndarray) -> dict[str, float | None]:
+        ss_res = float(np.sum((f - y) ** 2))
+        r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else None
+        rmse = float(np.sqrt(np.mean((f - y) ** 2)))
+        return {"r2": round(r2, 4) if r2 is not None else None, "rmse": round(rmse, 6)}
+
+    out: dict[str, object] = {
+        "horizon": horizon,
+        "n": len(y),
+        "n_eff": len(range(start, n - h, h)),
+        "target": f"forward {h}d daily vol (RMS)",
+    }
+    for name, f in forecasts.items():
+        out[name] = _score(f)
+    return out

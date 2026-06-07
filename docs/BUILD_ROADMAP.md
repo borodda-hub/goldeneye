@@ -190,12 +190,32 @@ culture maps onto proper scoring rules for vol.
   30c); documented. **Met on REAL out-of-sample data, 6/6 commodities** (synthetic locked
   as a regression test; real-data check re-runnable via `seeds/validate_vol_real.py`).
 
-### 30b — Better estimator (flip point-forecast R² positive)
-- EWMA → recalibrated-EWMA → **HAR-RV** (pure-numpy OLS on daily/weekly/monthly realized
-  vol — no new deps; preferred) → optional GARCH-lite (flag `arch` as an optional dep,
-  not required). Same walk-forward acceptance test.
-- **Gate:** OOS R² > 0 vs the mean benchmark AND beats persistence; or keep the simplest
-  estimator that is *calibrated* and say so (same honest-gate culture as 26b/26c).
+### 30b — Better estimator (flip point-forecast R² positive) ✅ SHIPPED (opt-in)
+**Outcome: log-HAR beats the EWMA incumbent OOS on real data → shipped opt-in.** Default
+stays EWMA (cheap single pass; the validated-calibrated 30a band). `estimator=har_log` is the
+new opt-in path on `predict()` + `GET /v1/forecast/range`.
+
+- **Built** (`services/models/vol_range.py`): pure-numpy walk-forward HAR-RV (Corsi 2009) — OLS
+  of realized forward-h-day variance on [daily, weekly, monthly] RV components, refit each step
+  on only target windows closed *before* the decision point (look-ahead-safe; prefix-invariance
+  locked as a test). Two forms: raw-variance (`_har_rv_sigma`) and **log-HAR** (`log=True`, the
+  shipped one) with a causal Jensen back-transform. No new deps.
+- **`estimator_skill()`** is the acceptance harness: walk-forward OOS R² (vs the mean benchmark)
+  + RMSE for persistence / EWMA / raw-HAR / log-HAR on the same target & sample.
+- **Gate MET on real data** (`seeds/validate_estimator_30b.py`, ~10y, 6 commodities):
+  - **log-HAR > EWMA**: mean OOS R² **+0.25 vs +0.20 @1w**, **+0.21 vs +0.16 @1m**; wins NG
+    decisively (+0.22 vs +0.06 @1w; +0.14 vs −0.03 @1m); the few "losses" are marginal ties.
+  - **raw-variance HAR FAILED** and is **benched** (code+tests retained): it did not beat EWMA
+    and **blew up on real CL (R² −1.06 @1m)** — linear HAR over-extrapolates in vol explosions.
+    log-HAR is bounded-multiplicative and fixes exactly this (the "say so" honest-gate moment).
+  - **Coverage preserved** under log-HAR (bands recompute against its σ): cov80 ≈0.78–0.81,
+    cov95 ≈0.93–0.95 — locked in `tests/test_vol_range.py`.
+- **Provenance** (`docs/MODEL_DILIGENCE.md`): log-HAR point forecast = **real-OOS ✅**; raw-HAR
+  = **real-OOS ❌ benched**.
+- **Deferred to 30d:** make log-HAR the *default* (needs a perf pass — periodic refit, not daily
+  O(n) OLS — + re-validation) and surface the estimator selector in the UI with its live
+  calibration readout. The frontend contract regen also rides along with 30d (additive optional
+  query param; web untouched this session).
 
 ### 30c — Fat tails + regime conditioning
 - **✅ SHIPPED + real-OOS validated (2026-06-07).** Replaced the fixed normal-z band
