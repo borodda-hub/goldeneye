@@ -302,7 +302,13 @@ Spread/ratio charts (crack spread, gold/silver, CL/NG), multi-symbol compare, ma
 drawing tools (LWC v5 primitives), pattern-credibility backtest (reuse Phase-10
 engine to show which patterns actually paid).
 
-### Phase 31 (DEFERRED) — Real feature-history ingestion (the structural diligence gap)
+### Phase 31 — Real feature-history ingestion (the structural diligence gap) — 📋 DETAILED PLAN: `docs/PHASE_31_PLAN.md`
+**Detailed, code-grounded plan drafted 2026-06-08 in `docs/PHASE_31_PLAN.md`** (31a ingest+persist
+→ 31b validate factor_composite on real point-in-time features → 31c conditional logreg alt-data).
+Key audit finding: the look-ahead-safe point-in-time reconstruction (`_context_as_of`) **already
+exists**, so this is mostly *data, not machinery*; 31a+31b ≈ 1.5–2 days for the honest verdict.
+Owner reviewing before build (next session).
+
 The remaining substrate gap surfaced by the 2026-06-07 diligence pass. Backtests +
 calibration currently run on the synthetic seed, whose COT/storage/weather are causally
 independent of the price path — so `logreg_directional` and `factor_composite` **cannot be
