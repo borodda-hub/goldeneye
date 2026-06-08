@@ -49,12 +49,29 @@ vol-regime is context not a voter; the "no backtest engine" caveat removed; +
 `MODEL_DILIGENCE.md` pointer). `STRATEGY.md` + `TECHNICAL_AUDIT.md` are also now committed.
 Commit `11d9748` on `develop`. **This is Stage F2 of the Master Plan** (parallel, doc-only).
 
+**2026-06-08 — Stage F0 + F1 shipped (develop, not promoted).** Per `docs/PHASE_F_PLAN.md`,
+built on `feat/phase-f-contracts` → merged to `develop`.
+- **F0 (verify-only, no promotion):** confirmed Phase 30d is correctly live at `2c5daad` —
+  `git diff master develop -- apps/` empty (code-identical), `har_log` is the
+  `/v1/forecast/range` default (`forecast.py:51`), the four Signal Lab states
+  (`both`/`range`/`direction` + EWMA·log-HAR selector) are present (`SignalViewControls.tsx:8`).
+  No re-promotion needed.
+- **F1 (contract integrity + CI lock):** the committed `packages/contracts/openapi.json` +
+  `src/index.ts` were found **already byte-identical** to the live schema (resynced in
+  `fca8718`) — so no regen delta. Added the durable lock: a new **`contracts` CI job**
+  (schema parity = live `app.openapi()` vs committed JSON, date-normalized; types parity =
+  regen TS + `git diff --exit-code`), **proven to fail on intentional drift** then revert.
+  CI triggers broadened to **`develop`** (push + PR) and PRs to **`master`** so both the
+  drift lane and the promotion gate are covered. New `scripts/check_contracts.py` +
+  `pnpm contracts:check` for local repro. The Master Plan's "date-dependent `chart/bars
+  from`" premise was stale (it's a fixed literal) — normalization shipped as a forward
+  guard; see `PHASE_F_PLAN.md §0`.
+
 **Sync state (2026-06-08):** `master == origin/master == 2c5daad` (unchanged — Phase 30d
-live). `develop == 11d9748`, **ahead of master by 2 commits** (the session-end-rule doc
-`58930b1`, already on `origin/develop`, + the F2 commit `11d9748`, **unpushed**). Clean
-working tree, no stashes. **906 backend + 402 web tests** passing; `pnpm health` green
-end-to-end (F2 is doc-only — no code touched). **Un-promoted:** F2 + `58930b1` on `develop`;
-**unpushed:** `11d9748`.
+live; **F0/F1 NOT promoted, awaiting owner sign-off**). `develop` carries F2 (`11d9748`),
+the HANDOFF update (`db633c8`), the Phase F plan (`644133a`), and the F0/F1 implementation
+(this merge). Clean working tree, no stashes. **906 backend + 402 web tests** passing;
+`pnpm health` green end-to-end; the new `contracts` CI job is green on `develop`.
 
 The single-sentence product story has correctly pivoted from "we predict
 price" to **"we calibrate uncertainty honestly."**
