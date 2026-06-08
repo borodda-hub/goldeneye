@@ -69,19 +69,47 @@ fast-forwarded to `master`; the `contracts` CI job ran **green on both `develop`
   from`" premise was stale (it's a fixed literal) — normalization shipped as a forward
   guard; see `PHASE_F_PLAN.md §0`.
 
+**2026-06-08 — Stage A2 (honest derived LLM confidence) shipped + PROMOTED TO LIVE
+(`master == develop == f5ae345`).** Per `docs/PHASE_A2_PLAN.md`, built on
+`feat/phase-a2-confidence` → merged to `develop` → fast-forwarded to `master`; CI (incl. the
+`contracts` job) **green on both lanes**. Retires DD risk **R4** (the "hardcoded `medium`"
+gap).
+- **What changed:** the three *forecast-bearing* LLM narratives — `explain_signal`,
+  `summarize_market`, `generate_thesis` — no longer hardcode `confidence="medium"`. They take
+  an `envelope_confidence` derived in the router by a new pure helper
+  `services/ensemble.py::derive_envelope_confidence(ensemble_confidence, band_width)`: start
+  from the ensemble's agreement tier, **down-modulate by predicted band width** (wider ⇒
+  lower, **never upgrades**). Cutoffs `_WIDE_BAND_PCT=0.10` / `_VERY_WIDE_BAND_PCT=0.18`.
+- **Scope held:** the four non-forecast LLM sites (`narrate_scenario`, `review_journal_entry`,
+  `critique_thesis`, `devils_advocate`) are **untouched** — they make no ensemble-forecast
+  claim, so deriving one would be dishonest (their hand-written caveats are the honest value).
+- **Verified end-to-end:** real-input demo showed low/medium/high all occur (high-agree/tight
+  → high; mixed/medium → medium; low-agree/wide-band → medium *down-modulated to* low). The
+  conservative `"low"` default only fires for the thin `explain.py` caller that passes nothing;
+  the live signals/dashboard paths always pass a derived value.
+- **Honesty notes:** value-only — `SafetyEnvelope.confidence` stays
+  `Literal["low","medium","high"]`, **no schema change** (contracts CI green). `envelope_confidence`
+  folded into the LLM response-cache key so a cached envelope can't go stale. S3 unaffected
+  (pure function of request-time values; cheating-model proof untouched). Locked by
+  `tests/test_envelope_confidence.py` (mapping + "never upgrades") + `tests/llm/
+  test_envelope_confidence_wiring.py` (wiring + AST guard against re-introducing a literal).
+  Documented in `AI_BEHAVIOR.md §safety_envelope`.
+
 **Sync state (2026-06-08):** `master == origin/master == develop == origin/develop ==
-205bfcf`. Everything in sync — nothing un-promoted, nothing unpushed (this HANDOFF commit is
+f5ae345`. Everything in sync — nothing un-promoted, nothing unpushed (this HANDOFF commit is
 the only trailing item; promote it with the next phase). Clean working tree, no stashes.
-**906 backend + 402 web tests** passing; `pnpm health` green end-to-end; the `contracts` CI
-job is green on both lanes. **Stage F complete (F0+F1+F2).** Next critical-path item per
-`MASTER_PLAN.md §8` is **A2 — honest derived confidence**.
+**930 backend + 402 web tests** passing (+24 from A2); `pnpm health` green end-to-end; the
+`contracts` CI job is green on both lanes. **Stage F complete (F0+F1+F2); Stage A2 complete.**
+Next critical-path item per `MASTER_PLAN.md §8` is **B3 — accounts GA + per-user scoping**.
 
 The single-sentence product story has correctly pivoted from "we predict
 price" to **"we calibrate uncertainty honestly."**
 
 The current roadmap source of truth is **`docs/MASTER_PLAN.md`** (this file is the
-living session-state log and *defers* to it for the plan); the next-build detail is
-**`docs/PHASE_31_PLAN.md`** (= Master Plan item **C3**).
+living session-state log and *defers* to it for the plan). Next critical-path item is
+**B3 — accounts GA + per-user scoping** (`MASTER_PLAN.md §4` Stage B / §8); it has no
+plan doc yet (write `docs/PHASE_B3_PLAN.md` via a `/plan` session first). `docs/
+PHASE_31_PLAN.md` remains the detail for the later **C3** real-COT/EIA ingestion item.
 
 ---
 
