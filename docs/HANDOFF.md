@@ -39,15 +39,29 @@ validate `factor_composite`/`logreg` on real features) is drafted in
 validated live against EIA v2). Owner is mulling the 31 scope call (31a+31b first, or
 the full arc).
 
-Everything is in sync: `master == develop == origin/master == origin/develop
-== 2c5daad`, clean working tree, **nothing un-promoted, nothing unpushed** (verified
-2026-06-08). **906 backend + 402 web tests** passing; `pnpm health` green end-to-end.
+**2026-06-08 — Stage F2 doc reconciliation shipped (develop, unpushed).** The three
+diverged roadmaps were consolidated into a single source of truth: **`docs/MASTER_PLAN.md`**
+is now the only roadmap. `BUILD_ROADMAP.md`, `ROADMAP.md`, and `CALIBRATION_ROADMAP.md`
+got a SUPERSEDED banner and moved to **`docs/archive/`**; a new **`docs/README.md`** docs
+index was added; `CLAUDE.md`'s source-of-truth table now leads with `MASTER_PLAN.md` +
+`README.md`; and the four stale `ARCHITECTURE.md` spots were fixed (Holt not Prophet;
+vol-regime is context not a voter; the "no backtest engine" caveat removed; +
+`MODEL_DILIGENCE.md` pointer). `STRATEGY.md` + `TECHNICAL_AUDIT.md` are also now committed.
+Commit `11d9748` on `develop`. **This is Stage F2 of the Master Plan** (parallel, doc-only).
+
+**Sync state (2026-06-08):** `master == origin/master == 2c5daad` (unchanged — Phase 30d
+live). `develop == 11d9748`, **ahead of master by 2 commits** (the session-end-rule doc
+`58930b1`, already on `origin/develop`, + the F2 commit `11d9748`, **unpushed**). Clean
+working tree, no stashes. **906 backend + 402 web tests** passing; `pnpm health` green
+end-to-end (F2 is doc-only — no code touched). **Un-promoted:** F2 + `58930b1` on `develop`;
+**unpushed:** `11d9748`.
 
 The single-sentence product story has correctly pivoted from "we predict
 price" to **"we calibrate uncertainty honestly."**
 
-The current roadmap source of truth is **`docs/BUILD_ROADMAP.md`** (this file
-defers to it for phase detail); the next-build detail is **`docs/PHASE_31_PLAN.md`**.
+The current roadmap source of truth is **`docs/MASTER_PLAN.md`** (this file is the
+living session-state log and *defers* to it for the plan); the next-build detail is
+**`docs/PHASE_31_PLAN.md`** (= Master Plan item **C3**).
 
 ---
 
@@ -55,7 +69,7 @@ defers to it for phase detail); the next-build detail is **`docs/PHASE_31_PLAN.m
 
 ### Phase 26 — Model Intelligence v2 ✅ COMPLETE + promoted to live
 Turned "5 models, 1 genuinely trained" into "4 distinct honest models + the
-machinery to see when they're wrong." Full detail in `docs/BUILD_ROADMAP.md`.
+machinery to see when they're wrong." Full detail in `docs/archive/BUILD_ROADMAP.md`.
 - **26a (`847bcf2`)** — model diagnostics: per-model directional bias,
   regime-conditional accuracy, Brier decomposition (calibration vs sharpness),
   logreg feature-importance drift. `GET /v1/backtest/diagnostics` + **Model
@@ -301,7 +315,10 @@ pending:** 31a+31b first, or the full arc.
 ---
 
 ## Pointers
-- `docs/BUILD_ROADMAP.md` — **current roadmap source of truth** (Phase 26 + 30
+- `docs/MASTER_PLAN.md` — **current roadmap source of truth** (single consolidated
+  plan; stages F → A → B → C, with DoD per item).
+- `docs/README.md` — **docs index** (role + last-reviewed for every doc).
+- `docs/archive/BUILD_ROADMAP.md` — **superseded**, retained for history (Phase 26 + 30
   detail, the audit agenda, gates).
 - `docs/PHASE_31_PLAN.md` — **detailed next-build plan** (real COT/EIA ingestion →
   directional validation; 31a/31b/31c breakdown, gates, open scope question).
