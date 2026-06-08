@@ -164,6 +164,8 @@ export interface RangeForecastBands {
 export interface RangeForecastResponse {
   symbol: string;
   horizon: string;
+  /** Vol estimator behind the band: "ewma" (default) | "har_log" (Phase 30b/30d). */
+  estimator: string;
   range: RangeForecastBands;
   coverage: {
     cov80: number | null;
@@ -183,10 +185,13 @@ export interface RangeForecastResponse {
 export async function getRangeForecast(params: {
   symbol?: string;
   horizon?: string;
+  /** "ewma" (default) | "har_log". Additive/optional — omit for the default. */
+  estimator?: string;
 }): Promise<RangeForecastResponse> {
   const q = new URLSearchParams();
   if (params.symbol) q.set("symbol", params.symbol);
   if (params.horizon) q.set("horizon", params.horizon);
+  if (params.estimator) q.set("estimator", params.estimator);
   return apiFetch(`/v1/forecast/range?${q.toString()}`);
 }
 

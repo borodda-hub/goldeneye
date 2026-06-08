@@ -1,11 +1,19 @@
 "use client";
 
+import type { VolEstimator } from "@/components/signals/SignalViewControls";
 import type { InstrumentRow } from "@/lib/api";
 import { useInstruments, useRangeForecast } from "@/lib/queries";
 
 interface Props {
   symbol: string;
+  /** Vol estimator behind the band — EWMA (default) | log-HAR (Phase 30d). */
+  estimator?: VolEstimator;
 }
+
+const ESTIMATOR_LABEL: Record<string, string> = {
+  ewma: "EWMA",
+  har_log: "log-HAR",
+};
 
 /**
  * Expected Range strip (Phase 30a) — the platform's one *calibrated* forecast.
@@ -15,8 +23,8 @@ interface Props {
  * walk-forward (~0.80 on the seeded series). Makes NO directional claim. Compact,
  * auto-height (never h-full — a prior version filled the screen).
  */
-export function ExpectedRange({ symbol }: Props) {
-  const { data } = useRangeForecast(symbol, "1w");
+export function ExpectedRange({ symbol, estimator = "ewma" }: Props) {
+  const { data } = useRangeForecast(symbol, "1w", estimator);
   const { data: instruments } = useInstruments();
 
   // Graceful: render nothing until the (additive, safety-wrapped) endpoint answers,
@@ -44,8 +52,11 @@ export function ExpectedRange({ symbol }: Props) {
       <div className="flex items-center gap-x-8 gap-y-3 flex-wrap">
         {/* The band — the calibrated headline */}
         <div className="flex flex-col gap-0.5">
-          <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+          <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4 flex items-center gap-1.5">
             Expected range · 1 week · 80% band
+            <span className="rounded-sm border border-line-2 bg-surface-2 px-1 py-px text-[8px] tracking-normal text-ink-3 normal-case">
+              {ESTIMATOR_LABEL[data.estimator] ?? data.estimator}
+            </span>
           </span>
           <span className="font-mono font-medium tabular-nums text-2xl leading-none text-ink-1">
             {lo != null && hi != null ? (
@@ -112,8 +123,7 @@ export function ExpectedRange({ symbol }: Props) {
         <span className="text-up">ⓘ</span> Range only — no directional (up/down)
         claim. The 80% band is the calibrated surface (coverage measured
         walk-forward, not guaranteed); the central vol level is not a reliable
-        point forecast. This is the measured edge the directional call above
-        lacks.
+        point forecast. This is the measured edge the directional call lacks.
       </p>
     </div>
   );

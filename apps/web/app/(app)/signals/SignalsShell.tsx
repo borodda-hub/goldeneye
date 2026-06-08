@@ -11,10 +11,16 @@ import { HistoryTable } from "@/components/signals/HistoryTable";
 import { ModelCalibrationCard } from "@/components/signals/ModelCalibrationCard";
 import { ModelGrid } from "@/components/signals/ModelGrid";
 import { NewsFeedPanel } from "@/components/signals/NewsFeedPanel";
+import {
+  type SignalView,
+  SignalViewControls,
+  type VolEstimator,
+} from "@/components/signals/SignalViewControls";
 import { useCurrentSignal } from "@/lib/queries";
 import { useChannel } from "@/lib/realtime";
 import { useActiveInstrument } from "@/lib/useActiveInstrument";
 import { Radar } from "lucide-react";
+import { useState } from "react";
 import type { CurrentSignal } from "./types";
 
 const signalsHeader = (
@@ -33,6 +39,10 @@ interface Props {
 
 export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
   const { activeSymbol } = useActiveInstrument();
+  // Phase 30d — the user picks a view (default Both, range primary) and, within
+  // vol, an estimator. Direction & range are never presented as co-equal.
+  const [view, setView] = useState<SignalView>("both");
+  const [estimator, setEstimator] = useState<VolEstimator>("ewma");
   const { data: fetchedData } = useCurrentSignal(activeSymbol);
   const fromQuery = fetchedData as CurrentSignal | undefined;
   const signal =
@@ -60,15 +70,28 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
     );
   }
 
+  const showDirection = view !== "range";
+  const showRange = view !== "direction";
+
   return (
     <div className="stagger flex flex-col gap-4">
       {signalsHeader}
 
+      {/* Row 0 — view + estimator selectors (Phase 30d). */}
+      <SignalViewControls
+        view={view}
+        onViewChange={setView}
+        estimator={estimator}
+        onEstimatorChange={setEstimator}
+      />
+
       {/* Row 1 — THE CALL (hero): direction + honest agreement framing. */}
-      <EnsembleHeader ensemble={signal.ensemble} />
+      {showDirection && <EnsembleHeader ensemble={signal.ensemble} />}
 
       {/* Row 1b — THE CALIBRATED EDGE: volatility range (direction has none). */}
-      <ExpectedRange symbol={activeSymbol} />
+      {showRange && (
+        <ExpectedRange symbol={activeSymbol} estimator={estimator} />
+      )}
 
       {/* Row 2 — THE EVIDENCE: the per-model ensemble vote. */}
       <ModelGrid models={signal.models} />

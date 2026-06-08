@@ -25,6 +25,7 @@ const range = {
 const forecast = {
   symbol: "NG",
   horizon: "1w",
+  estimator: "ewma",
   range,
   coverage: { cov80: 0.8, cov95: 0.94, n_eff: 140 },
   forward_vol_corr: 0.42,
@@ -68,5 +69,14 @@ describe("ExpectedRange", () => {
     useRangeForecastMock.mockReturnValue({ data: forecast });
     render(<ExpectedRange symbol="NG" />);
     expect(screen.getByText(/Range only — no directional/)).toBeInTheDocument();
+  });
+
+  it("badges the active estimator and passes it to the query", () => {
+    useRangeForecastMock.mockReturnValue({
+      data: { ...forecast, estimator: "har_log" },
+    });
+    render(<ExpectedRange symbol="NG" estimator="har_log" />);
+    expect(screen.getByText("log-HAR")).toBeInTheDocument();
+    expect(useRangeForecastMock).toHaveBeenCalledWith("NG", "1w", "har_log");
   });
 });

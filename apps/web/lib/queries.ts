@@ -286,10 +286,14 @@ export function useModelDiagnostics(symbol = "NG", horizon = "1d") {
   });
 }
 
-export function useRangeForecast(symbol = "NG", horizon = "1w") {
+export function useRangeForecast(
+  symbol = "NG",
+  horizon = "1w",
+  estimator = "ewma",
+) {
   return useQuery({
-    queryKey: ["forecast", "range", symbol, horizon],
-    queryFn: () => getRangeForecast({ symbol, horizon }),
+    queryKey: ["forecast", "range", symbol, horizon, estimator],
+    queryFn: () => getRangeForecast({ symbol, horizon, estimator }),
     staleTime: 30_000,
     refetchInterval: 60_000,
   });

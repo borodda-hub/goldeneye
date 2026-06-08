@@ -179,13 +179,12 @@ culture maps onto proper scoring rules for vol.
     autocorrelation, the GARCH/HAR fact every vol desk has) — the moat is honest
     calibration + presentation, not a proprietary signal; (3) the **95% band is confirmed
     miscalibrated on real data too** (92–94%, fat tails) → 30c is necessary, not optional.
-- Frontend: **DEFERRED — desirable feature, not yet built.** An "Expected Range" card was
-  attempted and **removed** (`8dd15b6`→reverted): it shipped 3× without visual verification
-  and had an `h-full` layout bug that filled the screen. **Lesson: run the app and look
-  before placing any UI.** Rebuild later WITH visual verification; owner chooses placement;
-  frontend + backend must promote to live together (else the card calls a missing endpoint).
-  Component design (80% band + 95% band + daily vol + live walk-forward coverage readout +
-  "range only, no directional claim", instrument-following) is sound — re-use it.
+- Frontend: **✅ SHIPPED** (`e6d946c`, Signal Lab honesty fix). The Expected Range strip
+  (`components/signals/ExpectedRange.tsx`) is live in `SignalsShell` (Row 1b), below the
+  directional hero: 80% $-band + daily vol + live walk-forward coverage/correlation, "range
+  only — no directional claim", instrument-following, auto-height (the earlier `8dd15b6`
+  `h-full` bug is fixed). **Lesson banked: run the app and look before placing any UI.** The
+  Phase-30d view/estimator selectors (below) build on this card.
 - **Gate:** walk-forward 80% coverage within [77, 83]%; 95% reported (tails fixed in
   30c); documented. **Met on REAL out-of-sample data, 6/6 commodities** (synthetic locked
   as a regression test; real-data check re-runnable via `seeds/validate_vol_real.py`).
@@ -229,23 +228,31 @@ new opt-in path on `predict()` + `GET /v1/forecast/range`.
   empirical-quantile fix already meets the coverage gate, so this is a refinement, not a
   blocker.
 
-### 30d — Mode selection / views (informed choice, not false equivalence) — ⭐ RECOMMENDED NEXT
-With 30a/30b/30c shipped + promoted, 30d is the recommended next move: the first *visible*
-payoff of the vol/range arc, and where 30b's deferred follow-through lands (make log-HAR the
-default after a perf pass — periodic refit, not per-step OLS — + re-validation; rebuild the
-Expected Range card WITH visual verification; run the frontend contract regen). Frontend-inclusive.
+### 30d — Mode selection / views (informed choice, not false equivalence)
+**Frontend views ✅ SHIPPED (session 2026-06-07, branch `feat/phase-30d-views`).** The first
+*visible* payoff of the vol/range arc. Owner-decided split: **frontend views first**, the
+log-HAR **default-swap deferred to a focused backend follow-up** (see "Remaining" below).
 
 The user picks the **view**, never a "which model is right" toggle — direction and range
 answer different questions and must not be presented as co-equal (direction has no edge —
 **confirmed real-OOS 2026-06-07**: price-only models score ≈45–57% decisive, below a
 drift-aware naive baseline in all 36 commodity×model×horizon cells; see `MODEL_DILIGENCE.md`).
-- **Range · Direction · Both** view selector (default Both, range primary; direction
-  shown with its existing no-edge caveat).
-- Estimator selector *within* vol mode (EWMA · HAR-RV · GARCH-lite).
-- **Guardrail:** every mode/estimator carries its own live walk-forward calibration
-  readout (coverage for range, the honest "no reliable gradient" label for direction).
-  You can choose the view; you can't escape its track record. Prevents bias-confirming
-  cherry-picking — the core "decision intelligence, honest enough for diligence" stance.
+- ✅ **Range · Direction · Both** view selector in Signal Lab (`SignalViewControls.tsx` +
+  reusable `Segmented.tsx`); default Both, range primary; Range hides the directional hero,
+  Direction hides the range + the estimator selector (never co-equal).
+- ✅ **Estimator selector (EWMA · log-HAR)** *within* vol views — wired through
+  `useRangeForecast(symbol, horizon, estimator)` → `?estimator=`; ExpectedRange badges the
+  active estimator and its band/coverage recompute live (verified: EWMA ±6.6% → log-HAR
+  ±12.4% on NG 1w). HAR-RV/GARCH-lite naming collapsed to the two shipped estimators.
+- ✅ **Guardrail intact:** ExpectedRange carries its live walk-forward coverage/corr; the
+  EnsembleHeader keeps its "no proven directional edge" caveat. You can choose the view; you
+  can't escape its track record. Visual-verified (Playwright, all four states); `pnpm health`
+  web lane green (typecheck + biome + 402 vitest, +4 new).
+- **Remaining (backend follow-up, deferred by owner this session):** make log-HAR the
+  **default** after a **perf pass** (periodic refit, not per-step O(n) OLS) + re-validation on
+  `seeds/validate_estimator_30b.py`; then frontend contract regen (the `estimator` param is
+  additive/optional, so nothing is broken meanwhile). Frontend + this backend swap promote to
+  live together.
 
 - **Cross-cutting gate (all of 30):** walk-forward coverage/skill is the acceptance test
   (extend the `ensemble_calibration` harness to vol); honest framing per AI_BEHAVIOR;

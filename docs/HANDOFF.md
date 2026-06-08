@@ -205,23 +205,28 @@ build, if proceeding, continues Phase 30 — the one place with a real edge.
 work is **30d**, which is also where 30b's deferred follow-through lands. It is
 the recommended next move — the first *visible* payoff of the whole vol/range arc.
 
-### Recommended next move: Phase 30d — Mode / views (the visible payoff)
-A frontend-inclusive session (deliberate switch from the backend-only 30b session).
-- **Range · Direction · Both** view selector (default Both, range primary; direction
-  shown with its existing no-edge caveat). Direction and range answer different
-  questions — never presented as co-equal.
-- **Estimator selector** within vol mode (EWMA · log-HAR), each carrying its own live
-  walk-forward calibration readout. You can choose the view/estimator; you can't escape
-  its track record — the core "decision intelligence, honest enough for diligence" stance.
-- **Rebuild the Expected Range card** (30a frontend, previously removed for an `h-full`
-  bug) **with visual verification** — run the app and look before placing UI.
-- **Fold in 30b's deferred follow-through:** make log-HAR the *default* — but only after a
-  **perf pass** (the estimator refits OLS per step, O(n); switch to a periodic refit) **and
+### Phase 30d — Mode / views ✅ FRONTEND SHIPPED (branch `feat/phase-30d-views`, not yet promoted)
+The visible payoff of the vol/range arc. Owner split the work: **frontend views first**, the
+log-HAR default-swap deferred to a focused backend follow-up.
+- ✅ **Range · Direction · Both** view selector in Signal Lab (`SignalViewControls.tsx` +
+  reusable `Segmented.tsx`, house segmented-control idiom). Default Both (range primary);
+  Range hides the directional hero; Direction hides the range *and* the estimator selector —
+  never co-equal.
+- ✅ **Estimator selector (EWMA · log-HAR)** within vol views; `useRangeForecast` now takes an
+  `estimator` arg → `?estimator=`. `ExpectedRange` badges the active estimator; band + coverage
+  recompute live (verified EWMA ±6.6% → log-HAR ±12.4% on NG 1w).
+- ✅ Guardrail intact: range carries its live coverage/corr readout; direction keeps its "no
+  proven edge" caveat. **Visual-verified** (Playwright, all four states — ran the app and
+  looked, per the banked `h-full` lesson). Web lane green: typecheck + biome + **402 vitest**
+  (+4 new); no backend change this session (endpoint already supported `estimator`).
+- **Remaining = backend follow-up (deferred):** make log-HAR the **default** after a **perf
+  pass** (the estimator refits OLS per step, O(n); switch to a periodic refit) **and
   re-validation** that the cheaper version still beats EWMA on `seeds/validate_estimator_30b.py`.
-  Then run the **frontend contract regen** (the `estimator` query param is additive/optional,
-  so nothing is broken meanwhile).
-- **Gate:** `pnpm health` green incl. web; every mode/estimator surfaces its live coverage /
-  no-edge readout; visual verification of the card; honest framing per AI_BEHAVIOR.
+  Then **frontend contract regen** (the `estimator` query param is additive/optional, so nothing
+  is broken meanwhile). Promote the frontend + this backend swap to live **together**.
+- **Promotion note:** the frontend branch is purely additive (new selectors default to the
+  current EWMA behaviour), so it *can* promote alone — but holding it to ride with the backend
+  default-swap keeps the "log-HAR is now primary" story in one promotion.
 
 ### Optional 30 refinement (not a blocker)
 - **30c regime-conditional vol** — condition the band on the `volatility_regime` context. The
