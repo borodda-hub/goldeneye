@@ -289,7 +289,7 @@ export function useModelDiagnostics(symbol = "NG", horizon = "1d") {
 export function useRangeForecast(
   symbol = "NG",
   horizon = "1w",
-  estimator = "ewma",
+  estimator = "har_log",
 ) {
   return useQuery({
     queryKey: ["forecast", "range", symbol, horizon, estimator],

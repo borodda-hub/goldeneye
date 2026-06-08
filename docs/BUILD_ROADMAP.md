@@ -211,10 +211,9 @@ new opt-in path on `predict()` + `GET /v1/forecast/range`.
     cov95 ≈0.93–0.95 — locked in `tests/test_vol_range.py`.
 - **Provenance** (`docs/MODEL_DILIGENCE.md`): log-HAR point forecast = **real-OOS ✅**; raw-HAR
   = **real-OOS ❌ benched**.
-- **Deferred to 30d:** make log-HAR the *default* (needs a perf pass — periodic refit, not daily
-  O(n) OLS — + re-validation) and surface the estimator selector in the UI with its live
-  calibration readout. The frontend contract regen also rides along with 30d (additive optional
-  query param; web untouched this session).
+- **✅ DONE in 30d:** log-HAR is now the live endpoint + UI **default** after the perf pass +
+  re-validation (see §30d below). The estimator selector ships in the UI with its live
+  calibration readout.
 
 ### 30c — Fat tails + regime conditioning
 - **✅ SHIPPED + real-OOS validated (2026-06-07).** Replaced the fixed normal-z band
@@ -228,10 +227,9 @@ new opt-in path on `predict()` + `GET /v1/forecast/range`.
   empirical-quantile fix already meets the coverage gate, so this is a refinement, not a
   blocker.
 
-### 30d — Mode selection / views (informed choice, not false equivalence)
-**Frontend views ✅ SHIPPED (session 2026-06-07, branch `feat/phase-30d-views`).** The first
-*visible* payoff of the vol/range arc. Owner-decided split: **frontend views first**, the
-log-HAR **default-swap deferred to a focused backend follow-up** (see "Remaining" below).
+### 30d — Mode selection / views + log-HAR default ✅ COMPLETE (branch `feat/phase-30d-views`, not yet promoted)
+**Both halves shipped (session 2026-06-07).** The first *visible* payoff of the vol/range arc
+(frontend views) **and** the log-HAR default-swap with its perf pass + re-validation.
 
 The user picks the **view**, never a "which model is right" toggle — direction and range
 answer different questions and must not be presented as co-equal (direction has no edge —
@@ -248,11 +246,32 @@ drift-aware naive baseline in all 36 commodity×model×horizon cells; see `MODEL
   EnsembleHeader keeps its "no proven directional edge" caveat. You can choose the view; you
   can't escape its track record. Visual-verified (Playwright, all four states); `pnpm health`
   web lane green (typecheck + biome + 402 vitest, +4 new).
-- **Remaining (backend follow-up, deferred by owner this session):** make log-HAR the
-  **default** after a **perf pass** (periodic refit, not per-step O(n) OLS) + re-validation on
-  `seeds/validate_estimator_30b.py`; then frontend contract regen (the `estimator` param is
-  additive/optional, so nothing is broken meanwhile). Frontend + this backend swap promote to
-  live together.
+- ✅ **log-HAR is now the DEFAULT** (endpoint `Query(default="har_log")` + the `useRangeForecast`
+  / `ExpectedRange` / `SignalsShell` frontend defaults). EWMA stays a one-click opt-out
+  (`?estimator=ewma`). The pure-function `estimator=` defaults in `vol_range.py` stay `"ewma"`
+  so the EWMA calibration regression locks remain meaningful — the *user-facing* default lives
+  at the endpoint + UI.
+- ✅ **Perf pass (periodic refit):** `_har_rv_sigma` refits the OLS every `_HAR_REFIT=5` steps
+  and reuses the (strictly-older-data) beta in between, keyed to the absolute index so
+  prefix-invariance / look-ahead-safety is preserved (locked by `test_log_har_is_look_ahead_safe`).
+  Serve cost predict+cov+corr: **har_log 21.4ms → 14.9ms** (HAR overhead −70%), EWMA 11.7ms.
+- ✅ **Re-validated real-OOS — the perf pass is skill-NEUTRAL.** A cadence sweep on ~10y real
+  data (6 commodities) showed cadence-1 (per-step) and cadence-5 give the **same gate**:
+  **log-HAR beats EWMA 5/6 @1w, 4/6 @1m**, mean edge **+0.05 R²** (consistent with the 30b
+  headline +0.25 vs +0.20). The losers (RB @1w; CL+RB @1m) are the *same* marginal losses
+  present per-step — NOT introduced by the cadence — and both estimators stay positive-R² there.
+  Honest scope: log-HAR is the better default *on the majority*, not universally; the band
+  (the user-facing calibrated surface) is coverage-validated under **either** estimator, so the
+  default choice mainly moves the point-forecast skill, which users are told not to read anyway.
+- ⚠️ **Contract regen NOT bundled here (pre-existing debt).** `packages/contracts` is stale
+  across multiple phases (its `openapi.json` predates even the 30a/30b forecast endpoints) and
+  the live `openapi.json` carries a date-dependent default (`chart/bars` `from`) that drifts
+  daily — so a regen is a noisy 581-line, non-deterministic diff unrelated to 30d. 30d's only API
+  change is a query-param **default value**, which `openapi-typescript` types identically
+  (`estimator?: string`), and the web app's forecast types are hand-written in `lib/api.ts`
+  (updated, typecheck-clean). Left as a dedicated **contracts-resync cleanup** task, not 30d's.
+- **Promotion:** frontend + backend ship together on `feat/phase-30d-views`. Not yet promoted to
+  master (awaiting owner sign-off + a live re-verify that the default reads `har_log`).
 
 - **Cross-cutting gate (all of 30):** walk-forward coverage/skill is the acceptance test
   (extend the `ensemble_calibration` harness to vol); honest framing per AI_BEHAVIOR;

@@ -205,9 +205,9 @@ build, if proceeding, continues Phase 30 — the one place with a real edge.
 work is **30d**, which is also where 30b's deferred follow-through lands. It is
 the recommended next move — the first *visible* payoff of the whole vol/range arc.
 
-### Phase 30d — Mode / views ✅ FRONTEND SHIPPED (branch `feat/phase-30d-views`, not yet promoted)
-The visible payoff of the vol/range arc. Owner split the work: **frontend views first**, the
-log-HAR default-swap deferred to a focused backend follow-up.
+### Phase 30d — Mode / views + log-HAR default ✅ COMPLETE (branch `feat/phase-30d-views`, not yet promoted)
+The visible payoff of the vol/range arc **plus** the log-HAR default-swap. Both halves shipped
+(owner split the work frontend-first within one session).
 - ✅ **Range · Direction · Both** view selector in Signal Lab (`SignalViewControls.tsx` +
   reusable `Segmented.tsx`, house segmented-control idiom). Default Both (range primary);
   Range hides the directional hero; Direction hides the range *and* the estimator selector —
@@ -219,14 +219,28 @@ log-HAR default-swap deferred to a focused backend follow-up.
   proven edge" caveat. **Visual-verified** (Playwright, all four states — ran the app and
   looked, per the banked `h-full` lesson). Web lane green: typecheck + biome + **402 vitest**
   (+4 new); no backend change this session (endpoint already supported `estimator`).
-- **Remaining = backend follow-up (deferred):** make log-HAR the **default** after a **perf
-  pass** (the estimator refits OLS per step, O(n); switch to a periodic refit) **and
-  re-validation** that the cheaper version still beats EWMA on `seeds/validate_estimator_30b.py`.
-  Then **frontend contract regen** (the `estimator` query param is additive/optional, so nothing
-  is broken meanwhile). Promote the frontend + this backend swap to live **together**.
-- **Promotion note:** the frontend branch is purely additive (new selectors default to the
-  current EWMA behaviour), so it *can* promote alone — but holding it to ride with the backend
-  default-swap keeps the "log-HAR is now primary" story in one promotion.
+- ✅ **log-HAR is now the DEFAULT** — endpoint `Query(default="har_log")` + the frontend
+  defaults (`useRangeForecast`/`ExpectedRange`/`SignalsShell`). EWMA is a one-click opt-out.
+  Pure-function `estimator=` defaults stay `"ewma"` so the EWMA calibration locks stay honest;
+  the user-facing default lives at the endpoint + UI.
+- ✅ **Perf pass:** `_har_rv_sigma` now refits the OLS every `_HAR_REFIT=5` steps (absolute-index
+  schedule → prefix-invariant, look-ahead-safe). Serve cost predict+cov+corr **21.4ms → 14.9ms**.
+- ✅ **Re-validated real-OOS — skill-NEUTRAL.** A cadence sweep on ~10y real data proved
+  cadence-1 (per-step) ≈ cadence-5: log-HAR beats EWMA **5/6 @1w, 4/6 @1m**, mean +0.05 R²
+  (matches the 30b headline). RB @1w / CL+RB @1m lose marginally — the *same* losses that exist
+  per-step, not a cadence artifact; both estimators stay positive-R² there. Honest: log-HAR is
+  the better default *on the majority*; the band is coverage-validated under either estimator.
+- ✅ Gate: full `pnpm health` green — backend **906** (+2 new endpoint tests: default-is-har_log
+  + ewma-opt-out), web 402, ruff/mypy clean.
+- ⚠️ **Contract regen deliberately NOT bundled — pre-existing debt.** `packages/contracts` is
+  stale across multiple phases (its `openapi.json` predates the 30a/30b forecast endpoints) and
+  the live schema has a date-dependent default that drifts daily → a regen is a noisy ~581-line
+  non-deterministic diff unrelated to 30d. 30d's only API change is a query-param *default value*
+  (no TS type impact; forecast types are hand-written in `lib/api.ts`, typecheck-clean). Tracked
+  as a separate **contracts-resync** cleanup, not this commit.
+- **Promotion:** frontend + backend ship together on `feat/phase-30d-views`. Not yet promoted —
+  awaiting owner sign-off + a live re-verify the default reads `har_log` (the local :8000 needed
+  a restart to pick it up — WatchFiles didn't hot-reload; same gotcha as always).
 
 ### Optional 30 refinement (not a blocker)
 - **30c regime-conditional vol** — condition the band on the `volatility_regime` context. The

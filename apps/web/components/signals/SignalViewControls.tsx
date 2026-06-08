@@ -40,16 +40,16 @@ const VIEW_OPTIONS: ReadonlyArray<SegmentedOption<SignalView>> = [
 
 const ESTIMATOR_OPTIONS: ReadonlyArray<SegmentedOption<VolEstimator>> = [
   {
-    value: "ewma",
-    label: "EWMA",
-    title:
-      "Exponentially-weighted vol (default). Cheap single pass; calibrated band validated real-OOS.",
-  },
-  {
     value: "har_log",
     label: "log-HAR",
     title:
-      "Log-HAR realized-variance model. Beat EWMA on real out-of-sample point accuracy across six commodities.",
+      "Log-HAR realized-variance model (default). Beat EWMA on real out-of-sample point accuracy across six commodities.",
+  },
+  {
+    value: "ewma",
+    label: "EWMA",
+    title:
+      "Exponentially-weighted vol — the original Phase 30a band. Cheap single pass; the explicit opt-out from the log-HAR default.",
   },
 ];
 

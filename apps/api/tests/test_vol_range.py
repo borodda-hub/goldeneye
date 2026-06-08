@@ -302,6 +302,29 @@ def test_range_endpoint_accepts_har_log_estimator(client: TestClient):
     assert any("log-HAR" in c for c in body["safety"]["caveats"])
 
 
+def test_range_endpoint_defaults_to_har_log(client: TestClient):
+    """Phase 30d: with no estimator param the endpoint now defaults to log-HAR."""
+    with _patch_db(_gbm(200)):
+        resp = client.get("/v1/forecast/range", params={"symbol": "NG", "horizon": "1w"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["estimator"] == "har_log"
+    assert body["range"]["method"].startswith("har_log")
+
+
+def test_range_endpoint_ewma_opt_out(client: TestClient):
+    """EWMA stays reachable as the explicit opt-out from the log-HAR default."""
+    with _patch_db(_gbm(200)):
+        resp = client.get(
+            "/v1/forecast/range",
+            params={"symbol": "NG", "horizon": "1w", "estimator": "ewma"},
+        )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["estimator"] == "ewma"
+    assert body["range"]["method"].startswith("ewma")
+
+
 def test_range_endpoint_rejects_bad_estimator(client: TestClient):
     resp = client.get(
         "/v1/forecast/range", params={"symbol": "NG", "estimator": "garch_supreme"}

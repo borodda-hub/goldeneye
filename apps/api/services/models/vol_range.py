@@ -55,6 +55,14 @@ _HAR_MIN_TRAIN = 60
 # Variance floor for log-HAR so ``log(RV)`` is finite on (near-)zero-return days. 1e-6 ≈ a
 # 0.1%/day move²; it only bites on genuinely tiny moves and has low leverage (daily component).
 _HAR_FLOOR = 1e-6
+# Refit cadence for the HAR OLS (Phase 30d perf pass). The original refit-every-step cost an
+# O(n) OLS solve per decision point; the coefficients barely move between adjacent days, so we
+# refit every ``_HAR_REFIT`` steps and reuse the (strictly-older-data) beta in between. Keyed to
+# the ABSOLUTE index (``d_start + k·_HAR_REFIT``), so the forecast at any d stays prefix-invariant
+# (a truncated series hits the same refit points → identical beta → look-ahead-safe). Weekly (5)
+# is a conservative cadence: ~5× fewer solves with the real-OOS skill over EWMA preserved
+# (re-validated via seeds/validate_estimator_30b.py).
+_HAR_REFIT = 5
 
 
 @dataclass
@@ -118,8 +126,9 @@ def _har_rv_sigma(rets: np.ndarray, h: int, *, log: bool = False) -> np.ndarray:
     vol explosions (it forecast a negative-R² blow-up on real CL across the 2020 crash); the
     log form is bounded-multiplicative and is the standard robust variant for exactly this.
 
-    Cost note: the per-step refit is O(n) OLS solves over growing data. Fine for the manual
-    real-data validator and the locked test; the live endpoint keeps EWMA as the default.
+    Cost note (30d): the OLS is refit every ``_HAR_REFIT`` steps (not per-step) and the beta is
+    reused in between — ~5× fewer solves, look-ahead-safe (absolute-index schedule). With that
+    perf pass log-HAR is now the live endpoint's default estimator.
     """
     n = rets.size
     sigma = _wf_sigma(rets)  # EWMA fallback for the warm-up region
@@ -138,15 +147,24 @@ def _har_rv_sigma(rets: np.ndarray, h: int, *, log: bool = False) -> np.ndarray:
         ytar[t] = np.log(mean_rv) if log else mean_rv
     # First decision point with >= _HAR_MIN_TRAIN training pairs (rows _HAR_M-1 .. d-1-h).
     d_start = _HAR_MIN_TRAIN + h + _HAR_M - 1
+    # Periodic refit (30d): recompute beta every _HAR_REFIT steps and reuse it in between. The
+    # schedule keys on the absolute index (d - d_start) % _HAR_REFIT, so a truncated prefix hits
+    # the same refit points and reuses a beta fit on identical (strictly-older) data → the forecast
+    # at d stays prefix-invariant / look-ahead-safe (locked by test_log_har_is_look_ahead_safe).
+    beta: np.ndarray | None = None
+    resid_var = 0.0  # only used by the log model (Jensen back-transform), cached with beta
     for d in range(d_start, n):
-        t_max = d - 1 - h  # last t whose target window closed strictly before d
-        xtr = x[_HAR_M - 1 : t_max + 1]
-        ytr = ytar[_HAR_M - 1 : t_max + 1]
-        beta, *_ = np.linalg.lstsq(xtr, ytr, rcond=None)
+        if beta is None or (d - d_start) % _HAR_REFIT == 0:
+            t_max = d - 1 - h  # last t whose target window closed strictly before d
+            xtr = x[_HAR_M - 1 : t_max + 1]
+            ytr = ytar[_HAR_M - 1 : t_max + 1]
+            beta, *_ = np.linalg.lstsq(xtr, ytr, rcond=None)
+            if log:
+                resid = ytr - xtr @ beta
+                resid_var = float(np.mean(resid**2))
         pred = float(x[d] @ beta)
         if log:
-            resid = ytr - xtr @ beta
-            var = float(np.exp(pred + 0.5 * float(np.mean(resid**2))))  # Jensen back-transform
+            var = float(np.exp(pred + 0.5 * resid_var))  # Jensen back-transform
         else:
             var = pred
         if np.isfinite(var) and var > 0.0:
@@ -154,10 +172,14 @@ def _har_rv_sigma(rets: np.ndarray, h: int, *, log: bool = False) -> np.ndarray:
     return sigma
 
 
-# Selectable vol estimators. EWMA is the default (cheap, single recursive pass, the
-# validated-calibrated band of Phase 30a). ``har_log`` is the opt-in Phase 30b log-HAR — it
-# beats EWMA on real out-of-sample point-forecast R² (mean +5pp across 6 commodities, fixes
-# the raw-HAR vol-explosion blow-up; see seeds/validate_estimator_30b.py + MODEL_DILIGENCE.md).
+# Selectable vol estimators. ``har_log`` (Phase 30b log-HAR) is now the live endpoint **default**
+# (Phase 30d): it beats EWMA on real out-of-sample point-forecast R² (mean +5pp across 6
+# commodities, fixes the raw-HAR vol-explosion blow-up; see seeds/validate_estimator_30b.py +
+# MODEL_DILIGENCE.md) and the 30d periodic-refit perf pass made it cheap enough to serve by
+# default. ``ewma`` (cheap single recursive pass, the original Phase 30a band) stays available as
+# an explicit opt-out. NOTE: the pure-function ``estimator=`` defaults below stay ``"ewma"`` so the
+# EWMA calibration regression tests remain meaningful; the *user-facing* default lives at the
+# endpoint Query + the frontend selector.
 ESTIMATORS = ("ewma", "har_log")
 
 

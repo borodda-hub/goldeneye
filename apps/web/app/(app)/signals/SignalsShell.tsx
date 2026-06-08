@@ -42,7 +42,7 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
   // Phase 30d — the user picks a view (default Both, range primary) and, within
   // vol, an estimator. Direction & range are never presented as co-equal.
   const [view, setView] = useState<SignalView>("both");
-  const [estimator, setEstimator] = useState<VolEstimator>("ewma");
+  const [estimator, setEstimator] = useState<VolEstimator>("har_log");
   const { data: fetchedData } = useCurrentSignal(activeSymbol);
   const fromQuery = fetchedData as CurrentSignal | undefined;
   const signal =

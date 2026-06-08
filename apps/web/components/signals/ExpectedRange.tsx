@@ -23,7 +23,7 @@ const ESTIMATOR_LABEL: Record<string, string> = {
  * walk-forward (~0.80 on the seeded series). Makes NO directional claim. Compact,
  * auto-height (never h-full — a prior version filled the screen).
  */
-export function ExpectedRange({ symbol, estimator = "ewma" }: Props) {
+export function ExpectedRange({ symbol, estimator = "har_log" }: Props) {
   const { data } = useRangeForecast(symbol, "1w", estimator);
   const { data: instruments } = useInstruments();
 

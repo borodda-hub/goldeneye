@@ -4,6 +4,10 @@
 (empirically fat-tail-calibrated 80% and 95% bands — Phase 30c) plus the band's
 *measured* walk-forward coverage — the honest track record, shown not asserted. Makes no
 directional claim (direction is near-random per Phase 26; volatility is not).
+
+The default vol estimator is **log-HAR** (Phase 30b/30d — better real-OOS point forecast,
+made cheap to serve by the 30d periodic-refit perf pass); ``?estimator=ewma`` is the
+explicit opt-out to the original Phase 30a EWMA band.
 """
 from __future__ import annotations
 
@@ -44,7 +48,7 @@ _RANGE_CAVEATS = [
 async def get_range_forecast(
     symbol: str = Query(default="NG"),
     horizon: str = Query(default="1w"),
-    estimator: str = Query(default="ewma"),
+    estimator: str = Query(default="har_log"),
     session: AsyncSession = Depends(get_db),
 ) -> dict:
     if horizon not in _VALID_HORIZONS:
