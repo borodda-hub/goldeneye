@@ -138,6 +138,8 @@ upside only if 31b shows alt-data signal.
 
 ## Open questions to resolve before building
 
-1. Confirm `EIA_API_KEY` is available locally (it's on Railway; needed in `apps/api/.env`).
-2. Scope call: ship 31a+31b first (the honest verdict) and treat 31c as a follow-on, or
-   commit to the full arc up front?
+1. ✅ **RESOLVED (2026-06-08):** `EIA_API_KEY` is set in `apps/api/.env` (gitignored,
+   untracked) and **validated live** — EIA v2 API returned 200 with real weekly storage data.
+   The EIA leg of the 31a backfill is ready. (CFTC needs no key.)
+2. ⏳ **OWNER MULLING — scope call:** ship 31a+31b first (the honest verdict) and treat 31c as
+   a follow-on, or commit to the full arc up front?
