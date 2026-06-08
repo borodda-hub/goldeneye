@@ -2,9 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, develop]
   pull_request:
-    branches: [main, master]
+    # `develop` covers the drift lane; `master` makes the contract lock a hard gate
+    # on the develop -> master promotion PR.
+    branches: [main, master, develop]
 
 jobs:
   lint-api:
@@ -84,3 +86,31 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter web exec vitest run
+
+  contracts:
+    name: Contracts (OpenAPI drift)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --group dev
+        working-directory: apps/api
+      # Schema parity: the live FastAPI schema (imported, no server) must match the
+      # committed packages/contracts/openapi.json, modulo date-shaped defaults.
+      - name: Schema parity (live schema vs committed openapi.json)
+        run: uv run python ../../scripts/check_contracts.py
+        working-directory: apps/api
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      # Types parity: regenerating the TS types from the committed schema must be a
+      # no-op (catches a committed openapi.json that wasn't followed by a types regen).
+      - name: Types parity (regen TS from committed schema)
+        run: |
+          pnpm contracts:gen:local
+          git diff --exit-code packages/contracts/src/index.ts
