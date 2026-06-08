@@ -194,6 +194,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/journal/extract-prediction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Extract Prediction Endpoint
+         * @description Propose a machine-resolvable claim from a prose thesis (LLM-extract). The
+         *     UI shows this for the analyst to confirm/edit before saving the entry.
+         */
+        post: operations["extract_prediction_endpoint_v1_journal_extract_prediction_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/journal/auto-resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Auto Resolve
+         * @description Resolve every open structured decision whose horizon has elapsed, against
+         *     real market data. Idempotent — only touches still-unresolved entries. Meant
+         *     to be called on a schedule (or on demand).
+         */
+        post: operations["auto_resolve_v1_journal_auto_resolve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/journal": {
         parameters: {
             query?: never;
@@ -233,6 +276,44 @@ export interface paths {
         head?: never;
         /** Patch Entry */
         patch: operations["patch_entry_v1_journal__entry_id__patch"];
+        trace?: never;
+    };
+    "/v1/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Me
+         * @description The signed-in user (or null when anonymous / accounts off).
+         */
+        get: operations["get_me_v1_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get My Settings */
+        get: operations["get_my_settings_v1_me_settings_get"];
+        /** Put My Settings */
+        put: operations["put_my_settings_v1_me_settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/v1/paper-trades/open": {
@@ -442,6 +523,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/forecast/range": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Range Forecast */
+        get: operations["get_range_forecast_v1_forecast_range_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/news/recent": {
         parameters: {
             query?: never;
@@ -489,6 +587,50 @@ export interface paths {
          *       doesn't mix fake + real outcomes.
          */
         get: operations["run_backtest_endpoint_v1_backtest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/backtest/calibration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Model Calibration Endpoint
+         * @description Per-model reliability (claimed confidence vs realized hit-rate) + Brier
+         *     score over persisted backtest rows; optionally split by volatility regime.
+         */
+        get: operations["model_calibration_endpoint_v1_backtest_calibration_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/backtest/diagnostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Model Diagnostics Endpoint
+         * @description Per-model failure diagnostics over persisted backtest rows: directional
+         *     bias, Brier (Murphy) decomposition (reliability vs resolution), regime-
+         *     conditional accuracy, and logreg feature-importance drift. Descriptive,
+         *     in-sample over the backtest window.
+         */
+        get: operations["model_diagnostics_endpoint_v1_backtest_diagnostics_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -611,6 +753,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/thesis/{thesis_id}/devils-advocate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Devils Advocate Thesis
+         * @description Run an adversarial review: a steelmanned counter-case, a pre-mortem, and
+         *     the specific signals that would change the analyst's mind. The thesis is not
+         *     modified — this is a discipline probe, not a verdict.
+         */
+        post: operations["devils_advocate_thesis_v1_thesis__thesis_id__devils_advocate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/thesis/{thesis_id}": {
         parameters: {
             query?: never;
@@ -637,6 +801,27 @@ export interface paths {
         };
         /** Get Signal Quality */
         get: operations["get_signal_quality_v1_signal_quality_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/calibration/desk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Desk Calibration
+         * @description Per-analyst calibration (decision-quality Brier + hit-rate) across all
+         *     resolved decisions, ranked best-calibrated first, with a significance gate.
+         */
+        get: operations["get_desk_calibration_v1_calibration_desk_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -862,6 +1047,20 @@ export interface components {
             /** Reflection */
             reflection?: string | null;
         };
+        /** DemandShock */
+        DemandShock: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "demand";
+            /** Region */
+            region: string;
+            /** Delta Mbpd */
+            delta_mbpd: number;
+            /** Days */
+            days: number;
+        };
         /** EvidenceEntry */
         EvidenceEntry: {
             /** Factor */
@@ -887,6 +1086,20 @@ export interface components {
              * @default 0.5
              */
             weight: number;
+        };
+        /** GeopoliticalSupplyShock */
+        GeopoliticalSupplyShock: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "geopolitical_supply";
+            /** Region */
+            region: string;
+            /** Delta Mbpd */
+            delta_mbpd: number;
+            /** Days */
+            days: number;
         };
         /** GetIndicatorsResponse */
         GetIndicatorsResponse: {
@@ -933,6 +1146,18 @@ export interface components {
             /** Lines */
             lines: components["schemas"]["IndicatorLine"][];
         };
+        /** InventoryShock */
+        InventoryShock: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "inventory";
+            /** Delta Mmbbl */
+            delta_mmbbl: number;
+            /** Days */
+            days: number;
+        };
         /** JournalCreateRequest */
         JournalCreateRequest: {
             /**
@@ -952,6 +1177,12 @@ export interface components {
             risk_factors?: string[];
             /** Invalidation Criteria */
             invalidation_criteria?: string | null;
+            /** Predicted Direction */
+            predicted_direction?: ("bullish" | "bearish" | "neutral") | null;
+            /** Horizon Days */
+            horizon_days?: number | null;
+            /** Threshold Pct */
+            threshold_pct?: number | null;
         };
         /** JournalExplainRequest */
         JournalExplainRequest: {
@@ -992,6 +1223,18 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** OpecSupplyShock */
+        OpecSupplyShock: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "opec_supply";
+            /** Delta Mbpd */
+            delta_mbpd: number;
+            /** Days */
+            days: number;
+        };
         /** OpenTradeRequest */
         OpenTradeRequest: {
             /**
@@ -1015,6 +1258,16 @@ export interface components {
             rationale?: string | null;
             /** Journal Ref */
             journal_ref?: string | null;
+        };
+        /** PredictionExtractRequest */
+        PredictionExtractRequest: {
+            /**
+             * Instrument
+             * @default NG
+             */
+            instrument: string;
+            /** Hypothesis */
+            hypothesis: string;
         };
         /** ProductionShock */
         ProductionShock: {
@@ -1046,7 +1299,14 @@ export interface components {
             /** Name */
             name: string;
             /** Shocks */
-            shocks: (components["schemas"]["WeatherShock"] | components["schemas"]["LngExportShock"] | components["schemas"]["ProductionShock"] | components["schemas"]["StorageShock"])[];
+            shocks: (components["schemas"]["WeatherShock"] | components["schemas"]["LngExportShock"] | components["schemas"]["ProductionShock"] | components["schemas"]["StorageShock"] | components["schemas"]["OpecSupplyShock"] | components["schemas"]["GeopoliticalSupplyShock"] | components["schemas"]["DemandShock"] | components["schemas"]["InventoryShock"])[];
+        };
+        /** SettingsBody */
+        SettingsBody: {
+            /** Settings */
+            settings: {
+                [key: string]: unknown;
+            };
         };
         /** SignalExplainRequest */
         SignalExplainRequest: {
@@ -1499,6 +1759,63 @@ export interface operations {
             };
         };
     };
+    extract_prediction_endpoint_v1_journal_extract_prediction_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PredictionExtractRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    auto_resolve_v1_journal_auto_resolve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     list_entries_v1_journal_get: {
         parameters: {
             query?: {
@@ -1613,6 +1930,109 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["JournalPatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_me_v1_me_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_my_settings_v1_me_settings_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_my_settings_v1_me_settings_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettingsBody"];
             };
         };
         responses: {
@@ -2040,6 +2460,41 @@ export interface operations {
             };
         };
     };
+    get_range_forecast_v1_forecast_range_get: {
+        parameters: {
+            query?: {
+                symbol?: string;
+                horizon?: string;
+                estimator?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_recent_news_v1_news_recent_get: {
         parameters: {
             query?: {
@@ -2087,6 +2542,75 @@ export interface operations {
                 retrain_days?: number | null;
                 /** @description Write results to model_forecasts */
                 persist?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    model_calibration_endpoint_v1_backtest_calibration_get: {
+        parameters: {
+            query?: {
+                symbol?: string;
+                horizon?: string;
+                by_regime?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    model_diagnostics_endpoint_v1_backtest_diagnostics_get: {
+        parameters: {
+            query?: {
+                symbol?: string;
+                horizon?: string;
             };
             header?: never;
             path?: never;
@@ -2284,6 +2808,39 @@ export interface operations {
             };
         };
     };
+    devils_advocate_thesis_v1_thesis__thesis_id__devils_advocate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thesis_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     patch_thesis_v1_thesis__thesis_id__patch: {
         parameters: {
             query?: never;
@@ -2350,6 +2907,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_desk_calibration_v1_calibration_desk_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

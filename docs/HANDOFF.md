@@ -232,12 +232,14 @@ The visible payoff of the vol/range arc **plus** the log-HAR default-swap. Both 
   the better default *on the majority*; the band is coverage-validated under either estimator.
 - ✅ Gate: full `pnpm health` green — backend **906** (+2 new endpoint tests: default-is-har_log
   + ewma-opt-out), web 402, ruff/mypy clean.
-- ⚠️ **Contract regen deliberately NOT bundled — pre-existing debt.** `packages/contracts` is
-  stale across multiple phases (its `openapi.json` predates the 30a/30b forecast endpoints) and
-  the live schema has a date-dependent default that drifts daily → a regen is a noisy ~581-line
-  non-deterministic diff unrelated to 30d. 30d's only API change is a query-param *default value*
-  (no TS type impact; forecast types are hand-written in `lib/api.ts`, typecheck-clean). Tracked
-  as a separate **contracts-resync** cleanup, not this commit.
+- ✅ **Contract regen done as a separate `chore/contracts-resync` commit** (kept out of the 30d
+  logic commits on purpose). `packages/contracts` had drifted across multiple phases (its
+  `openapi.json` predated the 30a/30b forecast endpoints) — regenerated from the live schema
+  (+581 lines of genuinely-missing endpoint types, incl. `forecast/range` + the `estimator`
+  param with `default:"har_log"`); the regenerated `src/index.ts` compiles clean (tsc strict).
+  Note: the package is **not imported by app code** (web uses hand-written `lib/api.ts`), and its
+  `typecheck` script has no local `tsc` — the pre-existing reason drift was never CI-enforced
+  (a hermetic OpenAPI-dump-and-diff CI step would be the durable fix; deferred).
 - **Promotion:** frontend + backend ship together on `feat/phase-30d-views`. Not yet promoted —
   awaiting owner sign-off + a live re-verify the default reads `har_log` (the local :8000 needed
   a restart to pick it up — WatchFiles didn't hot-reload; same gotcha as always).
