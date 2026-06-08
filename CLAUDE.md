@@ -16,6 +16,8 @@ A Next.js 14 (App Router) + TypeScript frontend talks to a Python FastAPI backen
 
 | Topic | File |
 |---|---|
+| Build roadmap (single SOT) | `docs/MASTER_PLAN.md` |
+| Docs index | `docs/README.md` |
 | System architecture | `docs/ARCHITECTURE.md` |
 | Database schema | `docs/SCHEMA.md` |
 | REST + WebSocket contracts | `docs/API_CONTRACTS.md` |

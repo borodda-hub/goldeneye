@@ -1,3 +1,5 @@
+> ⚠️ SUPERSEDED 2026-06-08 by docs/MASTER_PLAN.md. Retained for history; do not plan from this file. Live items absorbed into the master plan's reconciliation table.
+
 # docs/ROADMAP.md — Next-Stage Roadmap
 
 What the MVP deliberately doesn't do, and the path to take each piece from prototype to production. Nothing on this list is in scope for the demo build; if it were, it would be in `docs/PHASE_*.md` instead.

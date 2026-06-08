@@ -1,3 +1,5 @@
+> ⚠️ SUPERSEDED 2026-06-08 by docs/MASTER_PLAN.md. Retained for history; do not plan from this file. Live items absorbed into the master plan's reconciliation table.
+
 # Goldeneye — Build Roadmap (post-scenario-globe)
 
 Status as of 2026-06-06. Organizing thesis: **decision intelligence, honest enough

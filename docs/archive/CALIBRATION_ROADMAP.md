@@ -1,3 +1,5 @@
+> ⚠️ SUPERSEDED 2026-06-08 by docs/MASTER_PLAN.md. Retained for history; do not plan from this file. Live items absorbed into the master plan's reconciliation table.
+
 # Goldeneye — Calibration Platform Roadmap
 
 *The build plan for the decision-intelligence pivot. Pairs with `docs/INNOVATION_BRIEF.md`

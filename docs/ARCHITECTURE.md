@@ -103,14 +103,17 @@ class ForecastModel(Protocol):
     def predict(self, ctx: ForecastContext) -> ForecastResult: ...
 ```
 
-MVP models:
+Live voters (four directional models):
 - `MovingAverageDirectional` (3 horizons)
-- `ProphetTrend` (1w, 1m)
-- `VolatilityRegime` (regime label + transition probability)
+- `HoltTrend` (pure-numpy Holt/AR trend; replaced the Prophet stub in Phase 26b)
 - `FactorComposite` (transparent rules-based blend of storage surprise, COT positioning, and momentum — hand-set weights, not a trained model)
 - `LogRegDirectional` (genuinely *trained* logistic regression on price features; fit walk-forward on each call from only past closes, so it's look-ahead-safe by construction — numpy, no heavy ML dep)
 
-Signals shown in the Signal Lab are an ensemble vote across these models with explicit "supporting" / "contradicting" attribution per model.
+`VolatilityRegime` is **context, not a voter** (Phase 26b): a regime label stamped on every forecast row and the ensemble, not a directional vote. The volatility/range engine (`services/models/vol_range.py`) is a separate, real-OOS-validated subsystem (EWMA + log-HAR with empirical fat-tail bands). `ProphetTrend` and `factor_learned` are benched (code + tests retained, not wired).
+
+Signals shown in the Signal Lab are an ensemble vote across the live voters with explicit "supporting" / "contradicting" attribution per model.
+
+> **For the current model truth — what is live, benched, validated, or unvalidated, and on what data — `docs/MODEL_DILIGENCE.md` is the source of truth.** This section describes shape; the diligence ledger is authoritative for claims.
 
 ## 7. The scenario engine
 
@@ -157,6 +160,7 @@ All runtime config via environment variables, loaded by Pydantic `BaseSettings`.
 
 - No real broker integration. Paper trading is a self-contained simulator.
 - No production auth. A simple session cookie or bearer token over a single local user is acceptable for the demo. Multi-tenant comes later.
-- No backtest engine. Forecasts are run forward only; backtesting is in the next-stage roadmap.
 - No real-time tick feed. Bars are 1-minute or coarser, fed by the mock adapter; Databento integration is roadmap.
-- No production-grade ML training pipeline. Models are placeholders that demonstrate shape; real training pipelines are roadmap.
+- No production-grade ML training pipeline. Most voters are price-only or hand-set, though `LogRegDirectional` is a genuinely *trained* (walk-forward) model and the vol/range engine is real-OOS-validated; a heavyweight training/serving pipeline is still roadmap.
+
+*(Historical note: a look-ahead-safe backtest engine **does** exist since Phase 10 — `services/backtest.py`, with a cheating-model proof in `tests/test_backtest_lookahead.py`. The earlier "no backtest engine" caveat is obsolete.)*
