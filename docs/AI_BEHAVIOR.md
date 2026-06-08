@@ -78,6 +78,8 @@ Rules:
 - `caveats` must be non-empty; minimum one caveat for any inference. Caveat strings are written in the same persona as the rest of the output.
 - `as_of` is the timestamp of the freshest input data, not the generation time.
 
+**Derivation (Phase A2).** For the three *forecast-bearing* LLM narratives — `explain_signal`, `summarize_market`, `generate_thesis` — `confidence` is derived from the ensemble's agreement (its winning-fraction tier) **down-modulated by the predicted band width** (a wider band can only *lower* confidence, never raise it). The shared helper is `services/ensemble.py::derive_envelope_confidence`; the router computes it from the in-scope ensemble and passes it in. The label remains a coarse 3-bucket *relative* signal, not a calibrated probability. The non-forecast LLM outputs (`narrate_scenario`, `review_journal_entry`, `critique_thesis`, `devils_advocate`) carry their own hand-written caveats and a fixed conservative band — they make no ensemble-forecast claim, so they are intentionally not derived this way.
+
 ## §prompt_templates
 
 All four LLM calls share a system message and a per-call task message. Templates live in `apps/api/services/llm_prompts.py`.
