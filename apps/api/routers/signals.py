@@ -14,7 +14,7 @@ from apps.api.repos import price_bars as price_repo
 from apps.api.repos import forecasts as forecast_repo
 from apps.api.services.price_lookup import get_latest_closes
 from apps.api.services.model_registry import ForecastContext, run_all
-from apps.api.services.ensemble import compute_ensemble
+from apps.api.services.ensemble import compute_ensemble, derive_envelope_confidence
 from apps.api.services.model_calibration import model_weights_for
 from apps.api.services.llm_explainer import explain_signal
 from apps.api.services.signal_scoring import score_forecast
@@ -142,7 +142,18 @@ async def get_current_signal(
         "cot": latest_cot,
         "models": models_out,
     }
-    explanation, safety_env = await explain_signal(signal_dict, ctx_dict)
+    _erange = ensemble.get("range") or {}
+    _band_width = (
+        _erange["high_pct"] - _erange["low_pct"]
+        if _erange.get("high_pct") is not None and _erange.get("low_pct") is not None
+        else None
+    )
+    env_conf = derive_envelope_confidence(
+        ensemble_confidence=ensemble["confidence"], band_width=_band_width
+    )
+    explanation, safety_env = await explain_signal(
+        signal_dict, ctx_dict, envelope_confidence=env_conf
+    )
 
     return {
         "instrument": symbol,

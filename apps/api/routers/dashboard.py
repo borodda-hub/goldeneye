@@ -15,7 +15,7 @@ from apps.api.repos import price_bars as price_repo
 from apps.api.services.price_lookup import get_latest_closes
 from apps.api.adapters.registry import get_market
 from apps.api.services.model_registry import ForecastContext, run_all
-from apps.api.services.ensemble import compute_ensemble
+from apps.api.services.ensemble import compute_ensemble, derive_envelope_confidence
 from apps.api.services.model_calibration import model_weights_for
 from apps.api.services.llm_explainer import generate_thesis, summarize_market
 
@@ -98,6 +98,17 @@ async def get_summary(
     weights = await model_weights_for(session, instrument.id, "1d")
     ensemble = compute_ensemble(results, model_weights=weights)
 
+    # Derived LLM-envelope confidence (Phase A2): ensemble agreement + band width.
+    _erange = ensemble.get("range") or {}
+    _band_width = (
+        _erange["high_pct"] - _erange["low_pct"]
+        if _erange.get("high_pct") is not None and _erange.get("low_pct") is not None
+        else None
+    )
+    env_conf = derive_envelope_confidence(
+        ensemble_confidence=ensemble["confidence"], band_width=_band_width
+    )
+
     # AI summary
     market_ctx = {
         "symbol": symbol,
@@ -105,7 +116,7 @@ async def get_summary(
         "vol_regime": ensemble.get("vol_regime"),
         "direction": ensemble.get("direction"),
     }
-    ai_text, safety_env = await summarize_market(market_ctx)
+    ai_text, safety_env = await summarize_market(market_ctx, envelope_confidence=env_conf)
 
     # AI thesis — richer per-instrument synthesis: news + factors + curve shape.
     # Curve shape from front-3 mids: monotonically rising = contango, falling =
@@ -145,7 +156,9 @@ async def get_summary(
         "supporting_factors": supporting_factors[:5],
         "contradicting_factors": contradicting_factors[:5],
     }
-    thesis_data, thesis_safety = await generate_thesis(thesis_ctx)
+    thesis_data, thesis_safety = await generate_thesis(
+        thesis_ctx, envelope_confidence=env_conf
+    )
 
     return {
         "instrument": {

@@ -103,9 +103,14 @@ async def _call_with_safety_check(
     return text
 
 
-async def summarize_market(ctx: dict[str, Any]) -> tuple[str, SafetyEnvelope]:
+async def summarize_market(
+    ctx: dict[str, Any], *, envelope_confidence: str | None = None
+) -> tuple[str, SafetyEnvelope]:
     prompt = summarize_market_messages(ctx)
-    key = _cache_key(prompt)
+    # Envelope confidence is derived from out-of-prompt inputs (ensemble agreement +
+    # band width), so it must be part of the cache key — otherwise a cached envelope
+    # could be returned with a stale confidence for an identical prompt.
+    key = f"{_cache_key(prompt)}:{envelope_confidence or 'low'}"
     if key in _cache:
         return _cache[key]
 
@@ -114,7 +119,7 @@ async def summarize_market(ctx: dict[str, Any]) -> tuple[str, SafetyEnvelope]:
 
     envelope = wrap_with_uncertainty(
         {},
-        confidence="medium",
+        confidence=envelope_confidence or "low",
         caveats=[
             "Model outputs are statistical inferences only, not financial advice.",
             "Based on synthetic mock data for research purposes.",
@@ -127,7 +132,7 @@ async def summarize_market(ctx: dict[str, Any]) -> tuple[str, SafetyEnvelope]:
 
 
 async def generate_thesis(
-    ctx: dict[str, Any],
+    ctx: dict[str, Any], *, envelope_confidence: str | None = None
 ) -> tuple[dict[str, Any], SafetyEnvelope]:
     """Synthesize a per-instrument research thesis using current trends + news.
 
@@ -136,7 +141,7 @@ async def generate_thesis(
     JSON so the UI can still render with the safety envelope.
     """
     prompt = generate_thesis_messages(ctx)
-    key = _cache_key(prompt)
+    key = f"{_cache_key(prompt)}:{envelope_confidence or 'low'}"
     if key in _thesis_cache:
         return _thesis_cache[key]
 
@@ -147,7 +152,7 @@ async def generate_thesis(
     parsed = _parse_thesis_json(text)
     envelope = wrap_with_uncertainty(
         {},
-        confidence="medium",
+        confidence=envelope_confidence or "low",
         caveats=[
             "Thesis is an LLM inference over current snapshot data, not a forecast.",
             "Based on synthetic mock data for research purposes.",
@@ -185,10 +190,13 @@ def _parse_thesis_json(text: str) -> dict[str, Any]:
 
 
 async def explain_signal(
-    signal: dict[str, Any], ctx: dict[str, Any]
+    signal: dict[str, Any],
+    ctx: dict[str, Any],
+    *,
+    envelope_confidence: str | None = None,
 ) -> tuple[str, SafetyEnvelope]:
     prompt = explain_signal_messages(signal, ctx)
-    key = _cache_key(prompt)
+    key = f"{_cache_key(prompt)}:{envelope_confidence or 'low'}"
     if key in _cache:
         return _cache[key]
 
@@ -197,7 +205,7 @@ async def explain_signal(
 
     envelope = wrap_with_uncertainty(
         {},
-        confidence="medium",
+        confidence=envelope_confidence or "low",
         caveats=[
             "Model outputs are statistical inferences only, not financial advice.",
             "Based on synthetic mock data for research purposes.",
