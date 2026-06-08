@@ -49,8 +49,10 @@ vol-regime is context not a voter; the "no backtest engine" caveat removed; +
 `MODEL_DILIGENCE.md` pointer). `STRATEGY.md` + `TECHNICAL_AUDIT.md` are also now committed.
 Commit `11d9748` on `develop`. **This is Stage F2 of the Master Plan** (parallel, doc-only).
 
-**2026-06-08 — Stage F0 + F1 shipped (develop, not promoted).** Per `docs/PHASE_F_PLAN.md`,
-built on `feat/phase-f-contracts` → merged to `develop`.
+**2026-06-08 — Stage F0 + F1 shipped + PROMOTED TO LIVE (`master == develop == 205bfcf`).**
+Per `docs/PHASE_F_PLAN.md`, built on `feat/phase-f-contracts` → merged to `develop` →
+fast-forwarded to `master`; the `contracts` CI job ran **green on both `develop` and
+`master`** (push events). Stage F is now complete (F0 + F1 + the earlier F2).
 - **F0 (verify-only, no promotion):** confirmed Phase 30d is correctly live at `2c5daad` —
   `git diff master develop -- apps/` empty (code-identical), `har_log` is the
   `/v1/forecast/range` default (`forecast.py:51`), the four Signal Lab states
@@ -67,11 +69,12 @@ built on `feat/phase-f-contracts` → merged to `develop`.
   from`" premise was stale (it's a fixed literal) — normalization shipped as a forward
   guard; see `PHASE_F_PLAN.md §0`.
 
-**Sync state (2026-06-08):** `master == origin/master == 2c5daad` (unchanged — Phase 30d
-live; **F0/F1 NOT promoted, awaiting owner sign-off**). `develop` carries F2 (`11d9748`),
-the HANDOFF update (`db633c8`), the Phase F plan (`644133a`), and the F0/F1 implementation
-(this merge). Clean working tree, no stashes. **906 backend + 402 web tests** passing;
-`pnpm health` green end-to-end; the new `contracts` CI job is green on `develop`.
+**Sync state (2026-06-08):** `master == origin/master == develop == origin/develop ==
+205bfcf`. Everything in sync — nothing un-promoted, nothing unpushed (this HANDOFF commit is
+the only trailing item; promote it with the next phase). Clean working tree, no stashes.
+**906 backend + 402 web tests** passing; `pnpm health` green end-to-end; the `contracts` CI
+job is green on both lanes. **Stage F complete (F0+F1+F2).** Next critical-path item per
+`MASTER_PLAN.md §8` is **A2 — honest derived confidence**.
 
 The single-sentence product story has correctly pivoted from "we predict
 price" to **"we calibrate uncertainty honestly."**
