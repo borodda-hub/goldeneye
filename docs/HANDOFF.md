@@ -1,6 +1,6 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-06-07. Read this first to pick up where we left off._
+_Last updated: 2026-06-08. Read this first to pick up where we left off._
 
 ## TL;DR
 
@@ -28,16 +28,26 @@ predictive claim rested on the synthetic seed. We closed it:
 - Provenance now governed by `docs/MODEL_DILIGENCE.md`. The one real edge is
   vol/range; it's table-stakes, so the moat is honest calibration, not alpha.
 
+**2026-06-08 — Phase 30d shipped + promoted; Phase 31 planned.** Phase 30d (the
+visible payoff of the vol/range arc) is now **live on master**: Range·Direction·Both
+view selector + EWMA·log-HAR estimator selector in Signal Lab, and **log-HAR is now
+the default** estimator (perf pass + skill-neutral real-OOS re-validation). The
+`packages/contracts` drift was resynced to the live OpenAPI schema in a dedicated
+chore commit. A detailed **Phase 31 plan** (real COT/EIA feature-history ingestion →
+validate `factor_composite`/`logreg` on real features) is drafted in
+`docs/PHASE_31_PLAN.md`; **`EIA_API_KEY` is resolved** (set in `apps/api/.env`,
+validated live against EIA v2). Owner is mulling the 31 scope call (31a+31b first, or
+the full arc).
+
 Everything is in sync: `master == develop == origin/master == origin/develop
-== 6f71827`, clean working tree (Phase 30b promoted to live 2026-06-08 by clean
-fast-forward; CI green). **904 backend + 398 web tests** passing; `pnpm health`
-green end-to-end.
+== 2c5daad`, clean working tree, **nothing un-promoted, nothing unpushed** (verified
+2026-06-08). **906 backend + 402 web tests** passing; `pnpm health` green end-to-end.
 
 The single-sentence product story has correctly pivoted from "we predict
 price" to **"we calibrate uncertainty honestly."**
 
 The current roadmap source of truth is **`docs/BUILD_ROADMAP.md`** (this file
-defers to it for phase detail).
+defers to it for phase detail); the next-build detail is **`docs/PHASE_31_PLAN.md`**.
 
 ---
 
@@ -140,18 +150,20 @@ Synced stale source-of-truth docs to code:
 
 ## Current state
 
-- **Sync:** `master == develop == origin/* == 6f71827`. Nothing un-promoted.
-  Clean working tree.
-- **Tests:** backend **904** passing; web **398** green; `pnpm health` GREEN
+- **Sync:** `master == develop == origin/* == 2c5daad`. Nothing un-promoted,
+  nothing unpushed. Clean working tree, no stashes.
+- **Tests:** backend **906** passing; web **402** green; `pnpm health` GREEN
   end-to-end (ruff → mypy → pytest → web lint → typecheck → test).
 - **Models:** 4 voters (MA · holt_trend · factor_composite · logreg) +
   `volatility_regime` as context. Calibration-weighted ensemble. `factor_learned`
   + raw-variance HAR benched.
 - **Forecast surfaces:** `GET /v1/forecast/range` (calibrated vol band, live;
-  `estimator=ewma` default | `har_log` opt-in — 30b); Signal Lab shows the honest
-  Agreement framing + Expected Range strip.
-- **Vol estimators:** EWMA (default) + log-HAR (opt-in, better real-OOS point
-  forecast). Default-swap + perf pass + UI selector deferred to 30d.
+  **`estimator=har_log` is now the default** | `ewma` one-click opt-out — 30d);
+  Signal Lab has the **Range·Direction·Both** view selector + the EWMA·log-HAR
+  estimator selector, the honest Agreement framing, and the Expected Range strip.
+- **Vol estimators:** log-HAR (**default** — better real-OOS point forecast) +
+  EWMA (opt-out). 30d perf pass: HAR serve cost 21.4ms → 14.9ms; re-validation
+  confirmed the periodic-refit perf pass is skill-neutral.
 - **Honest posture, codified:** the directional "no OOS edge" and the vol/range
   "real calibrated edge" are both *tested claims*, not narrative; provenance per
   `docs/MODEL_DILIGENCE.md`.
@@ -197,15 +209,18 @@ Synced stale source-of-truth docs to code:
 
 ## Next-steps plan (start-fresh-ready)
 
-The owner-requested **full project audit + plan reassessment** (agenda in
-`docs/BUILD_ROADMAP.md`) is the formal next decision point. The recommended
-build, if proceeding, continues Phase 30 — the one place with a real edge.
+**All of Phase 30 (30a–30d) is shipped and promoted to live.** The recommended
+next build is **Phase 31 — real COT/EIA feature-history ingestion** (detailed plan
+in `docs/PHASE_31_PLAN.md`): the one structural diligence gap left. It validates
+`factor_composite`/`logreg` on real point-in-time features→price — closing the
+"we think these models work" vs "we checked" gap. Most-likely honest outcome is
+"still no directional edge, now proven on real data," which is itself a diligence
+asset; a genuine edge is the upside. **`EIA_API_KEY` is resolved**; the
+look-ahead-safe point-in-time machinery already exists, so 31a+31b ≈ 1.5–2 days.
+**Open decision before building:** ship 31a+31b first, or commit to the full
+31a→31c arc up front (owner mulling).
 
-**30a + 30b + 30c are shipped and promoted to live.** The remaining Phase-30
-work is **30d**, which is also where 30b's deferred follow-through lands. It is
-the recommended next move — the first *visible* payoff of the whole vol/range arc.
-
-### Phase 30d — Mode / views + log-HAR default ✅ COMPLETE (branch `feat/phase-30d-views`, not yet promoted)
+### Phase 30d — Mode / views + log-HAR default ✅ COMPLETE + PROMOTED TO LIVE (`2c5daad`)
 The visible payoff of the vol/range arc **plus** the log-HAR default-swap. Both halves shipped
 (owner split the work frontend-first within one session).
 - ✅ **Range · Direction · Both** view selector in Signal Lab (`SignalViewControls.tsx` +
@@ -240,13 +255,25 @@ The visible payoff of the vol/range arc **plus** the log-HAR default-swap. Both 
   Note: the package is **not imported by app code** (web uses hand-written `lib/api.ts`), and its
   `typecheck` script has no local `tsc` — the pre-existing reason drift was never CI-enforced
   (a hermetic OpenAPI-dump-and-diff CI step would be the durable fix; deferred).
-- **Promotion:** frontend + backend ship together on `feat/phase-30d-views`. Not yet promoted —
-  awaiting owner sign-off + a live re-verify the default reads `har_log` (the local :8000 needed
-  a restart to pick it up — WatchFiles didn't hot-reload; same gotcha as always).
+- **Promotion:** ✅ **promoted to live 2026-06-08.** Frontend + backend shipped together and
+  fast-forwarded into `master` (`32e85bf` backend + `48b37ff` frontend); the contracts resync
+  landed as a follow-on chore (`fca8718`). `master == develop == origin == 2c5daad`.
 
 ### Optional 30 refinement (not a blocker)
 - **30c regime-conditional vol** — condition the band on the `volatility_regime` context. The
   empirical-quantile fix already meets the coverage gate, so this is polish, not required.
+
+### Phase 31 — Real COT/EIA feature-history ingestion 📋 RECOMMENDED NEXT (plan: `docs/PHASE_31_PLAN.md`)
+The one structural diligence gap. Backtests/calibration currently run on the synthetic
+seed, whose COT/storage are causally independent of price — so `factor_composite` and
+`logreg_directional` are `unvalidated` in `MODEL_DILIGENCE.md`. **31a** ingests + persists
+real historical COT (CFTC Socrata, no key) + EIA storage (`EIA_API_KEY` ✅ resolved) via the
+already-built real adapters + new `*_range()` fetch + upsert repos + `seeds/backfill_features.py`.
+**31b** runs the *unchanged locked backtest* on real point-in-time features (the
+look-ahead-safe `_context_as_of()` machinery already exists) → an honest real-OOS verdict for
+`factor_composite`. **31c** (conditional) adds alt-data features to `logreg`. Honest scope:
+most-likely outcome is "no edge, now proven" — a diligence win either way. **Owner decision
+pending:** 31a+31b first, or the full arc.
 
 ### Queued strategic phases (sequence TBD, all below 30)
 - **Phase 27 — Concierge copilot.** Floating agentic assistant (navigates
@@ -276,6 +303,8 @@ The visible payoff of the vol/range arc **plus** the log-HAR default-swap. Both 
 ## Pointers
 - `docs/BUILD_ROADMAP.md` — **current roadmap source of truth** (Phase 26 + 30
   detail, the audit agenda, gates).
+- `docs/PHASE_31_PLAN.md` — **detailed next-build plan** (real COT/EIA ingestion →
+  directional validation; 31a/31b/31c breakdown, gates, open scope question).
 - `docs/CHARTING_ROADMAP.md` — the 6-phase charting plan + per-phase closeouts
   (Phases 20–25, now Phase 29 territory).
 - `docs/INNOVATION_BRIEF.md` — code-grounded audit + "decision intelligence"

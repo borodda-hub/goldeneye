@@ -84,6 +84,7 @@ These exist because they cost nothing to follow and save thousands of tokens per
 - **Run `/health-check` before declaring a phase done.** This runs lint, typecheck, and tests across both stacks.
 - **Run `/contract-check` whenever you change the FastAPI schema.** It regenerates frontend types and fails if anything diverged.
 - **Update `docs/` in the same commit as the code change.** A schema change without a `docs/SCHEMA.md` update is an incomplete commit.
+- **End every session by making `docs/HANDOFF.md` current.** Before wrapping up, update `docs/HANDOFF.md` so it reflects the true state at session end: what shipped, the live sync state (`master`/`develop`/`origin` SHAs), what is promoted vs. un-promoted, and the recommended next step. The handoff is the first thing read on the next session and when picking up from another machine — a stale handoff is treated as a defect. Never leave a "not yet promoted" note in place after the promotion has happened.
 
 ## Things you must never do
 

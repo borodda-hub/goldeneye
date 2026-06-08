@@ -227,8 +227,8 @@ new opt-in path on `predict()` + `GET /v1/forecast/range`.
   empirical-quantile fix already meets the coverage gate, so this is a refinement, not a
   blocker.
 
-### 30d — Mode selection / views + log-HAR default ✅ COMPLETE (branch `feat/phase-30d-views`, not yet promoted)
-**Both halves shipped (session 2026-06-07).** The first *visible* payoff of the vol/range arc
+### 30d — Mode selection / views + log-HAR default ✅ COMPLETE + PROMOTED TO LIVE (`2c5daad`, 2026-06-08)
+**Both halves shipped (session 2026-06-07) and promoted 2026-06-08.** The first *visible* payoff of the vol/range arc
 (frontend views) **and** the log-HAR default-swap with its perf pass + re-validation.
 
 The user picks the **view**, never a "which model is right" toggle — direction and range
@@ -263,15 +263,17 @@ drift-aware naive baseline in all 36 commodity×model×horizon cells; see `MODEL
   Honest scope: log-HAR is the better default *on the majority*, not universally; the band
   (the user-facing calibrated surface) is coverage-validated under **either** estimator, so the
   default choice mainly moves the point-forecast skill, which users are told not to read anyway.
-- ⚠️ **Contract regen NOT bundled here (pre-existing debt).** `packages/contracts` is stale
-  across multiple phases (its `openapi.json` predates even the 30a/30b forecast endpoints) and
-  the live `openapi.json` carries a date-dependent default (`chart/bars` `from`) that drifts
-  daily — so a regen is a noisy 581-line, non-deterministic diff unrelated to 30d. 30d's only API
-  change is a query-param **default value**, which `openapi-typescript` types identically
-  (`estimator?: string`), and the web app's forecast types are hand-written in `lib/api.ts`
-  (updated, typecheck-clean). Left as a dedicated **contracts-resync cleanup** task, not 30d's.
-- **Promotion:** frontend + backend ship together on `feat/phase-30d-views`. Not yet promoted to
-  master (awaiting owner sign-off + a live re-verify that the default reads `har_log`).
+- ✅ **Contract regen DONE as a dedicated follow-on chore (`fca8718`).** It was deliberately kept
+  out of the 30d logic commits (`packages/contracts` had drifted across multiple phases — its
+  `openapi.json` predated even the 30a/30b forecast endpoints, and the live schema carries a
+  date-dependent `chart/bars` `from` default). Resynced from the live OpenAPI schema (+581 lines
+  of genuinely-missing endpoint types, incl. `forecast/range` + the `estimator` param with
+  `default:"har_log"`); regenerated `src/index.ts` compiles clean. The package is **not imported
+  by app code** (web uses hand-written `lib/api.ts`), so a hermetic OpenAPI-dump-and-diff CI step
+  remains the durable fix (deferred).
+- **Promotion:** ✅ **promoted to live 2026-06-08.** Frontend + backend fast-forwarded into
+  `master` (`32e85bf` backend + `48b37ff` frontend); contracts resync followed as `fca8718`.
+  `master == develop == origin == 2c5daad`.
 
 - **Cross-cutting gate (all of 30):** walk-forward coverage/skill is the acceptance test
   (extend the `ensemble_calibration` harness to vol); honest framing per AI_BEHAVIOR;
