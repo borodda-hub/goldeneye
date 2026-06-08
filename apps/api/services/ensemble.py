@@ -18,6 +18,8 @@ realized-hit-rate promise.
 """
 from __future__ import annotations
 
+from typing import Literal
+
 from apps.api.services.models.moving_average_directional import ForecastResult
 
 CONFIDENCE_WEIGHTS: dict[str, int] = {"high": 3, "medium": 2, "low": 1}
@@ -30,6 +32,50 @@ _NON_PRICE_INPUTS = {"vol_regime_signal"}  # signals derived from prices but not
 _WEIGHT_FLOOR = 0.4
 _WEIGHT_CAP = 2.0
 _BRIER_EPS = 1e-3
+
+# ---------------------------------------------------------------------------
+# LLM narrative-envelope confidence (Phase A2)
+# ---------------------------------------------------------------------------
+# The envelope confidence on the forecast-bearing LLM narratives (explain_signal,
+# summarize_market, generate_thesis) is DERIVED, not hardcoded: it starts from the
+# ensemble's agreement-derived confidence and is *down-modulated* by the predicted
+# band width. A wider band ⇒ more uncertainty ⇒ it can only LOWER confidence, never
+# raise it. The regime tie-rule is already baked into ``ensemble_confidence`` (see
+# ``compute_ensemble``), so the regime is not a separate input here.
+#
+# Cutoffs are coarse heuristics on the ensemble's *fractional* band width
+# (high_pct - low_pct). The envelope label is a 3-bucket relative signal, not a
+# calibrated probability (consistent with the honest-scope note at the top of this
+# module). Look-ahead-safe (S3): a pure function of values computed at request time.
+EnvelopeConfidence = Literal["low", "medium", "high"]
+_CONFIDENCE_RANK: dict[str, int] = {"low": 0, "medium": 1, "high": 2}
+_WIDE_BAND_PCT = 0.10
+_VERY_WIDE_BAND_PCT = 0.18
+
+
+def derive_envelope_confidence(
+    *,
+    ensemble_confidence: str,
+    band_width: float | None,
+) -> EnvelopeConfidence:
+    """Derive an LLM-narrative envelope confidence from ensemble agreement + band width.
+
+    ``ensemble_confidence`` already encodes the agreement (winning weighted fraction)
+    and the regime tie-rule. ``band_width`` is the ensemble's fractional predicted
+    range (``range["high_pct"] - range["low_pct"]``); a wide band can only lower the
+    result. ``band_width=None`` returns the agreement tier unchanged. Never upgrades.
+    """
+    base_rank = _CONFIDENCE_RANK.get(ensemble_confidence, 0)
+    if band_width is not None:
+        if band_width >= _VERY_WIDE_BAND_PCT:
+            base_rank = _CONFIDENCE_RANK["low"]
+        elif band_width >= _WIDE_BAND_PCT:
+            base_rank = min(base_rank, _CONFIDENCE_RANK["medium"])
+    if base_rank >= _CONFIDENCE_RANK["high"]:
+        return "high"
+    if base_rank == _CONFIDENCE_RANK["medium"]:
+        return "medium"
+    return "low"
 
 
 def model_weights_from_brier(
