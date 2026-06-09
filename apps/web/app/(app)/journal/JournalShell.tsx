@@ -3,6 +3,7 @@
 import { NotebookPen } from "lucide-react";
 import { useState } from "react";
 import { PageHeader } from "../../../components/PageHeader";
+import { SampleDeskBanner } from "../../../components/SampleDeskBanner";
 import { EntryDetailDrawer } from "../../../components/journal/EntryDetailDrawer";
 import { EntryList } from "../../../components/journal/EntryList";
 import { NewEntryForm } from "../../../components/journal/NewEntryForm";
@@ -31,6 +32,8 @@ export function JournalShell({ initialEntries }: Props) {
         title="Decision Journal"
         subtitle="Hypothesis log with AI assumption review"
       />
+
+      <SampleDeskBanner />
 
       {/* Two-column layout */}
       <div className="flex gap-4">

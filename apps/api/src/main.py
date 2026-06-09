@@ -51,6 +51,9 @@ from apps.api.services.safety import SafetyViolation  # noqa: E402
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await start_ticker()
+    from apps.api.services.resolution_scheduler import start_scheduler
+
+    start_scheduler()  # B1: in-process auto-resolution loop (no-op unless enabled)
     yield
 
 

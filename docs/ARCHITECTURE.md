@@ -47,6 +47,7 @@ NGTI is a four-tier system:
 - Repositories own DB access. SQLAlchemy 2.x async sessions. No raw SQL outside repositories.
 - Adapters are protocol-based. Each domain (market, energy, weather, positioning, news) has a `Protocol` in `adapters/base.py` and at least one mock implementation. Real adapters are drop-in replacements selected at startup via env config.
 - Workers handle scheduled ingestion: EIA storage report on Thursdays, COT reports on Fridays, NWS forecast pulls every 6 hours, daily price-bar refresh.
+- In-process scheduler (`services/resolution_scheduler.py`, B1): an env-gated `asyncio` loop started from the FastAPI lifespan that periodically calls `services/auto_resolution.py::resolve_open_decisions` so the calibration ledger compounds without a manual mark. Off by default — runs only when `AUTO_RESOLVE_ENABLED=true`; cadence is `AUTO_RESOLVE_INTERVAL_HOURS` (default 24, floored to 60s). It is a co-located convenience tier, not the heavy ingestion worker above; resolution is idempotent (`resolved_direction IS NULL` only) and look-ahead-safe (real `price_bars` via the front-month path).
 
 ### Postgres + TimescaleDB
 - Time-series data lives in hypertables: `price_bars`, `tick_data`, `weather_observations`, `weather_forecasts`. See `docs/SCHEMA.md §hypertables`.

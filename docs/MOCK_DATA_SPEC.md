@@ -102,6 +102,30 @@ Each is a complete `scenarios/run` response stored verbatim.
 
 These exist mainly so the Decision Journal and Paper Trading screens have content on first load and so the LLM journal-review feature can be demonstrated.
 
+## §sample_analyst (B1 showcase — honesty-critical)
+
+`seeds/demo_sample_analyst.py` seeds ONE clearly-fictional sample analyst into the
+anonymous (NULL) pool to populate the Calibration/Journal showcase. The honesty
+contract is strict and load-bearing:
+
+- **We author only her conviction *behavior*, never her outcomes.** Direction is a
+  fixed blind rule (momentum — continuation of the prior 20-day return), chosen
+  before the move is known. Conviction is a signal-strength quintile plus a
+  decaying early-overconfidence bias. No outcome is ever picked or forced.
+- **The real engine resolves real prices.** Outcomes come only from
+  `auto_resolution.py` scoring against real `yahoo_delayed` `price_bars`. Whatever
+  reliability curve emerges is kept as-is — the current emergent finding is that
+  her highest-conviction (80–100) NG calls resolved far below claim (~87% → ~29%),
+  which is the product's value proposition demonstrated honestly, not a tuned line.
+- **Every surface is labeled.** `apps/web/components/SampleDeskBanner.tsx` renders an
+  "Illustrative scenario — sample analyst, real engine, real prices" note on the
+  Calibration and Journal screens (signed-out / accounts-off), so it is never read
+  as a real analyst track record. See `docs/AI_BEHAVIOR.md §sample_data_labeling`.
+- A companion `seeds/demo_sample_desk.py` seeds blind strategy desks
+  (momentum / contrarian / random, each in its own user pool) as the quant-proof
+  layer. The outcome-forcing `demo_desk_analysts.py` seed was **deleted** — the
+  engine is the only path that writes a resolution.
+
 ## §fixture_files
 
 ```

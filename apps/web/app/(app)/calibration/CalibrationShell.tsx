@@ -1,6 +1,7 @@
 "use client";
 
 import { PageHeader } from "@/components/PageHeader";
+import { SampleDeskBanner } from "@/components/SampleDeskBanner";
 import { Skeleton, SkeletonText } from "@/components/Skeleton";
 import { BucketTable } from "@/components/calibration/BucketTable";
 import { CalibrationSummary } from "@/components/calibration/CalibrationSummary";
@@ -87,6 +88,8 @@ export function CalibrationShell({ initialData, initialSymbol = "NG" }: Props) {
           </span>
         }
       />
+
+      <SampleDeskBanner />
 
       <header className="flex flex-col gap-3 border-b border-line-1 pb-4">
         <h2 className="font-serif text-[40px] leading-[1.02] tracking-[-0.015em] text-ink-1">

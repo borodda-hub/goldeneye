@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import select
@@ -85,6 +86,8 @@ async def list_with_resolutions(
     session: AsyncSession,
     instrument_id: uuid.UUID,
     user_id: uuid.UUID | None = None,
+    since: datetime | None = None,
+    until: datetime | None = None,
 ) -> list[UserDecisionJournal]:
     """All journal entries for an instrument within the requester scope —
     regardless of resolution state.
@@ -94,13 +97,18 @@ async def list_with_resolutions(
     "n=14 entries scored" and "n=3 unresolved" counts. `user_id=None` selects the
     shared anonymous pool (today's behavior); a real id selects only that user's
     entries — so a signed-in analyst's calibration never mixes in others' decisions.
+    Optional `since`/`until` bound `created_at` — used to show calibration over time
+    (e.g. an early- vs late-period reliability comparison).
     """
+    stmt = select(UserDecisionJournal).where(
+        UserDecisionJournal.instrument_id == instrument_id,
+        UserDecisionJournal.user_id == user_id,
+    )
+    if since is not None:
+        stmt = stmt.where(UserDecisionJournal.created_at >= since)
+    if until is not None:
+        stmt = stmt.where(UserDecisionJournal.created_at < until)
     result = await session.execute(
-        select(UserDecisionJournal)
-        .where(
-            UserDecisionJournal.instrument_id == instrument_id,
-            UserDecisionJournal.user_id == user_id,
-        )
-        .order_by(UserDecisionJournal.created_at.desc())
+        stmt.order_by(UserDecisionJournal.created_at.desc())
     )
     return list(result.scalars().all())

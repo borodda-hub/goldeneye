@@ -184,6 +184,8 @@ async def compute_calibration(
     instrument_code: str,
     bucket_count: int = 5,
     user_id: Any = None,
+    since: Any = None,
+    until: Any = None,
 ) -> CalibrationResult:
     """Compute calibration buckets for an instrument's journal entries.
 
@@ -200,7 +202,7 @@ async def compute_calibration(
     """
     edges = _bucket_edges(bucket_count)
     entries = await journal_repo.list_with_resolutions(
-        session, instrument_id, user_id=user_id
+        session, instrument_id, user_id=user_id, since=since, until=until
     )
 
     grouped: list[list[UserDecisionJournal]] = [[] for _ in edges]

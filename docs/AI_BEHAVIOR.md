@@ -61,6 +61,27 @@ The standard disclaimer string, surfaced on every screen that displays forecasts
 
 Stored as `services.safety.DISCLAIMER`. UI imports it from the contracts package and renders it in a fixed footer slot.
 
+## §sample_data_labeling
+
+Any screen showing seeded *demonstration* analyst/desk data — distinct from a real
+or signed-in user's own ledger — must carry an unambiguous illustrative-scenario
+label so it is never read as a real track record or testimonial. The canonical
+label (`apps/web/components/SampleDeskBanner.tsx`, Calibration + Journal surfaces):
+
+> Illustrative scenario — sample analyst · real engine · real prices. A fictional
+> sample analyst's decisions, scored by the same calibration engine against real
+> market prices — not a real analyst track record.
+
+Honesty rules for any such showcase:
+- The number quoted in the label must match what the live page actually shows
+  (no aspirational or stale figures). When the seed changes the resolved figure,
+  update the label in the same change.
+- Never present seeded outcomes as a real customer/analyst result. The phrase
+  "point it at your desk and it scores your analysts the same way" is the only
+  permitted forward-looking framing, and only when literally true of the engine.
+- Outcomes in any demo must be engine-resolved against real prices, never authored.
+  See `docs/MOCK_DATA_SPEC.md §sample_analyst`.
+
 ## §safety_envelope
 
 Every endpoint that returns model or LLM output wraps it:

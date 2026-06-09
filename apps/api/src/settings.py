@@ -64,5 +64,12 @@ class Settings(BaseSettings):
     redis_ttl_scenario: int = 86400         # 24h
     redis_ttl_chart_indicator: int = 300    # 5 min
 
+    # Auto-resolution scheduler (B1). When enabled, an in-process background loop
+    # resolves open structured decisions against real prices on a cadence (a boot
+    # tick, then every interval). Default OFF so tests/CI and non-primary processes
+    # never spawn the loop; enable on the single deployed API process.
+    auto_resolve_enabled: bool = False
+    auto_resolve_interval_hours: float = 24.0
+
 
 settings = Settings()

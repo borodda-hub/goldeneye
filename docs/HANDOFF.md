@@ -1,6 +1,6 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-06-08. Read this first to pick up where we left off._
+_Last updated: 2026-06-09. Read this first to pick up where we left off._
 
 ## TL;DR
 
@@ -162,12 +162,43 @@ Clerk token. **Anonymous / Clerk-off demo path is unchanged** (scope=None → sh
   `/v1/llm/explain-*` client fns are pre-existing dead code (real routes `/v1/explain/*`); admin/desk
   gate is "any-authenticated" (no admin *role* yet). `pnpm health` green (930/402).
 
-**Sync state (2026-06-09):** `master == origin/master == develop == origin/develop == c2a7712`.
-Everything in sync — B3a + B3a.1 + B3b promoted; nothing un-promoted, nothing unpushed (bar this
-HANDOFF commit). Clean working tree. **930 backend + 402 web** (`pnpm health`) + **34 `tests/db`**
-(CI-gated; +6 HTTP isolation) passing. **Stage F + A2 + B3 (B3a/B3a.1/B3b) complete — Stage B's
-per-user foundation is done and isolation is LIVE.** Next per `MASTER_PLAN.md §4` Stage B: **B1**
-(schedule auto-resolution), **B2** (skill-vs-luck scorecards, now unblocked by per-user scoping),
+**2026-06-09 — Stage B1 (scheduled auto-resolution + honest showcase) BUILT on
+`feat/phase-b1-scheduler` — NOT PROMOTED (awaiting owner sign-off).** Per
+`docs/PHASE_B1_PLAN.md`. Two pieces, shipped together:
+- **The scheduler.** New `services/resolution_scheduler.py`: an env-gated `asyncio`
+  loop started from the FastAPI lifespan (`src/main.py`) that periodically calls
+  `auto_resolution.py::resolve_open_decisions` so the calibration ledger compounds
+  with no manual mark. **Off by default** — `AUTO_RESOLVE_ENABLED` (settings
+  `auto_resolve_enabled=False`) gates it; cadence `AUTO_RESOLVE_INTERVAL_HOURS`
+  (default 24, floored to 60s). Boot-tick first, then sleep loop; survives errors.
+  Co-located convenience tier, NOT the heavy ingestion worker (`ARCHITECTURE.md §2`).
+- **The honest showcase.** `seeds/demo_sample_analyst.py` seeds ONE clearly-fictional
+  sample analyst (NULL pool) — **we author her conviction *behavior* (overconfident
+  early, decaying), never her outcomes.** Direction is a blind momentum rule chosen
+  before the move; the REAL engine resolves REAL `yahoo_delayed` prices. **Emergent
+  finding (kept as-is, not tuned):** mid-conviction buckets calibrate (NG 51→50,
+  66→54; CL 56→58, 72→65) but her **highest-conviction NG calls are a genuine blind
+  spot — ~87% claimed → ~29% realized (n=52)**. That IS the product's value prop,
+  demonstrated honestly. `SampleDeskBanner.tsx` labels it "Illustrative scenario —
+  sample analyst · real engine · real prices" on Calibration + Journal (number kept
+  in sync with the live summary). Blind strategy desks (`demo_sample_desk.py`:
+  momentum/contrarian/random) are the quant-proof layer. **The outcome-forcing
+  `demo_desk_analysts.py` seed was DELETED — the engine is the only path that writes
+  a resolution** (`auto_resolution.py` + the manual journal PATCH).
+- **Engine lock (separate from the seed):** `tests/db/test_auto_resolution_e2e.py`
+  (testcontainer, 2 tests) — a controlled elapsed decision resolves to the correct
+  hit/miss vs real bars; **idempotent re-run resolves 0 and re-stamps nothing**;
+  a manually-marked row is never overwritten; an unelapsed horizon stays pending.
+- `pnpm health` green (930 backend / 402 web); `tests/db` lock verified green
+  locally (Docker). No router signature change → F1 contracts stays green. Docs
+  updated in-commit: `ARCHITECTURE.md §2` (scheduler tier), `MOCK_DATA_SPEC.md
+  §sample_analyst`, `AI_BEHAVIOR.md §sample_data_labeling`.
+
+**Sync state (2026-06-09):** `master == origin/master == c2a7712`; `develop == c2a7712`
+(B1 work is on **`feat/phase-b1-scheduler`**, NOT yet merged to develop or master).
+**B1 is built and green but UN-PROMOTED — awaiting owner sign-off on the emergent
+calibration view.** Stage F + A2 + B3 (B3a/B3a.1/B3b) are complete and live. Next per
+`MASTER_PLAN.md §4` Stage B: promote B1, then **B2** (skill-vs-luck scorecards),
 **B4** (decision/audit ledger).
 
 The single-sentence product story has correctly pivoted from "we predict
