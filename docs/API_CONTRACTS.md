@@ -4,6 +4,10 @@ All endpoints are versioned under `/v1/`. Pydantic v2 models in `apps/api/models
 
 > Every response that includes a model output, scenario, or LLM string carries a `safety` envelope: `{ confidence, caveats, as_of, disclaimer }`. See `docs/AI_BEHAVIOR.md §safety_envelope`.
 
+## §authentication
+
+Personal-artifact endpoints (journal, theses, scenarios, paper-trades, calibration) accept an optional `Authorization: Bearer <clerk-token>` header and **scope reads/writes to the signed-in user** (B3b). With no token — or when Clerk is unconfigured (the open demo) — they operate on the shared anonymous (`user_id IS NULL`) pool, so the zero-friction demo is unchanged. By-id reads/mutations return **404** (not 403) for resources owned by another user. Admin (`/v1/admin/*`) and the desk leaderboard (`/v1/calibration/desk`) are **auth-required when accounts are configured** (denied to anonymous; open in the single-tenant demo). The cross-user leaderboard *visibility model* is deferred to B2.
+
 ## §rest
 
 ### Dashboard

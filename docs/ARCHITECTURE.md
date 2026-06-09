@@ -159,7 +159,7 @@ All runtime config via environment variables, loaded by Pydantic `BaseSettings`.
 ## 12. What we deliberately don't do in MVP
 
 - No real broker integration. Paper trading is a self-contained simulator.
-- No production auth. A simple session cookie or bearer token over a single local user is acceptable for the demo. Multi-tenant comes later.
+- ~~No production auth.~~ **Updated (B3a/B3b):** optional Clerk bearer-token auth + per-user data scoping is wired — every personal-artifact query filters by `user_id`, by-id paths enforce ownership (404), admin/desk are auth-gated. The app still runs **fully open/anonymous when Clerk is unconfigured** (the demo on the shared `user_id IS NULL` pool), so single-tenant deployment is unchanged. Role-based access (beyond any-authenticated) and the leaderboard visibility model are still future work.
 - No real-time tick feed. Bars are 1-minute or coarser, fed by the mock adapter; Databento integration is roadmap.
 - No production-grade ML training pipeline. Most voters are price-only or hand-set, though `LogRegDirectional` is a genuinely *trained* (walk-forward) model and the vol/range engine is real-OOS-validated; a heavyweight training/serving pipeline is still roadmap.
 
