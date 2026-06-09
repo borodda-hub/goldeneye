@@ -95,8 +95,9 @@ gap).
   test_envelope_confidence_wiring.py` (wiring + AST guard against re-introducing a literal).
   Documented in `AI_BEHAVIOR.md §safety_envelope`.
 
-**2026-06-08 — Stage B3a (per-user scoping, DATA LAYER ONLY) shipped to develop.** Per
-`docs/PHASE_B3_PLAN.md §5.A`. Migration `010_theses_user_scope` (`theses.user_id` nullable FK
+**2026-06-08 — Stage B3a (per-user scoping, DATA LAYER ONLY) shipped + PROMOTED TO LIVE
+(`master == develop == 01c24c6`).** CI green on both lanes (incl. Contracts/OpenAPI-drift —
+no schema change). Per `docs/PHASE_B3_PLAN.md §5.A`. Migration `010_theses_user_scope` (`theses.user_id` nullable FK
 → `users.id` `ON DELETE RESTRICT`; active-uniqueness swapped to per-`(user_id, instrument_code)`;
 `(user_id, …)` scope indexes on journals/scenarios/theses). Repos (journal/theses/scenarios/
 paper_trades) + services (calibration/dq_coach/paper_engine) take `user_id: UUID|None = None`
@@ -124,10 +125,9 @@ deactivate flipped every other user's active thesis — proven by a fail-without
 - `pnpm health` green (930/402); `contracts:check` no-op (no router change → F1 green). Dev DB
   migrated to `010`; dev server restarted on B3a (anonymous `/v1/journal` → NULL pool only).
 
-**Sync state (2026-06-08):** `master == origin/master == 774c9d1` (Stage A2 + its handoff).
-`develop == 8ad8c70` carries the B3 split plan + the B3a data-layer commits; **B3a NOT on master
-yet** (awaiting sign-off).
-Clean working tree. **930 backend + 402 web** (`pnpm health`) + **28 `tests/db`** (incl. 5 new
+**Sync state (2026-06-09):** `master == origin/master == develop == origin/develop == 01c24c6`.
+Everything in sync — B3a promoted; nothing un-promoted, nothing unpushed (bar this HANDOFF commit,
+which promotes with B3b). Clean working tree. **930 backend + 402 web** (`pnpm health`) + **28 `tests/db`** (incl. 5 new
 isolation tests) passing. **Stage F + A2 complete; B3a on develop, B3b is next** (identity +
 enforcement — the phase that makes isolation live).
 
