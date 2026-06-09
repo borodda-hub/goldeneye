@@ -133,22 +133,24 @@ async def coach_decision_quality(
     instrument_id: Any,
     instrument_code: str,
     bucket_count: int = 5,
+    user_id: Any = None,
 ) -> tuple[dict[str, Any], SafetyEnvelope]:
     """Run LLM coaching against the analyst's journal + calibration.
 
     Returns ({buckets, overall}, safety_envelope). When there are zero
     resolved entries, returns empty coaching with a safety envelope flagging
     the small-sample caveat so the UI can render a useful empty state
-    without hitting the LLM.
+    without hitting the LLM. Scoped to `user_id` (None = anonymous pool).
     """
     calibration = await compute_calibration(
         session,
         instrument_id=instrument_id,
         instrument_code=instrument_code,
         bucket_count=bucket_count,
+        user_id=user_id,
     )
     entries_orm = await journal_repo.list_with_resolutions(
-        session, instrument_id
+        session, instrument_id, user_id=user_id
     )
     entries_dicts = [_entry_to_prompt_dict(e) for e in entries_orm]
 

@@ -20,12 +20,20 @@ from apps.api.models.orm.theses import Thesis
 
 
 async def get_active(
-    session: AsyncSession, instrument_code: str = "NG"
+    session: AsyncSession,
+    instrument_code: str = "NG",
+    user_id: uuid.UUID | None = None,
 ) -> Thesis | None:
-    """Return the active thesis for an instrument, or None if none exists."""
+    """Return the active thesis for an instrument within the requester scope, or
+    None. `user_id=None` reads the shared anonymous pool (today's behavior); a real
+    id reads only that user's active thesis (B3b passes it)."""
     result = await session.execute(
         select(Thesis)
-        .where(Thesis.instrument_code == instrument_code, Thesis.active.is_(True))
+        .where(
+            Thesis.instrument_code == instrument_code,
+            Thesis.active.is_(True),
+            Thesis.user_id == user_id,
+        )
         .limit(1)
     )
     return result.scalar_one_or_none()
@@ -46,12 +54,18 @@ async def replace_active(
     contradicting_evidence: list[dict[str, Any]],
     missing_data: list[str],
     conviction_pct: int,
+    user_id: uuid.UUID | None = None,
 ) -> Thesis:
-    """Deactivate the current active thesis (if any) and insert a new one.
+    """Deactivate the requester's current active thesis (if any) and insert a new one.
 
     Both operations happen in the same session/transaction; the caller is
     responsible for the surrounding commit. Raises ValueError on invalid
     `conviction_pct` to fail fast before hitting the CHECK constraint.
+
+    **The deactivate is scoped to `user_id`** (incl. the `user_id IS NULL` anonymous
+    pool). Without that scope, creating a thesis would deactivate *every other user's*
+    active thesis for the same instrument — the B3 data-isolation landmine. The new
+    row is stamped with the same `user_id`.
     """
     if not 0 <= conviction_pct <= 100:
         raise ValueError(
@@ -62,7 +76,11 @@ async def replace_active(
 
     await session.execute(
         sa_update(Thesis)
-        .where(Thesis.instrument_code == instrument_code, Thesis.active.is_(True))
+        .where(
+            Thesis.instrument_code == instrument_code,
+            Thesis.active.is_(True),
+            Thesis.user_id == user_id,
+        )
         .values(active=False)
     )
     fresh = Thesis(
@@ -73,6 +91,7 @@ async def replace_active(
         missing_data=missing_data,
         conviction_pct=conviction_pct,
         active=True,
+        user_id=user_id,
     )
     session.add(fresh)
     await session.flush()

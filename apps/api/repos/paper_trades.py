@@ -22,8 +22,16 @@ async def list_trades(
     status: str | None = None,
     limit: int = 50,
     instrument_id: uuid.UUID | None = None,
+    user_id: uuid.UUID | None = None,
 ) -> list[PaperTrade]:
-    q = select(PaperTrade).order_by(PaperTrade.opened_at.desc()).limit(limit)
+    """Trades for the requester scope. `user_id=None` = the shared anonymous pool
+    (today's behavior); a real id = only that user's trades."""
+    q = (
+        select(PaperTrade)
+        .where(PaperTrade.user_id == user_id)
+        .order_by(PaperTrade.opened_at.desc())
+        .limit(limit)
+    )
     if status:
         q = q.where(PaperTrade.status == status)
     if instrument_id is not None:

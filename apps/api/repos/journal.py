@@ -27,9 +27,14 @@ async def get_recent(
     session: AsyncSession,
     limit: int = 20,
     instrument_id: uuid.UUID | None = None,
+    user_id: uuid.UUID | None = None,
 ) -> list[UserDecisionJournal]:
+    """Recent entries for the requester scope. `user_id=None` selects the shared
+    anonymous pool (`user_id IS NULL`) — today's behavior; a real id selects only
+    that user's entries (B3b passes it). The filter is always applied."""
     stmt = (
         select(UserDecisionJournal)
+        .where(UserDecisionJournal.user_id == user_id)
         .order_by(UserDecisionJournal.created_at.desc())
         .limit(limit)
     )
@@ -77,17 +82,25 @@ async def update(
 
 
 async def list_with_resolutions(
-    session: AsyncSession, instrument_id: uuid.UUID
+    session: AsyncSession,
+    instrument_id: uuid.UUID,
+    user_id: uuid.UUID | None = None,
 ) -> list[UserDecisionJournal]:
-    """All journal entries for an instrument — regardless of resolution state.
+    """All journal entries for an instrument within the requester scope —
+    regardless of resolution state.
 
     The calibration service consumes this and computes its own filtering. We
     return everything (resolved + unresolved + null) so the page can show both
-    "n=14 entries scored" and "n=3 unresolved" counts.
+    "n=14 entries scored" and "n=3 unresolved" counts. `user_id=None` selects the
+    shared anonymous pool (today's behavior); a real id selects only that user's
+    entries — so a signed-in analyst's calibration never mixes in others' decisions.
     """
     result = await session.execute(
         select(UserDecisionJournal)
-        .where(UserDecisionJournal.instrument_id == instrument_id)
+        .where(
+            UserDecisionJournal.instrument_id == instrument_id,
+            UserDecisionJournal.user_id == user_id,
+        )
         .order_by(UserDecisionJournal.created_at.desc())
     )
     return list(result.scalars().all())

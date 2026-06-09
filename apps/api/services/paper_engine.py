@@ -47,10 +47,16 @@ def compute_pnl(
 # ---------------------------------------------------------------------------
 # Equity helpers
 # ---------------------------------------------------------------------------
-async def current_equity(session: AsyncSession) -> float:
-    """STARTING_EQUITY_USD + sum(outcome_pnl) over closed trades."""
+async def current_equity(
+    session: AsyncSession, user_id: uuid.UUID | None = None
+) -> float:
+    """STARTING_EQUITY_USD + sum(outcome_pnl) over the requester's closed trades.
+    `user_id=None` = the shared anonymous pool (today's behavior)."""
     result = await session.execute(
-        select(PaperTrade).where(PaperTrade.status == "closed")
+        select(PaperTrade).where(
+            PaperTrade.status == "closed",
+            PaperTrade.user_id == user_id,
+        )
     )
     closed = list(result.scalars().all())
     realized = sum(float(t.outcome_pnl or 0.0) for t in closed)
@@ -142,8 +148,10 @@ async def open_trade(
     take_profit: float | None,
     rationale: str | None,
     journal_ref: uuid.UUID | None,
+    user_id: uuid.UUID | None = None,
 ) -> PaperTrade:
-    """Validates and persists a paper trade. Caller is responsible for commit."""
+    """Validates and persists a paper trade. Caller is responsible for commit.
+    Stamped with `user_id` (None = anonymous pool; B3b passes the requester's id)."""
     await validate_open(
         session,
         side=side,
@@ -163,6 +171,7 @@ async def open_trade(
         "journal_ref": journal_ref,
         "contract_id": contract_id,
         "status": "open",
+        "user_id": user_id,
     }
     return await trade_repo.create(session, instrument_id, data)
 
@@ -280,6 +289,7 @@ async def _bars_for_contract_by_day(
 async def equity_curve(
     session: AsyncSession,
     since: date | None = None,
+    user_id: uuid.UUID | None = None,
 ) -> list[dict]:
     """
     Daily equity series since `since` (default: 90 days ago) up to today (UTC).
@@ -301,8 +311,10 @@ async def equity_curve(
     if since > today:
         return []
 
-    # 1) Pre-load every trade once.
-    result = await session.execute(select(PaperTrade))
+    # 1) Pre-load every trade once (scoped to the requester; None = anonymous pool).
+    result = await session.execute(
+        select(PaperTrade).where(PaperTrade.user_id == user_id)
+    )
     all_trades: list[PaperTrade] = list(result.scalars().all())
 
     # 2) Pre-resolve a price-contract-id per trade (bound contract or instrument front-month).
