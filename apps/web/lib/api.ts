@@ -570,9 +570,16 @@ export interface ThesisPatchBody {
 export async function getCurrentThesis(
   instrumentCode = "NG",
 ): Promise<Thesis | null> {
+  // Attach the Clerk token (like apiFetch) so /v1/thesis/current is user-scoped,
+  // but keep the 404 -> null handling apiFetch doesn't provide.
+  const token = await clerkToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
   const res = await fetch(
     `${BASE_URL}/v1/thesis/current?instrument_code=${encodeURIComponent(instrumentCode)}`,
-    { headers: { "Content-Type": "application/json" } },
+    { headers },
   );
   if (res.status === 404) return null;
   if (!res.ok) {

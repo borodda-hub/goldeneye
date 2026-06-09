@@ -246,9 +246,8 @@ export interface paths {
         };
         /**
          * List Entries
-         * @description List recent entries. When ?symbol= is supplied, filter to that
-         *     instrument; otherwise return entries across all instruments (legacy
-         *     behavior preserved for callers that don't pass the param).
+         * @description List recent entries for the requester scope. When ?symbol= is supplied,
+         *     filter to that instrument; otherwise return entries across all instruments.
          */
         get: operations["list_entries_v1_journal_get"];
         put?: never;
@@ -820,6 +819,12 @@ export interface paths {
          * Get Desk Calibration
          * @description Per-analyst calibration (decision-quality Brier + hit-rate) across all
          *     resolved decisions, ranked best-calibrated first, with a significance gate.
+         *
+         *     Auth-required when accounts are configured (B3b/§10.2): a cross-user
+         *     leaderboard must not be open to anonymous in multi-tenant. The *visibility
+         *     model* (who sees whom) is deferred to B2 — this only stops anonymous access.
+         *     `get_current_user` returns None (no enforcement) when Clerk is off, so the
+         *     single-tenant demo is unchanged.
          */
         get: operations["get_desk_calibration_v1_calibration_desk_get"];
         put?: never;
@@ -1608,7 +1613,9 @@ export interface operations {
     run_scenario_endpoint_v1_scenarios_run_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1667,7 +1674,9 @@ export interface operations {
             query?: {
                 limit?: number;
             };
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1698,7 +1707,9 @@ export interface operations {
     get_run_v1_scenarios_runs__run_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 run_id: string;
             };
@@ -1731,7 +1742,9 @@ export interface operations {
     export_run_pdf_v1_scenarios_runs__run_id__export_pdf_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 run_id: string;
             };
@@ -1822,7 +1835,9 @@ export interface operations {
                 limit?: number;
                 symbol?: string | null;
             };
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1853,7 +1868,9 @@ export interface operations {
     create_entry_v1_journal_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1888,7 +1905,9 @@ export interface operations {
     get_entry_v1_journal__entry_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 entry_id: string;
             };
@@ -1921,7 +1940,9 @@ export interface operations {
     patch_entry_v1_journal__entry_id__patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 entry_id: string;
             };
@@ -2061,7 +2082,9 @@ export interface operations {
     open_trade_v1_paper_trades_open_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2096,7 +2119,9 @@ export interface operations {
     close_trade_v1_paper_trades__trade_id__close_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 trade_id: string;
             };
@@ -2135,7 +2160,9 @@ export interface operations {
             query?: {
                 since?: string | null;
             };
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2170,7 +2197,9 @@ export interface operations {
                 limit?: number;
                 symbol?: string | null;
             };
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2201,7 +2230,9 @@ export interface operations {
     get_trade_v1_paper_trades__trade_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 trade_id: string;
             };
@@ -2259,7 +2290,9 @@ export interface operations {
                 unread?: boolean;
                 limit?: number;
             };
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2290,7 +2323,9 @@ export interface operations {
     acknowledge_alert_v1_admin_alerts__alert_id__ack_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 alert_id: string;
             };
@@ -2393,7 +2428,9 @@ export interface operations {
     explain_scenario_v1_explain_scenario_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2428,7 +2465,9 @@ export interface operations {
     explain_journal_v1_explain_journal_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2679,7 +2718,9 @@ export interface operations {
             query?: {
                 instrument_code?: string;
             };
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2712,7 +2753,9 @@ export interface operations {
             query?: {
                 instrument_code?: string;
             };
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2743,7 +2786,9 @@ export interface operations {
     create_thesis_v1_thesis_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2778,7 +2823,9 @@ export interface operations {
     critique_thesis_v1_thesis__thesis_id__critique_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 thesis_id: string;
             };
@@ -2811,7 +2858,9 @@ export interface operations {
     devils_advocate_thesis_v1_thesis__thesis_id__devils_advocate_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 thesis_id: string;
             };
@@ -2844,7 +2893,9 @@ export interface operations {
     patch_thesis_v1_thesis__thesis_id__patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 thesis_id: string;
             };
@@ -2914,7 +2965,9 @@ export interface operations {
     get_desk_calibration_v1_calibration_desk_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2931,6 +2984,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     get_calibration_v1_calibration_get: {
@@ -2939,7 +3001,9 @@ export interface operations {
                 instrument_code?: string;
                 bucket_count?: number;
             };
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2973,7 +3037,9 @@ export interface operations {
                 instrument_code?: string;
                 bucket_count?: number;
             };
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
