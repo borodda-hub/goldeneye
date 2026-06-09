@@ -95,20 +95,49 @@ gap).
   test_envelope_confidence_wiring.py` (wiring + AST guard against re-introducing a literal).
   Documented in `AI_BEHAVIOR.md §safety_envelope`.
 
-**Sync state (2026-06-08):** `master == origin/master == develop == origin/develop ==
-f5ae345`. Everything in sync — nothing un-promoted, nothing unpushed (this HANDOFF commit is
-the only trailing item; promote it with the next phase). Clean working tree, no stashes.
-**930 backend + 402 web tests** passing (+24 from A2); `pnpm health` green end-to-end; the
-`contracts` CI job is green on both lanes. **Stage F complete (F0+F1+F2); Stage A2 complete.**
-Next critical-path item per `MASTER_PLAN.md §8` is **B3 — accounts GA + per-user scoping**.
+**2026-06-08 — Stage B3a (per-user scoping, DATA LAYER ONLY) shipped to develop.** Per
+`docs/PHASE_B3_PLAN.md §5.A`. Migration `010_theses_user_scope` (`theses.user_id` nullable FK
+→ `users.id` `ON DELETE RESTRICT`; active-uniqueness swapped to per-`(user_id, instrument_code)`;
+`(user_id, …)` scope indexes on journals/scenarios/theses). Repos (journal/theses/scenarios/
+paper_trades) + services (calibration/dq_coach/paper_engine) take `user_id: UUID|None = None`
+and filter on it; the **`replace_active` deactivate is now scoped** (the landmine: an unscoped
+deactivate flipped every other user's active thesis — proven by a fail-without/pass-with test).
+- **END-TO-END ISOLATION IS NOT LIVE YET.** The per-user scoping *params exist* and the data
+  layer *isolates by `user_id`*, but **no auth/router wires a real `user_id`** — every caller
+  still passes `None`, so the app runs exactly as a single anonymous tenant. Turning isolation
+  on (wiring `get_optional_user`, by-id 404 ownership, admin/desk gating, contracts regen, the
+  HTTP A-vs-B matrix) is **B3b**. Treat B3a as a tested-but-unwired seam.
+- **Behavior:** identical for theses/scenarios/paper (0 non-NULL rows). For journal/calibration,
+  **B3a corrects a pre-existing anonymous-view leak**: the seed's 3 synthetic desk analysts
+  (`demo_desk_analysts.py`, 42 NG journals owned by non-`users` UUIDs) used to leak into the
+  anonymous `/v1/calibration`+`/v1/journal` (no filter existed); now the anonymous view returns
+  only the NULL pool. **Counts drop because isolation now works** — not a regression. The desk
+  leaderboard (`/v1/calibration/desk`, grouped by `user_id`) still sees all analysts.
+- **Tests:** `tests/db/test_user_scoping.py` (testcontainer) — list filtering, the `replace_active`
+  non-cross-deactivation, service scoping, equity scoping, default-`None`==anonymous-pool. **Note:
+  `tests/db` is the DB-integration home and is NOT in `pnpm health`/CI** (the fast gate runs the
+  mocked `apps/api/tests`); run it with `uv run --project apps/api pytest tests/db` from the repo
+  root. Wiring `tests/db` into CI is a recommended follow-up so the isolation lock runs in CI.
+- **Infra fix:** `tests/db/conftest.py` now resolves alembic paths absolutely — the ini's relative
+  `script_location = ../../infra/migrations` broke `migrated_url` when pytest ran from the repo
+  root (the whole `tests/db` suite was unrunnable from root); noted here so it's not a mystery.
+- `pnpm health` green (930/402); `contracts:check` no-op (no router change → F1 green). Dev DB
+  migrated to `010`; dev server restarted on B3a (anonymous `/v1/journal` → NULL pool only).
+
+**Sync state (2026-06-08):** `master == origin/master == f5ae345` (Stage A2). `develop` carries
+A2 + the B3a data-layer commits (this promotion); **B3a NOT on master yet** (awaiting sign-off).
+Clean working tree. **930 backend + 402 web** (`pnpm health`) + **28 `tests/db`** (incl. 5 new
+isolation tests) passing. **Stage F + A2 complete; B3a on develop, B3b is next** (identity +
+enforcement — the phase that makes isolation live).
 
 The single-sentence product story has correctly pivoted from "we predict
 price" to **"we calibrate uncertainty honestly."**
 
 The current roadmap source of truth is **`docs/MASTER_PLAN.md`** (this file is the
 living session-state log and *defers* to it for the plan). Next critical-path item is
-**B3 — accounts GA + per-user scoping** (`MASTER_PLAN.md §4` Stage B / §8); it has no
-plan doc yet (write `docs/PHASE_B3_PLAN.md` via a `/plan` session first). `docs/
+**B3b — identity + enforcement** (wire `get_optional_user`, by-id ownership 404s, admin/desk
+gating, contracts regen, the HTTP A-vs-B isolation matrix) per `docs/PHASE_B3_PLAN.md §5.B`;
+B3a (data layer) is done. `docs/
 PHASE_31_PLAN.md` remains the detail for the later **C3** real-COT/EIA ingestion item.
 
 ---
