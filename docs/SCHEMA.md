@@ -158,6 +158,7 @@ CREATE TABLE scenario_runs (
 -- snapshotted into journal entries at write time for calibration.
 CREATE TABLE theses (
   id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id                 UUID REFERENCES users(id) ON DELETE RESTRICT,  -- nullable; NULL = shared anonymous pool (migration 010)
   instrument_code         TEXT NOT NULL DEFAULT 'NG',
   statement               TEXT NOT NULL CHECK (char_length(statement) > 0),
   supporting_evidence     JSONB NOT NULL DEFAULT '[]',  -- [{factor, weight, note, source}]
@@ -168,10 +169,17 @@ CREATE TABLE theses (
   updated_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
   active                  BOOLEAN NOT NULL DEFAULT true
 );
--- Only one active thesis per instrument.
-CREATE UNIQUE INDEX one_active_thesis_per_instrument
-  ON theses (instrument_code) WHERE active;
+-- Only one active thesis per (user, instrument) — per-user since migration 010.
+-- NOTE: Postgres treats NULL user_id as distinct, so the anonymous (NULL) pool's
+-- single-active is enforced by the repo (replace_active scopes its deactivate,
+-- incl. the user_id IS NULL branch), not this index.
+CREATE UNIQUE INDEX one_active_thesis_per_user_instrument
+  ON theses (user_id, instrument_code) WHERE active;
 CREATE INDEX theses_instrument_time_idx ON theses (instrument_code, created_at DESC);
+CREATE INDEX ix_theses_user_active ON theses (user_id, active);
+-- Per-user read indexes added in migration 010 (B3a):
+CREATE INDEX ix_journal_user_created ON user_decision_journals (user_id, created_at);
+CREATE INDEX ix_scenario_runs_user_created ON scenario_runs (user_id, created_at);
 
 -- Decision Journal entries (decision-quality framework).
 -- Calibration columns added in migrations 006 (Phase 13), 007_decision_capture

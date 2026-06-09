@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Boolean, CheckConstraint, Integer, Text, func
+from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Integer, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -25,6 +25,13 @@ class Thesis(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    # Owner (Clerk user). NULL = the shared anonymous/demo pool. Populated +
+    # enforced in B3b; the column + scoping capability land here in B3a.
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=True,
     )
     instrument_code: Mapped[str] = mapped_column(
         Text, nullable=False, server_default="NG"
