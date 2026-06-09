@@ -1,4 +1,4 @@
-# Phase B3 Plan — Accounts GA + per-user data scoping (data isolation)
+# Phase B3 Plan — Accounts GA + per-user data scoping (data isolation) — **split into B3a + B3b**
 
 *Plan-only. Produced in a `/plan` session per `MASTER_PLAN.md §7.1`. Covers **B3 only**. No code
 changed by this document. Template follows `MASTER_PLAN.md §7.2`. Maps to DD risk **R3**.*
@@ -7,9 +7,26 @@ changed by this document. Template follows `MASTER_PLAN.md §7.2`. Maps to DD ri
 `user_id`; enforce isolation. (Schema/migrations already present via `007_users`/`009`.) DoD:
 multi-user isolation tested; anonymous demo still works; gate green."* Depends-on: F0 (done).
 
+**This plan is split into two independently-promotable phases along the data/identity *layer* seam:**
+- **B3a — data layer.** Migration + per-user scoping *capability* in the repos/services (a `user_id`
+  param, default `None`) + the `replace_active` landmine fix + **query-layer** isolation tests (direct
+  repo calls with explicit `user_id`s). Touches **no routers**, adds **no auth**, changes **no
+  contracts**, and is **behavior-identical to today** (every caller still passes `None`). It de-risks the
+  migration and proves the hard correctness on a small, auth-free surface.
+- **B3b — identity + enforcement.** Wire `Depends(get_optional_user)` into the ~24 endpoints, thread the
+  scope, add the by-id ownership `404` checks, gate admin/desk, fix the one frontend token gap, **own the
+  contracts regen** (the `authorization`-header diff, F1 red→green), and prove isolation **end-to-end**
+  (authed A vs. B over HTTP). This is the phase that actually turns multi-user on.
+
+*Why this seam (vs. the literal "scoping vs. auth" cut): at the router layer "scope an endpoint" and "add
+the auth dependency" are the same edit and both change contracts, so they can't be cleanly separated
+there. One layer down (repo/service vs. router) they separate perfectly. Critically, there is **no
+half-enabled-isolation window**: between B3a and B3b the app is exactly today (all-NULL, anonymous), so
+B3a never claims an isolation it hasn't enforced.*
+
 **Headline:** isolation is the deliverable, not a side effect. The risk is **one forgotten query**.
-§4 below is an exhaustive file:line checklist of every read/write path so a miss is visible on paper;
-§6 specifies **negative** tests ("refuses everyone else's data"), which are the real acceptance bar.
+§4 below is an exhaustive file:line checklist of every read/write path (now tagged by phase) so a miss is
+visible on paper; §6 specifies **negative** tests ("refuses everyone else's data") at both layers.
 
 ---
 
@@ -46,20 +63,35 @@ landed; the branch is stale and should be closed, not merged):
 
 ---
 
-## 1. Objective + DoD
+## 1. Objective + per-phase DoD
 
-**Objective:** Make every personal-artifact path user-aware: writes stamp the requester's scope; reads
-and by-id mutations are filtered/ownership-checked by it; anonymous/accounts-off behaviour is unchanged.
+**Overall objective:** Make every personal-artifact path user-aware: writes stamp the requester's scope;
+reads and by-id mutations are filtered/ownership-checked by it; anonymous/accounts-off behaviour is
+unchanged. Delivered in two layers (B3a data, B3b identity), each independently promotable.
 
-**DoD (from `MASTER_PLAN.md §4` B3):**
-- Every read/write path in the §4 checklist is scoped or has a documented reason it isn't.
-- **Multi-user isolation tested** with **negative tests** (§6): authed as A, denied/empty for B's data on
-  every scoped endpoint.
-- **Anonymous demo still works** — accounts-off and signed-out both keep the open NULL-scope behaviour;
-  no endpoint silently starts requiring auth.
-- Look-ahead invariants untouched (S3 N/A — no model/resolution logic changes; auto-resolution worker
-  stays system-wide and stamps nothing user-related).
-- `pnpm health` green; contracts regenerated + F1 gate green; docs updated in-commit (S7).
+### B3a — data layer · DoD
+- The migration (§5.A) lands and runs: `theses.user_id` (nullable FK) + indexes + the swapped active
+  uniqueness index. No multi-head; existing rows stay `user_id NULL`.
+- Repos/services gain a `user_id: UUID | None = None` param and filter on it; the `replace_active`
+  deactivate is scoped (the landmine fix).
+- **Query-layer isolation tests pass** (§6.A): direct repo/service calls with explicit `user_id`s prove
+  filtering + the `replace_active` non-cross-deactivation, *without any HTTP or auth*.
+- **No user-facing isolation yet, and that is stated plainly.** Every caller still passes `None`, so the
+  running app is **behavior-identical to today** (anonymous NULL pool); the `user_id` params are a
+  **tested-but-not-yet-wired seam**. No router touched → **no contracts change → F1 stays green**.
+- `pnpm health` green. The HANDOFF note for B3a must say exactly this (no isolation enforced yet).
+
+### B3b — identity + enforcement · DoD
+- Every router site in §4 resolves `scope` via `Depends(get_optional_user)` and threads it into the B3a
+  repos/services; every by-id path has the `row.user_id != scope → 404` check; admin/desk gated (§10.2).
+- The frontend token gap is closed (`getCurrentThesis` → `apiFetch`).
+- **Multi-user isolation proven end-to-end** (§6.B): the authed-A-vs-B HTTP negative matrix is green.
+- **Anonymous demo still works** — accounts-off and signed-out keep the open NULL-scope behaviour; no
+  endpoint silently starts forcing auth (data endpoints use `get_optional_user`, never `get_current_user`).
+- **Contracts regenerated** (the `authorization`-header diff) and the **F1 gate green** — B3b owns the
+  red→green (§8).
+- Look-ahead invariants untouched (S3 N/A; the auto-resolution worker stays system-wide). `pnpm health`
+  green; docs updated in-commit (S7).
 
 ---
 
@@ -114,70 +146,78 @@ experience.
 ## 4. THE ENUMERATION CHECKLIST — every user-data read/write path
 
 > Legend: **W** write · **R** read/list · **ID** by-id (needs ownership check). "Scope" = the fix.
-> A box is *not* done until its row is scoped or has a written reason it isn't.
+> **Phase** column: **B3a** = data-layer half (repo/service `user_id` param + filter, migration,
+> `replace_active` fix); **B3b** = identity half (router resolves `scope`, threads it, by-id `404`
+> ownership checks, gating, frontend). **B3a+B3b** = the row has work in both layers; **B3b** alone =
+> router-only (ownership checks / gating, nothing for the data layer to add). A box is *not* done until
+> its row is scoped (in its phase) or has a written reason it isn't.
 
 ### 4.1 Journal — `user_decision_journals` (has `user_id`)
-| # | Path | file:line | R/W | Scoping to apply |
-|---|---|---|---|---|
-| J1 | `POST /v1/journal` create_entry | `routers/journal.py:99` | W | stamp `user_id=scope` into `data` before `journal_repo.create` (`:136`) |
-| J2 | `GET /v1/journal` list_entries | `routers/journal.py:161` | R | pass `scope` → `journal_repo.get_recent` filters `user_id==scope` (`repos/journal.py:26`) |
-| J3 | `GET /v1/journal/{id}` get_entry | `routers/journal.py:184` | ID | ownership check after `get_by_id` (`repos/journal.py:42`) |
-| J4 | `PATCH /v1/journal/{id}` patch_entry | `routers/journal.py:195` | ID+W | ownership check before `update` (`repos/journal.py:49`) |
-| J5 | `POST /v1/journal/extract-prediction` | `routers/journal.py:69` | — | **no persistence** (LLM only) → no scoping needed |
-| J6 | `POST /v1/journal/auto-resolve` | `routers/journal.py:84` | W(sys) | background trigger → **system-wide** (all users); resolves each row's own claim, stamps nothing user-related → no per-user scoping. (Whether the manual trigger stays open vs. admin-gated is a B1/ops concern, not B3 data-scoping.) |
-| J7 | `services/calibration.py::compute_calibration` | `services/calibration.py:201` | R | add `user_id` param → scope `list_with_resolutions` (`repos/journal.py:79`); called by `GET /v1/calibration` (`routers/calibration.py:53`) |
-| J8 | `services/dq_coach.py::coach_decision_quality` | `services/dq_coach.py:150` | R | same scope param → `list_with_resolutions`; called by `GET /v1/calibration/coaching` (`routers/calibration.py:78`) |
-| J9 | `routers/explain.py::explain_journal` | `routers/explain.py:105` | ID | ownership check after `journal_repo.get_by_id` |
-| J10 | `services/auto_resolution.py::resolve_open_decisions` | `services/auto_resolution.py:92` | R+W(sys) | system job → unscoped **by design**; verify it never cross-contaminates (it only sets each row's own `resolved_*`) |
+| # | Path | file:line | R/W | Phase | Scoping to apply |
+|---|---|---|---|---|---|
+| J1 | `POST /v1/journal` create_entry | `routers/journal.py:99` | W | B3a+B3b | B3a: `journal_repo.create` accepts `user_id`. B3b: router stamps `user_id=scope` into `data` before create (`:136`) |
+| J2 | `GET /v1/journal` list_entries | `routers/journal.py:161` | R | B3a+B3b | B3a: `journal_repo.get_recent` filters `user_id==scope` (`repos/journal.py:26`). B3b: router passes `scope` |
+| J3 | `GET /v1/journal/{id}` get_entry | `routers/journal.py:184` | B3b | router 404 ownership check after `get_by_id` (`repos/journal.py:42`) |
+| J4 | `PATCH /v1/journal/{id}` patch_entry | `routers/journal.py:195` | B3b | router 404 ownership check before `update` (`repos/journal.py:49`) |
+| J5 | `POST /v1/journal/extract-prediction` | `routers/journal.py:69` | — | — | **no persistence** (LLM only) → no scoping in either phase |
+| J6 | `POST /v1/journal/auto-resolve` | `routers/journal.py:84` | W(sys) | — | background trigger → **system-wide**; resolves each row's own claim, stamps nothing user-related → no per-user scoping. (Open-vs-admin-gated is a B1/ops concern.) |
+| J7 | `services/calibration.py::compute_calibration` | `services/calibration.py:201` | R | B3a+B3b | B3a: add `user_id` param → scope `list_with_resolutions` (`repos/journal.py:79`). B3b: `GET /v1/calibration` passes `scope` (`routers/calibration.py:53`) |
+| J8 | `services/dq_coach.py::coach_decision_quality` | `services/dq_coach.py:150` | R | B3a+B3b | B3a: same `user_id` param → `list_with_resolutions`. B3b: `GET /v1/calibration/coaching` passes `scope` (`routers/calibration.py:78`) |
+| J9 | `routers/explain.py::explain_journal` | `routers/explain.py:105` | B3b | router 404 ownership check after `journal_repo.get_by_id` |
+| J10 | `services/auto_resolution.py::resolve_open_decisions` | `services/auto_resolution.py:92` | — | system job → unscoped **by design**; B3a verifies it never cross-contaminates (it only sets each row's own `resolved_*`) — no behavior change |
 
 ### 4.2 Theses — `theses` (**needs `user_id` column added**)
-| # | Path | file:line | R/W | Scoping to apply |
-|---|---|---|---|---|
-| T1 | `GET /v1/thesis/current` get_current | `routers/thesis.py:61` | R | scope `theses_repo.get_active` by `user_id` (`repos/theses.py:22`). **Also fix `getCurrentThesis` to use `apiFetch`** so the token is sent (`api.ts:573`) |
-| T2 | `POST /v1/thesis` create_thesis | `routers/thesis.py:136` | W | stamp `user_id=scope`; **scope the deactivate in `replace_active`** (`repos/theses.py:63-67`) by `user_id` — else creating a thesis deactivates *other users'* active theses ⚠️ |
-| T3 | `PATCH /v1/thesis/{id}` patch_thesis | `routers/thesis.py:211` | ID+W | ownership check after `get_by_id` (`repos/theses.py:34`) |
-| T4 | `POST /v1/thesis/{id}/critique` | `routers/thesis.py:157` | ID | ownership check after `get_by_id` |
-| T5 | `POST /v1/thesis/{id}/devils-advocate` | `routers/thesis.py:184` | ID | ownership check after `get_by_id` |
-| T6 | `GET /v1/thesis/seed` get_seed_draft | `routers/thesis.py:75` | R | reads forecasts (global) + **`scenarios_repo.get_recent`** (`:113`) for missing-data hints → scope that scenario read to `scope` (ties to S3 below) |
-| T7 | active-thesis uniqueness | `repos/theses.py` partial unique index | schema | index must become unique per **(user_id, instrument_code) where active** — covered by the migration |
+| # | Path | file:line | R/W | Phase | Scoping to apply |
+|---|---|---|---|---|---|
+| T1 | `GET /v1/thesis/current` get_current | `routers/thesis.py:61` | R | B3a+B3b | B3a: `theses_repo.get_active` filters `user_id` (`repos/theses.py:22`). B3b: router passes `scope` **and** fix `getCurrentThesis` → `apiFetch` so the token is sent (`api.ts:573`) |
+| T2 | `POST /v1/thesis` create_thesis | `routers/thesis.py:136` | W | B3a+B3b | **B3a (the ⚠️ landmine): scope `replace_active`'s deactivate** (`repos/theses.py:63-67`) by `user_id` + insert `user_id` — else creating a thesis deactivates *other users'* active theses. B3b: router passes `scope` |
+| T3 | `PATCH /v1/thesis/{id}` patch_thesis | `routers/thesis.py:211` | ID+W | B3b | router 404 ownership check after `get_by_id` (`repos/theses.py:34`) |
+| T4 | `POST /v1/thesis/{id}/critique` | `routers/thesis.py:157` | ID | B3b | router 404 ownership check after `get_by_id` |
+| T5 | `POST /v1/thesis/{id}/devils-advocate` | `routers/thesis.py:184` | ID | B3b | router 404 ownership check after `get_by_id` |
+| T6 | `GET /v1/thesis/seed` get_seed_draft | `routers/thesis.py:75` | R | B3a+B3b | B3a: `scenarios_repo.get_recent` (`:113`) gains `user_id` filter. B3b: router passes `scope` |
+| T7 | active-thesis uniqueness | `repos/theses.py` partial unique index | schema | B3a | migration: unique per **(user_id, instrument_code) where active** (see §5.A) |
 
 ### 4.3 Scenarios — `scenario_runs` (has `user_id`)
-| # | Path | file:line | R/W | Scoping to apply |
-|---|---|---|---|---|
-| S1 | `POST /v1/scenarios/run` | `routers/scenarios.py:107` | W | stamp `user_id=scope` in `scenario_repo.create` (`repos/scenarios.py:11`) |
-| S2 | `GET /v1/scenarios/runs` list_runs | `routers/scenarios.py:158` | R | scope `scenario_repo.get_recent` (`repos/scenarios.py:18`) |
-| S3 | `GET /v1/scenarios/runs/{id}` get_run | `routers/scenarios.py:177` | ID | ownership check after `get_by_id` (`repos/scenarios.py:25`) |
-| S4 | `GET /v1/scenarios/runs/{id}/export.pdf` | `routers/scenarios.py:201` | ID | ownership check after `get_by_id` |
-| S5 | `routers/explain.py::explain_scenario` | `routers/explain.py:90` | ID | ownership check after `scenario_repo.get_by_id` |
-| S6 | `GET /v1/scenarios/templates` | `routers/scenarios.py:149` | — | static fixture → no scoping |
+| # | Path | file:line | R/W | Phase | Scoping to apply |
+|---|---|---|---|---|---|
+| S1 | `POST /v1/scenarios/run` | `routers/scenarios.py:107` | W | B3a+B3b | B3a: `scenario_repo.create` accepts `user_id` (`repos/scenarios.py:11`). B3b: router stamps `scope` |
+| S2 | `GET /v1/scenarios/runs` list_runs | `routers/scenarios.py:158` | R | B3a+B3b | B3a: `scenario_repo.get_recent` filters `user_id` (`repos/scenarios.py:18`). B3b: router passes `scope` |
+| S3 | `GET /v1/scenarios/runs/{id}` get_run | `routers/scenarios.py:177` | ID | B3b | router 404 ownership check after `get_by_id` (`repos/scenarios.py:25`) |
+| S4 | `GET /v1/scenarios/runs/{id}/export.pdf` | `routers/scenarios.py:201` | ID | B3b | router 404 ownership check after `get_by_id` |
+| S5 | `routers/explain.py::explain_scenario` | `routers/explain.py:90` | ID | B3b | router 404 ownership check after `scenario_repo.get_by_id` |
+| S6 | `GET /v1/scenarios/templates` | `routers/scenarios.py:149` | — | — | static fixture → no scoping |
 
 ### 4.4 Paper trades — `paper_trades` (has `user_id` + index)
-| # | Path | file:line | R/W | Scoping to apply |
-|---|---|---|---|---|
-| P1 | `POST /v1/paper-trades/open` | `routers/paper.py:36` → `paper_engine.open_trade:167` | W | thread `user_id=scope` into `trade_repo.create` (`repos/paper_trades.py:13`) |
-| P2 | `POST /v1/paper-trades/{id}/close` | `routers/paper.py:66` → `paper_engine.close_trade:210` | ID+W | ownership check after `get_by_id` (`repos/paper_trades.py:35`) |
-| P3 | `GET /v1/paper-trades` list_trades | `routers/paper.py:91` | R | scope `trade_repo.list_trades` (`repos/paper_trades.py:20`) |
-| P4 | `GET /v1/paper-trades/{id}` get_trade | `routers/paper.py:112` | ID | ownership check after `get_by_id` |
-| P5 | `GET /v1/paper-trades/equity-curve` | `routers/paper.py:82` → `paper_engine.equity_curve:305` | R | scope the trades query by `user_id` |
-| P6 | `paper_engine.current_equity` | `services/paper_engine.py:53` | R | scope by `user_id` (used by equity/curve math) |
+| # | Path | file:line | R/W | Phase | Scoping to apply |
+|---|---|---|---|---|---|
+| P1 | `POST /v1/paper-trades/open` | `routers/paper.py:36` → `paper_engine.open_trade:167` | W | B3a+B3b | B3a: `open_trade`/`trade_repo.create` accept `user_id` (`repos/paper_trades.py:13`). B3b: router stamps `scope` |
+| P2 | `POST /v1/paper-trades/{id}/close` | `routers/paper.py:66` → `paper_engine.close_trade:210` | ID+W | B3b | router 404 ownership check after `get_by_id` (`repos/paper_trades.py:35`) |
+| P3 | `GET /v1/paper-trades` list_trades | `routers/paper.py:91` | R | B3a+B3b | B3a: `trade_repo.list_trades` filters `user_id` (`repos/paper_trades.py:20`). B3b: router passes `scope` |
+| P4 | `GET /v1/paper-trades/{id}` get_trade | `routers/paper.py:112` | ID | B3b | router 404 ownership check after `get_by_id` |
+| P5 | `GET /v1/paper-trades/equity-curve` | `routers/paper.py:82` → `paper_engine.equity_curve:305` | R | B3a+B3b | B3a: `equity_curve` filters trades by `user_id`. B3b: router passes `scope` |
+| P6 | `paper_engine.current_equity` | `services/paper_engine.py:53` | R | B3a+B3b | B3a: `current_equity` filters by `user_id`. B3b: callers pass `scope` |
 
-### 4.5 Alerts — `alerts` (has `user_id`; admin surface)
-| # | Path | file:line | R/W | Scoping to apply |
-|---|---|---|---|---|
-| A1 | `GET /v1/admin/alerts` list_alerts | `routers/admin.py:108/110` | R | **auth-required (admin surface)** per decision §10.2 — enforce sign-in on the admin router so it's not open in multi-tenant |
-| A2 | `POST /v1/admin/alerts/{id}/acknowledge` | `routers/admin.py:133` | ID+W | auth-required (admin surface) per §10.2 |
+### 4.5 Alerts — `alerts` (admin surface; gating-only, not per-user scoping in B3)
+| # | Path | file:line | R/W | Phase | Scoping to apply |
+|---|---|---|---|---|---|
+| A1 | `GET /v1/admin/alerts` list_alerts | `routers/admin.py:108/110` | R | B3b | **auth-required (admin surface)** per §10.2 — enforce sign-in on the admin router. (Per-user *scoping* of alerts is deferred with the visibility model; B3 only stops it being open) |
+| A2 | `POST /v1/admin/alerts/{id}/acknowledge` | `routers/admin.py:133` | ID+W | B3b | auth-required (admin surface) per §10.2 |
 
 ### 4.6 Desk calibration — cross-user **by design** (B2 surface)
-| # | Path | file:line | Note |
-|---|---|---|---|
-| D1 | `GET /v1/calibration/desk` → `compute_desk_calibration` | `routers/calibration.py:20`, `services/desk_calibration.py:53` | Groups Brier **by `user_id` across all users** (the leaderboard). Per decision §10.2: **gate to authenticated-only** in B3, and **explicitly defer the cross-user visibility model (who sees whom) to B2**. B3 must not invent a visibility policy — it only stops the endpoint being open to anonymous |
+| # | Path | file:line | Phase | Note |
+|---|---|---|---|---|
+| D1 | `GET /v1/calibration/desk` → `compute_desk_calibration` | `routers/calibration.py:20`, `services/desk_calibration.py:53` | B3b | Groups Brier **by `user_id` across all users** (the leaderboard). Per §10.2: **gate to authenticated-only** in B3 and **defer the cross-user visibility model (who sees whom) to B2**. B3 only stops it being open to anonymous — no data-layer scoping change |
 
-**Count:** 4 tables to scope at the query layer + `theses` needs a column; **~24 call sites** across 7
-routers + 4 services. Every row above must be green or have a written exemption (J5, J6, J10, S6, D1).
+**Count:** **B3a** = 4 tables' repo/service scoping (journal, theses, scenarios, paper) + the migration +
+the `replace_active` fix (~12 repo/service edits, no routers). **B3b** = ~24 router sites wired
+(`scope` threading + by-id 404s) + admin/desk gating + the frontend fix + contracts. Every row above must
+be green **in its phase** or carry a written exemption (J5, J6, J10, S6).
 
 ---
 
-## 5. Change set (by stack lane)
+## 5. Change set (by phase, then stack lane)
+
+### 5.A — B3a (data layer) — no routers, no auth, no contracts change
 
 **Schema / migration (one new Alembic revision, down_revision `009_merge_heads`):**
 - `ALTER TABLE theses ADD COLUMN user_id UUID NULL REFERENCES users(id) ON DELETE RESTRICT;` — nullable FK
@@ -195,97 +235,153 @@ routers + 4 services. Every row above must be green or have a written exemption 
 - Update `SCHEMA.md` in the same commit (S7): add `theses.user_id` (FK) + the new indexes; correct the
   stale "008 scopes them" note inherited into `007_users`'s docstring lineage.
 
-**Backend — repos (add `user_id: uuid.UUID | None` params + `WHERE user_id == scope`):**
-`repos/journal.py` (get_recent, get_by_id*, list_with_resolutions, create), `repos/theses.py` (get_active,
-replace_active **scoped deactivate**, get_by_id*, +`user_id` on insert), `repos/scenarios.py` (get_recent,
-get_by_id*, create), `repos/paper_trades.py` (list_trades, get_by_id*, create, list_open/closed used by
-engine), `repos/alerts.py` (get_unread, get_all, get_by_id*). *by-id repos can stay id-only and let the
-router do the ownership check — pick one pattern and apply it uniformly (recommend: repo stays id-only,
-router enforces ownership, so the check is visible at the endpoint).
+**Repos — add `user_id: uuid.UUID | None = None` params + `WHERE user_id == scope`** (default `None`
+keeps every current caller behavior-identical): `repos/journal.py` (get_recent, list_with_resolutions,
+create), `repos/theses.py` (get_active, **`replace_active` scoped deactivate — the landmine fix**,
+`user_id` on insert), `repos/scenarios.py` (get_recent, create), `repos/paper_trades.py` (list_trades,
+create, the list/aggregate helpers the engine uses). **By-id repo getters stay id-only** — ownership is a
+router 404 in B3b (keeps the check visible at the endpoint, not buried in the repo). **`repos/alerts.py`
+is untouched in B3a** (alerts is admin-gating in B3b, not per-user data scoping).
 
-**Backend — routers/services (resolve scope + thread it):** add `user=Depends(get_optional_user)` to
-every scoped endpoint in §4; compute `scope = user.id if user else None`; pass to repos/services; add the
-`row.user_id != scope → 404` check on every by-id path. Services `calibration.py`, `dq_coach.py`,
-`paper_engine.py` take a `user_id` param.
+**Services — add a `user_id` param + thread it to the repo:** `calibration.py::compute_calibration`,
+`dq_coach.py::coach_decision_quality`, `paper_engine.py` (`current_equity`, `equity_curve`, `open_trade`).
+Default `None`. (`auto_resolution.py` stays system-wide — unchanged.)
 
-**Frontend:** route `getCurrentThesis` through `apiFetch` (`api.ts:573`) so the token is sent. (Everything
-else already flows the token.) No new UI required for isolation; sign-in UI already exists.
+**Tests:** §6.A query-layer isolation suite (direct repo/service calls with explicit `user_id`s) +
+per-repo scope-preservation unit tests. No HTTP/auth.
 
-**Tests:** the isolation suite (§6) + scope-preservation unit tests on each repo.
+### 5.B — B3b (identity + enforcement) — routers, ownership, gating, contracts
+
+**Routers/services wiring:** add `user=Depends(get_optional_user)` to every scoped endpoint in §4;
+compute `scope = user.id if user else None`; pass `scope` into the B3a repo/service params; stamp it on
+writes. Add the `if row.user_id != scope: raise HTTPException(404)` check on **every by-id path** (J3, J4,
+J9, T3, T4, T5, S3, S4, S5, P2, P4). Gate `/v1/admin/*` (A1/A2) and `/v1/calibration/desk` (D1) to
+authenticated-only per §10.2 — **without** inventing a leaderboard visibility policy (deferred to B2).
+
+**Frontend:** route `getCurrentThesis` through `apiFetch` (`api.ts:573`) so the token is sent. Everything
+else already flows the token. No new UI (sign-in already exists).
+
+**Contracts:** regen after wiring (the `authorization`-header diff) — B3b owns the F1 red→green (§8).
+
+**Tests:** §6.B end-to-end HTTP isolation matrix (authed A vs. B).
 
 ---
 
 ## 6. Isolation tests — NEGATIVE tests are the acceptance bar (S5)
 
-"Returns my own data" is **insufficient**. For **every** scoped endpoint, with Clerk configured and two
-distinct users A and B (seed two `users` rows; stub `get_optional_user` to return A or B per request, or
-mint/verify test tokens), assert:
+"Returns my own data" is **insufficient** — the bar is "refuses everyone else's." The proof is split to
+match the layers: B3a proves it at the **query layer** (no HTTP), B3b proves it **end-to-end** (HTTP, real
+identities). Together: unit + integration, each shipping with the code it covers.
+
+### 6.A — B3a query-layer isolation (direct repo/service calls, explicit `user_id`s)
+
+No auth, no HTTP. Seed two `users` rows (A, B) — needed because `theses.user_id` is now an FK — and insert
+artifact rows directly with `user_id = A`, `user_id = B`, and `user_id = NULL`. Then call the repos/services
+**with an explicit `user_id`** and assert:
+
+1. **List filtering:** `journal_repo.get_recent(user_id=A)` / `scenario_repo.get_recent(user_id=A)` /
+   `trade_repo.list_trades(user_id=A)` / `theses_repo.get_active(user_id=A)` return **only A's** rows —
+   never B's, never the NULL pool.
+2. **`replace_active` non-cross-deactivation (the ⚠️ landmine, T2):** with A and B both holding an active
+   NG thesis, `theses_repo.replace_active(user_id=B, instrument_code="NG", …)` leaves **A's** row
+   `active=True` and deactivates only B's. Repeat for the NULL pool (anonymous = one shared demo user):
+   `replace_active(user_id=None, …)` collapses only the NULL pool's active row.
+3. **Service scoping:** `compute_calibration(user_id=A)` / `coach_decision_quality(user_id=A)` /
+   `paper_engine.equity_curve(user_id=A)` aggregate **only A's** resolved rows/trades.
+4. **Default-`None` is behavior-preserving:** calling any of the above with no `user_id` (the current
+   call convention) returns the NULL pool exactly as today — the seam is inert until B3b wires it.
+
+Lock as a parametrized suite over (repo/service × A/B/NULL). This is the B3a acceptance gate.
+
+### 6.B — B3b end-to-end HTTP isolation matrix (authed A vs. B)
+
+With Clerk configured and two distinct users A and B (stub `get_optional_user` to return A or B per
+request, or mint/verify test tokens), over the real endpoints assert:
 
 1. **Cross-read denied/empty:** A creates a journal entry / thesis / scenario / paper trade; **B's**
    `GET /list` does **not** include it; **B's** `GET /{A's id}` → **404**.
 2. **Cross-write denied:** B's `PATCH/POST .../{A's id}` (journal patch, thesis patch/critique/devils,
    paper close, scenario export, explain-journal/scenario) → **404**, and A's row is **unchanged**.
-3. **Thesis deactivate isolation (T2 ⚠️):** A has an active thesis for NG; B creates a thesis for NG;
-   **A's** thesis stays `active=True` (B's create only deactivated B's own).
-4. **Calibration/coaching isolation (J7/J8):** A and B each have resolved decisions; A's
-   `GET /v1/calibration` reflects **only A's** entries (counts + buckets), not the union.
+3. **Thesis deactivate isolation (T2 ⚠️), end-to-end:** A has an active NG thesis; B `POST /v1/thesis` for
+   NG; **A's** thesis stays `active=True` (re-asserts 6.A.2 through the HTTP path).
+4. **Calibration/coaching isolation (J7/J8):** A's `GET /v1/calibration` reflects **only A's** entries.
 5. **Equity isolation (P5/P6):** A's `equity-curve` sums only A's closed trades.
-6. **Anonymous pool intact:** with **no** auth (and with Clerk **off**), the seeded NULL-scope demo data
-   is still readable/writable exactly as today (a positive test guarding the demo).
+6. **Anonymous pool intact:** with **no** auth (and with Clerk **off**), the seeded NULL-scope demo data is
+   still readable/writable exactly as today (a positive test guarding the demo).
 7. **Anonymous ↔ signed-in separation:** an anonymous write (user_id NULL) is **not** visible to signed-in
    A, and A's write is **not** visible anonymously.
+8. **Admin/desk gating (§10.2):** anonymous `GET /v1/admin/alerts` and `GET /v1/calibration/desk` are
+   **denied** when accounts are configured.
 
-Each assertion is a row in the matrix; a missing endpoint in this matrix = an untested isolation hole.
-Lock the matrix as a parametrized test over the endpoint list.
+Each assertion is a matrix row; a missing endpoint = an untested isolation hole. Lock as a parametrized
+test over the endpoint list. This is the B3b acceptance gate.
 
 ---
 
 ## 7. Gates (S1–S8 — which apply)
 
-- **S1 (WIP=1):** B3 is the single primary thread. (B1 may run first or parallel only if file-disjoint;
-  per §5 they overlap on `auto_resolution`/journal — sequence B3 around B1 or coordinate.)
-- **S2:** full `pnpm health` green.
+- **S1 (WIP=1):** B3a and B3b are **strictly sequential** (B3b depends on B3a's repo/service params +
+  migration) — one primary thread, promoted in order, never overlapping. (B1 overlaps `auto_resolution`/
+  journal — coordinate around it.)
+- **S2:** full `pnpm health` green **for each phase** (B3a green with no router/contract change; B3b green
+  including the regenerated contracts).
 - **S3 (look-ahead):** **N/A to model/resolution logic** — B3 changes *who sees* rows, not how forecasts
   resolve. The auto-resolution worker stays system-wide and look-ahead-safe; the cheating-model proof is
-  untouched and must still pass.
+  untouched and must still pass (both phases).
 - **S4 (provenance):** no predictive claim changes.
-- **S5 (test-lock):** the §6 isolation matrix is the locked regression.
-- **S6 (claims gate):** no public copy change; the demo still reads honestly. Per §10.1 a signed-in user
-  starts empty — ensure the empty-state copy reads sensibly (a fresh workspace, not an error).
-- **S7 (docs-in-commit):** `SCHEMA.md` (new column/indexes), `API_CONTRACTS.md` (auth header now accepted),
-  `ARCHITECTURE.md` auth/tenancy note, `HANDOFF.md`.
-- **S8:** `feat/phase-b3-accounts` → `develop` → owner sign-off → `master`.
+- **S5 (test-lock):** §6.A is B3a's locked regression; §6.B is B3b's.
+- **S6 (claims gate):** **B3a — affirmatively state "no user-facing isolation yet"** (so no one reads the
+  merged capability as enforced). **B3b** — per §10.1 a signed-in user starts empty; ensure the empty-state
+  copy reads sensibly (a fresh workspace, not an error). No public copy change either phase.
+- **S7 (docs-in-commit):** B3a → `SCHEMA.md` (new column/indexes) + `HANDOFF.md` (the "seam, not enforced
+  yet" note). B3b → `API_CONTRACTS.md` (auth header now accepted), `ARCHITECTURE.md` auth/tenancy note,
+  `HANDOFF.md` (isolation live).
+- **S8:** two-lane, **two promotions** — `feat/phase-b3a-scoping` → `develop` → `master`, then
+  `feat/phase-b3b-identity` → `develop` → `master` (each with its own owner sign-off).
 
 ---
 
 ## 8. Migration / contracts / CI impact
 
-- **Migration:** one new revision (down_revision `009_merge_heads`) per §5; run `make migrate`. **No
-  multi-head** risk (single head today). Backfill: existing rows keep `user_id NULL` (the anonymous pool)
-  — no data migration needed.
-- **Contracts / F1 CI — expect a real diff:** adding `Depends(get_optional_user)` (which declares
-  `authorization: str | None = Header(default=None)`) makes FastAPI add an **`authorization` header
-  parameter** to each scoped path in `openapi.json`. So `packages/contracts` **will** change and the
-  **F1 `contracts` job will (correctly) fail until regenerated**. Plan: after wiring, run `curl … ->
-  packages/contracts/openapi.json && pnpm contracts:gen:local` (or `pnpm contracts:check`) and commit the
-  regenerated artifacts. Response *bodies* are unchanged (no new fields), so the web client types are
-  unaffected beyond the header param.
-- **Testcontainers:** the isolation suite needs the Timescale test DB (already in CI `test-api`).
+- **Migration (B3a):** one new revision (down_revision `009_merge_heads`) per §5.A; run `make migrate`.
+  **No multi-head** risk (single head today). Backfill: existing rows keep `user_id NULL` (the anonymous
+  pool) — no data migration needed.
+- **Contracts — B3a stays GREEN, B3b owns the RED→GREEN.**
+  - **B3a touches no routers**, so `openapi.json` is **unchanged** → the F1 `contracts` job passes with no
+    regen. (Sanity: `pnpm contracts:check` should be a no-op on the B3a branch.)
+  - **B3b** adds `Depends(get_optional_user)` (which declares `authorization: str | None =
+    Header(default=None)`), so FastAPI adds an **`authorization` header parameter** to each scoped path →
+    `packages/contracts` **will** change and the **F1 job will (correctly) fail until regenerated**. B3b's
+    flow: wire → `curl … -> packages/contracts/openapi.json && pnpm contracts:gen:local` (or `pnpm
+    contracts:check`) → commit the regenerated artifacts → F1 green. Response *bodies* are unchanged (no
+    new fields), so the web client types are unaffected beyond the header param.
+- **Testcontainers:** both isolation suites need the Timescale test DB (already in CI `test-api`).
 
 ---
 
-## 9. Promotion
+## 9. Promotion — two independent promotions
 
-- **Branch:** `feat/phase-b3-accounts` off `develop`. Close the stale `feat/accounts-clerk` / PR #7
-  (its content is already on master; do not merge it).
-- **Commit split (suggested):** (1) migration + `SCHEMA.md` (`theses.user_id` + indexes); (2) repos scope
-  params + tests; (3) routers/services wire `get_optional_user` + ownership checks; (4) frontend
-  `getCurrentThesis` via `apiFetch`; (5) contracts regen; (6) isolation suite; (7) docs (`API_CONTRACTS`,
-  `ARCHITECTURE`, `HANDOFF`).
-- **Sign-off note:** B3 complete — every §4 path scoped (or exempted with reason); §6 negative-test matrix
-  green; anonymous + accounts-off demo unchanged; contracts regenerated (auth header), F1 green; S3 proof
-  untouched. `pnpm health` green.
-- **After promotion:** B3 unblocks **B2** (per-analyst skill-vs-luck) and **B4** (decision/audit ledger).
+Close the stale `feat/accounts-clerk` / PR #7 (its content is already on master; do not merge it).
+
+### B3a — `feat/phase-b3a-scoping` off `develop`
+- **Commits:** (1) migration + `SCHEMA.md` (`theses.user_id` FK + indexes + swapped active index);
+  (2) repos `user_id` params + filters + the `replace_active` scoped-deactivate fix; (3) services
+  `user_id` params; (4) §6.A query-layer isolation suite; (5) `HANDOFF` note.
+- **Sign-off note:** B3a complete — per-user scoping **capability** landed at the data layer + the
+  `replace_active` landmine fixed; query-layer isolation (incl. non-cross-deactivation) proven by direct
+  repo tests. **No user-facing isolation yet — every caller passes `None`, app behavior-identical to
+  today; the `user_id` params are a tested-but-unwired seam.** No router/contract change → F1 green.
+  `pnpm health` green.
+
+### B3b — `feat/phase-b3b-identity` off `develop` (after B3a on `master`)
+- **Commits:** (1) routers/services wire `get_optional_user` + thread `scope`; (2) by-id `404` ownership
+  checks; (3) admin/desk gating; (4) frontend `getCurrentThesis` → `apiFetch`; (5) **contracts regen**;
+  (6) §6.B HTTP isolation matrix; (7) docs (`API_CONTRACTS`, `ARCHITECTURE`, `HANDOFF`).
+- **Sign-off note:** B3b complete — every §4 router site scoped (or exempted); §6.B negative matrix green;
+  anonymous + accounts-off demo unchanged; admin/desk gated (no B2 visibility policy invented); contracts
+  regenerated (auth header), F1 red→green; S3 proof untouched. `pnpm health` green. **Multi-user isolation
+  is now live.**
+- **After B3b:** unblocks **B2** (per-analyst skill-vs-luck) and **B4** (decision/audit ledger).
 
 ---
 
@@ -316,4 +412,3 @@ Lock the matrix as a parametrized test over the endpoint list.
    `user_id IS NULL` branch for anonymous), so the anonymous pool collapses to a single active row per
    instrument just like a real user. This is a deliberate product assumption (anonymous = the shared
    showcase desk), called out here so it is never a future surprise.
-```
