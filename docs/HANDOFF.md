@@ -138,21 +138,47 @@ guards the codebase in CI. Two pre-existing snags the wiring surfaced + fixed (n
 now points at the migrated testcontainer; `test_equity_curve_scoped` hardened to assert absolute
 per-user equity (the shared session DB holds seed trades after the loader fix).
 
-**Sync state (2026-06-09):** `master == origin/master == develop == origin/develop == 86251ad`.
-Everything in sync — B3a + B3a.1 promoted; nothing un-promoted, nothing unpushed (bar this HANDOFF
-commit, which promotes with B3b). Clean working tree. **930 backend + 402 web** (`pnpm health`) +
-**28 `tests/db`** (now CI-gated) passing. **Stage F + A2 complete; B3a + B3a.1 live; B3b is next**
-(identity + enforcement — the phase that makes isolation live).
+**2026-06-09 — Stage B3b (identity + enforcement) shipped + PROMOTED TO LIVE
+(`master == develop == c2a7712`). PER-USER ISOLATION IS NOW LIVE AND ENFORCED END-TO-END.**
+Per `docs/PHASE_B3_PLAN.md §5.B`. All 7 personal-artifact routers resolve the requester via
+`Depends(get_optional_user)`, thread `scope = user.id or None` into the B3a repo/service params,
+stamp it on writes, and enforce **by-id ownership (`row.user_id != scope` → 404)**. Admin
+(`/v1/admin/*`) + desk leaderboard (`/v1/calibration/desk`) are **auth-required when accounts are
+configured** (`get_current_user`; open in single-tenant demo, denied to anonymous in multi-tenant;
+the leaderboard *visibility model* is deferred to B2). Frontend `getCurrentThesis` now sends the
+Clerk token. **Anonymous / Clerk-off demo path is unchanged** (scope=None → shared NULL pool).
+- **Contracts:** regen = ONLY an optional `authorization` header param on scoped paths (+ consequent
+  422 blocks); no new fields, endpoint count unchanged (54→54). F1 contracts job green.
+- **§6.B HTTP isolation matrix** (`tests/db/test_http_isolation.py`, 6 tests, real app over httpx +
+  testcontainer): B/anon cannot read/modify A's journal/theses/scenarios/paper (404), lists scoped,
+  the thesis landmine holds e2e, admin/desk deny anonymous when Clerk configured, anonymous demo
+  survives. **Runs in the gated CI `db-tests` job. Proven to bite (red→green by SHA):** GREEN
+  `d56d2c9` → RED `8a46357` (removed journal by-id ownership check → `db-tests` FAILED on
+  `test_journal_http_isolation`, 2/32) → GREEN `c2a7712` (promoted). **e2e live-demoed** (not just
+  asserted) against the dev DB: B + anon got 404 on user A's journal.
+- **CI hardening:** `TESTCONTAINERS_RYUK_DISABLED=true` on `db-tests` (ephemeral runner doesn't need
+  Ryuk; avoids a flaky Docker Hub ryuk-image pull that once failed the gate).
+- **Reality nits (non-blocking):** admin ack route is `/v1/admin/alerts/{id}/ack`; the web's
+  `/v1/llm/explain-*` client fns are pre-existing dead code (real routes `/v1/explain/*`); admin/desk
+  gate is "any-authenticated" (no admin *role* yet). `pnpm health` green (930/402).
+
+**Sync state (2026-06-09):** `master == origin/master == develop == origin/develop == c2a7712`.
+Everything in sync — B3a + B3a.1 + B3b promoted; nothing un-promoted, nothing unpushed (bar this
+HANDOFF commit). Clean working tree. **930 backend + 402 web** (`pnpm health`) + **34 `tests/db`**
+(CI-gated; +6 HTTP isolation) passing. **Stage F + A2 + B3 (B3a/B3a.1/B3b) complete — Stage B's
+per-user foundation is done and isolation is LIVE.** Next per `MASTER_PLAN.md §4` Stage B: **B1**
+(schedule auto-resolution), **B2** (skill-vs-luck scorecards, now unblocked by per-user scoping),
+**B4** (decision/audit ledger).
 
 The single-sentence product story has correctly pivoted from "we predict
 price" to **"we calibrate uncertainty honestly."**
 
 The current roadmap source of truth is **`docs/MASTER_PLAN.md`** (this file is the
-living session-state log and *defers* to it for the plan). Next critical-path item is
-**B3b — identity + enforcement** (wire `get_optional_user`, by-id ownership 404s, admin/desk
-gating, contracts regen, the HTTP A-vs-B isolation matrix) per `docs/PHASE_B3_PLAN.md §5.B`;
-B3a (data layer) is done. `docs/
-PHASE_31_PLAN.md` remains the detail for the later **C3** real-COT/EIA ingestion item.
+living session-state log and *defers* to it for the plan). **B3 is fully complete (B3a data
+layer + B3a.1 CI lock + B3b identity); per-user isolation is LIVE.** Next per `MASTER_PLAN.md §4`
+Stage B: **B1** (schedule auto-resolution), **B2** (skill-vs-luck scorecards — now unblocked by
+per-user scoping), **B4** (decision/audit ledger). `docs/PHASE_31_PLAN.md` remains the detail for
+the later **C3** real-COT/EIA ingestion item.
 
 ---
 
