@@ -132,5 +132,9 @@ jobs:
       - run: uv sync --group dev
         working-directory: apps/api
       # Run from the repo root (CWD=root) so tests/db/conftest's alembic paths
-      # and the `apps.api.*` imports resolve.
+      # and the `apps.api.*` imports resolve. Ryuk (testcontainers' resource
+      # reaper) is disabled: ephemeral CI runners don't need container cleanup,
+      # and pulling testcontainers/ryuk from Docker Hub is a flaky failure point.
       - run: uv run --project apps/api pytest tests/db
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
