@@ -115,21 +115,34 @@ deactivate flipped every other user's active thesis — proven by a fail-without
   only the NULL pool. **Counts drop because isolation now works** — not a regression. The desk
   leaderboard (`/v1/calibration/desk`, grouped by `user_id`) still sees all analysts.
 - **Tests:** `tests/db/test_user_scoping.py` (testcontainer) — list filtering, the `replace_active`
-  non-cross-deactivation, service scoping, equity scoping, default-`None`==anonymous-pool. **Note:
-  `tests/db` is the DB-integration home and is NOT in `pnpm health`/CI** (the fast gate runs the
-  mocked `apps/api/tests`); run it with `uv run --project apps/api pytest tests/db` from the repo
-  root. Wiring `tests/db` into CI is a recommended follow-up so the isolation lock runs in CI.
+  non-cross-deactivation, service scoping, equity scoping, default-`None`==anonymous-pool. Run locally
+  with `uv run --project apps/api pytest tests/db` from the repo root. **(Now gated in CI — see B3a.1
+  below.)**
 - **Infra fix:** `tests/db/conftest.py` now resolves alembic paths absolutely — the ini's relative
   `script_location = ../../infra/migrations` broke `migrated_url` when pytest ran from the repo
   root (the whole `tests/db` suite was unrunnable from root); noted here so it's not a mystery.
 - `pnpm health` green (930/402); `contracts:check` no-op (no router change → F1 green). Dev DB
   migrated to `010`; dev server restarted on B3a (anonymous `/v1/journal` → NULL pool only).
 
-**Sync state (2026-06-09):** `master == origin/master == develop == origin/develop == 01c24c6`.
-Everything in sync — B3a promoted; nothing un-promoted, nothing unpushed (bar this HANDOFF commit,
-which promotes with B3b). Clean working tree. **930 backend + 402 web** (`pnpm health`) + **28 `tests/db`** (incl. 5 new
-isolation tests) passing. **Stage F + A2 complete; B3a on develop, B3b is next** (identity +
-enforcement — the phase that makes isolation live).
+**2026-06-09 — Stage B3a.1 (CI lock for the isolation suite) shipped + PROMOTED TO LIVE
+(`master == develop == 86251ad`).** Per `docs/PHASE_B3_PLAN.md §5.0`. New **`db-tests` CI job**
+(`.github/workflows/ci.yml`) runs `uv run --project apps/api pytest tests/db` from the repo root,
+gating the **whole `tests/db` dir** (the 5 isolation tests + migrations/seed/generators). Separate
+from the fast mocked `test-api` job because it needs Docker/testcontainers + is slower (**CI-cost
+trade: pulls `timescaledb:latest-pg16`, ~+1 min — deliberate, flagged in the commit + plan**). CI is
+now **8 jobs**. **Proven to bite (red→green by SHA, permanent in Actions history):** GREEN `79d6cd6`
+(db-tests pass) → RED `5322bd9` (reintroduced the unscoped `replace_active` → db-tests FAILED on
+`test_replace_active_isolation`, 1/27) → GREEN `86251ad` (reverted, promoted). The landmine now
+guards the codebase in CI. Two pre-existing snags the wiring surfaced + fixed (not B3b work):
+`test_seed_loader` used the app's localhost-cached `DATABASE_URL` (only "passed" on a dev box) →
+now points at the migrated testcontainer; `test_equity_curve_scoped` hardened to assert absolute
+per-user equity (the shared session DB holds seed trades after the loader fix).
+
+**Sync state (2026-06-09):** `master == origin/master == develop == origin/develop == 86251ad`.
+Everything in sync — B3a + B3a.1 promoted; nothing un-promoted, nothing unpushed (bar this HANDOFF
+commit, which promotes with B3b). Clean working tree. **930 backend + 402 web** (`pnpm health`) +
+**28 `tests/db`** (now CI-gated) passing. **Stage F + A2 complete; B3a + B3a.1 live; B3b is next**
+(identity + enforcement — the phase that makes isolation live).
 
 The single-sentence product story has correctly pivoted from "we predict
 price" to **"we calibrate uncertainty honestly."**
