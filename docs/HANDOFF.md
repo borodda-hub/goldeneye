@@ -124,8 +124,9 @@ deactivate flipped every other user's active thesis — proven by a fail-without
 - `pnpm health` green (930/402); `contracts:check` no-op (no router change → F1 green). Dev DB
   migrated to `010`; dev server restarted on B3a (anonymous `/v1/journal` → NULL pool only).
 
-**Sync state (2026-06-08):** `master == origin/master == f5ae345` (Stage A2). `develop` carries
-A2 + the B3a data-layer commits (this promotion); **B3a NOT on master yet** (awaiting sign-off).
+**Sync state (2026-06-08):** `master == origin/master == 774c9d1` (Stage A2 + its handoff).
+`develop == 8ad8c70` carries the B3 split plan + the B3a data-layer commits; **B3a NOT on master
+yet** (awaiting sign-off).
 Clean working tree. **930 backend + 402 web** (`pnpm health`) + **28 `tests/db`** (incl. 5 new
 isolation tests) passing. **Stage F + A2 complete; B3a on develop, B3b is next** (identity +
 enforcement — the phase that makes isolation live).
