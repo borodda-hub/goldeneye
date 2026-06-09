@@ -7,7 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from apps.api.auth.deps import get_optional_user
 from apps.api.db.session import get_db
+from apps.api.models.orm.users import User
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
 from apps.api.repos import paper_trades as trade_repo
@@ -37,6 +39,7 @@ class CloseTradeRequest(BaseModel):
 async def open_trade(
     req: OpenTradeRequest,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
     instrument = await instr_repo.get_by_symbol(session, req.instrument)
     if instrument is None:
@@ -58,6 +61,7 @@ async def open_trade(
         take_profit=req.take_profit,
         rationale=req.rationale,
         journal_ref=req.journal_ref,
+        user_id=user.id if user else None,
     )
     await session.commit()
     return _serialize(trade)
@@ -68,7 +72,13 @@ async def close_trade(
     trade_id: uuid.UUID,
     req: CloseTradeRequest,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
+    scope = user.id if user else None
+    # Ownership gate before the engine mutates it (engine.close_trade loads by id).
+    existing = await trade_repo.get_by_id(session, trade_id)
+    if existing is None or existing.user_id != scope:
+        raise HTTPException(status_code=404, detail="Trade not found")
     trade = await paper_engine.close_trade(
         session,
         trade_id,
@@ -83,8 +93,11 @@ async def close_trade(
 async def get_equity_curve(
     since: date | None = Query(default=None),
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
-    series = await paper_engine.equity_curve(session, since=since)
+    series = await paper_engine.equity_curve(
+        session, since=since, user_id=(user.id if user else None)
+    )
     return {"series": series}
 
 
@@ -94,7 +107,9 @@ async def list_trades(
     limit: int = Query(default=50, le=500),
     symbol: str | None = Query(default=None),
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
+    scope = user.id if user else None
     instrument_id = None
     if symbol:
         instrument = await instr_repo.get_by_symbol(session, symbol)
@@ -104,7 +119,7 @@ async def list_trades(
             )
         instrument_id = instrument.id
     trades = await trade_repo.list_trades(
-        session, status=status, limit=limit, instrument_id=instrument_id
+        session, status=status, limit=limit, instrument_id=instrument_id, user_id=scope
     )
     return {"trades": [_serialize(t) for t in trades]}
 
@@ -113,9 +128,11 @@ async def list_trades(
 async def get_trade(
     trade_id: uuid.UUID,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
+    scope = user.id if user else None
     trade = await trade_repo.get_by_id(session, trade_id)
-    if trade is None:
+    if trade is None or trade.user_id != scope:
         raise HTTPException(status_code=404, detail="Trade not found")
     return _serialize(trade)
 

@@ -4,7 +4,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from apps.api.auth.deps import get_current_user, get_optional_user
 from apps.api.db.session import get_db
+from apps.api.models.orm.users import User
 from apps.api.repos import instruments as instr_repo
 from apps.api.services.calibration import (
     CalibrationBucket,
@@ -20,9 +22,17 @@ router = APIRouter(prefix="/v1/calibration", tags=["calibration"])
 @router.get("/desk")
 async def get_desk_calibration(
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user),
 ) -> dict:
     """Per-analyst calibration (decision-quality Brier + hit-rate) across all
-    resolved decisions, ranked best-calibrated first, with a significance gate."""
+    resolved decisions, ranked best-calibrated first, with a significance gate.
+
+    Auth-required when accounts are configured (B3b/§10.2): a cross-user
+    leaderboard must not be open to anonymous in multi-tenant. The *visibility
+    model* (who sees whom) is deferred to B2 — this only stops anonymous access.
+    `get_current_user` returns None (no enforcement) when Clerk is off, so the
+    single-tenant demo is unchanged.
+    """
     return await compute_desk_calibration(session)
 
 
@@ -55,6 +65,7 @@ async def get_calibration(
     instrument_code: str = Query(default="NG"),
     bucket_count: int = Query(default=5, ge=2, le=10),
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
     instrument = await instr_repo.get_by_symbol(session, instrument_code)
     if instrument is None:
@@ -68,6 +79,7 @@ async def get_calibration(
             instrument_id=instrument.id,
             instrument_code=instrument_code,
             bucket_count=bucket_count,
+            user_id=user.id if user else None,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -80,6 +92,7 @@ async def get_coaching(
     instrument_code: str = Query(default="NG"),
     bucket_count: int = Query(default=5, ge=2, le=10),
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
     """LLM-synthesized Decision Quality coaching per bucket + overall."""
     instrument = await instr_repo.get_by_symbol(session, instrument_code)
@@ -93,6 +106,7 @@ async def get_coaching(
             instrument_id=instrument.id,
             instrument_code=instrument_code,
             bucket_count=bucket_count,
+            user_id=user.id if user else None,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

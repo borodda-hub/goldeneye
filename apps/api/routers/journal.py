@@ -7,7 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from apps.api.auth.deps import get_optional_user
 from apps.api.db.session import get_db
+from apps.api.models.orm.users import User
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
 from apps.api.repos import journal as journal_repo
@@ -100,7 +102,9 @@ async def auto_resolve(session: AsyncSession = Depends(get_db)) -> dict:
 async def create_entry(
     req: JournalCreateRequest,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
+    scope = user.id if user else None
     instrument = await instr_repo.get_by_symbol(session, req.instrument)
     if instrument is None:
         raise HTTPException(status_code=404, detail=f"Instrument {req.instrument!r} not found")
@@ -108,12 +112,14 @@ async def create_entry(
     # Phase 13: snapshot the active thesis at write time so calibration can
     # attribute outcomes back to the conviction-at-decision. Both columns
     # stay NULL when no active thesis exists for the instrument; the entry
-    # falls back to its own confidence_pct in calibration.
+    # falls back to its own confidence_pct in calibration. Scoped to the
+    # requester so a signed-in user reads their own active thesis, not the pool's.
     active_thesis = await theses_repo.get_active(
-        session, instrument_code=req.instrument
+        session, instrument_code=req.instrument, user_id=scope
     )
 
     data: dict[str, Any] = {
+        "user_id": scope,
         "hypothesis": req.hypothesis,
         "evidence": [e.model_dump() for e in req.evidence],
         "confidence_pct": req.confidence_pct,
@@ -163,10 +169,11 @@ async def list_entries(
     limit: int = 20,
     symbol: str | None = Query(default=None),
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
-    """List recent entries. When ?symbol= is supplied, filter to that
-    instrument; otherwise return entries across all instruments (legacy
-    behavior preserved for callers that don't pass the param)."""
+    """List recent entries for the requester scope. When ?symbol= is supplied,
+    filter to that instrument; otherwise return entries across all instruments."""
+    scope = user.id if user else None
     instrument_id = None
     if symbol:
         instrument = await instr_repo.get_by_symbol(session, symbol)
@@ -176,7 +183,7 @@ async def list_entries(
             )
         instrument_id = instrument.id
     entries = await journal_repo.get_recent(
-        session, limit=limit, instrument_id=instrument_id
+        session, limit=limit, instrument_id=instrument_id, user_id=scope
     )
     return {"entries": [_serialize(e) for e in entries]}
 
@@ -185,9 +192,11 @@ async def list_entries(
 async def get_entry(
     entry_id: uuid.UUID,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
+    scope = user.id if user else None
     entry = await journal_repo.get_by_id(session, entry_id)
-    if entry is None:
+    if entry is None or entry.user_id != scope:
         raise HTTPException(status_code=404, detail="Journal entry not found")
     return _serialize(entry)
 
@@ -197,9 +206,11 @@ async def patch_entry(
     entry_id: uuid.UUID,
     req: JournalPatchRequest,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
+    scope = user.id if user else None
     entry = await journal_repo.get_by_id(session, entry_id)
-    if entry is None:
+    if entry is None or entry.user_id != scope:
         raise HTTPException(status_code=404, detail="Journal entry not found")
     # Only include fields the client actually set — exclude_unset distinguishes
     # `{"resolved_direction": null}` (clear) from omitting the field entirely.

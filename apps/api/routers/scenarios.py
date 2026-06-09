@@ -10,13 +10,15 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from apps.api.auth.deps import get_optional_user
 from apps.api.db.session import get_db
+from apps.api.models.orm.users import User
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
 from apps.api.repos import scenarios as scenario_repo
+from apps.api.services.model_calibration import model_weights_for
 from apps.api.services.model_registry import ForecastContext
 from apps.api.services.price_lookup import get_latest_closes
-from apps.api.services.model_calibration import model_weights_for
 from apps.api.services.scenario_engine import run_scenario
 from apps.api.services.scenario_pdf import render_scenario_pdf
 
@@ -108,7 +110,9 @@ class ScenarioRunRequest(BaseModel):
 async def run_scenario_endpoint(
     req: ScenarioRunRequest,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
+    scope = user.id if user else None
     instrument = await instr_repo.get_by_symbol(session, req.instrument)
     if instrument is None:
         raise HTTPException(status_code=404, detail=f"Instrument {req.instrument!r} not found")
@@ -134,7 +138,8 @@ async def run_scenario_endpoint(
     )
 
     run = await scenario_repo.create(
-        session, instrument_id=instrument.id, name=req.name, shocks=shocks_dicts, result=result
+        session, instrument_id=instrument.id, name=req.name, shocks=shocks_dicts,
+        result=result, user_id=scope,
     )
     await session.commit()
 
@@ -159,8 +164,11 @@ async def get_templates() -> dict:
 async def list_runs(
     limit: int = 20,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
-    runs = await scenario_repo.get_recent(session, limit=limit)
+    runs = await scenario_repo.get_recent(
+        session, limit=limit, user_id=(user.id if user else None)
+    )
     return {
         "runs": [
             {
@@ -178,14 +186,16 @@ async def list_runs(
 async def get_run(
     run_id: str,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
+    scope = user.id if user else None
     try:
         run_uuid = uuid.UUID(run_id)
     except (ValueError, TypeError) as exc:
         raise HTTPException(status_code=400, detail="Invalid run_id format") from exc
 
     run = await scenario_repo.get_by_id(session, run_uuid)
-    if run is None:
+    if run is None or run.user_id != scope:
         raise HTTPException(status_code=404, detail=f"Scenario run {run_id!r} not found")
 
     return {
@@ -202,15 +212,17 @@ async def get_run(
 async def export_run_pdf(
     run_id: str,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> Response:
     """Render a scenario run as an executive PDF report (download)."""
+    scope = user.id if user else None
     try:
         run_uuid = uuid.UUID(run_id)
     except (ValueError, TypeError) as exc:
         raise HTTPException(status_code=400, detail="Invalid run_id format") from exc
 
     run = await scenario_repo.get_by_id(session, run_uuid)
-    if run is None:
+    if run is None or run.user_id != scope:
         raise HTTPException(status_code=404, detail=f"Scenario run {run_id!r} not found")
 
     pdf_bytes = render_scenario_pdf(

@@ -16,8 +16,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from apps.api.auth.deps import get_optional_user
 from apps.api.db.session import get_db
 from apps.api.models.orm.theses import Thesis
+from apps.api.models.orm.users import User
 from apps.api.repos import forecasts as forecasts_repo
 from apps.api.repos import instruments as instruments_repo
 from apps.api.repos import scenarios as scenarios_repo
@@ -62,8 +64,12 @@ class ThesisPatchRequest(BaseModel):
 async def get_current(
     instrument_code: str = "NG",
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict[str, Any]:
-    thesis = await theses_repo.get_active(session, instrument_code=instrument_code)
+    scope = user.id if user else None
+    thesis = await theses_repo.get_active(
+        session, instrument_code=instrument_code, user_id=scope
+    )
     if thesis is None:
         raise HTTPException(
             status_code=404,
@@ -76,6 +82,7 @@ async def get_current(
 async def get_seed_draft(
     instrument_code: str = "NG",
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict[str, Any]:
     """Draft a fresh thesis from the latest forecast and scenario run.
 
@@ -110,7 +117,9 @@ async def get_seed_draft(
     # Missing data — start with the latest scenario run's data_needed_to_validate,
     # then top up with the fixed cadence list so the user always sees something.
     missing: list[str] = []
-    recent_scenarios = await scenarios_repo.get_recent(session, limit=5)
+    recent_scenarios = await scenarios_repo.get_recent(
+        session, limit=5, user_id=(user.id if user else None)
+    )
     for s in recent_scenarios:
         result = s.result or {}
         for item in (result.get("data_needed_to_validate") or []):
@@ -137,6 +146,7 @@ async def get_seed_draft(
 async def create_thesis(
     req: ThesisCreateRequest,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict[str, Any]:
     try:
         fresh = await theses_repo.replace_active(
@@ -147,6 +157,7 @@ async def create_thesis(
             contradicting_evidence=[e.model_dump() for e in req.contradicting_evidence],
             missing_data=req.missing_data,
             conviction_pct=req.conviction_pct,
+            user_id=user.id if user else None,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -158,11 +169,13 @@ async def create_thesis(
 async def critique_thesis(
     thesis_id: uuid.UUID,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict[str, Any]:
     """Run an LLM critique on the named thesis. Returns structured pushback
     plus a safety envelope. The thesis itself is not modified."""
+    scope = user.id if user else None
     thesis = await theses_repo.get_by_id(session, thesis_id)
-    if thesis is None:
+    if thesis is None or thesis.user_id != scope:
         raise HTTPException(status_code=404, detail="Thesis not found")
 
     payload = {
@@ -185,12 +198,14 @@ async def critique_thesis(
 async def devils_advocate_thesis(
     thesis_id: uuid.UUID,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict[str, Any]:
     """Run an adversarial review: a steelmanned counter-case, a pre-mortem, and
     the specific signals that would change the analyst's mind. The thesis is not
     modified — this is a discipline probe, not a verdict."""
+    scope = user.id if user else None
     thesis = await theses_repo.get_by_id(session, thesis_id)
-    if thesis is None:
+    if thesis is None or thesis.user_id != scope:
         raise HTTPException(status_code=404, detail="Thesis not found")
 
     payload = {
@@ -213,9 +228,11 @@ async def patch_thesis(
     thesis_id: uuid.UUID,
     req: ThesisPatchRequest,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict[str, Any]:
+    scope = user.id if user else None
     thesis = await theses_repo.get_by_id(session, thesis_id)
-    if thesis is None:
+    if thesis is None or thesis.user_id != scope:
         raise HTTPException(status_code=404, detail="Thesis not found")
     if not thesis.active:
         raise HTTPException(

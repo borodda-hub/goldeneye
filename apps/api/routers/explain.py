@@ -6,22 +6,23 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from apps.api.auth.deps import get_optional_user
 from apps.api.db.session import get_db
-from apps.api.repos import instruments as instr_repo
+from apps.api.models.orm.users import User
 from apps.api.repos import contracts as contract_repo
-from apps.api.repos import price_bars as price_repo
-from apps.api.services.price_lookup import get_latest_closes
-from apps.api.repos import scenarios as scenario_repo
+from apps.api.repos import instruments as instr_repo
 from apps.api.repos import journal as journal_repo
-from apps.api.services.model_registry import ForecastContext, run_all
+from apps.api.repos import scenarios as scenario_repo
 from apps.api.services.ensemble import compute_ensemble
-from apps.api.services.model_calibration import model_weights_for
 from apps.api.services.llm_explainer import (
-    summarize_market,
     explain_signal,
     narrate_scenario,
     review_journal_entry,
+    summarize_market,
 )
+from apps.api.services.model_calibration import model_weights_for
+from apps.api.services.model_registry import ForecastContext, run_all
+from apps.api.services.price_lookup import get_latest_closes
 
 router = APIRouter(prefix="/v1/explain", tags=["explain"])
 
@@ -86,9 +87,11 @@ async def explain_signal_endpoint(
 async def explain_scenario(
     req: ScenarioExplainRequest,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
+    scope = user.id if user else None
     run = await scenario_repo.get_by_id(session, req.run_id)
-    if run is None:
+    if run is None or run.user_id != scope:
         raise HTTPException(status_code=404, detail="Scenario run not found")
 
     result = run.result or {}
@@ -101,9 +104,11 @@ async def explain_scenario(
 async def explain_journal(
     req: JournalExplainRequest,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ) -> dict:
+    scope = user.id if user else None
     entry = await journal_repo.get_by_id(session, req.entry_id)
-    if entry is None:
+    if entry is None or entry.user_id != scope:
         raise HTTPException(status_code=404, detail="Journal entry not found")
 
     entry_dict = {

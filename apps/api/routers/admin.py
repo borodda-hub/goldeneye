@@ -8,8 +8,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from apps.api.auth.deps import get_current_user
 from apps.api.db.session import get_db
 from apps.api.models.orm.forecasts import ModelForecast
+from apps.api.models.orm.users import User
 from apps.api.repos import adapter_runs as run_repo
 from apps.api.repos import alerts as alert_repo
 from apps.api.services.data_health import (
@@ -103,7 +105,11 @@ async def list_alerts(
     unread: bool = Query(default=False),
     limit: int = Query(default=50, le=500),
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user),
 ) -> dict:
+    # Auth-required admin surface when accounts are configured (B3b/§10.2): alerts
+    # carry user_id and must not be open to anonymous in multi-tenant. get_current_user
+    # returns None (no enforcement) when Clerk is off, so the demo is unchanged.
     if unread:
         alerts = await alert_repo.get_unread(session, limit=limit)
     else:
@@ -129,6 +135,7 @@ async def list_alerts(
 async def acknowledge_alert(
     alert_id: uuid.UUID,
     session: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user),
 ) -> dict:
     alert = await alert_repo.get_by_id(session, alert_id)
     if alert is None:
