@@ -162,8 +162,10 @@ Clerk token. **Anonymous / Clerk-off demo path is unchanged** (scope=None → sh
   `/v1/llm/explain-*` client fns are pre-existing dead code (real routes `/v1/explain/*`); admin/desk
   gate is "any-authenticated" (no admin *role* yet). `pnpm health` green (930/402).
 
-**2026-06-09 — Stage B1 (scheduled auto-resolution + honest showcase) BUILT on
-`feat/phase-b1-scheduler` — NOT PROMOTED (awaiting owner sign-off).** Per
+**2026-06-09 — Stage B1 (scheduled auto-resolution + honest showcase) shipped +
+PROMOTED TO LIVE (`master == origin/master == develop == 03f427d`).** CI green on
+both lanes (8 jobs); the gated **`db-tests` job executed the new e2e lock on the
+master lane** (`test_auto_resolution_e2e.py`, 36 items collected, 36 passed). Per
 `docs/PHASE_B1_PLAN.md`. Two pieces, shipped together:
 - **The scheduler.** New `services/resolution_scheduler.py`: an env-gated `asyncio`
   loop started from the FastAPI lifespan (`src/main.py`) that periodically calls
@@ -194,12 +196,15 @@ Clerk token. **Anonymous / Clerk-off demo path is unchanged** (scope=None → sh
   updated in-commit: `ARCHITECTURE.md §2` (scheduler tier), `MOCK_DATA_SPEC.md
   §sample_analyst`, `AI_BEHAVIOR.md §sample_data_labeling`.
 
-**Sync state (2026-06-09):** `master == origin/master == c2a7712`; `develop == c2a7712`
-(B1 work is on **`feat/phase-b1-scheduler`**, NOT yet merged to develop or master).
-**B1 is built and green but UN-PROMOTED — awaiting owner sign-off on the emergent
-calibration view.** Stage F + A2 + B3 (B3a/B3a.1/B3b) are complete and live. Next per
-`MASTER_PLAN.md §4` Stage B: promote B1, then **B2** (skill-vs-luck scorecards),
-**B4** (decision/audit ledger).
+**Sync state (2026-06-09):** `master == origin/master == develop == origin/develop == 03f427d`.
+Everything in sync — B1 promoted; nothing un-promoted, nothing unpushed (bar this HANDOFF
+commit). Clean working tree. **B1 is DONE:** auto-resolution is scheduled (in-process loop,
+**default OFF**, engine-locked in CI by `tests/db/test_auto_resolution_e2e.py`), and the honest
+single-analyst showcase is live (sample analyst, real engine, real prices; emergent finding ~87%
+claimed → ~29% realized on her highest-conviction NG calls, kept as-is). **Follow-up: Issue #8**
+(de-hardcode the banner figure so the headline can't drift false) — noted, non-blocking. Stage F +
+A2 + B3 + B1 complete. Next per `MASTER_PLAN.md §4` Stage B: **B2** (skill-vs-luck scorecards,
+unblocked by per-user scoping), **B4** (decision/audit ledger).
 
 The single-sentence product story has correctly pivoted from "we predict
 price" to **"we calibrate uncertainty honestly."**
