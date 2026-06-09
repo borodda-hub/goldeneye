@@ -114,3 +114,23 @@ jobs:
         run: |
           pnpm contracts:gen:local
           git diff --exit-code packages/contracts/src/index.ts
+
+  db-tests:
+    name: DB integration (isolation + migrations)
+    runs-on: ubuntu-latest
+    # Real-DB suite: spins a TimescaleDB testcontainer (Docker; GitHub-hosted
+    # ubuntu ships it) and runs migrations, so it's a separate, slower job from
+    # the fast mocked `test-api`. It gates the whole tests/db dir — including the
+    # B3a per-user isolation suite (the replace_active landmine regression).
+    # CI-cost trade: pulls timescale/timescaledb:latest-pg16 per run (~adds a
+    # minute) — deliberate, so isolation actually gates.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --group dev
+        working-directory: apps/api
+      # Run from the repo root (CWD=root) so tests/db/conftest's alembic paths
+      # and the `apps.api.*` imports resolve.
+      - run: uv run --project apps/api pytest tests/db

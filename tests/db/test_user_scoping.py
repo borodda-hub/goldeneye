@@ -219,9 +219,10 @@ async def test_equity_curve_scoped(migrated_url):
             })
         await s.flush()
 
+        # A and B are fresh users with exactly one closed trade each, so their
+        # equity is absolute: STARTING + their own PnL only — never each other's,
+        # never the anonymous pool's (which holds seed trades in the shared DB).
         eq_a = await paper_engine.current_equity(s, user_id=a.id)
         eq_b = await paper_engine.current_equity(s, user_id=b.id)
-        eq_anon = await paper_engine.current_equity(s, user_id=None)
-        # A's equity reflects only A's +100; B's only -50; anonymous sees neither.
-        assert eq_a - eq_anon == pytest.approx(100.0)
-        assert eq_b - eq_anon == pytest.approx(-50.0)
+        assert eq_a == pytest.approx(paper_engine.STARTING_EQUITY_USD + 100.0)
+        assert eq_b == pytest.approx(paper_engine.STARTING_EQUITY_USD - 50.0)

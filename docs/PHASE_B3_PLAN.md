@@ -217,6 +217,20 @@ be green **in its phase** or carry a written exemption (J5, J6, J10, S6).
 
 ## 5. Change set (by phase, then stack lane)
 
+### 5.0 — B3a.1 (CI lock for the isolation suite) — SHIP BEFORE B3b ✅ DONE
+
+The B3a isolation suite lives in `tests/db` (testcontainer), which the fast mocked `test-api`
+job does **not** run — so the `replace_active` landmine regression didn't gate the codebase.
+B3a.1 closes that: a **separate `db-tests` CI job** (`.github/workflows/ci.yml`) that runs
+`uv run --project apps/api pytest tests/db` from the repo root, gating the **whole `tests/db`
+dir** (the 5 isolation tests + the existing migrations-run/seed/generators tests). Own job, not
+folded into `test-api` — it needs Docker (testcontainers) and is slower. **CI-cost trade
+(flagged in the PR):** pulls `timescale/timescaledb:latest-pg16` per run (~+1 min) — deliberate,
+so isolation actually gates. **Proven to bite** (red→green, same bar as the contracts F1 lock):
+landed green → reintroduced the unscoped `replace_active` → `db-tests` went RED on
+`test_replace_active_isolation` → reverted → green. Ships on `feat/phase-b3a1-ci-lock` →
+`develop` → `master`, fully promoted before any B3b code.
+
 ### 5.A — B3a (data layer) — no routers, no auth, no contracts change
 
 **Schema / migration (one new Alembic revision, down_revision `009_merge_heads`):**
