@@ -118,7 +118,7 @@ record.
 | `event_type` | TEXT CHECK in (`created`,`resolved`,`amended`) | |
 | `occurred_at` | TIMESTAMPTZ | domain time of the event (decision `created_at`; resolution `resolved_at`; amend wall-clock) |
 | `recorded_at` | TIMESTAMPTZ default `now()` | append wall-clock |
-| `source` | TEXT CHECK in (`live`,`backfill`) | provenance honesty (§3.4) |
+| `source` | TEXT NOT NULL default `live` CHECK = `live` | provenance is always live-captured — there is no `backfill` value, structurally enforcing §3.4 (no fabricated history) |
 | `payload` | JSONB NOT NULL | the snapshot (§3.3) |
 | `prev_hash` | TEXT NULL | row_hash of the previous event for this `decision_id` |
 | `row_hash` | TEXT NOT NULL | `sha256(canonical(prev_hash, decision_id, event_type, occurred_at, payload))` |
@@ -146,13 +146,18 @@ The `created` event's `payload` captures, in one immutable blob:
 - **User inputs (from the journal write-once fields):** hypothesis, evidence, confidence_pct,
   predicted_direction, horizon_days, threshold_pct, anchor_price, planned_action, risk_factors,
   invalidation_criteria, thesis snapshot (`thesis_id_at_write`, `thesis_conviction_at_write`).
-- **System context at that instant (the gap §2.1 closes), BEST-EFFORT:** the ensemble forecast
-  (direction, agreement N-of-M, derived envelope confidence), the vol band / expected range +
-  estimator, the vol regime, the model lineup identifiers, and the forecast `as_of`. Captured by
-  **reusing the same `ensemble` + `vol_range` computation the signals/forecast endpoints already
-  call** — no new model, no new calibration feature (§6 scope). Wrapped in try/except like
-  `llm_review`, so a forecast hiccup never blocks a decision write; on failure the payload records
-  `system_context: {captured: false}` (honest, not fabricated).
+- **System context at that instant (the gap §2.1 closes):** the ensemble forecast (direction,
+  agreement N-of-M, derived envelope confidence), the vol band / expected range + estimator, the
+  vol regime, the model lineup identifiers, and the forecast `as_of`. Captured by **reusing the
+  same `ensemble` + `vol_range` computation the signals/forecast endpoints already call** — no new
+  model, no new calibration feature (§6 scope).
+  - **Missing-context is RECORDED, never silently omitted.** The capture is wrapped (a forecast
+    hiccup never blocks a decision write), but on failure the payload does **not** drop the field —
+    it records the *absence* explicitly: `system_context: {captured: false, reason: "<unavailable:
+    ...>"}` (e.g. `"unavailable: no forecast for instrument at as_of"`). An audit log that silently
+    omits context it couldn't capture is dishonest — the ledger must show *that* it didn't know, and
+    *why*, not present a hole as if context never applied. Every `created` event therefore has a
+    `system_context` key: either the captured snapshot or an explicit recorded absence with a reason.
 
 The `resolved` event payload records: outcome (hit/miss/neutral), `resolved_at`, `auto_resolved`,
 the realized close + anchor + computed move, and the deadband used. The `amended` event records the
@@ -161,13 +166,15 @@ field name + old→new value.
 The **view** (`GET /v1/ledger`, `GET /v1/ledger/{decision_id}`) returns each decision with its
 ordered event timeline + a `chain_ok` boolean from the verifier.
 
-### 3.4 Backfill (bounded, honesty-labelled)
-Pre-B4 decisions have no events. A one-time `seeds/backfill_ledger.py` synthesizes `created` (from
-the **write-once journal columns only**) and `resolved` (from `resolved_*`) events for existing
-rows, stamped `source=backfill` and **omitting** system-context (it wasn't captured then →
-`captured: false`). Backfilled events are never presented as live-captured. (Marked optional in §6;
-default is the ledger accrues from B4 forward, with pre-ledger decisions shown as "no immutable
-record.")
+### 3.4 No backfill — forward-only is the *correct* answer, not a deferral
+**Pre-B4 decisions have no ledger entry, by design.** You cannot honestly backfill an audit ledger:
+reconstructing weeks-old decision-time state (the forecast, regime, prices you'd *have to* re-derive
+after the fact) and recording it as if it had been captured live is **fabricated provenance** — the
+exact dishonesty an audit trail exists to prevent. The ledger therefore **accrues from the B4
+deploy forward only**; decisions created before B4 are shown plainly as **"no immutable record (pre-
+ledger)"** — never with a synthesized event. The `source` column (`live` only, in practice) and this
+rule make the absence explicit rather than papered over. (This is a hard rule, not an optional
+trade-off — see §6.)
 
 ---
 
@@ -247,8 +254,10 @@ follows §2.3.
   `sentry_sdk.init` wiring + the dep are deferred (cheap later add; not needed for the in-house trio).
 - **Cryptographic notarization.** The hash chain is tamper-*evident*, not externally-notarized; no
   third-party timestamping authority.
-- **Ledger backfill** of pre-B4 decisions is **optional** (§3.4) — ship the forward-accruing ledger
-  first; backfill only if the demo needs populated history, and only from immutable columns.
+- **Ledger backfill** of pre-B4 decisions — **forbidden by design** (§3.4), not deferred. The ledger
+  accrues forward-only; pre-B4 decisions show "no immutable record (pre-ledger)." Synthesizing
+  historical events would be fabricated provenance, so the `source` column structurally cannot mark
+  a row as backfilled.
 - **Changing the journal's mutability model** or the auto-resolution engine's resolution logic.
 
 ---
@@ -277,6 +286,9 @@ follows §2.3.
 - **Append-on-lifecycle (gated `db-tests`):** a decision create appends exactly one `created` event
   (with the snapshot); auto-resolution appends a `resolved` event; a manual outcome edit appends an
   `amended` event.
+- **Recorded-absence (mocked `test-api`):** when system-context can't be captured, the `created`
+  event's payload carries `system_context: {captured: false, reason: ...}` — i.e. the key is
+  **present with an explicit reason**, never missing. Locks the "never silently omit context" rule.
 - **Isolation (gated `db-tests`, HTTP):** B/anon cannot read A's ledger (404 by-id; lists scoped);
   anonymous demo still works.
 - **Safety-violation alerting (mocked `test-api`):** a forbidden phrase surviving retry creates an
@@ -319,13 +331,14 @@ follows §2.3.
 
 ---
 
-## 10. Open questions for owner (decide before/at build kickoff)
+## 10. Owner decisions (RESOLVED — locked into the plan above)
 
-1. **System-context capture in the `created` snapshot** (§3.3) — include now (richer "what you knew",
-   reuses existing forecast compute) or ship the ledger over existing journal fields first and add
-   system-context as B4.1? *Recommendation: include now — it's the heart of the compliance story and
-   touches no model logic.*
-2. **Metrics dependency** — `prometheus-client` (recommended; standard, scrape-ready) vs a zero-dep
-   hand-rolled `/v1/metrics`? *Recommendation: prometheus-client.*
-3. **Backfill** pre-B4 decisions (§3.4) now, or accrue forward only? *Recommendation: forward-only for
-   B4; backfill as an optional follow-up if the demo needs history.*
+1. **System-context capture in the `created` snapshot — INCLUDE NOW** (§3.3). It's the heart of the
+   compliance story and touches no model logic. **Refinement (locked):** missing context is
+   **recorded as an explicit absence with a reason** (`{captured: false, reason: "..."}`), never
+   silently omitted — every `created` event carries a `system_context` key.
+2. **Metrics dependency — `prometheus-client`** (§4.3). Standard, scrape-ready, no collector.
+3. **Backfill — NONE, forward-only by design** (§3.4). Not a deferral: an audit ledger cannot be
+   honestly backfilled (fabricated provenance), so pre-B4 decisions have **no ledger entry by
+   design** and are shown as "no immutable record (pre-ledger)." The `source` column structurally
+   forbids a non-`live` value.
