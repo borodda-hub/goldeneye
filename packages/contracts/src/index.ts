@@ -818,13 +818,14 @@ export interface paths {
         /**
          * Get Desk Calibration
          * @description Per-analyst calibration (decision-quality Brier + hit-rate) across all
-         *     resolved decisions, ranked best-calibrated first, with a significance gate.
+         *     resolved decisions, ranked best-calibrated first, with a significance gate
+         *     and a skill-vs-luck verdict (Wilson 95% CI on directional hit-rate vs 0.50).
          *
-         *     Auth-required when accounts are configured (B3b/§10.2): a cross-user
-         *     leaderboard must not be open to anonymous in multi-tenant. The *visibility
-         *     model* (who sees whom) is deferred to B2 — this only stops anonymous access.
-         *     `get_current_user` returns None (no enforcement) when Clerk is off, so the
-         *     single-tenant demo is unchanged.
+         *     Visibility model (B2): this is a **desk-wide leaderboard** — it is *not*
+         *     scoped to the requester (per-user calibration lives on `GET /v1/calibration`).
+         *     It is **auth-required when accounts are configured** (a cross-user leaderboard
+         *     must not be open to anonymous in multi-tenant); `get_current_user` returns None
+         *     (no enforcement) when Clerk is off, so the single-tenant demo is unchanged.
          */
         get: operations["get_desk_calibration_v1_calibration_desk_get"];
         put?: never;
@@ -1045,6 +1046,35 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AnalystScoreOut
+         * @description One desk analyst's decision-quality + skill-vs-luck verdict (B2).
+         */
+        AnalystScoreOut: {
+            /** User Id */
+            user_id: string | null;
+            /** N */
+            n: number;
+            /** Brier */
+            brier: number | null;
+            /** Hit Rate */
+            hit_rate: number | null;
+            /** Mean Conviction */
+            mean_conviction: number | null;
+            /** Calibration Gap */
+            calibration_gap: number | null;
+            /** Qualifies */
+            qualifies: boolean;
+            /** Wilson Low */
+            wilson_low: number | null;
+            /** Wilson High */
+            wilson_high: number | null;
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "skill" | "luck" | "insufficient";
+        };
         /** CloseTradeRequest */
         CloseTradeRequest: {
             /** Exit Price */
@@ -1065,6 +1095,15 @@ export interface components {
             delta_mbpd: number;
             /** Days */
             days: number;
+        };
+        /** DeskCalibrationOut */
+        DeskCalibrationOut: {
+            /** Analysts */
+            analysts: components["schemas"]["AnalystScoreOut"][];
+            /** Min Resolved */
+            min_resolved: number;
+            /** Baseline */
+            baseline: number;
         };
         /** EvidenceEntry */
         EvidenceEntry: {
@@ -2979,9 +3018,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["DeskCalibrationOut"];
                 };
             };
             /** @description Validation Error */

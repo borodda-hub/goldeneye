@@ -6,10 +6,13 @@ direction is fixed by a fixed rule **before the outcome is known**, then let the
 auto-resolution engine score them against real price moves and show *whatever*
 calibration / skill-vs-luck actually emerges:
 
-  - momentum   — predict continuation of the prior 20-day return (user_id NULL,
-                 the anonymous sample desk → drives the per-instrument reliability diagram)
+  - momentum   — predict continuation of the prior 20-day return (named desk,
+                 _MOMENTUM_UID → its own row on the desk leaderboard)
   - contrarian — predict reversal of the prior 20-day return
   - random     — a deterministic coin-flip (the luck baseline)
+
+All three desks are NAMED (own user_id); the NULL pool is reserved for the hero
+sample-analyst (demo_sample_analyst.py) so these desks don't pollute it.
 
 THE LINE (docs/PHASE_B1_PLAN.md §11.1): direction is NEVER chosen to force a hit;
 it is the strategy's blind call. Conviction is a function of *signal strength*
@@ -161,7 +164,7 @@ async def go() -> None:
         await s.commit()
         print(
             f"Seeded {total} OPEN blind-strategy decisions across {len(windows)} windows "
-            f"(momentum=NULL pool, contrarian/random named). Directions are fixed by each "
+            f"(momentum/contrarian/random all named desks). Directions are fixed by each "
             f"strategy's rule BEFORE the outcome. Resolve to reveal the real calibration."
         )
 

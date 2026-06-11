@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.auth.deps import get_current_user, get_optional_user
@@ -13,25 +14,47 @@ from apps.api.services.calibration import (
     CalibrationResult,
     compute_calibration,
 )
-from apps.api.services.desk_calibration import compute_desk_calibration
+from apps.api.services.desk_calibration import Verdict, compute_desk_calibration
 from apps.api.services.dq_coach import coach_decision_quality
 
 router = APIRouter(prefix="/v1/calibration", tags=["calibration"])
 
 
-@router.get("/desk")
+class AnalystScoreOut(BaseModel):
+    """One desk analyst's decision-quality + skill-vs-luck verdict (B2)."""
+
+    user_id: str | None
+    n: int
+    brier: float | None
+    hit_rate: float | None
+    mean_conviction: float | None
+    calibration_gap: float | None
+    qualifies: bool
+    wilson_low: float | None
+    wilson_high: float | None
+    verdict: Verdict
+
+
+class DeskCalibrationOut(BaseModel):
+    analysts: list[AnalystScoreOut]
+    min_resolved: int
+    baseline: float  # chance hit-rate the skill verdict tests against (0.50)
+
+
+@router.get("/desk", response_model=DeskCalibrationOut)
 async def get_desk_calibration(
     session: AsyncSession = Depends(get_db),
     user: User | None = Depends(get_current_user),
 ) -> dict:
     """Per-analyst calibration (decision-quality Brier + hit-rate) across all
-    resolved decisions, ranked best-calibrated first, with a significance gate.
+    resolved decisions, ranked best-calibrated first, with a significance gate
+    and a skill-vs-luck verdict (Wilson 95% CI on directional hit-rate vs 0.50).
 
-    Auth-required when accounts are configured (B3b/§10.2): a cross-user
-    leaderboard must not be open to anonymous in multi-tenant. The *visibility
-    model* (who sees whom) is deferred to B2 — this only stops anonymous access.
-    `get_current_user` returns None (no enforcement) when Clerk is off, so the
-    single-tenant demo is unchanged.
+    Visibility model (B2): this is a **desk-wide leaderboard** — it is *not*
+    scoped to the requester (per-user calibration lives on `GET /v1/calibration`).
+    It is **auth-required when accounts are configured** (a cross-user leaderboard
+    must not be open to anonymous in multi-tenant); `get_current_user` returns None
+    (no enforcement) when Clerk is off, so the single-tenant demo is unchanged.
     """
     return await compute_desk_calibration(session)
 
