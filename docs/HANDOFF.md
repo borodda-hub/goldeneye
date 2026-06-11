@@ -196,8 +196,11 @@ master lane** (`test_auto_resolution_e2e.py`, 36 items collected, 36 passed). Pe
   updated in-commit: `ARCHITECTURE.md §2` (scheduler tier), `MOCK_DATA_SPEC.md
   §sample_analyst`, `AI_BEHAVIOR.md §sample_data_labeling`.
 
-**2026-06-10 — Stage B2 (skill-vs-luck verdict) BUILT on `feat/phase-b2-skill-vs-luck`,
-merged to `develop`; awaiting `master` sign-off.** Per `docs/PHASE_B2_PLAN.md`. The Desk
+**2026-06-10 — Stage B2 (skill-vs-luck verdict) SHIPPED + PROMOTED TO LIVE
+(`master == origin/master == develop == origin/develop == 9890f40`).** CI green on both
+lanes (8 jobs); the gated **`db-tests` job executed the honesty lock on the master lane**
+(`test_desk_skill_verdict_e2e.py`), and the **Contracts (OpenAPI drift) job is green** (the
+F1 red→green). Per `docs/PHASE_B2_PLAN.md`. The Desk
 Calibration card was *labeled* "skill vs. luck" but never measured it (raw Brier + an `n≥10`
 gate, no significance test). B2 closes that with a **Wilson 95% CI on each desk's directional
 hit-rate vs the 0.50 chance baseline → verdict `skill` / `luck` / `insufficient`**. Pre-registered
@@ -229,11 +232,17 @@ calibration-gap retained as the separate conviction-reliability axis.
   proof.) `pnpm health` green (937 backend / 405 web); `db-tests` + contracts green locally.
 - **Follow-up: Issue #8** (de-hardcode the B1 banner figure) still open, non-blocking.
 
-**Sync state (2026-06-10):** `master == origin/master == 7346e17` (B1); `develop` ahead with
-`8d0ba2b` (B2 plan) + `c17846e` (B2 build) + this HANDOFF commit. **B2 is on `develop`, NOT yet
-promoted to `master`** — owner holds the master call. Stage F + A2 + B3 + B1 + B2 complete on
-`develop`. Next per `MASTER_PLAN.md §4` Stage B: **B4** (decision/audit ledger), then **B5**
-(cross-asset). Tomorrow's optional confirmation: the styled `/calibration` card render.
+**Sync state (2026-06-10):** `master == origin/master == develop == origin/develop == 9890f40`.
+Everything in sync — **B2 promoted to live**; nothing un-promoted, nothing unpushed (bar this
+HANDOFF commit). Clean working tree. **B2 is DONE:** the skill-vs-luck Wilson 95% verdict is live
+on the desk leaderboard (`skill` / `luck` / `insufficient` vs the 0.50 chance baseline,
+pre-registered constants), the desk endpoint is typed (`DeskCalibrationOut`, F1 contracts green),
+and the honesty lock (`tests/db/test_desk_skill_verdict_e2e.py`) gates in CI. Real-price verdicts
+verified: all three blind desks → `luck` at n=71/desk (momentum 53.5%, contrarian 46.5%, random
+49.3%; CIs straddle 0.50) — the tool refuses to crown noise. Stage F + A2 + B3 + B1 + B2 complete.
+Next per `MASTER_PLAN.md §4` Stage B: **B4** (decision/audit ledger), then **B5** (cross-asset).
+**Follow-up: Issue #8** (de-hardcode the B1 banner figure) still open, non-blocking. Optional
+tomorrow confirmation: the styled `/calibration` card render (dev DB still holds the real-price seed).
 
 The single-sentence product story has correctly pivoted from "we predict
 price" to **"we calibrate uncertainty honestly."**
