@@ -41,6 +41,7 @@ whether a claim survives outside the generator.
 | **Directional** edge (`logreg_directional`, `factor_composite`) | **unvalidated** ⚠️ | Cannot be tested — they consume synthetic COT/storage. Treat directional claims as unproven | blocked on real historical COT + EIA ingestion (deferred) |
 | Ensemble **confidence gradient** (26c) | **real-OOS** ✅ tested | No reliable OOS gradient at any horizon; shipped reframed as down-weighting miscalibrated models | `tests/test_ensemble_calibration.py` |
 | Per-model diagnostics (bias / Brier decomposition / drift) (26a) | **synthetic** | Methodology validated on seeded data; reproduces known truths | `services/model_diagnostics.py` |
+| Desk **skill-vs-luck verdict** (B2) | **methodology** (not a predictive claim) | Wilson 95% CI on directional hit-rate vs the 0.50 chance baseline → `skill` only when the lower bound clears chance, else `luck`, else `insufficient` (`n < 10`). Pre-registered thresholds (`SKILL_BASELINE=0.50`, `WILSON_Z=1.96`). Consistent with the no-directional-edge finding, the blind `momentum`/`contrarian`/`random` desks are expected to read `luck` — the tool refuses to crown noise as skill | `services/desk_calibration.py::skill_verdict`; honesty-locked in `tests/db/test_desk_skill_verdict_e2e.py` (real coin-flip desk → `luck`) + `tests/test_desk_calibration.py` |
 
 ## What this means for the product story
 

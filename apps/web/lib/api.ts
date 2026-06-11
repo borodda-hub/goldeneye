@@ -744,6 +744,8 @@ export async function getCalibration(
   );
 }
 
+export type SkillVerdict = "skill" | "luck" | "insufficient";
+
 export interface DeskAnalyst {
   user_id: string | null;
   n: number;
@@ -752,11 +754,15 @@ export interface DeskAnalyst {
   mean_conviction: number | null;
   calibration_gap: number | null;
   qualifies: boolean;
+  wilson_low: number | null;
+  wilson_high: number | null;
+  verdict: SkillVerdict;
 }
 
 export interface DeskCalibrationResponse {
   analysts: DeskAnalyst[];
   min_resolved: number;
+  baseline: number; // chance hit-rate the skill verdict tests against (0.50)
 }
 
 export async function getDeskCalibration(): Promise<DeskCalibrationResponse> {

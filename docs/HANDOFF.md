@@ -1,6 +1,6 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-06-09. Read this first to pick up where we left off._
+_Last updated: 2026-06-10. Read this first to pick up where we left off._
 
 ## TL;DR
 
@@ -196,15 +196,44 @@ master lane** (`test_auto_resolution_e2e.py`, 36 items collected, 36 passed). Pe
   updated in-commit: `ARCHITECTURE.md §2` (scheduler tier), `MOCK_DATA_SPEC.md
   §sample_analyst`, `AI_BEHAVIOR.md §sample_data_labeling`.
 
-**Sync state (2026-06-09):** `master == origin/master == develop == origin/develop == 03f427d`.
-Everything in sync — B1 promoted; nothing un-promoted, nothing unpushed (bar this HANDOFF
-commit). Clean working tree. **B1 is DONE:** auto-resolution is scheduled (in-process loop,
-**default OFF**, engine-locked in CI by `tests/db/test_auto_resolution_e2e.py`), and the honest
-single-analyst showcase is live (sample analyst, real engine, real prices; emergent finding ~87%
-claimed → ~29% realized on her highest-conviction NG calls, kept as-is). **Follow-up: Issue #8**
-(de-hardcode the banner figure so the headline can't drift false) — noted, non-blocking. Stage F +
-A2 + B3 + B1 complete. Next per `MASTER_PLAN.md §4` Stage B: **B2** (skill-vs-luck scorecards,
-unblocked by per-user scoping), **B4** (decision/audit ledger).
+**2026-06-10 — Stage B2 (skill-vs-luck verdict) BUILT on `feat/phase-b2-skill-vs-luck`,
+merged to `develop`; awaiting `master` sign-off.** Per `docs/PHASE_B2_PLAN.md`. The Desk
+Calibration card was *labeled* "skill vs. luck" but never measured it (raw Brier + an `n≥10`
+gate, no significance test). B2 closes that with a **Wilson 95% CI on each desk's directional
+hit-rate vs the 0.50 chance baseline → verdict `skill` / `luck` / `insufficient`**. Pre-registered
+thresholds as named constants (`SKILL_BASELINE=0.50`, `WILSON_Z=1.96`); a desk earns `skill` only
+when the CI lower bound clears chance, so a hot streak or noise is never crowned. Brier +
+calibration-gap retained as the separate conviction-reliability axis.
+- **Backend:** `wilson_interval` + `skill_verdict` pure helpers in `desk_calibration.py`;
+  `AnalystScore` gains `wilson_low/high/verdict`; service returns `baseline=0.50`.
+- **Contract:** desk endpoint typed with `response_model=DeskCalibrationOut` (was a bare `dict` /
+  opaque OpenAPI object) — the real F1 contract change + opaque-contract fix. Regen diff is
+  **only** the two new schemas + the path's `additionalProperties:true → $ref` (verified). Visibility
+  model resolved: **desk-wide** (no per-user scope), auth-required-in-multitenant retained.
+- **Honesty lock in the GATED `tests/db` suite** (`test_desk_skill_verdict_e2e.py`, runs in CI's
+  `db-tests` job): a real coin-flip desk → `luck`, a genuine edge → `skill`, a thin record →
+  `insufficient`. Plus mocked verdict-math units (Wilson known-values, hot-streak→luck, sub-gate→
+  insufficient). S3 untouched (pure read-time statistic; no model/resolution path). No migration.
+- **Frontend:** Verdict badge column + Wilson CI on the hit cell; S6 copy = "the test that
+  separates skill from luck and correctly refuses to call noise skill" (never "your analysts are
+  guessing"). `luck` badge intentionally understated (neutral, not alarming).
+- **Fixed** `demo_sample_desk.py` comment drift (momentum = `_MOMENTUM_UID`, not NULL pool).
+- **Verified live on REAL `yahoo_delayed` prices** (NG+CL backfilled ~2y, desks re-seeded over
+  real bars, auto-resolved against real prices, queried over HTTP through the response model):
+  **all three blind desks land on `luck`** at **n=71/desk** — momentum 53.5% (CI [0.420, 0.646]),
+  contrarian 46.5% (CI [0.354, 0.580]), random 49.3% (CI [0.380, 0.607]); the Unattributed/NULL
+  pool 52.2% (n=249) also `luck`. None clears chance at this sample → the tool refuses to crown
+  noise, exactly as designed. (Endpoint exercised anonymously via a **process-local** Clerk-off
+  override on the dev uvicorn — `.env` untouched, no auth code in the B2 change set. The styled
+  browser-card screenshot is a non-blocking tomorrow confirmation; the endpoint verdicts are the
+  proof.) `pnpm health` green (937 backend / 405 web); `db-tests` + contracts green locally.
+- **Follow-up: Issue #8** (de-hardcode the B1 banner figure) still open, non-blocking.
+
+**Sync state (2026-06-10):** `master == origin/master == 7346e17` (B1); `develop` ahead with
+`8d0ba2b` (B2 plan) + `c17846e` (B2 build) + this HANDOFF commit. **B2 is on `develop`, NOT yet
+promoted to `master`** — owner holds the master call. Stage F + A2 + B3 + B1 + B2 complete on
+`develop`. Next per `MASTER_PLAN.md §4` Stage B: **B4** (decision/audit ledger), then **B5**
+(cross-asset). Tomorrow's optional confirmation: the styled `/calibration` card render.
 
 The single-sentence product story has correctly pivoted from "we predict
 price" to **"we calibrate uncertainty honestly."**
