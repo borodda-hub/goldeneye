@@ -2,7 +2,46 @@
 
 _Last updated: 2026-06-27. Read this first to pick up where we left off._
 
-## Most recent: Stage B4 — decision/audit ledger + minimal observability (BUILT, committed, live-verified; PENDING PROMOTION)
+## Most recent: Stage B4 — decision/audit ledger + minimal observability ✅ SHIPPED + PROMOTED TO LIVE (`master == origin/master == develop == origin/develop == 1413a49`)
+
+**B4 is LIVE.** Per `docs/PHASE_B4_PLAN.md`. The immutable, tamper-evident decision
+ledger + the smallest-useful observability layer. Built on `feat/phase-b4-ledger`
+(commits `8a7e58a` feature + `1413a49` doc note) → PR #9 → fast-forwarded into
+`develop` then `master`. **CI green on BOTH lanes** (8 jobs): the gated **`db-tests`
+job executed the 5 ledger immutability/tamper locks + `test_ledger_http_isolation` on
+the runner** (`tests/db/test_ledger_e2e.py .....` + `test_ledger_http_isolation`, 44
+passed) on develop AND master pushes, and **Contracts (OpenAPI drift) is green** (the
+red→green delta was exactly the 3 new paths — `/v1/ledger`, `/v1/ledger/{id}`,
+`/v1/metrics` — demonstrated against the pre-B4 schema). Nothing un-promoted, nothing
+unpushed.
+
+- **Live (immutable decision/audit ledger):** DB-enforced immutability (`BEFORE UPDATE
+  OR DELETE` trigger RAISEs — verified IN CI, not just locally) + per-decision SHA-256
+  **hash-chain tamper-evidence** (chain flips `chain_ok=false` on a trigger-bypass edit
+  — verified). **Forward-only by design** (`source='live'` CHECK, no backfill value —
+  pre-B4 decisions have no entry). The `created` snapshot captures user inputs + thesis
+  snapshot **and** real system state at decision time (ensemble read, vol band/regime,
+  model lineup — live-confirmed `captured=true`) OR an explicit **recorded-absence** with
+  reason (never silently omitted). `GET /v1/ledger` + `/v1/ledger/{id}` (user-scoped, by-id
+  404). Web Decision Ledger view at `/ledger`. S3 look-ahead invariant untouched (the
+  resolution append is a post-side-effect).
+- **Live (minimal observability — not APM/OTel):** request-id/timing/structured-log ASGI
+  middleware (`X-Request-ID` on every response); `log_level`/`sentry_dsn` settings;
+  `prometheus-client` metrics at `GET /v1/metrics` (http / safety / auto-resolve / ledger
+  counters); **safety-violation alerting** — a blocked LLM output writes an `Alert`
+  (activates the previously-dormant table) + a counter.
+- **⚠️ FK design note:** `decision_ledger_events.decision_id` is **ON DELETE RESTRICT** — a
+  journal row that has ledger entries **cannot be deleted** (by design — you can't erase an
+  audit trail). A future journal-delete path must delete the ledger events first (which
+  itself requires bypassing the immutability trigger) or it will hit an FK violation. The
+  `--fresh` demo seed does **not** delete `user_decision_journals`, so re-seeding is
+  unaffected.
+- **Optional (not a gate):** owner to glance at one fresh decision's CLEAN ledger (Verified
+  badge, full timeline) via `make clean && make demo` → Journal → new decision → `/ledger`.
+- **Next per `MASTER_PLAN.md §4` Stage B:** **B5** (cross-asset). `docs/PHASE_31_PLAN.md`
+  remains the detail for the later **C3** real-COT/EIA ingestion.
+
+## (superseded, kept for the record) Pre-promotion B4 status
 
 **Status: committed on `feat/phase-b4-ledger` (`8a7e58a`), NOT yet merged/promoted.**
 Per `docs/PHASE_B4_PLAN.md`. The immutable, tamper-evident decision ledger + the
