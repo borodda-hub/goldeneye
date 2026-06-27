@@ -11,14 +11,19 @@ disclaimer so nothing here overstates what it is.
 """
 from __future__ import annotations
 
+from apps.api.services.asset_config import DEFAULT, AssetClassConfig
+
 
 def predict(
     closes: list[float],
     horizon: str = "1d",
     latest_storage: dict | None = None,
     latest_cot: dict | None = None,
+    cfg: AssetClassConfig | None = None,
 ) -> "ForecastResult":
     from apps.api.services.models.moving_average_directional import ForecastResult
+
+    cfg = cfg if cfg is not None else DEFAULT
 
     # Sub-signal votes: each (direction, weight)
     sub_votes: list[tuple[str, float]] = []
@@ -46,8 +51,10 @@ def predict(
         else:
             sub_dir = "neutral"
             note = "EIA storage delta vs consensus: 0 Bcf (in line with expectations)."
-        sub_votes.append((sub_dir, 0.4))
-        supporting.append({"factor": "EIA storage delta vs consensus", "weight": 0.4, "note": note})
+        sub_votes.append((sub_dir, cfg.factor.storage_weight))
+        supporting.append(
+            {"factor": "EIA storage delta vs consensus", "weight": cfg.factor.storage_weight, "note": note}
+        )
         inputs_used.append("latest_storage")
     else:
         contradicting.append(
@@ -70,8 +77,10 @@ def predict(
         else:
             sub_dir = "neutral"
             note = "Managed-money net position unchanged WoW."
-        sub_votes.append((sub_dir, 0.3))
-        supporting.append({"factor": "COT managed-money net delta", "weight": 0.3, "note": note})
+        sub_votes.append((sub_dir, cfg.factor.cot_weight))
+        supporting.append(
+            {"factor": "COT managed-money net delta", "weight": cfg.factor.cot_weight, "note": note}
+        )
         inputs_used.append("latest_cot")
 
     # Momentum sub-signal (weight 0.3)
@@ -89,8 +98,10 @@ def predict(
         else:
             mom_dir = "bearish"
             mom_note = "5-day mean below prior 5-day mean (short-term downward momentum)."
-    sub_votes.append((mom_dir, 0.3))
-    supporting.append({"factor": "Short-term price momentum", "weight": 0.3, "note": mom_note})
+    sub_votes.append((mom_dir, cfg.factor.momentum_weight))
+    supporting.append(
+        {"factor": "Short-term price momentum", "weight": cfg.factor.momentum_weight, "note": mom_note}
+    )
 
     # Ensure supporting is non-empty (already guaranteed by momentum above)
 
@@ -108,7 +119,11 @@ def predict(
     agreeing = sum(1 for sub_dir, _ in sub_votes if sub_dir == direction)
     confidence = "medium" if agreeing >= 2 else "low"
 
-    expected_pct = 0.005 if direction == "bullish" else (-0.005 if direction == "bearish" else 0.0)
+    expected_pct = (
+        cfg.factor.expected_pct
+        if direction == "bullish"
+        else (-cfg.factor.expected_pct if direction == "bearish" else 0.0)
+    )
 
     return ForecastResult(
         model_name="factor_composite",
@@ -116,8 +131,8 @@ def predict(
         direction=direction,
         confidence=confidence,
         expected_pct=expected_pct,
-        range_low_pct=-0.02,
-        range_high_pct=0.02,
+        range_low_pct=-cfg.factor.range_pct,
+        range_high_pct=cfg.factor.range_pct,
         vol_regime=None,
         supporting=supporting,
         contradicting=contradicting,

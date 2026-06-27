@@ -149,6 +149,7 @@ async def capture_system_context(
             closes=closes,
             latest_storage=None,
             latest_cot=None,
+            asset_class=getattr(instrument, "asset_class", "commodity"),
         )
         results = await run_all(ctx)
         weights = await model_weights_for(session, instrument.id, "1d")

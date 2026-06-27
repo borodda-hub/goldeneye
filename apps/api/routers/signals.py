@@ -17,6 +17,7 @@ from apps.api.services.model_registry import ForecastContext, run_all
 from apps.api.services.ensemble import compute_ensemble, derive_envelope_confidence
 from apps.api.services.model_calibration import model_weights_for
 from apps.api.services.llm_explainer import explain_signal
+from apps.api.services.asset_config import config_for
 from apps.api.services.signal_scoring import score_forecast
 
 router = APIRouter(prefix="/v1/signals", tags=["signals"])
@@ -105,6 +106,7 @@ async def get_current_signal(
         closes=closes,
         latest_storage=latest_storage,
         latest_cot=latest_cot,
+        asset_class=getattr(instrument, "asset_class", "commodity"),
     )
     results = await run_all(ctx)
     weights = await model_weights_for(session, instrument.id, "1d")
@@ -149,7 +151,9 @@ async def get_current_signal(
         else None
     )
     env_conf = derive_envelope_confidence(
-        ensemble_confidence=ensemble["confidence"], band_width=_band_width
+        ensemble_confidence=ensemble["confidence"],
+        band_width=_band_width,
+        band_cfg=ctx.cfg.ensemble_band,
     )
     explanation, safety_env = await explain_signal(
         signal_dict, ctx_dict, envelope_confidence=env_conf
@@ -266,6 +270,10 @@ async def get_signal_history(
             horizon=f.horizon,
             expected_pct=float(f.expected_pct) if f.expected_pct is not None else None,
             realized_pct=realized_pct,
+            # B5: per-asset-class deadband (commodity default == the prior 0.003).
+            deadband=config_for(
+                getattr(instrument, "asset_class", "commodity")
+            ).default_deadband,
         )
 
         outcome = score["outcome"]

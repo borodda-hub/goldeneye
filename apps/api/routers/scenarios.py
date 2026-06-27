@@ -125,7 +125,11 @@ async def run_scenario_endpoint(
         n=100,
     )
 
-    baseline_ctx = ForecastContext(symbol=req.instrument, closes=closes)
+    baseline_ctx = ForecastContext(
+        symbol=req.instrument,
+        closes=closes,
+        asset_class=getattr(instrument, "asset_class", "commodity"),
+    )
     shocks_dicts = [s.model_dump() for s in req.shocks]
     weights = await model_weights_for(session, instrument.id, "1d")
 

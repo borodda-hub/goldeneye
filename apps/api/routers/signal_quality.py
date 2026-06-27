@@ -34,7 +34,11 @@ async def get_signal_quality(
         n=100,
     )
 
-    ctx = ForecastContext(symbol=symbol, closes=closes)
+    ctx = ForecastContext(
+        symbol=symbol,
+        closes=closes,
+        asset_class=getattr(instrument, "asset_class", "commodity"),
+    )
     results = await run_all(ctx)
     weights = await model_weights_for(session, instrument.id, "1d")
     ensemble = compute_ensemble(results, model_weights=weights)

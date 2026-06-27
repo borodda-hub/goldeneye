@@ -21,8 +21,10 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from apps.api.services.ensemble import compute_ensemble
+from apps.api.services.model_registry import ForecastContext, run_all
 from apps.api.services.models.factor_composite import predict as factor_predict
 from apps.api.services.models.holt_trend import predict as holt_predict
 from apps.api.services.models.logreg_directional import predict as logreg_predict
@@ -88,3 +90,33 @@ def test_golden_commodity_byte_identical():
         "b5_golden.json missing — capture the baseline first via _b5_golden_capture.py"
     )
     assert build_golden() == GOLDEN_PATH.read_text(encoding="utf-8")
+
+
+def _registry_subset(voters: list, ensemble: dict) -> str:
+    """Canonical JSON of just the registry-path output (voters + ensemble), the slice
+    of the golden the per-asset-class config path is responsible for."""
+    return json.dumps(
+        {"voters": [dataclasses.asdict(r) for r in voters], "ensemble": ensemble},
+        sort_keys=True,
+        indent=2,
+    )
+
+
+@pytest.mark.parametrize("asset_class", ["commodity", "metal"])
+async def test_golden_via_registry_commodity_and_metal(asset_class):
+    """run_all → ensemble through the per-asset-class config path reproduces the frozen
+    baseline for BOTH commodity (explicit) and metal (commodity fallback) — byte-for-byte.
+    This is the cross-asset guarantee: the config refactor changed nothing for the
+    existing demo's asset classes."""
+    golden = json.loads(GOLDEN_PATH.read_text(encoding="utf-8"))
+    expected_json = json.dumps(
+        {"voters": golden["voters"], "ensemble": golden["ensemble"]},
+        sort_keys=True,
+        indent=2,
+    )
+
+    ctx = ForecastContext(symbol="X", closes=_series(), asset_class=asset_class)
+    results = await run_all(ctx)
+    actual_json = _registry_subset(results, compute_ensemble(results))
+
+    assert actual_json == expected_json

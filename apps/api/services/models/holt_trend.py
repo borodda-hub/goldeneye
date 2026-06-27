@@ -20,14 +20,14 @@ from __future__ import annotations
 
 import numpy as np
 
-# Horizon → trading-day projection, min history, and the (alpha, beta) grid.
+from apps.api.services.asset_config import DEFAULT, AssetClassConfig
+
+# Horizon → trading-day projection and the (alpha, beta) grid. (min_closes,
+# neutral_band, and the SNR confidence cutoffs are per-asset-class — see cfg.holt.)
 _HORIZON_TDAYS = {"1d": 1, "1w": 5, "1m": 21}
-_MIN_CLOSES = 30
+_MIN_CLOSES = 30  # commodity default; cfg.holt.min_closes overrides per class
 _ALPHAS = (0.1, 0.3, 0.5, 0.7, 0.9)
 _BETAS = (0.05, 0.1, 0.2, 0.4)
-# Direction deadband on the projected pct move (mirrors the MA model's intent:
-# a tiny projected drift is treated as neutral, not a weak signal).
-_NEUTRAL_BAND = 0.001
 
 
 def _insufficient(horizon: str) -> "ForecastResult":  # noqa: F821
@@ -85,12 +85,15 @@ def _best_fit(y: np.ndarray) -> tuple[float, float, np.ndarray, float, float]:
     return best
 
 
-def predict(closes: list[float], horizon: str = "1d") -> "ForecastResult":  # noqa: F821
+def predict(
+    closes: list[float], horizon: str = "1d", cfg: AssetClassConfig | None = None
+) -> "ForecastResult":  # noqa: F821
     from apps.api.services.models.moving_average_directional import ForecastResult
 
+    cfg = cfg if cfg is not None else DEFAULT
     h = _HORIZON_TDAYS.get(horizon, 1)
     y = np.asarray(closes, dtype=float)
-    if y.size < _MIN_CLOSES or np.any(y <= 0):
+    if y.size < cfg.holt.min_closes or np.any(y <= 0):
         return _insufficient(horizon)
 
     alpha, beta, fitted, level, trend = _best_fit(y)
@@ -107,9 +110,9 @@ def predict(closes: list[float], horizon: str = "1d") -> "ForecastResult":  # no
     # Scale the residual band to the horizon (random-walk-style sqrt(h) widening).
     band = resid_pct * float(np.sqrt(h))
 
-    if expected_pct > _NEUTRAL_BAND:
+    if expected_pct > cfg.holt.neutral_band:
         direction = "bullish"
-    elif expected_pct < -_NEUTRAL_BAND:
+    elif expected_pct < -cfg.holt.neutral_band:
         direction = "bearish"
     else:
         direction = "neutral"
@@ -119,9 +122,9 @@ def predict(closes: list[float], horizon: str = "1d") -> "ForecastResult":  # no
     snr = abs(expected_pct) / band if band > 0 else 0.0
     if direction == "neutral":
         confidence = "low"
-    elif snr >= 1.5:
+    elif snr >= cfg.holt.snr_high:
         confidence = "high"
-    elif snr >= 0.7:
+    elif snr >= cfg.holt.snr_medium:
         confidence = "medium"
     else:
         confidence = "low"

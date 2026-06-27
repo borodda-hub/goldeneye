@@ -9,6 +9,8 @@ import math
 from dataclasses import dataclass, field
 from typing import Literal
 
+from apps.api.services.asset_config import DEFAULT, AssetClassConfig, VolRegimeBands
+
 
 @dataclass
 class ForecastResult:
@@ -43,18 +45,24 @@ def _annualized_vol(closes: list[float]) -> float:
     return math.sqrt(variance) * math.sqrt(252)
 
 
-def classify_vol_regime(annualized_vol: float) -> str:
-    """Classify annualized volatility into a regime label."""
-    if annualized_vol < 0.25:
+def classify_vol_regime(
+    annualized_vol: float, bands: VolRegimeBands | None = None
+) -> str:
+    """Classify annualized volatility into a regime label. ``bands`` defaults to the
+    commodity (NG) cutoffs — pass a per-asset-class band set to retune."""
+    b = bands if bands is not None else DEFAULT.vol_regime_bands
+    if annualized_vol < b.compressed:
         return "compressed"
-    if annualized_vol < 0.45:
+    if annualized_vol < b.normal:
         return "normal"
-    if annualized_vol < 0.70:
+    if annualized_vol < b.elevated:
         return "elevated"
     return "crisis"
 
 
-def predict(closes: list[float], horizon: str = "1d") -> ForecastResult:
+def predict(
+    closes: list[float], horizon: str = "1d", cfg: AssetClassConfig | None = None
+) -> ForecastResult:
     """
     Compute a directional forecast from SMA-20 vs SMA-50 crossover.
 
@@ -66,6 +74,7 @@ def predict(closes: list[float], horizon: str = "1d") -> ForecastResult:
         ForecastResult with direction, confidence, expected_pct, range, vol_regime,
         supporting factors, and contradicting factors.
     """
+    cfg = cfg if cfg is not None else DEFAULT
     if len(closes) < 55:
         return ForecastResult(
             model_name="moving_average_directional",
@@ -93,31 +102,37 @@ def predict(closes: list[float], horizon: str = "1d") -> ForecastResult:
     # Direction determination
     if sma50 == 0:
         direction: str = "neutral"
-    elif sma20 > sma50 * 1.002:
+    elif sma20 > sma50 * cfg.ma.cross_up:
         direction = "bullish"
-    elif sma20 < sma50 * 0.998:
+    elif sma20 < sma50 * cfg.ma.cross_down:
         direction = "bearish"
     else:
         direction = "neutral"
 
     # Confidence from cross magnitude
     spread_ratio = abs(sma20 - sma50) / sma50 if sma50 != 0 else 0.0
-    if spread_ratio > 0.01:
+    if spread_ratio > cfg.ma.spread_high:
         confidence: str = "high"
-    elif spread_ratio > 0.005:
+    elif spread_ratio > cfg.ma.spread_medium:
         confidence = "medium"
     else:
         confidence = "low"
 
     # Expected percent move (amplified)
-    expected_pct: float | None = (sma20 / sma50 - 1.0) * 2.0 if sma50 != 0 else 0.0
+    expected_pct: float | None = (
+        (sma20 / sma50 - 1.0) * cfg.ma.amplify if sma50 != 0 else 0.0
+    )
 
     # Volatility regime
     ann_vol = _annualized_vol(closes)
-    vol_regime = classify_vol_regime(ann_vol)
+    vol_regime = classify_vol_regime(ann_vol, cfg.vol_regime_bands)
 
     # Vol adjustment for range
-    vol_adjustment = 0.04 if vol_regime in ("elevated", "crisis") else 0.02
+    vol_adjustment = (
+        cfg.ma.range_elevated
+        if vol_regime in ("elevated", "crisis")
+        else cfg.ma.range_normal
+    )
 
     range_low_pct: float | None = (expected_pct or 0.0) - vol_adjustment
     range_high_pct: float | None = (expected_pct or 0.0) + vol_adjustment

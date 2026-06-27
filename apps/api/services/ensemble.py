@@ -20,6 +20,8 @@ from __future__ import annotations
 
 from typing import Literal
 
+from apps.api.services.asset_config import DEFAULT as _ASSET_DEFAULT
+from apps.api.services.asset_config import EnsembleBand
 from apps.api.services.models.moving_average_directional import ForecastResult
 
 CONFIDENCE_WEIGHTS: dict[str, int] = {"high": 3, "medium": 2, "low": 1}
@@ -49,14 +51,18 @@ _BRIER_EPS = 1e-3
 # module). Look-ahead-safe (S3): a pure function of values computed at request time.
 EnvelopeConfidence = Literal["low", "medium", "high"]
 _CONFIDENCE_RANK: dict[str, int] = {"low": 0, "medium": 1, "high": 2}
-_WIDE_BAND_PCT = 0.10
-_VERY_WIDE_BAND_PCT = 0.18
+# Band-width cutoffs now live in the per-asset-class config (B5,
+# asset_config.EnsembleBand). These module aliases are DERIVED from the commodity
+# config (single source) and retained for the A2 test-lock + any direct importers.
+_WIDE_BAND_PCT = _ASSET_DEFAULT.ensemble_band.wide          # commodity = 0.10
+_VERY_WIDE_BAND_PCT = _ASSET_DEFAULT.ensemble_band.very_wide  # commodity = 0.18
 
 
 def derive_envelope_confidence(
     *,
     ensemble_confidence: str,
     band_width: float | None,
+    band_cfg: "EnsembleBand | None" = None,
 ) -> EnvelopeConfidence:
     """Derive an LLM-narrative envelope confidence from ensemble agreement + band width.
 
@@ -64,12 +70,16 @@ def derive_envelope_confidence(
     and the regime tie-rule. ``band_width`` is the ensemble's fractional predicted
     range (``range["high_pct"] - range["low_pct"]``); a wide band can only lower the
     result. ``band_width=None`` returns the agreement tier unchanged. Never upgrades.
+
+    ``band_cfg`` (B5) supplies the per-asset-class wide/very-wide cutoffs; defaults to
+    the commodity (NG) set so existing callers stay byte-identical.
     """
+    bc = band_cfg if band_cfg is not None else _ASSET_DEFAULT.ensemble_band
     base_rank = _CONFIDENCE_RANK.get(ensemble_confidence, 0)
     if band_width is not None:
-        if band_width >= _VERY_WIDE_BAND_PCT:
+        if band_width >= bc.very_wide:
             base_rank = _CONFIDENCE_RANK["low"]
-        elif band_width >= _WIDE_BAND_PCT:
+        elif band_width >= bc.wide:
             base_rank = min(base_rank, _CONFIDENCE_RANK["medium"])
     if base_rank >= _CONFIDENCE_RANK["high"]:
         return "high"

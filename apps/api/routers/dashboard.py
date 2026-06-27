@@ -93,7 +93,11 @@ async def get_summary(
         contract_code=front.contract_code if front else None,
         n=100,
     )
-    ctx = ForecastContext(symbol=symbol, closes=closes)
+    ctx = ForecastContext(
+        symbol=symbol,
+        closes=closes,
+        asset_class=getattr(instrument, "asset_class", "commodity"),
+    )
     results = await run_all(ctx)
     weights = await model_weights_for(session, instrument.id, "1d")
     ensemble = compute_ensemble(results, model_weights=weights)
@@ -106,7 +110,9 @@ async def get_summary(
         else None
     )
     env_conf = derive_envelope_confidence(
-        ensemble_confidence=ensemble["confidence"], band_width=_band_width
+        ensemble_confidence=ensemble["confidence"],
+        band_width=_band_width,
+        band_cfg=ctx.cfg.ensemble_band,
     )
 
     # AI summary

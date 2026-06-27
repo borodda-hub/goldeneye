@@ -20,12 +20,12 @@ from __future__ import annotations
 
 import numpy as np
 
-# Feature lookback, min training rows, and horizon → trading-day map.
+from apps.api.services.asset_config import DEFAULT, AssetClassConfig
+
+# Feature lookback and horizon → trading-day map. (min_train_rows, iters, lr, the
+# direction thresholds, and the edge cutoffs are per-asset-class — see cfg.logreg.)
 _WARMUP = 20
-_MIN_TRAIN_ROWS = 24
 _HORIZON_TDAYS = {"1d": 1, "1w": 5, "1m": 21}
-_ITERS = 400
-_LR = 0.3
 _FEATURE_NAMES = [
     "1-day momentum",
     "5-day momentum",
@@ -81,13 +81,15 @@ def predict(
     horizon: str = "1d",
     latest_storage: dict | None = None,
     latest_cot: dict | None = None,
+    cfg: AssetClassConfig | None = None,
 ) -> "ForecastResult":  # noqa: F821
     from apps.api.services.models.moving_average_directional import ForecastResult
 
+    cfg = cfg if cfg is not None else DEFAULT
     h = _HORIZON_TDAYS.get(horizon, 1)
     c = np.asarray(closes, dtype=float)
     n = c.size
-    need = _WARMUP + h + _MIN_TRAIN_ROWS
+    need = _WARMUP + h + cfg.logreg.min_train_rows
     if n < need or np.any(c <= 0):
         return _insufficient(horizon, need)
 
@@ -105,24 +107,30 @@ def predict(
     w = np.zeros(xs.shape[1])
     b = 0.0
     m = y.size
-    for _ in range(_ITERS):
+    for _ in range(cfg.logreg.iters):
         p = _sigmoid(xs @ w + b)
         err = p - y
-        w -= _LR * (xs.T @ err) / m
-        b -= _LR * float(err.sum()) / m
+        w -= cfg.logreg.lr * (xs.T @ err) / m
+        b -= cfg.logreg.lr * float(err.sum()) / m
 
     # Predict the latest bar (uses only past closes).
     x_last = (np.array(_features(c, n - 1)) - mu) / sd
     p_up = float(_sigmoid(np.array([x_last @ w + b]))[0])
 
-    if p_up >= 0.55:
+    if p_up >= cfg.logreg.direction_up:
         direction = "bullish"
-    elif p_up <= 0.45:
+    elif p_up <= cfg.logreg.direction_down:
         direction = "bearish"
     else:
         direction = "neutral"
     edge = abs(p_up - 0.5)
-    confidence = "high" if edge >= 0.15 else "medium" if edge >= 0.07 else "low"
+    confidence = (
+        "high"
+        if edge >= cfg.logreg.edge_high
+        else "medium"
+        if edge >= cfg.logreg.edge_medium
+        else "low"
+    )
 
     # Typical realized move over the horizon → expected_pct + range scale.
     avg_move = float(np.mean(np.abs(c[_WARMUP + h :] / c[_WARMUP:-h] - 1.0)))

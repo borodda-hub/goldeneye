@@ -1,20 +1,24 @@
 """Volatility regime classifier."""
 from __future__ import annotations
 
+from apps.api.services.asset_config import AssetClassConfig
 
-def classify(closes: list[float]) -> str:
+
+def classify(closes: list[float], cfg: AssetClassConfig | None = None) -> str:
     """
     Returns one of: compressed, normal, elevated, crisis
-    Based on annualized realized vol of last 20 daily returns.
-    < 0.25: compressed, < 0.45: normal, < 0.70: elevated, else crisis
+    Based on annualized realized vol of last 20 daily returns. Band cutoffs default
+    to the commodity (NG) set; pass a per-asset-class ``cfg`` to retune.
     """
+    from apps.api.services.asset_config import DEFAULT
     from apps.api.services.models.moving_average_directional import (
         _annualized_vol,
         classify_vol_regime,
     )
 
+    c = cfg if cfg is not None else DEFAULT
     ann_vol = _annualized_vol(closes)
-    return classify_vol_regime(ann_vol)
+    return classify_vol_regime(ann_vol, c.vol_regime_bands)
 
 
 def predict(closes: list[float], horizon: str = "1d") -> "ForecastResult":  # noqa: F821

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime, time, timedelta, timezone
+from decimal import Decimal
 from typing import Any
 
 from fastapi import HTTPException
@@ -22,11 +23,29 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from apps.api.models.orm.paper import PaperTrade
 from apps.api.models.orm.prices import PriceBar
 from apps.api.repos import contracts as contract_repo
+from apps.api.repos import instruments as instr_repo
 from apps.api.repos import paper_trades as trade_repo
 
+# B5: the per-$1-move USD value of a contract is the instrument's contract_size
+# (NG 10000, ES 50, ZN 1000). NG_TICK_VALUE_USD == NG's contract_size, kept as the
+# fallback so compute_pnl/validate_open stay byte-identical for NG + the mocked
+# unit tests; instrument-aware paths resolve the real value via _resolve_tick_value.
 NG_TICK_VALUE_USD: float = 10_000.0
 STARTING_EQUITY_USD: float = 100_000.0
 LEVERAGE_CAP: float = 10.0
+
+
+async def _resolve_tick_value(
+    session: AsyncSession, instrument_id: uuid.UUID
+) -> float:
+    """The instrument's contract_size (per-$1-move USD value). Falls back to
+    NG_TICK_VALUE_USD when the instrument can't be resolved to a numeric size — so
+    the mocked unit tests (AsyncMock session → non-numeric attr) keep the NG value."""
+    instr = await instr_repo.get_by_id(session, instrument_id)
+    cs = getattr(instr, "contract_size", None)
+    if isinstance(cs, (int, float, Decimal)):
+        return float(cs)
+    return NG_TICK_VALUE_USD
 
 
 # ---------------------------------------------------------------------------
@@ -73,6 +92,7 @@ async def validate_open(
     entry_price: float,
     stop_loss: float | None,
     take_profit: float | None,
+    tick_value: float = NG_TICK_VALUE_USD,
 ) -> None:
     """
     Raises HTTPException 400 on bad inputs, 409 on leverage breach.
@@ -119,7 +139,7 @@ async def validate_open(
                 detail="short take_profit must be below entry_price",
             )
 
-    notional = size * entry_price * NG_TICK_VALUE_USD
+    notional = size * entry_price * tick_value
     equity = await current_equity(session)
     cap = LEVERAGE_CAP * equity
     if notional > cap:
@@ -159,6 +179,7 @@ async def open_trade(
         entry_price=entry_price,
         stop_loss=stop_loss,
         take_profit=take_profit,
+        tick_value=await _resolve_tick_value(session, instrument_id),
     )
 
     data: dict[str, Any] = {
@@ -236,6 +257,7 @@ async def close_trade(
         size=float(trade.size_contracts),
         entry=float(trade.entry_price),
         exit_=float(exit_price),
+        tick_value=await _resolve_tick_value(session, trade.instrument_id),
     )
 
     trade.exit_price = exit_price  # type: ignore[assignment]
@@ -321,7 +343,14 @@ async def equity_curve(
     #    Then load all 1d bars in the window for each unique contract, keyed by date.
     front_month_cache: dict[uuid.UUID, uuid.UUID | None] = {}
     trade_price_contract: dict[uuid.UUID, uuid.UUID | None] = {}
+    # B5: per-instrument tick value (contract_size) for the open-position MTM, cached
+    # so each instrument is resolved once.
+    tick_by_instrument: dict[uuid.UUID, float] = {}
     for t in all_trades:
+        if t.instrument_id not in tick_by_instrument:
+            tick_by_instrument[t.instrument_id] = await _resolve_tick_value(
+                session, t.instrument_id
+            )
         if t.contract_id is not None:
             trade_price_contract[t.id] = t.contract_id
             continue
@@ -383,6 +412,7 @@ async def equity_curve(
                 size=float(t.size_contracts),
                 entry=float(t.entry_price),
                 exit_=day_close,
+                tick_value=tick_by_instrument.get(t.instrument_id, NG_TICK_VALUE_USD),
             )
 
         equity = STARTING_EQUITY_USD + realized + unrealized
