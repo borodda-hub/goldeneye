@@ -13,9 +13,12 @@ from apps.api.models.orm.users import User
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
 from apps.api.repos import journal as journal_repo
+from apps.api.repos import ledger as ledger_repo
 from apps.api.repos import theses as theses_repo
+from apps.api.services import ledger as ledger_svc
 from apps.api.services.auto_resolution import resolve_open_decisions
 from apps.api.services.llm_explainer import extract_prediction, review_journal_entry
+from apps.api.services.metrics import LEDGER_EVENTS
 from apps.api.services.price_lookup import get_latest_closes
 
 router = APIRouter(prefix="/v1/journal", tags=["journal"])
@@ -160,6 +163,24 @@ async def create_entry(
     except Exception:
         pass  # review is best-effort
 
+    # B4: append the immutable "at the moment of decision, here is what you knew"
+    # event. System-context capture is best-effort and records an explicit
+    # absence on failure (never silently omitted).
+    system_context = await ledger_svc.capture_system_context(
+        session, instrument=instrument, instrument_code=req.instrument
+    )
+    await ledger_repo.append_event(
+        session,
+        decision_id=entry.id,
+        user_id=scope,
+        event_type="created",
+        occurred_at=entry.created_at,
+        payload=ledger_svc.build_created_payload(
+            entry, system_context=system_context
+        ),
+    )
+    LEDGER_EVENTS.labels(event_type="created").inc()
+
     await session.commit()
     return _serialize(entry)
 
@@ -215,10 +236,62 @@ async def patch_entry(
     # Only include fields the client actually set — exclude_unset distinguishes
     # `{"resolved_direction": null}` (clear) from omitting the field entirely.
     patch = req.model_dump(exclude_unset=True)
+    # B4: snapshot pre-update values for the audited mutable fields so the ledger
+    # records old→new (the journal otherwise loses prior values on edit).
+    _audited = ("outcome", "reflection", "resolved_direction")
+    before = {k: getattr(entry, k) for k in _audited if k in patch}
     try:
         entry = await journal_repo.update(session, entry, patch)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    from datetime import UTC, datetime
+
+    now = datetime.now(UTC)
+    for field, old in before.items():
+        new = getattr(entry, field)
+        if new == old:
+            continue
+        if field == "resolved_direction" and new is not None:
+            # A manual resolution — a lifecycle event, not a free-text amend.
+            await ledger_repo.append_event(
+                session,
+                decision_id=entry.id,
+                user_id=scope,
+                event_type="resolved",
+                occurred_at=now,
+                payload=ledger_svc.build_resolved_payload(
+                    outcome=str(new),
+                    resolved_at=now,
+                    auto_resolved=False,
+                    anchor_price=(
+                        float(entry.anchor_price)
+                        if entry.anchor_price is not None
+                        else None
+                    ),
+                    realized_close=None,
+                    move_pct=None,
+                    deadband_pct=(
+                        float(entry.threshold_pct)
+                        if entry.threshold_pct is not None
+                        else None
+                    ),
+                ),
+            )
+            LEDGER_EVENTS.labels(event_type="resolved").inc()
+        else:
+            await ledger_repo.append_event(
+                session,
+                decision_id=entry.id,
+                user_id=scope,
+                event_type="amended",
+                occurred_at=now,
+                payload=ledger_svc.build_amended_payload(
+                    field=field, old=old, new=new
+                ),
+            )
+            LEDGER_EVENTS.labels(event_type="amended").inc()
+
     await session.commit()
     return _serialize(entry)
 

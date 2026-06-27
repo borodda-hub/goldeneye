@@ -18,7 +18,7 @@ from contextlib import asynccontextmanager  # noqa: E402
 
 from fastapi import FastAPI, Request  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
-from fastapi.responses import JSONResponse  # noqa: E402
+from fastapi.responses import JSONResponse, PlainTextResponse, Response  # noqa: E402
 
 from apps.api.realtime.ticker import start_ticker  # noqa: E402
 from apps.api.routers import (  # noqa: E402
@@ -33,6 +33,7 @@ from apps.api.routers import (  # noqa: E402
     indicators,
     instruments,
     journal,
+    ledger,
     me,
     news,
     paper,
@@ -59,7 +60,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(title="Goldeneye API", version="0.2.0", lifespan=lifespan)
 
+from apps.api.services import metrics as _metrics  # noqa: E402
+from apps.api.services.observability import (  # noqa: E402
+    configure_logging,
+    record_safety_violation,
+    request_metrics_middleware,
+)
 from apps.api.src.settings import settings as _settings  # noqa: E402
+
+configure_logging(_settings.log_level)
 
 _cors_origins = [
     o.strip() for o in _settings.cors_allowed_origins.split(",") if o.strip()
@@ -73,10 +82,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# B4: request-id + timing + metrics (the minimal observability layer).
+app.middleware("http")(request_metrics_middleware)
+
 # ── Error handlers ────────────────────────────────────────────────────────────
 
 @app.exception_handler(SafetyViolation)
 async def safety_violation_handler(request: Request, exc: SafetyViolation) -> JSONResponse:
+    # B4: record the violation (Alert table + counter) before returning. This is
+    # the single choke point for every blocked LLM output. Best-effort.
+    await record_safety_violation(request, str(exc))
     return JSONResponse(
         status_code=500,
         content={
@@ -96,6 +111,7 @@ app.include_router(chart.router)
 app.include_router(signals.router)
 app.include_router(scenarios.router)
 app.include_router(journal.router)
+app.include_router(ledger.router)
 app.include_router(me.router)
 app.include_router(paper.router)
 app.include_router(admin.router)
@@ -118,3 +134,11 @@ app.include_router(patterns.router)
 @app.get("/v1/health")
 async def health() -> dict[str, bool]:
     return {"ok": True}
+
+
+@app.get("/v1/metrics")
+async def metrics() -> Response:
+    """Prometheus exposition for the minimal B4 metric set (text/plain)."""
+    return PlainTextResponse(
+        content=_metrics.render(), media_type=_metrics.CONTENT_TYPE
+    )

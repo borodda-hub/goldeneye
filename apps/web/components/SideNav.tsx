@@ -8,6 +8,7 @@ import {
   type LucideIcon,
   NotebookPen,
   Radar,
+  ScrollText,
   Server,
   Wallet,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const NAV_ITEMS: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: "/signals", label: "Signal Lab", Icon: Radar },
   { href: "/scenarios", label: "Scenario Lab", Icon: FlaskConical },
   { href: "/journal", label: "Journal", Icon: NotebookPen },
+  { href: "/ledger", label: "Ledger", Icon: ScrollText },
   { href: "/paper", label: "Paper Trading", Icon: Wallet },
   { href: "/calibration", label: "Calibration", Icon: Gauge },
   { href: "/admin", label: "Admin", Icon: Server },

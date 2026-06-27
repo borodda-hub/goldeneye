@@ -22,6 +22,22 @@ def client() -> TestClient:
     return TestClient(app)
 
 
+@pytest.fixture(autouse=True)
+def _stub_ledger():
+    """B4 hooks the immutable-ledger append + system-context capture into the
+    journal create/patch paths. These are mocked endpoint tests with no DB, so
+    stub the two ledger calls (their behavior is covered by
+    tests/test_ledger_service.py and the gated tests/db/test_ledger_e2e.py)."""
+    with patch(
+        "apps.api.routers.journal.ledger_repo.append_event",
+        new=AsyncMock(),
+    ), patch(
+        "apps.api.routers.journal.ledger_svc.capture_system_context",
+        new=AsyncMock(return_value={"captured": False, "reason": "stubbed in test"}),
+    ):
+        yield
+
+
 def _fake_instrument() -> Any:
     return type("I", (), {"id": uuid.uuid4()})()
 

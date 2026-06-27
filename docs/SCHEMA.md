@@ -281,6 +281,37 @@ CREATE TABLE user_settings (
   settings   JSONB NOT NULL DEFAULT '{}'::jsonb,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Immutable decision/audit ledger (migration 011_decision_ledger, Phase B4).
+-- An APPEND-ONLY event log shadowing user_decision_journals: a tamper-evident
+-- record of every decision's lifecycle (created / resolved / amended). The
+-- journal row stays mutable live state; this table is its immutable trail.
+-- Immutability is DB-ENFORCED (a trigger rejects UPDATE/DELETE — INSERT only);
+-- tamper-EVIDENCE is layered in the app via a per-decision SHA-256 hash chain
+-- (row_hash chains off the previous event), so an out-of-band edit that bypasses
+-- the trigger is still detectable on verify. The source CHECK permits only
+-- 'live' — there is no 'backfill' value, so fabricated history is structurally
+-- impossible (an audit ledger cannot be honestly backfilled; pre-B4 decisions
+-- have no entry by design).
+CREATE TABLE decision_ledger_events (
+  id           UUID PRIMARY KEY,
+  seq          BIGINT GENERATED ALWAYS AS IDENTITY UNIQUE,   -- DB-owned append order
+  decision_id  UUID NOT NULL REFERENCES user_decision_journals(id) ON DELETE RESTRICT,
+  user_id      UUID REFERENCES users(id) ON DELETE RESTRICT, -- copied at append; NULL = anon pool
+  event_type   TEXT NOT NULL CHECK (event_type IN ('created','resolved','amended')),
+  occurred_at  TIMESTAMPTZ NOT NULL,                         -- domain time of the event
+  recorded_at  TIMESTAMPTZ NOT NULL DEFAULT now(),           -- append wall-clock
+  source       TEXT NOT NULL DEFAULT 'live' CHECK (source = 'live'),
+  payload      JSONB NOT NULL,                               -- the immutable snapshot
+  prev_hash    TEXT,                                         -- row_hash of the prior event
+  row_hash     TEXT NOT NULL                                 -- sha256(prev_hash, decision_id, type, occurred_at, payload)
+);
+CREATE INDEX ix_ledger_user_decision_seq ON decision_ledger_events (user_id, decision_id, seq);
+CREATE INDEX ix_ledger_decision_seq ON decision_ledger_events (decision_id, seq);
+-- DB-enforced immutability: BEFORE UPDATE OR DELETE trigger RAISEs (append-only).
+CREATE TRIGGER decision_ledger_events_no_mutate
+  BEFORE UPDATE OR DELETE ON decision_ledger_events
+  FOR EACH ROW EXECUTE FUNCTION decision_ledger_events_immutable();
 ```
 
 ## §hypertables
@@ -390,4 +421,4 @@ Pydantic models in `apps/api/models/` mirror these tables. The OpenAPI schema ge
 - Squash-style "init" migration is allowed only for Phase 01. After Phase 01, all changes are forward-only.
 - Hypertable creation goes in a separate migration step from `CREATE TABLE` (TimescaleDB requirement).
 - Generated columns and check constraints documented inline in this file are part of the contract; tests in `tests/db/test_constraints.py` enforce them.
-- **Current head: `009`** (`009_merge_heads`). Migrations `006` (journal calibration) and the accounts branch `007_users` both revise off their parents and produced two heads (`008_auto_resolution` and `007_users`); `009_merge_heads` unifies them. New migrations revise from `009`.
+- **Current head: `011`** (`011_decision_ledger`, Phase B4 — the `decision_ledger_events` table + immutability trigger). Lineage: `009_merge_heads` unified the two heads (`008_auto_resolution` and the accounts branch `007_users`) from migrations `006` (journal calibration) / `007_users`; `010_theses_user_scope` (B3a per-user scoping) revised from `009`; `011_decision_ledger` revises from `010`. New migrations revise from `011`.

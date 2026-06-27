@@ -171,6 +171,40 @@ async def test_paper_http_isolation(ctx):
                               json={"exit_price": 3.5})).status_code == 404
 
 
+# ── Ledger (B4): A's audit trail is private; B/anon get 404; recorded-absence ──
+@pytest.mark.asyncio
+async def test_ledger_http_isolation(ctx):
+    client, as_user, _sm, a_id, b_id, _inst_id, sym = ctx
+
+    as_user(a_id)
+    r = await client.post("/v1/journal", json={
+        "instrument": sym, "hypothesis": "A's ledgered decision", "confidence_pct": 70})
+    assert r.status_code == 200, r.text
+    decision_id = r.json()["id"]
+
+    # A sees the immutable record: in the list, and by-id with an intact chain.
+    a_list = (await client.get("/v1/ledger")).json()["decisions"]
+    assert any(d["decision_id"] == decision_id for d in a_list)
+    a_detail = await client.get(f"/v1/ledger/{decision_id}")
+    assert a_detail.status_code == 200
+    body = a_detail.json()
+    assert body["chain_ok"] is True
+    created = next(e for e in body["events"] if e["event_type"] == "created")
+    # Recorded-absence: no prices in the test DB → system_context is present and
+    # explicitly marks the absence with a reason (never silently omitted).
+    sysctx = created["payload"]["system_context"]
+    assert sysctx["captured"] is False and "reason" in sysctx
+
+    # B: not in list, 404 by-id — cannot read A's audit trail.
+    as_user(b_id)
+    assert all(d["decision_id"] != decision_id for d in (await client.get("/v1/ledger")).json()["decisions"])
+    assert (await client.get(f"/v1/ledger/{decision_id}")).status_code == 404
+
+    # Anonymous can't reach it either.
+    as_user(None)
+    assert (await client.get(f"/v1/ledger/{decision_id}")).status_code == 404
+
+
 # ── Admin/desk gating: denied to anonymous when accounts are configured ────────
 @pytest.mark.asyncio
 async def test_admin_desk_gating_when_clerk_configured(ctx, monkeypatch):

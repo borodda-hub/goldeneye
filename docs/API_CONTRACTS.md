@@ -318,6 +318,43 @@ shocks list and the complete `result` block above. Returns 404 if the
 }
 ```
 
+### Decision Ledger (Phase B4)
+
+The immutable "at the moment of decision, here is exactly what you knew" view —
+an append-only, tamper-evident record shadowing the journal. Read-only over HTTP
+(events are appended internally on the journal-create / resolution paths). Scoped
+by `user_id` with by-id 404 ownership (the B3 isolation invariant); pre-B4
+decisions have no ledger entry by design.
+
+`GET /v1/ledger` — the requester's decisions, each with its event timeline and a
+`chain_ok` integrity flag. Typed `LedgerListOut`.
+`GET /v1/ledger/{decision_id}` — one decision's full immutable record; 404 if it
+has no ledger (pre-B4 / unknown) or is owned by another user. Typed `LedgerDecisionOut`.
+
+```jsonc
+// GET /v1/ledger/{decision_id}
+{
+  "decision_id": "…",
+  "chain_ok": true,            // hash-chain integrity — false ⇒ tamper detected
+  "broken_at_seq": null,       // the seq where verification broke, when !chain_ok
+  "events": [
+    {
+      "seq": 42, "event_type": "created",
+      "occurred_at": "2026-06-10T12:00:00Z", "recorded_at": "…",
+      "source": "live", "prev_hash": null, "row_hash": "…",
+      "payload": {
+        "user_inputs": { "hypothesis": "…", "predicted_direction": "bullish",
+                          "confidence_pct": 65, "horizon_days": 14, "anchor_price": 3.41 },
+        // System state at decision time — captured snapshot OR an explicit
+        // recorded absence (never silently omitted):
+        "system_context": { "captured": false, "reason": "unavailable: …" }
+      }
+    }
+    // … 'resolved' (outcome/realized_close/move_pct) and 'amended' (field/old/new) events
+  ]
+}
+```
+
 ### Paper Trading
 
 `POST /v1/paper-trades/open`
@@ -454,6 +491,20 @@ Latest CFTC managed-money positioning, keyed by the instrument's
 `POST /v1/explain/journal` — `{ entry_id }` → assumption-finding review
 
 All four return `{ text, safety }`.
+
+### Observability (Phase B4 — minimal)
+
+`GET /v1/metrics` — Prometheus exposition text (`text/plain`, **not** a typed JSON
+contract). Minimal set: `http_requests_total{method,route,status}`,
+`http_request_duration_seconds`, `safety_violations_total`,
+`auto_resolutions_total{outcome}`, `ledger_events_total{event_type}`.
+
+Every response carries an `X-Request-ID` header (assigned if the client didn't send
+one) and one structured request log line is emitted per request. When the safety
+layer blocks an LLM output after retry, an `Alert` row is written
+(`kind="safety_violation"`, `severity="error"`, best-effort `user_id`) and surfaces
+in the admin alerts view above; the request still returns the `safety_violation`
+error envelope (HTTP 500).
 
 ## §websocket
 

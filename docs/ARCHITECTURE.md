@@ -150,12 +150,18 @@ Every method composes a structured prompt that includes the persona from `docs/A
 
 All runtime config via environment variables, loaded by Pydantic `BaseSettings`. The full list lives in `apps/api/config.py` and `apps/web/.env.example`. Nothing in the repo is environment-specific aside from these files.
 
-## 11. Observability (MVP)
+## 11. Observability (minimal — Phase B4)
 
-- Structured JSON logs from FastAPI (uvicorn access + app logger).
-- Adapter health surfaced through `/v1/admin/data-health`, which reads last-success timestamps stored by each adapter run.
-- A simple Sentry stub wired but disabled by default.
-- Production observability (OpenTelemetry, metrics) is out of MVP scope.
+The smallest genuinely-useful layer now that the app is multi-tenant (deliberately **not** a full APM/OTel buildout):
+- **Structured request logging + request-id.** One ASGI middleware (`services/observability.py`) assigns/propagates `X-Request-ID`, times each request, and emits one structured log line (`method, route, status, duration_ms, request_id`). `log_level` is a settings field; `logging.dictConfig` is installed at startup.
+- **Metrics.** `prometheus-client` registry (`services/metrics.py`) exported at `GET /v1/metrics`: `http_requests_total`, `http_request_duration_seconds`, `safety_violations_total`, `auto_resolutions_total{outcome}`, `ledger_events_total{event_type}`.
+- **Safety-violation alerting.** A blocked LLM output (after retry) writes an `Alert` (`kind="safety_violation"`, best-effort `user_id`) — activating the previously-dormant `Alert` table — and increments the counter; it surfaces in the admin alerts view.
+- Adapter health surfaced through `/v1/admin/data-health` (last-success timestamps per adapter run).
+- `sentry_dsn` is a settings field for completeness; `sentry_sdk` wiring + full OpenTelemetry tracing remain out of scope (tracked re-entry items).
+
+## 11a. Decision/audit ledger (Phase B4)
+
+An **append-only, tamper-evident** record (`decision_ledger_events`, see `SCHEMA.md`) shadowing the mutable `user_decision_journals` row — the *"at the moment of decision, here is exactly what you knew"* compliance view. Events (`created` / `resolved` / `amended`) are appended on the journal-create + resolution paths (the resolution append is a post-decision side-effect — it observes, never changes, what the engine resolved, so the S3 look-ahead invariant is untouched). **Immutability is DB-enforced** (a `BEFORE UPDATE OR DELETE` trigger), and a per-decision SHA-256 **hash chain** makes any out-of-band edit detectable (`chain_ok`). The `created` snapshot captures the user's inputs plus the system state at that instant (ensemble read, vol band/regime, model lineup) — or, when capture fails, an **explicit recorded absence** with a reason (never silently omitted). Read surface: `GET /v1/ledger`, `GET /v1/ledger/{decision_id}` (user-scoped, by-id 404); the web Decision Ledger view renders the per-decision timeline with an integrity badge.
 
 ## 12. What we deliberately don't do in MVP
 

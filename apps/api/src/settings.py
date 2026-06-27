@@ -71,5 +71,11 @@ class Settings(BaseSettings):
     auto_resolve_enabled: bool = False
     auto_resolve_interval_hours: float = 24.0
 
+    # Observability (B4) — minimal. `log_level` configures structured request
+    # logging; `sentry_dsn` is a field for completeness (wiring is deferred — see
+    # docs/PHASE_B4_PLAN.md §6), so a value in .env no longer sits unread.
+    log_level: str = "INFO"
+    sentry_dsn: str = ""
+
 
 settings = Settings()

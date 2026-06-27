@@ -277,6 +277,49 @@ export interface paths {
         patch: operations["patch_entry_v1_journal__entry_id__patch"];
         trace?: never;
     };
+    "/v1/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ledger
+         * @description The requester's decision ledger — each decision with its immutable event
+         *     timeline and a chain-integrity flag. Scoped to the requester (`user_id`).
+         */
+        get: operations["get_ledger_v1_ledger_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/ledger/{decision_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ledger Decision
+         * @description One decision's full immutable record. 404 if it has no ledger (e.g. a
+         *     pre-B4 decision — no record exists by design) or is owned by another user
+         *     (ownership leak-proofing, mirroring the journal).
+         */
+        get: operations["get_ledger_decision_v1_ledger__decision_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/me": {
         parameters: {
             query?: never;
@@ -1042,6 +1085,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Metrics
+         * @description Prometheus exposition for the minimal B4 metric set (text/plain).
+         */
+        get: operations["metrics_v1_metrics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1244,6 +1307,51 @@ export interface components {
             reflection?: string | null;
             /** Resolved Direction */
             resolved_direction?: ("hit" | "miss" | "neutral" | "unresolved") | null;
+        };
+        /** LedgerDecisionOut */
+        LedgerDecisionOut: {
+            /** Decision Id */
+            decision_id: string;
+            /** Events */
+            events: components["schemas"]["LedgerEventOut"][];
+            /** Chain Ok */
+            chain_ok: boolean;
+            /** Broken At Seq */
+            broken_at_seq: number | null;
+        };
+        /** LedgerEventOut */
+        LedgerEventOut: {
+            /** Seq */
+            seq: number;
+            /** Decision Id */
+            decision_id: string;
+            /** Event Type */
+            event_type: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /**
+             * Recorded At
+             * Format: date-time
+             */
+            recorded_at: string;
+            /** Source */
+            source: string;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /** Prev Hash */
+            prev_hash: string | null;
+            /** Row Hash */
+            row_hash: string;
+        };
+        /** LedgerListOut */
+        LedgerListOut: {
+            /** Decisions */
+            decisions: components["schemas"]["LedgerDecisionOut"][];
         };
         /** LngExportShock */
         LngExportShock: {
@@ -2002,6 +2110,70 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ledger_v1_ledger_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ledger_decision_v1_ledger__decision_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                decision_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerDecisionOut"];
                 };
             };
             /** @description Validation Error */
@@ -3363,6 +3535,26 @@ export interface operations {
                     "application/json": {
                         [key: string]: boolean;
                     };
+                };
+            };
+        };
+    };
+    metrics_v1_metrics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };

@@ -26,6 +26,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from apps.api.models.orm.journal import UserDecisionJournal
 from apps.api.models.orm.prices import PriceBar
 from apps.api.repos import contracts as contract_repo
+from apps.api.repos import ledger as ledger_repo
+from apps.api.services import ledger as ledger_svc
+from apps.api.services.metrics import AUTO_RESOLUTIONS, LEDGER_EVENTS
 from apps.api.services.signal_scoring import score_forecast
 
 # score_forecast outcome → journal resolved_direction (CHECK: hit/miss/neutral).
@@ -129,6 +132,28 @@ async def resolve_open_decisions(
         e.auto_resolved = True
         result.resolved += 1
         result.by_outcome[resolved] = result.by_outcome.get(resolved, 0) + 1
+        AUTO_RESOLUTIONS.labels(outcome=resolved).inc()
+
+        # B4: append the immutable resolution event. This is a post-decision
+        # side-effect — it observes the resolution the engine just made and does
+        # NOT influence what was resolved (S3 look-ahead invariant untouched).
+        await ledger_repo.append_event(
+            session,
+            decision_id=e.id,
+            user_id=e.user_id,
+            event_type="resolved",
+            occurred_at=now_aware,
+            payload=ledger_svc.build_resolved_payload(
+                outcome=resolved,
+                resolved_at=now_aware,
+                auto_resolved=True,
+                anchor_price=anchor,
+                realized_close=realized,
+                move_pct=move,
+                deadband_pct=float(e.threshold_pct or 0.0),
+            ),
+        )
+        LEDGER_EVENTS.labels(event_type="resolved").inc()
 
     await session.flush()
     return result

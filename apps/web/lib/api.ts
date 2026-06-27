@@ -399,6 +399,14 @@ export async function getJournalEntry(id: string): Promise<unknown> {
   return apiFetch(`/v1/journal/${encodeURIComponent(id)}`);
 }
 
+// ── Decision ledger (B4) — the immutable audit trail ─────────────────────────
+/** The requester's decision ledger: each decision with its immutable event
+ *  timeline and a chain-integrity flag. Scoped to the signed-in user (or the
+ *  anonymous pool when accounts are off). */
+export async function getLedger(): Promise<unknown> {
+  return apiFetch("/v1/ledger");
+}
+
 export async function patchJournalEntry(
   id: string,
   body: Partial<{
