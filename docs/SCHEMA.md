@@ -306,6 +306,11 @@ CREATE TABLE decision_ledger_events (
   prev_hash    TEXT,                                         -- row_hash of the prior event
   row_hash     TEXT NOT NULL                                 -- sha256(prev_hash, decision_id, type, occurred_at, payload)
 );
+-- NOTE: decision_id is ON DELETE RESTRICT — a journal row that has ledger
+-- entries CANNOT be deleted. This is BY DESIGN (you cannot erase an audit
+-- trail). Any future journal-delete path must delete the ledger events first
+-- (which itself requires bypassing the immutability trigger), or it will hit a
+-- foreign-key violation rather than a confusing silent failure.
 CREATE INDEX ix_ledger_user_decision_seq ON decision_ledger_events (user_id, decision_id, seq);
 CREATE INDEX ix_ledger_decision_seq ON decision_ledger_events (decision_id, seq);
 -- DB-enforced immutability: BEFORE UPDATE OR DELETE trigger RAISEs (append-only).

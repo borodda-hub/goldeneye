@@ -1,6 +1,46 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-06-10. Read this first to pick up where we left off._
+_Last updated: 2026-06-27. Read this first to pick up where we left off._
+
+## Most recent: Stage B4 — decision/audit ledger + minimal observability (BUILT, committed, live-verified; PENDING PROMOTION)
+
+**Status: committed on `feat/phase-b4-ledger` (`8a7e58a`), NOT yet merged/promoted.**
+Per `docs/PHASE_B4_PLAN.md`. The immutable, tamper-evident decision ledger + the
+smallest-useful observability layer.
+
+- **Ledger (forward-only by design — pre-B4 decisions have no entry):** migration
+  `011_decision_ledger` (`decision_ledger_events`), DB-enforced immutability (a
+  `BEFORE UPDATE OR DELETE` trigger RAISEs — INSERT only), `source='live'` CHECK (no
+  backfill value), per-decision SHA-256 **hash chain** for tamper-evidence. ORM/repo/
+  service are append+read only (no update/delete path). The `created` snapshot captures
+  user inputs + thesis snapshot **and** the system state at decision time (ensemble read,
+  vol band/regime, model lineup) OR an explicit **recorded-absence** with reason (never
+  silently omitted). Hooks: journal create (`created`), auto-resolution + manual PATCH
+  (`resolved`/`amended`) — the resolution append is a post-side-effect, **S3 untouched**.
+  `GET /v1/ledger` + `/v1/ledger/{id}` (user-scoped, by-id 404). Web Decision Ledger view
+  at `/ledger` (timeline + integrity badge).
+- **Observability (minimal — not APM/OTel):** request-id/timing/structured-log ASGI
+  middleware; `log_level`/`sentry_dsn` settings; `prometheus-client` metrics at
+  `GET /v1/metrics`; safety violations now write an `Alert` (activates the dormant table)
+  + a counter.
+- **Gates:** `pnpm health` GREEN (941 backend / 413 web); gated **`db-tests` GREEN locally**
+  (44 passed incl. the 5 ledger immutability/tamper locks + `test_ledger_http_isolation`);
+  contracts regen = exactly the 3 new paths (`/v1/ledger`, `/v1/ledger/{id}`, `/v1/metrics`),
+  schema parity OK; docs in-commit (`SCHEMA.md` / `API_CONTRACTS.md` / `ARCHITECTURE.md`).
+- **Live-verified on the real dev stack** (Postgres+API+web): trigger bites on UPDATE/DELETE,
+  the chain flips `chain_ok=false` on a trigger-bypass edit, the `created` snapshot captured
+  **real** system state (`captured=true`), `/v1/metrics` counters move, the `/ledger` page
+  renders with integrity badges. The auto-mode classifier even **refused** a direct ledger
+  edit — the guardrail holds.
+- **⚠️ FK design note:** `decision_ledger_events.decision_id` is **ON DELETE RESTRICT** — a
+  journal row that has ledger entries **cannot be deleted** (you cannot erase an audit trail,
+  by design). A future journal-delete path must delete the ledger events first (which itself
+  requires bypassing the immutability trigger) or it will hit an FK violation. The `--fresh`
+  demo seed does **not** delete `user_decision_journals`, so re-seeding is unaffected.
+- **Next:** owner wipes the dev DB + eyeballs a CLEAN decision (Verified badge, full timeline);
+  push `feat/phase-b4-ledger` → PR to `develop` → confirm CI green (esp. the `db-tests` job
+  running the ledger locks in CI, and `contracts` red→green on the 3 new paths) → **owner
+  master call**. Then B5 (cross-asset).
 
 ## TL;DR
 
