@@ -1,0 +1,180 @@
+{
+  "ensemble": {
+    "agreement": {
+      "bearish": 2,
+      "bullish": 0,
+      "input_diversity": "low",
+      "neutral": 2,
+      "total": 4
+    },
+    "caveats": [
+      "Models disagree at low volatility; no clear directional signal."
+    ],
+    "confidence": "medium",
+    "confidence_rationale": [
+      "2 of 4 models agree on bearish direction.",
+      "All models read price series only (low input diversity).",
+      "Alt-data unavailable for one or more models; weight on price-only signals."
+    ],
+    "direction": "neutral",
+    "expected_pct": -0.0029152779653469343,
+    "range": {
+      "high_pct": 0.016932222034653065,
+      "low_pct": -0.020265277965346936
+    },
+    "vol_regime": "compressed"
+  },
+  "range_ewma": {
+    "band80_high_pct": 0.04541,
+    "band80_low_pct": -0.04541,
+    "band95_high_pct": 0.06362,
+    "band95_low_pct": -0.06362,
+    "horizon": "1w",
+    "method": "ewma+empirical-tails",
+    "note": "EWMA(\u03bb=0.94) daily vol 1.58% scaled to 1w (\u00b1q\u00b7\u03c3\u00b7\u221ah, q from empirical fat-tail quantiles; 95%\u00d71.81). Symmetric range \u2014 no directional claim.",
+    "sigma_daily": 0.015759,
+    "sigma_horizon": 0.035239
+  },
+  "range_har_log": {
+    "band80_high_pct": 0.04773,
+    "band80_low_pct": -0.04773,
+    "band95_high_pct": 0.07125,
+    "band95_low_pct": -0.07125,
+    "horizon": "1w",
+    "method": "har_log+empirical-tails",
+    "note": "log-HAR daily vol 2.10% scaled to 1w (\u00b1q\u00b7\u03c3\u00b7\u221ah, q from empirical fat-tail quantiles; 95%\u00d71.52). Symmetric range \u2014 no directional claim.",
+    "sigma_daily": 0.020997,
+    "sigma_horizon": 0.04695
+  },
+  "regime": "compressed",
+  "series_meta": {
+    "first": 102.052771,
+    "last": 114.986509,
+    "n": 160
+  },
+  "voters": [
+    {
+      "confidence": "low",
+      "contradicting": [
+        {
+          "factor": "RSI reading",
+          "note": "RSI at 65 reads as moderately overbought; historically precedes short-term consolidation.",
+          "weight": 0.3
+        }
+      ],
+      "direction": "neutral",
+      "expected_pct": -0.0016111118613877373,
+      "horizon": "1d",
+      "inputs_used": [
+        "closes"
+      ],
+      "model_name": "moving_average_directional",
+      "range_high_pct": 0.018388888138612263,
+      "range_low_pct": -0.021611111861387738,
+      "supporting": [
+        {
+          "factor": "SMA-20/50 cross",
+          "note": "SMA-20 (119.474) is below SMA-50 (119.571) by 0.08%, suggesting neutral momentum.",
+          "weight": 0.7
+        }
+      ],
+      "vol_regime": "compressed"
+    },
+    {
+      "confidence": "low",
+      "contradicting": [
+        {
+          "factor": "Smoothing projection, not a guarantee",
+          "note": "One-step residual scale is 2.00% of price; the projection extrapolates the recent trend and ignores regime shifts.",
+          "weight": 0.02
+        }
+      ],
+      "direction": "bearish",
+      "expected_pct": -0.00404,
+      "horizon": "1d",
+      "inputs_used": [
+        "closes"
+      ],
+      "model_name": "holt_trend",
+      "range_high_pct": 0.01594,
+      "range_low_pct": -0.02402,
+      "supporting": [
+        {
+          "factor": "Holt linear trend",
+          "note": "Smoothed trend of -0.216%/day (alpha=0.9, beta=0.05) projects bearish over 1d.",
+          "weight": 0.202
+        }
+      ],
+      "vol_regime": "compressed"
+    },
+    {
+      "confidence": "low",
+      "contradicting": [
+        {
+          "factor": "Not a trained model",
+          "note": "Rules-based composite of storage, positioning, and momentum signals \u2014 every weight is hand-set, not learned. A trained model replaces it in a later phase.",
+          "weight": 0.8
+        },
+        {
+          "factor": "Missing alt-data",
+          "note": "Storage and/or COT context unavailable; falling back to price momentum only.",
+          "weight": 0.5
+        }
+      ],
+      "direction": "bearish",
+      "expected_pct": -0.005,
+      "horizon": "1d",
+      "inputs_used": [
+        "closes"
+      ],
+      "model_name": "factor_composite",
+      "range_high_pct": 0.02,
+      "range_low_pct": -0.02,
+      "supporting": [
+        {
+          "factor": "Short-term price momentum",
+          "note": "5-day mean below prior 5-day mean (short-term downward momentum).",
+          "weight": 0.3
+        }
+      ],
+      "vol_regime": "compressed"
+    },
+    {
+      "confidence": "low",
+      "contradicting": [
+        {
+          "factor": "Trained per-call on a rolling window",
+          "note": "In-sample fit accuracy 55% (not out-of-sample); coefficients re-estimate each call.",
+          "weight": 0.5
+        },
+        {
+          "factor": "trend gap vs SMA-20",
+          "note": "lowers the modelled P(up).",
+          "weight": 0.084
+        },
+        {
+          "factor": "1-day momentum",
+          "note": "lowers the modelled P(up).",
+          "weight": 0.069
+        }
+      ],
+      "direction": "neutral",
+      "expected_pct": -0.00101,
+      "horizon": "1d",
+      "inputs_used": [
+        "closes"
+      ],
+      "model_name": "logreg_directional",
+      "range_high_pct": 0.0134,
+      "range_low_pct": -0.01543,
+      "supporting": [
+        {
+          "factor": "10-day momentum",
+          "note": "raises the modelled P(up).",
+          "weight": 0.101
+        }
+      ],
+      "vol_regime": "compressed"
+    }
+  ]
+}
