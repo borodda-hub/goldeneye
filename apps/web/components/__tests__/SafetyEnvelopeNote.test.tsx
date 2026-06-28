@@ -5,7 +5,7 @@ const envelope = {
   confidence: "medium",
   caveats: [
     "Model outputs are statistical inferences only.",
-    "Based on synthetic mock data.",
+    "Delayed/seeded market data; some inputs illustrative.",
   ],
   as_of: "2026-05-10T12:00:00",
   disclaimer: "For research purposes only.",
