@@ -1,8 +1,41 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-06-27. Read this first to pick up where we left off._
+_Last updated: 2026-06-28. Read this first to pick up where we left off._
 
-## Most recent: Stage B5 — cross-asset portability ✅ SHIPPED + PROMOTED TO LIVE (`master == origin/master == develop == origin/develop == 1a7e650`)
+## Most recent: Honesty fix — provenance-accurate LLM caveat ✅ PROMOTED TO LIVE (`master == origin/master == develop == origin/develop == 365a929`)
+
+**PR #12 merged (develop → master, CI green both lanes).** The four LLM narratives
+(`summarize_market`, `generate_thesis`, `explain_signal`, `narrate_scenario`) had
+**unconditionally** appended *"Based on synthetic mock data for research purposes."* —
+false whenever real adapters + a real LLM are configured (prod), and it *understated* the
+product to a buyer. Replaced with `services/llm_explainer.py::data_provenance_caveat()`,
+derived from live config (`llm_mode` + `adapter_market`): real → "AI-generated narrative
+over delayed real market prices; some positioning/storage inputs are illustrative.
+Research only."; mock/dev → "Placeholder narrative (LLM disabled) over delayed/seeded …".
+Locked by `tests/test_provenance_caveat.py` (per-config accuracy + a source guard);
+`AI_BEHAVIOR.md §sample_data_labeling` codifies the rule.
+
+**Read-only prod verification done before promoting (configured AND observed):**
+- ✅ Narrative is **genuinely real Claude** — the live NG thesis cites real NWS heat-alert
+  specifics from the news feed (not a placeholder).
+- ✅ Market prices are **real delayed** (NG $3.279, last-Friday close, real curve + 4%/day
+  vol, cov80 0.81 — a real-data signature, not GBM).
+- ✅ "positioning/storage illustrative" is **accurate against observed prod**: COT positioning
+  is `mock`, and EIA storage — though `ADAPTER_ENERGY=eia` is *configured* — is **observed
+  serving `source:"mock"`** (stale `2026-05-01`). The observed check inverted the storage
+  concern in our favor: from config alone we'd have wrongly "corrected" the caveat to claim
+  real storage.
+
+**Two flags logged (neither blocked #12):**
+1. **Latent caveat fragility:** the "illustrative storage" clause is hardcoded — correct now
+   (storage observed-mock) but would *understate* storage if real EIA ever starts flowing. A
+   future hardening makes the storage clause observed-derived.
+2. **Separate prod issue (not the caveat):** prod is configured for real EIA storage but
+   serves **stale mock** (`2026-05-01`) — EIA ingestion isn't running/refreshing. Worth its
+   own follow-up. (Also minor: the prod `ai_summary` LLM-hallucinated NG as "crude $32.79" —
+   a quality bug.)
+
+## Stage B5 — cross-asset portability ✅ SHIPPED + PROMOTED TO LIVE (`master == 1a7e650`, now superseded by 365a929)
 
 **PR #11 merged; promoted via develop → master, CI green on both lanes (DB integration +
 Contracts incl.).** Per `docs/PHASE_B5_PLAN.md`. The NG-tuned engine constants (vol-regime bands,
