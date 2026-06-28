@@ -63,7 +63,9 @@ def test_uses_class_config_not_commodity(asset_class, contract_size, base, vol, 
     # The regime classifier honours the class bands (no NG-band leak): a vol level
     # between the rates/index 'normal' cutoff and the much-higher commodity cutoff
     # classifies differently under the two band sets.
-    probe = cfg.vol_regime_bands.normal + (commodity.vol_regime_bands.normal - cfg.vol_regime_bands.normal) / 2
+    cls_normal = cfg.vol_regime_bands.normal
+    com_normal = commodity.vol_regime_bands.normal
+    probe = cls_normal + (com_normal - cls_normal) / 2
     flat = [base * (1.0 + probe / (252**0.5) * (1 if i % 2 else -1)) for i in range(60)]
     assert classify_regime(flat, cfg) != classify_regime(flat, commodity)
 
