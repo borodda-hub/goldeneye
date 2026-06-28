@@ -2,13 +2,14 @@
 
 _Last updated: 2026-06-27. Read this first to pick up where we left off._
 
-## Most recent: Stage B5 — cross-asset portability (BUILT + LOCAL-VERIFIED; PENDING OWNER PROMOTION)
+## Most recent: Stage B5 — cross-asset portability ✅ SHIPPED + PROMOTED TO LIVE (`master == origin/master == develop == origin/develop == 1a7e650`)
 
-**On `feat/phase-b5-cross-asset` (off `master` `a0243b0`), 5 commits, NOT pushed.** Per
-`docs/PHASE_B5_PLAN.md`. The NG-tuned engine constants (vol-regime bands, MA/Holt/factor/logreg
-thresholds, ensemble band-widths, deadband, paper tick value) were lifted into one per-asset-class
-config (`services/asset_config.py`), and two non-commodity classes were lit up: **`index` (ES)** +
-**`rates` (ZN)**.
+**PR #11 merged; promoted via develop → master, CI green on both lanes (DB integration +
+Contracts incl.).** Per `docs/PHASE_B5_PLAN.md`. The NG-tuned engine constants (vol-regime bands,
+MA/Holt/factor/logreg thresholds, ensemble band-widths, deadband, paper tick value) were lifted into
+one per-asset-class config (`services/asset_config.py`), and two non-commodity classes were lit up:
+**`index` (ES)** + **`rates` (ZN)**. Owner clicked through the live showcase + ZN loop + ZN Scenario
+Lab unsupported state before the call.
 
 - **Commodity byte-identical (the demo's protection):** a golden lock (`tests/test_asset_config_golden.py`)
   was captured on the UNREFACTORED engine (commit `878417c`) and re-run GREEN after **every** refactor
