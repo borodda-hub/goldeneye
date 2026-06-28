@@ -306,5 +306,6 @@
   { "instrument_symbol": "GF", "contract_code": "GFQ26", "expiry_date": "2026-08-27", "is_front_month": true },
   { "instrument_symbol": "ES", "contract_code": "ESU26", "expiry_date": "2026-09-18", "is_front_month": true },
   { "instrument_symbol": "NQ", "contract_code": "NQU26", "expiry_date": "2026-09-18", "is_front_month": true },
-  { "instrument_symbol": "YM", "contract_code": "YMU26", "expiry_date": "2026-09-18", "is_front_month": true }
+  { "instrument_symbol": "YM", "contract_code": "YMU26", "expiry_date": "2026-09-18", "is_front_month": true },
+  { "instrument_symbol": "ZN", "contract_code": "ZNU26", "expiry_date": "2026-09-19", "is_front_month": true }
 ]

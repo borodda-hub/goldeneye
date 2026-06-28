@@ -72,4 +72,18 @@ describe("ShockBuilder", () => {
     const next = onChange.mock.calls[0][0] as Shock[];
     expect(next[0].type).toBe("opec_supply");
   });
+
+  // B5 honest degradation: asset classes without a shock taxonomy (ES/ZN) show
+  // the explicit unsupported state, NOT NG shock controls.
+  it.each(["ES", "ZN"])(
+    "shows the unsupported state for %s (no NG controls, no add)",
+    (sym) => {
+      render(<ShockBuilder shocks={[]} onChange={() => {}} instrument={sym} />);
+      expect(
+        screen.getByText(new RegExp(`No scenario taxonomy for ${sym}`)),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/\+ Add/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/No shocks/)).not.toBeInTheDocument();
+    },
+  );
 });

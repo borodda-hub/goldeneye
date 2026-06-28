@@ -10,6 +10,7 @@ import { ShockBuilder } from "@/components/scenarios/ShockBuilder";
 import { TemplateGallery } from "@/components/scenarios/TemplateGallery";
 import { runScenario } from "@/lib/api";
 import { markStep } from "@/lib/onboarding";
+import { hasScenarioGeography } from "@/lib/scenarioGeo";
 import { useMutation } from "@tanstack/react-query";
 import { FlaskConical } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -43,6 +44,11 @@ interface Props {
 const INSTRUMENTS: { id: string; label: string }[] = [
   { id: "NG", label: "Natural Gas" },
   { id: "BZ", label: "Brent Crude" },
+  // B5: the cross-asset classes are selectable so the Scenario Lab can show its
+  // honest "no taxonomy for this asset class yet" state (empty globe + shock
+  // builder), instead of hiding them or rendering NG geography for them.
+  { id: "ES", label: "S&P 500" },
+  { id: "ZN", label: "10Y Treasury" },
 ];
 
 export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
@@ -121,6 +127,23 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
           </div>
         }
       />
+
+      {/* B5: honest unsupported state for asset classes without a scenario taxonomy
+          (ES/ZN). The forecast/vol-range/journal surfaces work for them; only the
+          Scenario Lab is energy-specific. */}
+      {!hasScenarioGeography(instrument) && (
+        <div
+          className="border border-line-1 bg-surface-1 px-4 py-3 text-[12px] leading-relaxed text-ink-3"
+          data-testid="scenario-unsupported"
+        >
+          <span className="font-medium text-ink-1">
+            Scenario Lab isn’t available for {instrument} yet.
+          </span>{" "}
+          Scenario shocks and the impact globe are modeled for natural gas and
+          crude only — this asset class has no scenario taxonomy. Its forecast,
+          expected range, and decision-journal surfaces work normally.
+        </div>
+      )}
 
       {/* Templates */}
       <section className="flex flex-col gap-2">

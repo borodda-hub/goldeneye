@@ -24,7 +24,8 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 # NG first (it's the GBM showcase → replace_mock); the rest accumulate real bars.
-DEFAULT_SYMBOLS = ["NG", "CL", "HO", "RB", "GC", "SI"]
+# ES (index) + ZN (rates) are the B5 cross-asset classes — real bars via Yahoo.
+DEFAULT_SYMBOLS = ["NG", "CL", "HO", "RB", "GC", "SI", "ES", "ZN"]
 REPLACE_MOCK_SYMBOLS = {"NG"}
 
 

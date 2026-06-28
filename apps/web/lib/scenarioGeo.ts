@@ -242,23 +242,39 @@ function buildCrudeLayers(
   return { points, arcs };
 }
 
-/** Dispatch to the right geography for the instrument (BZ = crude, else gas). */
+// B5: only these instruments have a geographic scenario taxonomy. Everything else
+// (ES/ZN and every non-energy asset class) renders an empty globe — never the
+// Henry-Hub gas / Brent crude geography it has no business showing.
+const GEO_TAXONOMY = new Set(["NG", "BZ"]);
+
+/** True when the instrument has a defined scenario geography (NG or BZ). */
+export function hasScenarioGeography(instrument: string): boolean {
+  return GEO_TAXONOMY.has(instrument);
+}
+
+/** Dispatch to the right geography for the instrument (BZ = crude, NG = gas);
+ *  empty for any instrument without a scenario taxonomy. */
 export function buildGlobeLayers(
   shocks: Shock[],
   palette: LeanPalette = DEFAULT_LEAN_COLOR,
   instrument = "NG",
 ): { points: GlobePoint[]; arcs: GlobeArc[] } {
+  if (!GEO_TAXONOMY.has(instrument)) return { points: [], arcs: [] };
   return instrument === "BZ"
     ? buildCrudeLayers(shocks, palette)
     : buildGasLayers(shocks, palette);
 }
 
-/** The pricing-benchmark label for the instrument (legend + framing). */
+/** The pricing-benchmark label for the instrument (legend + framing). Empty for
+ *  instruments without a scenario taxonomy. */
 export function benchmarkOf(instrument: string): string {
-  return instrument === "BZ" ? "Brent" : "Henry Hub";
+  if (instrument === "BZ") return "Brent";
+  if (instrument === "NG") return "Henry Hub";
+  return "";
 }
 
-/** Faint reference infrastructure (real, static) for the instrument's market. */
+/** Faint reference infrastructure (real, static) for the instrument's market;
+ *  empty for instruments without a scenario taxonomy. */
 export function infraGeography(
   instrument: string,
 ): { name: string; lat: number; lng: number; role: string }[] {
@@ -270,6 +286,7 @@ export function infraGeography(
       { ...CRUDE_STOCK_HUB, role: "storage" },
     ];
   }
+  if (instrument !== "NG") return [];
   return [
     ...GULF_TERMINALS.map((t) => ({ ...t, role: "LNG terminal" })),
     ...EUROPE.map((e) => ({ ...e, role: "import hub" })),
@@ -297,6 +314,7 @@ export function networkCorridors(instrument: string): {
     }
     return arcs;
   }
+  if (instrument !== "NG") return [];
   const arcs: {
     from: { lat: number; lng: number };
     to: { lat: number; lng: number };

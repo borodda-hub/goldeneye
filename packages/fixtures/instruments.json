@@ -316,5 +316,16 @@
     "contract_size": 5,
     "tick_size": 1.0,
     "metadata": { "yahoo_ticker": "YM=F", "description": "CBOT E-mini Dow Futures" }
+  },
+  {
+    "symbol": "ZN",
+    "name": "10-Year US Treasury Note",
+    "exchange": "CBOT",
+    "asset_class": "rates",
+    "currency": "USD",
+    "unit": "points (1/32)",
+    "contract_size": 1000,
+    "tick_size": 0.015625,
+    "metadata": { "yahoo_ticker": "ZN=F", "description": "CBOT 10-Year US Treasury Note Futures" }
   }
 ]

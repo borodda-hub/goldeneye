@@ -6,6 +6,7 @@ import {
   type GlobePoint,
   benchmarkOf,
   buildGlobeLayers,
+  hasScenarioGeography,
   infraGeography,
   networkCorridors,
 } from "@/lib/scenarioGeo";
@@ -345,15 +346,23 @@ export function ScenarioGlobe({
         <span>
           <span className="text-down">●</span> bearish
         </span>
-        <span>
-          <span style={{ color: rgba(theme.accent, 1) }}>●</span>{" "}
-          {benchmarkOf(instrument)}
-        </span>
+        {benchmarkOf(instrument) && (
+          <span>
+            <span style={{ color: rgba(theme.accent, 1) }}>●</span>{" "}
+            {benchmarkOf(instrument)}
+          </span>
+        )}
       </div>
-      {arcs.length === 0 && (
+      {!hasScenarioGeography(instrument) ? (
         <div className="absolute bottom-2 right-3 font-mono text-[10px] text-ink-4 pointer-events-none">
-          Load a scenario to trace its impact flows.
+          No scenario geography for this asset class.
         </div>
+      ) : (
+        arcs.length === 0 && (
+          <div className="absolute bottom-2 right-3 font-mono text-[10px] text-ink-4 pointer-events-none">
+            Load a scenario to trace its impact flows.
+          </div>
+        )
       )}
     </div>
   );

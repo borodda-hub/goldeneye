@@ -250,10 +250,13 @@ SYMBOL_CONFIGS: dict[str, SymbolNewsConfig] = {
 
 
 def _make_default_config(symbol: str) -> SymbolNewsConfig:
-    """Generic per-symbol config for any commodity we haven't curated keyword
-    lists for. Uses Yahoo Finance's per-symbol headline RSS — already filtered
-    upstream to news mentioning the ticker, so we skip the local keyword
-    filter via accept_all_sources.
+    """Generic per-symbol config for any instrument we haven't curated keyword
+    lists for — including the B5 cross-asset classes (index/rates, e.g. ES/ZN).
+    There is NO curated keyword taxonomy for these: it uses Yahoo Finance's
+    per-symbol headline RSS (already filtered upstream to news mentioning the
+    ticker, so we skip the local keyword filter via accept_all_sources). This is
+    an explicit fallback, never the NG-curated feed — a non-energy asset never
+    presents NG/energy-keyworded news as if it were its own.
 
     Yahoo's per-symbol feed URL format:
         https://feeds.finance.yahoo.com/rss/2.0/headline?s=<SYMBOL>=F&region=US&lang=en-US

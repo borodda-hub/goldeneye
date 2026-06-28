@@ -18,8 +18,11 @@ const SHOCK_TYPES_BY_INSTRUMENT: Record<string, ShockType[]> = {
   BZ: ["opec_supply", "geopolitical_supply", "demand", "inventory"],
 };
 
+// B5: instruments without a defined shock taxonomy (ES/ZN and every non-energy
+// asset class) return [] — the builder then renders an explicit "unsupported"
+// state instead of silently falling back to NG's weather/storage shocks.
 function shockTypesFor(instrument: string): ShockType[] {
-  return SHOCK_TYPES_BY_INSTRUMENT[instrument] ?? SHOCK_TYPES_BY_INSTRUMENT.NG;
+  return SHOCK_TYPES_BY_INSTRUMENT[instrument] ?? [];
 }
 
 function defaultShock(type: ShockType): Shock {
@@ -226,6 +229,35 @@ export function ShockBuilder({ shocks, onChange, instrument = "NG" }: Props) {
     if (shocks.length >= 10) return;
     onChange([...shocks, defaultShock(adding)]);
   };
+
+  // B5 honest degradation: no shock taxonomy for this asset class (e.g. ES/ZN).
+  // Show an explicit unsupported state rather than nonsensical NG shock controls.
+  if (types.length === 0) {
+    return (
+      <div className="card-interactive border border-line-1 bg-surface-1 flex flex-col">
+        <div className="px-3 py-2 border-b border-line-1 flex items-center gap-2 font-mono text-[10px] text-accent uppercase tracking-widest">
+          <SlidersHorizontal
+            size={12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className="text-ink-4"
+          />
+          Shock Builder
+        </div>
+        <div className="flex flex-col items-center gap-1.5 px-4 py-8 text-center text-ink-4">
+          <Zap size={18} strokeWidth={1.5} aria-hidden="true" />
+          <span className="text-[11px] text-ink-3">
+            No scenario taxonomy for {instrument} yet
+          </span>
+          <span className="max-w-xs text-[10px] text-ink-4/70">
+            Scenario shocks are defined for natural gas and crude only. This
+            asset class has no shock model yet — the Scenario Lab is unavailable
+            for it.
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="card-interactive border border-line-1 bg-surface-1 flex flex-col">

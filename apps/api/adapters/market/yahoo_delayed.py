@@ -102,6 +102,8 @@ _EXCHANGE_SUFFIX_BY_PREFIX: dict[str, str] = {
     "ES": ".CME",
     "NQ": ".CME",
     "YM": ".CBT",
+    # Rates — CBOT
+    "ZN": ".CBT",
 }
 _DEFAULT_EXCHANGE_SUFFIX = ".NYM"
 
