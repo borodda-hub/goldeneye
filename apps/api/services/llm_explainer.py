@@ -103,6 +103,32 @@ async def _call_with_safety_check(
     return text
 
 
+def data_provenance_caveat() -> str:
+    """An honest, configuration-derived provenance caveat for LLM narratives.
+
+    Replaces the old UNCONDITIONAL synthetic-mock-data caveat — which was
+    inaccurate whenever real adapters / a real LLM were configured (the live
+    deployment runs delayed real prices + real Claude), and in front of a buyer
+    actively *understated* what the platform was doing. The label now reflects the
+    actual data path: it neither overclaims real-ness nor pretends everything is
+    illustrative. Per `docs/MODEL_DILIGENCE.md` — no claim (including a
+    self-deprecating one) without provenance.
+    """
+    from apps.api.src.settings import settings
+
+    narrative = (
+        "AI-generated narrative"
+        if settings.llm_mode == "real"
+        else "placeholder narrative (LLM disabled)"
+    )
+    market_real = settings.adapter_market.strip().lower() not in ("", "mock")
+    data = "delayed real market prices" if market_real else "delayed/seeded market data"
+    return (
+        f"{narrative[0].upper()}{narrative[1:]} over {data}; some positioning/"
+        "storage inputs are illustrative. Research only."
+    )
+
+
 async def summarize_market(
     ctx: dict[str, Any], *, envelope_confidence: str | None = None
 ) -> tuple[str, SafetyEnvelope]:
@@ -122,7 +148,7 @@ async def summarize_market(
         confidence=envelope_confidence or "low",
         caveats=[
             "Model outputs are statistical inferences only, not financial advice.",
-            "Based on synthetic mock data for research purposes.",
+            data_provenance_caveat(),
         ],
         as_of=datetime.utcnow(),
     )
@@ -155,7 +181,7 @@ async def generate_thesis(
         confidence=envelope_confidence or "low",
         caveats=[
             "Thesis is an LLM inference over current snapshot data, not a forecast.",
-            "Based on synthetic mock data for research purposes.",
+            data_provenance_caveat(),
         ],
         as_of=datetime.utcnow(),
     )
@@ -208,7 +234,7 @@ async def explain_signal(
         confidence=envelope_confidence or "low",
         caveats=[
             "Model outputs are statistical inferences only, not financial advice.",
-            "Based on synthetic mock data for research purposes.",
+            data_provenance_caveat(),
         ],
         as_of=datetime.utcnow(),
     )
@@ -238,7 +264,7 @@ async def narrate_scenario(
         caveats=[
             "Scenario outputs are hypothetical and do not represent forecasts of actual outcomes.",
             "Model outputs are statistical inferences only, not financial advice.",
-            "Based on synthetic mock data for research purposes.",
+            data_provenance_caveat(),
         ],
         as_of=datetime.utcnow(),
     )

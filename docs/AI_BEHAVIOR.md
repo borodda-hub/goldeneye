@@ -81,6 +81,16 @@ Honesty rules for any such showcase:
   permitted forward-looking framing, and only when literally true of the engine.
 - Outcomes in any demo must be engine-resolved against real prices, never authored.
   See `docs/MOCK_DATA_SPEC.md §sample_analyst`.
+- **Data-provenance caveats must be true of the actual data path, not blanket.** An
+  LLM narrative's provenance caveat is **derived from the live configuration**
+  (`services/llm_explainer.py::data_provenance_caveat` — LLM mode + market adapter),
+  never a hardcoded blanket claim. The label must neither over-claim real-ness nor
+  under-claim it: a deployment running delayed real prices + the real Claude LLM must
+  not say "synthetic mock data" (the prior bug — false *and* self-undermining in front
+  of a buyer), and a mock/dev run must say it is illustrative. "No claim without
+  provenance" (`docs/MODEL_DILIGENCE.md`) applies to self-deprecating claims too.
+  Locked by `tests/test_provenance_caveat.py` (incl. a source guard against
+  reintroducing the blanket string).
 
 ## §safety_envelope
 
