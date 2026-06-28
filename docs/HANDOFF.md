@@ -2,6 +2,35 @@
 
 _Last updated: 2026-06-27. Read this first to pick up where we left off._
 
+## Most recent: Stage B5 — cross-asset portability (BUILT + LOCAL-VERIFIED; PENDING OWNER PROMOTION)
+
+**On `feat/phase-b5-cross-asset` (off `master` `a0243b0`), 5 commits, NOT pushed.** Per
+`docs/PHASE_B5_PLAN.md`. The NG-tuned engine constants (vol-regime bands, MA/Holt/factor/logreg
+thresholds, ensemble band-widths, deadband, paper tick value) were lifted into one per-asset-class
+config (`services/asset_config.py`), and two non-commodity classes were lit up: **`index` (ES)** +
+**`rates` (ZN)**.
+
+- **Commodity byte-identical (the demo's protection):** a golden lock (`tests/test_asset_config_golden.py`)
+  was captured on the UNREFACTORED engine (commit `878417c`) and re-run GREEN after **every** refactor
+  step; it asserts commodity AND metal reproduce the frozen baseline byte-for-byte. S3 look-ahead proof
+  green (only constants parameterized).
+- **Live-verified on the real dev stack (all 6 close-out bars):** ZN/ES forecast + signals serve
+  treasury/equity-scale (ZN ~110, 0.32%/day vol, ±0.94% 1w band, walk-forward cov80 ≈80%); a backdated
+  **ZN decision auto-resolved against real ZN prices → MISS → surfaced in ZN calibration** (the full
+  loop, end-to-end); the Scenario Lab shows the honest **unsupported state** for ES/ZN (no Henry-Hub
+  geography, empty globe — screenshotted, zero "Henry Hub" on page); the NG/CL showcase renders
+  identically (dashboard bullish + calibration "87% → 29% (n=52)").
+- **Labeled carve-outs (`MODEL_DILIGENCE.md`):** index/rates configs are **hand-set, `unvalidated`**
+  (portability phase, not a predictive claim). The paper-engine tick value uses real `contract_size`
+  for the new classes but is **deliberately pinned to legacy 10000 for existing commodities** to keep
+  the deployed equity curve byte-identical — a labeled deferral tracked as **issue #10** (CL should be
+  ×1000, GC ×100, SI ×5000).
+- **Gates:** `pnpm health` green (951 backend / 419 web); ruff/typecheck clean; honest-degradation +
+  cross-asset + golden locks added.
+- **Owner is clicking through the live app before any promotion call.** Next on promotion: push
+  `feat/phase-b5-cross-asset` → PR to `develop` → CI (incl. `db-tests` + `contracts`) → master sign-off.
+  Then Stage C (C3 real COT/EIA ingestion).
+
 ## Most recent: Stage B4 — decision/audit ledger + minimal observability ✅ SHIPPED + PROMOTED TO LIVE (`master == origin/master == develop == origin/develop == 1413a49`)
 
 **B4 is LIVE.** Per `docs/PHASE_B4_PLAN.md`. The immutable, tamper-evident decision

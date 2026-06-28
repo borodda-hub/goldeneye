@@ -114,6 +114,8 @@ Live voters (four directional models):
 
 Signals shown in the Signal Lab are an ensemble vote across the live voters with explicit "supporting" / "contradicting" attribution per model.
 
+**Per-asset-class config (Phase B5).** The voter thresholds, vol-regime bands, ensemble band-widths, and the scoring deadband are no longer NG hardcodes — they live in `services/asset_config.py`, keyed by `Instrument.asset_class`. `ForecastContext(asset_class=…)` resolves an `AssetClassConfig` (`config_for`) that `run_all` threads into every voter + the regime classifier; the model *logic* is unchanged (only constants are parameterized), so the look-ahead invariant and the cheating-model proof are untouched. The `commodity` entry holds the exact pre-B5 values — a byte-identical golden lock (`tests/test_asset_config_golden.py`) proves every existing asset class (commodity/metal/energy/…) is unchanged; `metal`/unknown fall back to `commodity`. Two non-commodity classes are lit up: **`index`** (ES) and **`rates`** (ZN), with hand-set, **unvalidated** scales (see `MODEL_DILIGENCE.md`). The paper engine's per-contract multiplier comes from `Instrument.contract_size` for the new classes; **existing commodities are deliberately pinned to the legacy `10000`** for demo continuity (a labeled deferral — issue #10).
+
 > **For the current model truth — what is live, benched, validated, or unvalidated, and on what data — `docs/MODEL_DILIGENCE.md` is the source of truth.** This section describes shape; the diligence ledger is authoritative for claims.
 
 ## 7. The scenario engine

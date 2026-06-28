@@ -42,6 +42,7 @@ whether a claim survives outside the generator.
 | Ensemble **confidence gradient** (26c) | **real-OOS** ✅ tested | No reliable OOS gradient at any horizon; shipped reframed as down-weighting miscalibrated models | `tests/test_ensemble_calibration.py` |
 | Per-model diagnostics (bias / Brier decomposition / drift) (26a) | **synthetic** | Methodology validated on seeded data; reproduces known truths | `services/model_diagnostics.py` |
 | Desk **skill-vs-luck verdict** (B2) | **methodology** (not a predictive claim) | Wilson 95% CI on directional hit-rate vs the 0.50 chance baseline → `skill` only when the lower bound clears chance, else `luck`, else `insufficient` (`n < 10`). Pre-registered thresholds (`SKILL_BASELINE=0.50`, `WILSON_Z=1.96`). Consistent with the no-directional-edge finding, the blind `momentum`/`contrarian`/`random` desks are expected to read `luck` — the tool refuses to crown noise as skill | `services/desk_calibration.py::skill_verdict`; honesty-locked in `tests/db/test_desk_skill_verdict_e2e.py` (real coin-flip desk → `luck`) + `tests/test_desk_calibration.py` |
+| **Cross-asset configs** for `index` (ES) + `rates` (ZN) (B5) | **unvalidated** ⚠️ (hand-set) | The per-asset-class vol-regime bands, voter thresholds, deadband, and band-widths for the two new classes are **hand-set plausible scales**, not calibrated or backtested. B5 is a **portability** phase: it proves the forecast→decision→resolution→calibration loop *runs* cross-asset with no commodity hardcode leaking (verified live on real ES/ZN bars — ZN reads treasury-scale: ~110 price, 0.32%/day vol, ±0.94% 1w band), **not** that it predicts equities or rates. The vol/range *band* self-calibrates per series (empirical walk-forward quantiles — ZN live cov80 ≈ 80%); the *directional* config values carry no edge claim. Validating them is future work | `services/asset_config.py` (`_INDEX`/`_RATES`); `tests/test_cross_asset_loop.py` (no-leak + runs); byte-identical commodity lock `tests/test_asset_config_golden.py` |
 
 ## What this means for the product story
 
@@ -57,6 +58,16 @@ whether a claim survives outside the generator.
 The only way to move `logreg`/`factor` out of `unvalidated` is to **ingest real historical
 COT (CFTC, free) + EIA storage** and re-run the backtests on real features→price. Until then,
 their directional output is unproven. Scoped as a future phase in `BUILD_ROADMAP.md`.
+
+**Paper-engine tick value — deliberate, labeled deferral (B5, issue #10).** The paper engine's
+per-$1-move USD multiplier should be each instrument's real `contract_size` (NG 10000, CL 1000,
+GC 100, SI 5000, ES 50, ZN 1000). B5 wired this for the **new** classes (`index`/`rates`) but
+**deliberately pinned every pre-existing commodity/metal class to the legacy `10000`** so the
+deployed demo's paper-trading equity curve does not move (the open-position MTM of a non-NG
+trade would shift up to 10×). NG is correct either way (its `contract_size` *is* 10000); CL/GC/SI
+keep a known-wrong multiplier **on purpose, as-shipped**, until the correction is reviewed
+against the demo. The pin is documented in `services/paper_engine.py::_resolve_tick_value` and
+tracked as **issue #10** — it is not a claim that 10000 is correct for those instruments.
 
 ## How to re-run
 
