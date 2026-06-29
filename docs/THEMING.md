@@ -32,8 +32,9 @@ slot in without rearchitecting.
 
 ## Built-in themes
 
-`goldeneye` (default), `slate`, `phosphor`, `ember`, `onyx`. Switch via the
-palette control in the TopBar (`components/ThemeSwitcher.tsx`).
+`goldeneye` (default), `slate`, `phosphor`, `ember`, `onyx`, `indigo`, `mauve`,
+`abyss`, `nord`, `iris` (zinc surfaces + violet/indigo accent — shadcn-style).
+Switch via the palette control in the TopBar (`components/ThemeSwitcher.tsx`).
 
 ## Add a theme
 

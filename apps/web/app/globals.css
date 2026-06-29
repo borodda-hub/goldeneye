@@ -280,6 +280,36 @@
   --gold-bright: rgb(var(--accent-bright));
 }
 
+[data-theme="iris"] {
+  --surface-0: 9 9 11;
+  --surface-1: 24 24 27;
+  --surface-2: 31 31 35;
+  --surface-3: 39 39 42;
+  --line-1: 48 48 54;
+  --line-2: 63 63 70;
+  --ink-1: 250 250 250;
+  --ink-1-soft: 228 228 231;
+  --ink-2: 161 161 170;
+  --ink-3: 113 113 122;
+  --ink-4: 82 82 91;
+  --up: 95 213 140;
+  --down: 240 113 124;
+  --flat: 139 139 148;
+  --up-soft: 14 26 18;
+  --down-soft: 28 14 16;
+  --accent: 168 85 247;
+  --accent-bright: 192 132 252;
+  --accent-deep: 124 58 237;
+  --accent-soft: 24 18 42;
+  --conf-low: 224 168 46;
+  --conf-medium: 192 132 252;
+  --conf-high: 95 213 140;
+  --cyan: 125 211 224;
+  --violet: 129 140 248;
+  --gold: rgb(var(--accent));
+  --gold-bright: rgb(var(--accent-bright));
+}
+
 html {
   scroll-behavior: smooth;
 }

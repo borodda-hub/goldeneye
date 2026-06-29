@@ -272,6 +272,38 @@ const nord: Palette = {
   violet: "#b48ead",
 };
 
+// shadcn-inspired: neutral zinc surfaces, vibrant violet primary accent with an
+// indigo secondary (the violet→indigo "generative tool" look). Anchors taken
+// directly from the reference palette (#09090b bg, #18181b/#27272a grays,
+// #a855f7 accent, #fafafa/#a1a1aa text, #6366f1-leaning violet token).
+const iris: Palette = {
+  "surface-0": "#09090b",
+  "surface-1": "#18181b",
+  "surface-2": "#1f1f23",
+  "surface-3": "#27272a",
+  "line-1": "#303036",
+  "line-2": "#3f3f46",
+  "ink-1": "#fafafa",
+  "ink-1-soft": "#e4e4e7",
+  "ink-2": "#a1a1aa",
+  "ink-3": "#71717a",
+  "ink-4": "#52525b",
+  up: "#5fd58c",
+  down: "#f0717c",
+  flat: "#8b8b94",
+  "up-soft": "#0e1a12",
+  "down-soft": "#1c0e10",
+  accent: "#a855f7",
+  "accent-bright": "#c084fc",
+  "accent-deep": "#7c3aed",
+  "accent-soft": "#18122a",
+  "conf-low": "#e0a82e",
+  "conf-medium": "#c084fc",
+  "conf-high": "#5fd58c",
+  cyan: "#7dd3e0",
+  violet: "#818cf8",
+};
+
 export interface ThemeDef {
   id: string;
   name: string;
@@ -290,6 +322,7 @@ export const BUILTIN_THEMES: ThemeDef[] = [
   { id: "mauve", name: "Mauve", palette: mauve },
   { id: "abyss", name: "Abyss", palette: abyss },
   { id: "nord", name: "Nord", palette: nord },
+  { id: "iris", name: "Iris", palette: iris },
 ];
 
 export const THEMES_BY_ID: Record<string, ThemeDef> = Object.fromEntries(
