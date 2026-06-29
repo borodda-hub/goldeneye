@@ -46,7 +46,7 @@ export function AdminShell({
       <PageHeader icon={Server} title="Admin" subtitle="Data & model health" />
 
       <DataHealthGrid adapters={health?.adapters ?? []} />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ModelHealthGrid models={health?.models ?? []} />
         <EnvironmentBlock
           gitSha={gitSha}

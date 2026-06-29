@@ -64,11 +64,11 @@ export function PaperShell({
         <EquityCurveChart series={equity} />
       </section>
 
-      <section className="flex gap-4">
+      <section className="flex flex-col gap-4 lg:flex-row">
         <div className="flex-1 min-w-0">
           <OpenPositionsTable trades={openTrades} />
         </div>
-        <div className="w-96 shrink-0">
+        <div className="w-full lg:w-96 lg:shrink-0">
           <NewTradeForm journalEntries={journalEntries} />
         </div>
       </section>

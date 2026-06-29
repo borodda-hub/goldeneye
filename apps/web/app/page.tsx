@@ -287,7 +287,7 @@ export default function LandingPage() {
               nobody else is measuring it.
             </p>
 
-            <div className="grid grid-cols-3 gap-6 mt-6 border-t border-line-1 pt-6">
+            <div className="grid grid-cols-1 gap-6 mt-6 border-t border-line-1 pt-6 sm:grid-cols-3">
               <Stat value="3" label="Loop stages: pre-decision, mid, post" />
               <Stat value="N" label="Conviction buckets, scored on hit-rate" />
               <Stat

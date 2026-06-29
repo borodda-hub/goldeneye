@@ -57,7 +57,7 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
       <div className="stagger flex flex-col gap-4 h-full">
         {signalsHeader}
         <Skeleton className="h-24 w-full" />
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[0, 1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-44 w-full" />
           ))}

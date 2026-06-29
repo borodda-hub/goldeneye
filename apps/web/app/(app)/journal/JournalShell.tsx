@@ -35,8 +35,8 @@ export function JournalShell({ initialEntries }: Props) {
 
       <SampleDeskBanner />
 
-      {/* Two-column layout */}
-      <div className="flex gap-4">
+      {/* Two-column on desktop; stacks (list, then detail/form) below `lg`. */}
+      <div className="flex flex-col gap-4 lg:flex-row">
         <div className="flex-1 min-w-0">
           <EntryList
             entries={entries}
@@ -44,7 +44,7 @@ export function JournalShell({ initialEntries }: Props) {
             onSelect={(id) => setSelectedId(id)}
           />
         </div>
-        <div className="w-96 shrink-0">
+        <div className="w-full lg:w-96 lg:shrink-0">
           {selected ? (
             <EntryDetailDrawer
               entry={selected}
