@@ -1,5 +1,6 @@
 "use client";
 
+import { useMediaQuery } from "@/lib/useMediaQuery";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Props {
@@ -13,7 +14,12 @@ interface Props {
   leftMinWidth?: number;
   /** Optional localStorage key — persist the user's width across reloads. */
   storageKey?: string;
-  /** className applied to the outer flex container (e.g. height, gap). */
+  /**
+   * className applied to the split's height/layout. In the wide (≥`lg`) two-pane
+   * layout it's the container height; when stacked (< `lg`) it's applied to EACH
+   * pane so charts keep an explicit height and cards size exactly as they do on
+   * desktop — just stacked vertically. Keep it to height/min-height utilities.
+   */
   className?: string;
 }
 
@@ -36,6 +42,10 @@ export function ResizableSplit({
   const containerRef = useRef<HTMLDivElement>(null);
   const [rightWidth, setRightWidth] = useState<number>(defaultRightWidth);
   const draggingRef = useRef(false);
+  // Below `lg` (tablet/phone) the fixed-px two-pane split + drag handle can't fit
+  // and overlaps; stack vertically instead. Defaults to wide on SSR/first paint
+  // so desktop markup is stable (no hydration mismatch), then syncs after mount.
+  const isWide = useMediaQuery("(min-width: 1024px)", true);
 
   // Hydrate from localStorage after mount to avoid SSR mismatch.
   useEffect(() => {
@@ -118,6 +128,20 @@ export function ResizableSplit({
     },
     [clampWidth],
   );
+
+  // Stacked layout (< lg): full-width panes in a vertical column, no drag handle,
+  // no persisted px width. Each pane keeps the row's height so charts render and
+  // cards size exactly as on desktop — they just stack instead of sitting side by
+  // side. This is what makes the dashboard reflow like every other page on
+  // tablet/mobile instead of overlapping.
+  if (!isWide) {
+    return (
+      <div className="flex flex-col gap-4" data-testid="resizable-split">
+        <div className={`w-full min-w-0 ${className}`}>{left}</div>
+        <div className={`w-full min-w-0 ${className}`}>{right}</div>
+      </div>
+    );
+  }
 
   return (
     <div

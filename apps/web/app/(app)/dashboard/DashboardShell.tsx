@@ -54,21 +54,24 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
   const feedMode: "live" | "delayed" = tick?.delayed ? "delayed" : "live";
 
   return (
-    <div className="flex items-start">
-      {/* Left rail: watchlist (sticky, resizable right edge) */}
-      <ResizableColumn
-        side="right"
-        defaultWidth={240}
-        minWidth={200}
-        maxWidth={400}
-        storageKey="goldeneye:dashboard:watchlist-width"
-        className="sticky top-0 self-start"
-      >
-        <WatchlistSidebar className="pr-2" />
-      </ResizableColumn>
+    <div className="flex flex-col lg:flex-row lg:items-start">
+      {/* Left rail: watchlist (sticky, resizable right edge). Hidden below `lg` —
+          the TopBar instrument switcher covers symbol selection on mobile, and a
+          full-height instrument list above the dashboard reads poorly on a phone. */}
+      <div className="hidden lg:block sticky top-0 self-start">
+        <ResizableColumn
+          side="right"
+          defaultWidth={240}
+          minWidth={200}
+          maxWidth={400}
+          storageKey="goldeneye:dashboard:watchlist-width"
+        >
+          <WatchlistSidebar className="pr-2" />
+        </ResizableColumn>
+      </div>
 
       {/* Main column */}
-      <div className="stagger flex-1 min-w-0 flex flex-col gap-3 px-4">
+      <div className="stagger w-full min-w-0 lg:flex-1 flex flex-col gap-3 px-4">
         <PageHeader
           icon={LayoutDashboard}
           title="Dashboard"
@@ -78,13 +81,13 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
           <>
             <SkeletonCard className="h-10" />
             <SkeletonCard className="h-32" />
-            <div className="flex gap-4 h-[34vh] min-h-[260px]">
-              <SkeletonCard className="flex-1 min-h-0" />
-              <SkeletonCard className="w-72 shrink-0" />
+            <div className="flex flex-col gap-4 lg:flex-row lg:h-[34vh] lg:min-h-[260px]">
+              <SkeletonCard className="h-44 lg:h-auto lg:flex-1 lg:min-h-0" />
+              <SkeletonCard className="h-44 lg:h-auto lg:w-72 lg:shrink-0" />
             </div>
-            <div className="flex gap-4 h-[16vh] min-h-[140px]">
-              <SkeletonCard className="flex-1" />
-              <SkeletonCard className="flex-1" />
+            <div className="flex flex-col gap-4 lg:flex-row lg:h-[16vh] lg:min-h-[140px]">
+              <SkeletonCard className="h-28 lg:h-auto lg:flex-1" />
+              <SkeletonCard className="h-28 lg:h-auto lg:flex-1" />
             </div>
             <SkeletonCard className="h-8" />
           </>

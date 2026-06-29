@@ -1,5 +1,6 @@
 "use client";
 
+import { useMediaQuery } from "@/lib/useMediaQuery";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Side = "left" | "right";
@@ -42,6 +43,10 @@ export function ResizableColumn({
   const [width, setWidth] = useState<number>(defaultWidth);
   const draggingRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Below `lg` a fixed-px rail crushes the main column; render full-width and
+  // let it stack in the (now vertical) dashboard layout. Defaults to wide on
+  // SSR/first paint so desktop markup is stable.
+  const isWide = useMediaQuery("(min-width: 1024px)", true);
 
   useEffect(() => {
     if (!storageKey) return;
@@ -140,6 +145,16 @@ export function ResizableColumn({
       />
     </div>
   );
+
+  // Stacked layout (< lg): full-width, no fixed px, no drag handle. The sticky/
+  // height className is desktop-only and dropped here so the rail flows inline.
+  if (!isWide) {
+    return (
+      <div className="w-full min-w-0" data-testid="resizable-column">
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div
