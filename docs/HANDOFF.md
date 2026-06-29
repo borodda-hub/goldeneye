@@ -2,7 +2,36 @@
 
 _Last updated: 2026-06-28. Read this first to pick up where we left off._
 
-## Most recent: Honesty fix — provenance-accurate LLM caveat ✅ PROMOTED TO LIVE (`master == origin/master == develop == origin/develop == 365a929`)
+## Most recent: UI / responsive arc (theme + mobile) — PROMOTING (`feat/theme-iris` shipped; `fix/dashboard-responsive-split` in flight)
+
+A UX pass, not a roadmap phase. Three things:
+1. **Iris theme — ✅ PROMOTED TO LIVE (`master == df9aa00`, PR #14).** A new built-in
+   dark palette: neutral zinc surfaces (`#09090b`/`#18181b`/`#27272a`) + a vibrant violet
+   accent (`#a855f7`) and indigo-leaning secondary (shadcn "violet-on-zinc" look). Added to
+   `lib/theme/themes.ts` + `BUILTIN_THEMES` (auto-listed in the TopBar switcher) + the matching
+   `[data-theme="iris"]` block in `globals.css`; theme drift/parity test green; `goldeneye`
+   default untouched. `THEMING.md` built-in list refreshed.
+2. **Responsive fixes (mobile/tablet) — on `fix/dashboard-responsive-split`, promoting now.**
+   The dashboard was the only page that *overlapped* on small screens — fixed-px "slider" panes
+   (`ResizableSplit` ×3 + `ResizableColumn` ×2 rails) with no breakpoint. Now they stack below
+   `lg` (full-width, no drag handle, ignore the persisted px width); desktop byte-identical. New
+   SSR-safe `lib/useMediaQuery` hook (mirrors `useReducedMotion`, defaults wide so first paint is
+   stable). Same class of bug swept site-wide: journal + paper (`w-96 shrink-0` detail panels →
+   `flex-col lg:flex-row` / `w-full lg:w-96`), signals skeleton grid, admin grid, landing grid —
+   all breakpoint-only, desktop-safe.
+3. **Mobile hamburger nav — same branch.** The persistent left `SideNav` (`w-44`/176px) ate ~45%
+   of a phone on every page. Below `lg` it's hidden and a hamburger in the TopBar opens the same
+   9-item nav as a slide-out drawer (scrim, route-change/Escape/X close, scroll-lock). Desktop
+   unchanged. `MobileNav` reuses the exported `NAV_ITEMS`.
+
+Verified at 390/768/1440 (Playwright): overlap gone, content full-width on mobile, desktop
+untouched everywhere. Web lint + typecheck clean, 420 vitest green.
+- **Deferred (optional, small):** trim the TopBar's Getting-Started/Tutorial chips below `sm`
+  (they can crowd the wordmark on a narrow phone).
+- **Open issues unchanged:** #10 (CL/GC/SI paper-MTM), #13 (prod EIA stale-mock → C3).
+- **Next roadmap item:** Stage C / C3 — real COT/EIA ingestion.
+
+## Honesty fix — provenance-accurate LLM caveat ✅ PROMOTED TO LIVE (`master == origin/master == develop == origin/develop == 365a929`)
 
 **PR #12 merged (develop → master, CI green both lanes).** The four LLM narratives
 (`summarize_market`, `generate_thesis`, `explain_signal`, `narrate_scenario`) had
