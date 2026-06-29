@@ -72,8 +72,12 @@ tracked as **issue #10** — it is not a claim that 10000 is correct for those i
 ## How to re-run
 
 ```
+uv run --directory apps/api python -m seeds.validate_engine_oos      # WHOLE engine: direction (all 5 models + ensemble, vs baseline + Brier skill + deadband on/off) AND vol coverage, per-commodity + pooled
 uv run --directory apps/api python -m seeds.validate_vol_real        # vol/range, real OOS
-uv run --directory apps/api python -m seeds.validate_direction_real  # direction, real OOS
+uv run --directory apps/api python -m seeds.validate_direction_real  # direction (price-only models), real OOS
 ```
-Both are manual diagnostics (live network → not hermetic CI). The *synthetic* locks live in
+All are manual diagnostics (live network → not hermetic CI). `validate_engine_oos` is the
+one-table umbrella scorecard — each metric reported next to its baseline so the number can't
+flatter itself (last run: **no directional edge over baseline on any model/horizon/commodity**;
+vol bands calibrated ~80/95% across all 6). The *synthetic* locks live in
 `tests/test_vol_range.py` / `tests/test_ensemble_calibration.py` and run in `pnpm health`.
