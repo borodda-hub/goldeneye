@@ -15,7 +15,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const NAV_ITEMS: { href: string; label: string; Icon: LucideIcon }[] = [
+export const NAV_ITEMS: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { href: "/chart", label: "Chart", Icon: CandlestickChart },
   { href: "/signals", label: "Signal Lab", Icon: Radar },
@@ -30,7 +30,7 @@ const NAV_ITEMS: { href: string; label: string; Icon: LucideIcon }[] = [
 export function SideNav() {
   const pathname = usePathname();
   return (
-    <nav className="flex w-44 shrink-0 flex-col border-r border-line-1 bg-surface-1 pt-6">
+    <nav className="hidden w-44 shrink-0 flex-col border-r border-line-1 bg-surface-1 pt-6 lg:flex">
       {NAV_ITEMS.map(({ href, label, Icon }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
         return (

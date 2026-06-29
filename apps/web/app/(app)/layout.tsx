@@ -1,4 +1,5 @@
 import { AccountControls } from "@/components/AccountControls";
+import { MobileNav } from "@/components/MobileNav";
 import { ProfileSync } from "@/components/ProfileSync";
 import { SideNav } from "@/components/SideNav";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
@@ -51,7 +52,8 @@ function Wordmark() {
 
 function TopBar() {
   return (
-    <header className="flex h-12 items-center justify-between border-b border-line-1 bg-surface-1 px-6 gap-4">
+    <header className="flex h-12 items-center justify-between border-b border-line-1 bg-surface-1 px-4 gap-3 lg:px-6 lg:gap-4">
+      <MobileNav />
       <Wordmark />
       <InstrumentSwitcher className="ml-auto" />
       <ThemeSwitcher />
