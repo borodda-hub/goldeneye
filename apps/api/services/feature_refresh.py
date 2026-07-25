@@ -29,9 +29,67 @@ logger = logging.getLogger(__name__)
 _RECENT_REPORTS = 8
 
 
+def _jsonable(value):  # type: ignore[no-untyped-def]
+    """Recursively convert dates/datetimes to ISO strings so the adapter's
+    forecast dicts (which carry `ts` objects) survive the JSONB boundary
+    verbatim-in-shape."""
+    import datetime as _dt
+
+    if isinstance(value, (_dt.datetime, _dt.date)):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {k: _jsonable(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(v) for v in value]
+    return value
+
+
+async def _archive_weather_vintage(session) -> int:  # type: ignore[no-untyped-def]
+    """Phase D5: persist today's forecast vintage (6 regions + the US
+    aggregate anomaly) from whatever weather adapter is configured. The
+    UNIQUE (vintage_date, region) key + insert-only repo make same-day
+    re-ticks no-ops — a past vintage is never rewritten. `source` labels
+    mock vintages so a future validation can exclude them."""
+    from datetime import date as _date
+
+    from apps.api.adapters.registry import get_weather
+    from apps.api.adapters.weather.regions import REGION_POINTS
+    from apps.api.repos import weather_vintages as wv_repo
+    from apps.api.src.settings import settings
+
+    today = _date.today()
+    weather = get_weather()
+    source = settings.adapter_weather or "mock"
+    rows: list[dict] = []
+    for region in REGION_POINTS:
+        forecast = await weather.get_forecast(region)
+        if forecast:
+            rows.append(
+                {
+                    "vintage_date": today,
+                    "region": region,
+                    "forecast": _jsonable(forecast),
+                    "national_hdd_anomaly": None,
+                    "source": source,
+                }
+            )
+    anomaly = await weather.get_national_hdd_anomaly()
+    rows.append(
+        {
+            "vintage_date": today,
+            "region": "US",
+            "forecast": [],
+            "national_hdd_anomaly": float(anomaly),
+            "source": source,
+        }
+    )
+    return await wv_repo.insert_vintages(session, rows)
+
+
 async def refresh_tick() -> dict[str, int]:
-    """One refresh cycle: fetch latest reports → upsert → re-observe
-    provenance. Returns per-source affected-row counts for logging/tests."""
+    """One refresh cycle: fetch latest reports → upsert → archive today's
+    weather vintage → re-observe provenance. Returns per-source
+    affected-row counts for logging/tests."""
     from apps.api.adapters.energy.eia import EIAAdapter
     from apps.api.adapters.positioning.cftc import MARKETS, CFTCAdapter
     from apps.api.db.session import get_session_factory
@@ -39,7 +97,7 @@ async def refresh_tick() -> dict[str, int]:
     from apps.api.repos import eia as eia_repo
     from apps.api.services.feature_provenance import observe_feature_provenance
 
-    counts = {"cot": 0, "storage": 0}
+    counts = {"cot": 0, "storage": 0, "weather": 0}
     async with get_session_factory()() as session:
         for symbol in MARKETS:
             try:
@@ -54,6 +112,10 @@ async def refresh_tick() -> dict[str, int]:
             counts["storage"] += await eia_repo.upsert_many(session, rows)
         except Exception:  # noqa: BLE001
             logger.exception("EIA storage refresh failed")
+        try:
+            counts["weather"] = await _archive_weather_vintage(session)
+        except Exception:  # noqa: BLE001 — D5 archival must not kill the tick
+            logger.exception("weather vintage archival failed")
         await session.commit()
         await observe_feature_provenance(session)
     return counts
