@@ -1,5 +1,6 @@
 """Mock EIA storage adapter. Serves from storage_generator output."""
 import sys
+from datetime import date
 from pathlib import Path
 _REPO_ROOT = Path(__file__).resolve().parents[4]
 if str(_REPO_ROOT) not in sys.path:
@@ -16,3 +17,7 @@ class MockEIAAdapter:
 
     async def get_latest_storage(self) -> dict | None:
         return _STORAGE_REPORTS[0] if _STORAGE_REPORTS else None
+
+    async def get_storage_reports_range(self, start: date, end: date) -> list[dict]:
+        """Protocol parity with the real adapter's Phase 31a range path."""
+        return [r for r in _STORAGE_REPORTS if start <= r["week_ending"] <= end]

@@ -272,3 +272,49 @@ gated `tests/db` green (46, incl. the two new real-SQL scoping locks):
 Note: pre-31a.0 persisted multi-symbol backtest rows contained contaminated
 context (see `MODEL_DILIGENCE.md`) — refresh persisted backtests after this
 promotes, before citing factor_composite calibration numbers.
+*(Done 2026-07-25: 31a.0 promoted to master; backtest refresh re-run on BOTH
+the dev DB (6 symbols) and prod (NG) — see HANDOFF.)*
+
+## 31a status — ✅ SHIPPED (2026-07-25, `feat/phase-31a-backfill`)
+
+**All pre-registered gates met on the dev DB:**
+- `cot_reports`: **522 real weekly reports/symbol × 6 markets = 3,132 rows**
+  (2016-07-26 → 2026-07-21, gate was ≥450) — pure real (`source='cftc'`),
+  every mock row replaced. `eia_storage_reports`: **521 real weekly NG rows**
+  (2016-07-29 → 2026-07-17, gate ≥500), mock overwritten in place.
+- **Idempotency proven:** immediate re-run → net-new 0 on both tables
+  (measured as table-rowcount delta; DO UPDATE refreshes values in place).
+- Latest rows sanity-real: NG managed-money net −102,694 (release_date =
+  the actual Friday), summer injection builds (+32/+41/+61 Bcf → 3,056 Bcf).
+
+**Built:** paginated `get_cot_reports_range` (Socrata `$where`+`$offset`,
+kills the 200-row ceiling) + `get_storage_reports_range` (EIA v2 start/end +
+offset paging; fetch padded 2 weeks so the oldest requested week keeps its
+WoW change) — mirrored on the mock adapters + protocols (null/petroleum =
+parity stubs; petroleum stays deliberately un-backfilled). Upsert repos
+`cot.upsert_many` / `eia.upsert_many` (chunked `ON CONFLICT DO UPDATE` on
+the tables' UNIQUE keys, column-whitelisted). CLI
+`seeds/backfill_features.py` (`--symbols`, `--years 10`; replace-mock +
+loud per-market duplicate guard; manual/cron, not CI).
+
+**Discovery — live CFTC adapter was silently broken for NG/CL (fixed):**
+Socrata renamed the dataset's market names (NG → `"NAT GAS NYME"`, CL →
+`"WTI-PHYSICAL"`), so the adapter's defensive `contract_market_name like`
+clause matched **zero rows dataset-wide** for both — the live adapter
+returned empty and callers fell back to mock (**this explains issue #13's
+observed-mock positioning in prod**). Both query paths now filter by the
+stable `cftc_contract_market_code` ONLY (never re-add a name filter). The
+name instability also means mock long-names don't collide with real
+short-names on the `(report_date, contract_market_name)` upsert key — the
+backfill therefore purges non-`cftc` rows per market post-fetch and FAILS
+LOUDLY if any `(market, report_date)` ends up duplicated (name-churn guard).
+A future `UNIQUE (report_date, cftc_contract_market_code)` migration is the
+durable fix if churn ever recurs — deferred, guard suffices.
+
+**Known nit:** EIA's three 5-yr stat series (`NW2_EPG0_SAO/SMX/SMN_R48_BCF`)
+return nothing on this route — `five_year_avg/max/min_bcf` are NULL on real
+rows (regional splits populate fine). Not load-bearing: the consensus-free
+proxy derives its own 5-yr norm from `net_change_bcf` history (31a.0).
+
+**Next: 31b** — alt-data arm of `seeds/validate_engine_oos.py` on this real
+feature history, pre-registered gate per §31b above.

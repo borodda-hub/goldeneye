@@ -22,6 +22,9 @@ class EnergyDataAdapter(Protocol):
         """Returns recent EIA storage report dicts, newest first."""
     async def get_latest_storage(self) -> dict | None:
         """Returns the most recent storage report dict or None."""
+    async def get_storage_reports_range(self, start: date, end: date) -> list[dict]:
+        """Returns storage reports with week_ending in [start, end], newest
+        first (Phase 31a backfill path — paginated, no live-path row cap)."""
 
 
 @runtime_checkable
@@ -40,6 +43,9 @@ class PositioningDataAdapter(Protocol):
         """Returns recent COT report dicts, newest first."""
     async def get_latest_cot(self) -> dict | None:
         """Returns the most recent COT report dict or None."""
+    async def get_cot_reports_range(self, start: date, end: date) -> list[dict]:
+        """Returns COT reports with report_date in [start, end], newest first
+        (Phase 31a backfill path — paginated, no live-path row cap)."""
 
 
 @runtime_checkable

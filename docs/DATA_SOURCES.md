@@ -50,7 +50,7 @@ This file exists so Claude Code does not have to re-research these every time we
 - **Notes:**
   - Late-2025: CFTC paused publication during a federal funding lapse, then resumed in chronological order. Adapter must tolerate gaps and out-of-order publication; never assume "the most recent report is for last Tuesday."
   - There is no primary key; sort by `report_date_as_yyyy_mm_dd` and `contract_market_name`.
-  - The natural-gas contract market name we want includes `NATURAL GAS - NEW YORK MERCANTILE EXCHANGE`. There are several other NG-adjacent markets (Henry Hub Last Day, etc.) — match deliberately.
+  - **⚠️ Market NAMES are unstable — filter by `cftc_contract_market_code` ONLY.** Socrata renamed the dataset's names (NG is now `NAT GAS NYME`, CL is `WTI-PHYSICAL`; historically they were the long `NATURAL GAS - NEW YORK MERCANTILE EXCHANGE` style). A defensive `contract_market_name like` clause silently matched zero NG/CL rows and made the live adapter fall back to mock (found + fixed in Phase 31a; explains issue #13's observed-mock positioning). The 6-digit code is the stable key; codename-adjacent markets (Henry Hub Last Day, etc.) have their own codes.
   - **Market codes (Phase 17)** in `adapters/positioning/cftc.py::MARKETS` and
     `instruments.json` metadata `cftc_market_code` (verify live — Socrata reissues):
     NG `023651`, CL `067651`, HO `022651` (NY Harbor ULSD), RB `111659` (Gasoline

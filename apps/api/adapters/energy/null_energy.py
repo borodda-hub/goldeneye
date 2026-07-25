@@ -8,6 +8,7 @@ without a 500 and without wrong-instrument data.
 """
 from __future__ import annotations
 
+from datetime import date
 from typing import Any
 
 
@@ -19,3 +20,8 @@ class NullEnergyAdapter:
 
     async def get_latest_storage(self) -> dict[str, Any] | None:
         return None
+
+    async def get_storage_reports_range(
+        self, start: date, end: date
+    ) -> list[dict[str, Any]]:
+        return []

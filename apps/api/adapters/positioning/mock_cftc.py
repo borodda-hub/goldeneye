@@ -1,5 +1,6 @@
 """Mock CFTC COT adapter. Serves from cot_generator output."""
 import sys
+from datetime import date
 from pathlib import Path
 _REPO_ROOT = Path(__file__).resolve().parents[4]
 if str(_REPO_ROOT) not in sys.path:
@@ -16,3 +17,7 @@ class MockCFTCAdapter:
 
     async def get_latest_cot(self) -> dict | None:
         return _COT_REPORTS[0] if _COT_REPORTS else None
+
+    async def get_cot_reports_range(self, start: date, end: date) -> list[dict]:
+        """Protocol parity with the real adapter's Phase 31a range path."""
+        return [r for r in _COT_REPORTS if start <= r["report_date"] <= end]

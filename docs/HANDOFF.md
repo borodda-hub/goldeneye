@@ -1,6 +1,36 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-07-24 (late). Read this first to pick up where we left off._
+_Last updated: 2026-07-25. Read this first to pick up where we left off._
+
+## Most recent: Phase 31a SHIPPED on `feat/phase-31a-backfill` — real 10y COT+EIA history in the dev DB, all gates met
+
+Per `docs/PHASE_31_PLAN.md §31a status` (full closeout there). Highlights:
+- **Data landed + gates met:** `cot_reports` = 522 real weekly reports/symbol × 6 markets
+  (2016-07-26 → 2026-07-21), pure `source='cftc'`, all mock purged; `eia_storage_reports` =
+  521 real NG weekly rows. **Idempotency proven** (immediate re-run → net-new 0 both tables).
+  Latest rows sanity-real (NG MM net −102,694 released the actual Friday; +32/+41/+61 Bcf
+  summer builds → 3,056 Bcf).
+- **Built:** paginated range fetchers on both real adapters (Socrata `$offset` / EIA v2
+  start+end+offset; kills the 200-row & 2.3y ceilings), protocol + mock parity, chunked
+  `upsert_many` repos on the tables' UNIQUE keys, `seeds/backfill_features.py` CLI
+  (replace-mock + loud per-market dup guard; manual/cron, not CI).
+- **Live-bug discovery (fixed):** Socrata RENAMED market names (NG→`NAT GAS NYME`,
+  CL→`WTI-PHYSICAL`) → the adapter's defensive name `like` clause matched ZERO NG/CL rows
+  dataset-wide → **the live CFTC adapter had been silently returning empty for NG/CL and
+  falling back to mock (explains issue #13's observed-mock positioning in prod)**. Both
+  query paths now filter by the stable market CODE only; `DATA_SOURCES.md §cftc` updated;
+  never re-add a name filter. Once this promotes + prod redeploys, prod positioning should
+  serve real CFTC — re-verify `/v1/positioning` and then update the #13 caveat trail.
+- **Known nit:** EIA's 5-yr stat series return nothing on this route → `five_year_*_bcf`
+  NULL on real rows (regional splits fine). Not load-bearing (the 31a.0 proxy computes its
+  own 5-yr norm from history).
+- **Gates:** `pnpm health` GREEN (980 backend / 420 web); full `tests/db` GREEN (48, incl.
+  2 new real-SQL upsert locks in `tests/db/test_feature_upserts.py`).
+- **NEXT = 31b:** alt-data-fed arm of `seeds/validate_engine_oos.py` over this real feature
+  history; pre-registered gate in `PHASE_31_PLAN.md §31b` (beat drift-naive AND best
+  price-only on OOS Brier @1w, ~1 SE on n_eff, monotone confidence gradient). NG features
+  in the dev DB are now REAL — a plain dev-DB backtest of factor_composite consumes real
+  point-in-time COT/storage already.
 
 ## Most recent: Phase 31a.0 PROMOTED TO LIVE + backtest refresh done (dev) / pending one owner command (prod)
 
