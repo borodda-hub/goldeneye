@@ -20,7 +20,12 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 _FROM = date(2025, 9, 1)
-_TO = date(2026, 5, 15)
+# Dynamic end date: persist_backtest_rows' delete-then-insert window is
+# bounded by the NEW rows' timestamp range, so a hardcoded _TO would leave
+# any previously-persisted rows beyond it in place (exactly what the 31a.0
+# contamination re-run must not do). Running through today replaces the
+# whole persisted history for each model.
+_TO = date.today()
 
 
 async def go(symbol: str) -> None:

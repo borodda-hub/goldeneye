@@ -2,7 +2,33 @@
 
 _Last updated: 2026-07-24 (late). Read this first to pick up where we left off._
 
-## Most recent: Phase 31a.0 SHIPPED + MERGED TO DEVELOP (`develop == origin/develop == a5ec5f2`, PR #17) — CI green on the PR **and** the develop push (8 jobs incl. `db-tests` + Contracts). NOT yet promoted to master (owner call — master still `b2d60f0`).
+## Most recent: Phase 31a.0 PROMOTED TO LIVE + backtest refresh done (dev) / pending one owner command (prod)
+
+**Promotion:** master fast-forwarded to develop (owner approved) — 31a.0 is live on
+`master == origin/master`; CI green on the master push (8 jobs). Railway redeploys the API
+from master, so prod now SERVES the fixed code.
+
+**Backtest refresh (the MODEL_DILIGENCE re-run) — DEV DB DONE, verified:**
+- `seeds/refresh_backtests.py` `_TO` made dynamic (`date.today()`) — the hardcoded
+  2026-05-15 end would have left contaminated tail rows (CL factor rows ran to 06-07)
+  outside the windowed delete-then-insert.
+- `seeds.backfill_prices` first: +6,774 real bars (HO/RB/GC/SI had lost their dailies in a
+  past DB rebuild; all 8 symbols now current).
+- Refreshed NG CL HO RB GC SI: 662 stale-model rows purged (prophet_trend /
+  volatility_regime), 4-voter lineup re-persisted per symbol (327 rows/model NG+CL,
+  289/model others), windows 2025-09→2026-07-24. **Verified in-DB:** post-fix CL
+  factor_composite rows cite only momentum + crude COT (no NG storage); NG keeps all three
+  legs. Hit rates ~0.39–0.55 — consistent with the honest no-edge finding.
+
+**⚠️ PROD refresh PENDING (one command, owner-run):** prod NG has **281 pre-fix
+factor_composite rows** (through 2026-06-08) feeding the live scorecard + ensemble weights
+(all other symbols empty in prod — verified via `/v1/backtest/summary`). The write to the
+prod DB was blocked by the session permission classifier (correctly — prod mutation).
+Prod DB is Timescale Cloud (publicly reachable); run from the repo root:
+`DATABASE_URL="$(railway variables --service web --kv | grep '^DATABASE_URL=' | cut -d= -f2-)" uv run --directory apps/api python -m seeds.refresh_backtests NG`
+then spot-check `/v1/backtest/summary?symbol=NG&horizon=1d` shows `to_date` = run date.
+
+## (superseded) 31a.0 merged to develop (`a5ec5f2`, PR #17) — CI green both lanes
 
 Same session as the Stage C audit below — the audit's three blockers are now FIXED, gated,
 and locked (this is the prerequisite step for the 31a backfill + 31b verdict):
