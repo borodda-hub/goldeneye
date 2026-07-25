@@ -38,7 +38,8 @@ whether a claim survives outside the generator.
 | Vol **point forecast**: log-HAR beats EWMA (30b → **default in 30d**) | **real-OOS** ✅ | Beats incumbent EWMA ≈+0.05 R²: **5/6 @1w, 4/6 @1m** commodities (RB @1w, CL+RB @1m lose *marginally*, both still +R²). 30d made it the **default**; EWMA is the opt-out. 30d perf pass (refit every 5 steps, not per-step) is **skill-neutral** — a cadence sweep showed cadence-1 ≡ cadence-5 on the gate, so the cheaper version preserves the win | `seeds/validate_estimator_30b.py`, ~10y real, `estimator_skill` |
 | Vol **point forecast**: raw-variance HAR (30b) | **real-OOS** ❌ benched | Does NOT beat EWMA; **blew up on real CL** (R² −1.06 @1m) — linear HAR on raw variance over-extrapolates in vol explosions. Code+tests retained, not wired | same harness; the failure log-HAR fixes |
 | **Directional** edge (`moving_average_directional`, `holt_trend`) | **real-OOS** ✅ tested | **No edge.** Decisive accuracy ≈45–57%, *below* a drift-aware naive baseline in all 36 rows (edge −0.8 to −7.6pp); no confidence gradient | `seeds/validate_direction_real.py`, ~10y real, scored via `signal_scoring.score_forecast` |
-| **Directional** edge (`logreg_directional`, `factor_composite`) | **unvalidated** ⚠️ | Cannot be tested — they consume synthetic COT/storage. Treat directional claims as unproven | blocked on real historical COT + EIA ingestion (deferred) |
+| **Directional** edge (`factor_composite`, alt-data legs) | **real-OOS** ✅ tested (Phase 31b, 2026-07-25) | **No edge — FAIL on the pre-registered gate.** Fed REAL point-in-time COT (6 commodities, 14y) + EIA NG storage through the locked symbol-scoped chokepoint, weekly Friday decisions (n=2,958 non-overlapping @1w): the alt-data legs made the model **worse**, not better — paired OOS Brier +0.0049 ± 0.0016 vs drift-naive (~3 SE worse) and **+0.0054 ± 0.0009 vs its own price-only variant (~6 SE worse)**; worse than drift in 5/6 commodities; decisive hit 48.4% vs base 53.3%; no confidence gradient (only one tier emitted). Weekly positioning/storage carry no 1w/1m directional signal through these hand-set rules. The model remains a labeled rules-based *view*; calibration weighting down-weights it automatically | `seeds/validate_engine_oos.py --alt-only` (§PHASE 31B block); gate pre-registered in `PHASE_31_PLAN.md §31b` |
+| **Directional** edge (`logreg_directional`) | **real-OOS** ✅ tested (price-only) | **No edge** (see the price-only row above — its features ARE price-only; `latest_storage`/`latest_cot` params are accepted and unused). The conditional alt-data extension (Phase 31c) **does not fire**: its pre-registered condition was a promising 31b, which FAILED — 31c is closed, the simpler model stands | `seeds/validate_engine_oos.py`; 31c closure per `PHASE_31_PLAN.md §sequencing` |
 | Ensemble **confidence gradient** (26c) | **real-OOS** ✅ tested | No reliable OOS gradient at any horizon; shipped reframed as down-weighting miscalibrated models | `tests/test_ensemble_calibration.py` |
 | Per-model diagnostics (bias / Brier decomposition / drift) (26a) | **synthetic** | Methodology validated on seeded data; reproduces known truths | `services/model_diagnostics.py` |
 | Desk **skill-vs-luck verdict** (B2) | **methodology** (not a predictive claim) | Wilson 95% CI on directional hit-rate vs the 0.50 chance baseline → `skill` only when the lower bound clears chance, else `luck`, else `insufficient` (`n < 10`). Pre-registered thresholds (`SKILL_BASELINE=0.50`, `WILSON_Z=1.96`). Consistent with the no-directional-edge finding, the blind `momentum`/`contrarian`/`random` desks are expected to read `luck` — the tool refuses to crown noise as skill | `services/desk_calibration.py::skill_verdict`; honesty-locked in `tests/db/test_desk_skill_verdict_e2e.py` (real coin-flip desk → `luck`) + `tests/test_desk_calibration.py` |
@@ -55,15 +56,18 @@ whether a claim survives outside the generator.
 - **Direction has no real edge** and the product correctly declines to manufacture one.
   This is now backed by real-data evidence, not just the synthetic seed.
 
-## The remaining structural gap (deferred, tracked)
+## The structural gap — ✅ CLOSED (Phase 31, 2026-07-25)
 
-The only way to move `logreg`/`factor` out of `unvalidated` is to **ingest real historical
-COT (CFTC, free) + EIA storage** and re-run the backtests on real features→price. Until then,
-their directional output is unproven. Scoped as Stage C / Phase 31 in `MASTER_PLAN.md`
-(detail: `PHASE_31_PLAN.md` v2). **31a.0 (2026-07-24) shipped the correctness
-prerequisites** — symbol-scoped context + the consensus-free surprise proxy — without which
-the eventual 31b verdict would have measured contamination and a dead storage leg instead of
-the models.
+The long-standing gap ("`logreg`/`factor` can't be tested — synthetic features") is closed:
+**31a.0** shipped the correctness prerequisites (symbol-scoped context + the consensus-free
+surprise proxy), **31a** ingested 14y of real COT (6 commodities) + EIA NG storage, and
+**31b** ran the pre-registered verdict. **Result: every directional model in the lineup is
+now real-OOS tested, and none has an edge** — price-only models (Phase 26 + the real-OOS
+sweep), `factor_composite`'s alt-data legs (31b FAIL — they *worsen* Brier vs price-only),
+and `logreg` (price-only by construction; 31c closed). "No claim without provenance" is now
+fully satisfied for direction: the claim is **tested-no-edge**, not unproven. The product's
+one validated predictive edge remains **vol/range**; direction ships only as labeled,
+caveated views.
 
 **Paper-engine tick value — deliberate, labeled deferral (B5, issue #10).** The paper engine's
 per-$1-move USD multiplier should be each instrument's real `contract_size` (NG 10000, CL 1000,
@@ -78,7 +82,8 @@ tracked as **issue #10** — it is not a claim that 10000 is correct for those i
 ## How to re-run
 
 ```
-uv run --directory apps/api python -m seeds.validate_engine_oos      # WHOLE engine: direction (all 5 models + ensemble, vs baseline + Brier skill + deadband on/off) AND vol coverage, per-commodity + pooled
+uv run --directory apps/api python -m seeds.validate_engine_oos      # WHOLE engine: direction (all 5 models + ensemble, vs baseline + Brier skill + deadband on/off) AND vol coverage, per-commodity + pooled; ends with the 31B alt-data block
+uv run --directory apps/api python -m seeds.validate_engine_oos --alt-only   # just the Phase 31b alt-data verdict (needs the feature backfill in DATABASE_URL: python -m seeds.backfill_features --years 14)
 uv run --directory apps/api python -m seeds.validate_vol_real        # vol/range, real OOS
 uv run --directory apps/api python -m seeds.validate_direction_real  # direction (price-only models), real OOS
 ```
