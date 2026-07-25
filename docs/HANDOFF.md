@@ -1,6 +1,37 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-07-25 (pm). Read this first to pick up where we left off._
+_Last updated: 2026-07-25 (eve). Read this first to pick up where we left off._
+
+## Most recent: **PHASE 31 COMPLETE — 31d LIVE IN PROD, issue #13 CLOSED. Stage C is done.**
+
+`master == develop == origin == 9f16de0` + this docs commit. All lanes CI-green (PR #20 +
+develop + master pushes). Sequence executed on owner's "proceed with 31d":
+- **31d code shipped** (PR #20): `services/feature_refresh.py` (env-gated scheduler,
+  `FEATURE_REFRESH_ENABLED`, boot tick + 6h cadence, idempotent 31a upserts) +
+  `services/feature_provenance.py` (observed≠configured; real = real-source AND fresh ≤21d —
+  stale-real reads NOT-real) + observed-derived `data_provenance_caveat()` (4 honest states;
+  #12 fragility retired). Locks in `test_provenance_caveat.py` + gated
+  `tests/db/test_feature_upserts.py`. Health 985/420 green.
+- **Prod rollout done:** promoted → `FEATURE_REFRESH_ENABLED=true` set on Railway → the boot
+  tick alone flipped prod. **Verified live:** `/v1/fundamentals?symbol=NG` `source:"eia"`
+  as_of 2026-07-17 (3,056 Bcf, +32); `/v1/positioning?symbol=NG` `source:"cftc"` report
+  07-21/released 07-24, MM net −102,694; LLM envelope caveat reads *"positioning/storage
+  inputs are real published CFTC/EIA data."* **Issue #13 CLOSED** with the verification.
+- **Optional hygiene (not acceptance, owner-run — my prod-DB writes are classifier-blocked,
+  which is the right posture):** one-time deep prod backfill purges legacy mock COT rows +
+  gives full 14y history:
+  `DATABASE_URL="$(railway variables --service web --kv | grep '^DATABASE_URL=' | cut -d= -f2-)" uv run --directory apps/api python -m seeds.backfill_features --years 14`
+  (run from a normal terminal, NOT the 2-min `!` prompt).
+
+**PHASE 31 FINAL LEDGER:** 31a.0 correctness pre-fixes ✅ · 31a 14y real ingestion ✅ ·
+31b verdict ✅ (**GATE FAIL — no directional alt-data edge; diligence gap CLOSED**) ·
+31c closed (condition unmet) · 31d prod flow + observed caveat ✅ (#13 closed).
+`MASTER_PLAN.md` Stage C marked COMPLETE. The platform's directional lineup is fully
+real-OOS tested (no edge anywhere); the validated edge remains vol/range; prod now serves
+real prices + real positioning + real storage with an honest, observed-derived label.
+
+**NEXT:** the deferred Stage D discussion (owner: "will discuss 4 after") — recommended
+opener **D1 implied-vs-realized vol** (extends the proven edge; probe-first, OVX/GVZ).
 
 ## Most recent: 31a PROMOTED TO LIVE + **Phase 31b VERDICT: FAIL (no alt-data edge) — the diligence arc is CLOSED**
 
