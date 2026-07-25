@@ -82,11 +82,25 @@ async def test_vintages_are_immutable_history(migrated_url):
             await session.commit()
 
 
+@pytest.fixture
+def mock_weather(monkeypatch):
+    """Hermeticity pin: a dev .env may configure the REAL NWS adapter — this
+    test must never hit the network. Force mock + clear the registry cache
+    on both sides."""
+    from apps.api.adapters import registry
+    from apps.api.src.settings import settings
+
+    registry.get_weather.cache_clear()
+    monkeypatch.setattr(settings, "adapter_weather", "mock")
+    yield
+    registry.get_weather.cache_clear()
+
+
 @pytest.mark.asyncio
-async def test_refresh_tick_archival_leg_writes_labeled_vintage(migrated_url):
+async def test_refresh_tick_archival_leg_writes_labeled_vintage(migrated_url, mock_weather):
     """One labeled row per region + the US aggregate; same-day re-run
-    inserts 0 (idempotent). Uses the configured (mock) weather adapter —
-    no network."""
+    inserts 0 (idempotent). Uses the forced-mock weather adapter — no
+    network."""
     today = date.today()
     async with _db(migrated_url) as session:
         try:

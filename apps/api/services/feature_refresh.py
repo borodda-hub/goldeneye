@@ -86,9 +86,51 @@ async def _archive_weather_vintage(session) -> int:  # type: ignore[no-untyped-d
     return await wv_repo.insert_vintages(session, rows)
 
 
+async def _archive_curve_vintage(session) -> int:  # type: ignore[no-untyped-def]
+    """Phase D2a: persist today's futures-curve snapshot per symbol. Yahoo
+    drops expired contract months, so the historical curve is otherwise
+    unreconstructible — this archive is the only path to full-fidelity
+    carry validation later. Same immutability doctrine as the weather
+    archive (insert-only; same-day re-ticks are no-ops)."""
+    from datetime import UTC as _UTC
+    from datetime import date as _date
+    from datetime import datetime as _datetime
+
+    from apps.api.adapters.registry import get_market
+    from apps.api.repos import curve_vintages as cv_repo
+    from apps.api.src.settings import settings
+
+    today = _date.today()
+    market = get_market()
+    source = settings.adapter_market or "mock"
+    now = _datetime.now(_UTC).replace(tzinfo=None)
+    rows: list[dict] = []
+    for symbol in _CURVE_SYMBOLS:
+        try:
+            curve = await market.get_curve_snapshot(symbol, now)
+        except Exception:  # noqa: BLE001 — one symbol must not kill the leg
+            logger.exception("curve snapshot failed for %s", symbol)
+            continue
+        if curve:
+            rows.append(
+                {
+                    "vintage_date": today,
+                    "symbol": symbol,
+                    "curve": _jsonable(curve),
+                    "source": source,
+                }
+            )
+    return await cv_repo.insert_vintages(session, rows)
+
+
+# Futures curves worth archiving — the six commodities (ES/ZN curves are not
+# served per-month by the current adapter path).
+_CURVE_SYMBOLS = ("NG", "CL", "HO", "RB", "GC", "SI")
+
+
 async def refresh_tick() -> dict[str, int]:
     """One refresh cycle: fetch latest reports → upsert → archive today's
-    weather vintage → re-observe provenance. Returns per-source
+    weather + curve vintages → re-observe provenance. Returns per-source
     affected-row counts for logging/tests."""
     from apps.api.adapters.energy.eia import EIAAdapter
     from apps.api.adapters.positioning.cftc import MARKETS, CFTCAdapter
@@ -97,7 +139,7 @@ async def refresh_tick() -> dict[str, int]:
     from apps.api.repos import eia as eia_repo
     from apps.api.services.feature_provenance import observe_feature_provenance
 
-    counts = {"cot": 0, "storage": 0, "weather": 0}
+    counts = {"cot": 0, "storage": 0, "weather": 0, "curve": 0}
     async with get_session_factory()() as session:
         for symbol in MARKETS:
             try:
@@ -116,6 +158,10 @@ async def refresh_tick() -> dict[str, int]:
             counts["weather"] = await _archive_weather_vintage(session)
         except Exception:  # noqa: BLE001 — D5 archival must not kill the tick
             logger.exception("weather vintage archival failed")
+        try:
+            counts["curve"] = await _archive_curve_vintage(session)
+        except Exception:  # noqa: BLE001 — D2a archival must not kill the tick
+            logger.exception("curve vintage archival failed")
         await session.commit()
         await observe_feature_provenance(session)
     return counts
