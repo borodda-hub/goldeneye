@@ -70,6 +70,10 @@ class Settings(BaseSettings):
     # never spawn the loop; enable on the single deployed API process.
     auto_resolve_enabled: bool = False
     auto_resolve_interval_hours: float = 24.0
+    # 31d — live COT/EIA feature refresh (off by default; dev/demo stays mock
+    # unless the deep backfill has been run deliberately).
+    feature_refresh_enabled: bool = False
+    feature_refresh_interval_hours: float = 6.0
 
     # Observability (B4) — minimal. `log_level` configures structured request
     # logging; `sentry_dsn` is a field for completeness (wiring is deferred — see

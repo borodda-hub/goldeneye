@@ -100,6 +100,46 @@ async def test_cot_upsert_idempotent_and_overwrites(migrated_url):
 
 
 @pytest.mark.asyncio
+async def test_provenance_observation_reads_db_truth(migrated_url):
+    """31d: the LLM caveat's clause derives from OBSERVED rows. Fresh
+    real-sourced rows → real; remove them (leaving stale/mock seed data) →
+    not-real. Real SQL, the same get_latest path production observes."""
+    from datetime import date as _date
+    from datetime import timedelta as _td
+
+    from apps.api.services.feature_provenance import observe_feature_provenance
+
+    today = _date.today()
+    async with _db(migrated_url) as session:
+        try:
+            await cot_repo.upsert_many(
+                session, [_cot_row(today - _td(days=3), 100_000, "cftc")]
+            )
+            await eia_repo.upsert_many(
+                session, [_eia_row(today - _td(days=2), 3000.0, "eia")]
+            )
+            await session.commit()
+            prov = await observe_feature_provenance(session)
+            assert prov.cot_real is True
+            assert prov.storage_real is True
+        finally:
+            await session.execute(
+                delete(COTReport).where(COTReport.contract_market_name == _MARKET)
+            )
+            await session.execute(
+                delete(EIAStorageReport).where(
+                    EIAStorageReport.report_date == today - _td(days=2)
+                )
+            )
+            await session.commit()
+        # With the fresh real rows gone, whatever remains (seeded mock, stale
+        # dates) must NOT read as real.
+        prov = await observe_feature_provenance(session)
+        assert prov.cot_real is False
+        assert prov.storage_real is False
+
+
+@pytest.mark.asyncio
 async def test_eia_upsert_idempotent_and_overwrites(migrated_url):
     async with _db(migrated_url) as session:
         try:

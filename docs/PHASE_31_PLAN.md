@@ -356,3 +356,39 @@ Note (correcting an earlier assumption): `/v1/positioning` reads the **DB**
 (`services/positioning.py` → `cot_repo`), not the live adapter — so prod
 positioning stays mock until 31d's prod backfill, which is the correct
 ordering (the caveat must flip in the same promotion as the data).
+
+## 31d status — ✅ CODE SHIPPED (2026-07-25, `feat/phase-31d-prod-flow`); prod rollout = the checklist below
+
+**Built:**
+- **`services/feature_refresh.py`** — B1-pattern env-gated scheduler
+  (`FEATURE_REFRESH_ENABLED`, default OFF; `FEATURE_REFRESH_INTERVAL_HOURS`,
+  default 6): each tick fetches the latest ~8 weekly reports per feed through
+  the REAL adapters, upserts via the 31a repos (UNIQUE keys → idempotent),
+  then re-observes provenance. Per-feed failures log and continue. The deep
+  historical load stays `seeds/backfill_features.py` (manual, deliberate).
+- **`services/feature_provenance.py`** — the observed≠configured fix (issue
+  #13's lesson): `derive_feature_provenance` (pure — real source AND fresh
+  ≤21 days; **stale-real reads as not-real**), `observe_feature_provenance`
+  (reads the actual latest rows), a process cache, and an always-run boot
+  observation so a manually-backfilled DB gets an accurate label even with
+  the scheduler off.
+- **`data_provenance_caveat()`** — the positioning/storage clause is now
+  observed-derived with four honest states (both real / storage-only /
+  positioning-only / conservative fallback). The #12-flagged hardcoded
+  "illustrative storage" fragility is retired.
+- **Locks:** caveat matrix + pure-derivation freshness tests
+  (`test_provenance_caveat.py`, incl. stale-real→not-real and
+  future-dated→not-fresh) and a real-SQL observation lock in the gated
+  `tests/db/test_feature_upserts.py`. Live-verified on the dev DB
+  (observed True/True → "real published CFTC/EIA data" caveat).
+
+**Prod rollout checklist (after promotion; acceptance = issue #13):**
+1. Promote → Railway redeploys (boot observation runs; prod DB still mock →
+   caveat stays conservative — correct).
+2. Owner-initiated prod deep backfill: `backfill_features --years 14`
+   against prod `DATABASE_URL` (purges mock COT, overwrites mock storage).
+3. Set `FEATURE_REFRESH_ENABLED=true` (+ optional interval) in Railway.
+4. Verify observed: `/v1/fundamentals?symbol=NG` → `source:"eia"` fresh;
+   `/v1/positioning?symbol=NG` → `source:"cftc"` fresh; an LLM envelope
+   caveat reads "real published CFTC/EIA data".
+5. Close issue #13.

@@ -13,6 +13,7 @@ _PROJECT_ROOT = _Path(__file__).resolve().parents[3]
 if str(_PROJECT_ROOT) not in _sys.path:
     _sys.path.insert(0, str(_PROJECT_ROOT))
 
+import asyncio  # noqa: E402
 from collections.abc import AsyncGenerator  # noqa: E402
 from contextlib import asynccontextmanager  # noqa: E402
 
@@ -52,9 +53,16 @@ from apps.api.services.safety import SafetyViolation  # noqa: E402
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await start_ticker()
+    from apps.api.services.feature_provenance import observe_once_on_boot
+    from apps.api.services.feature_refresh import start_feature_refresh
     from apps.api.services.resolution_scheduler import start_scheduler
 
     start_scheduler()  # B1: in-process auto-resolution loop (no-op unless enabled)
+    start_feature_refresh()  # 31d: live COT/EIA refresh (no-op unless enabled)
+    # 31d: always observe what the DB actually holds so the LLM provenance
+    # caveat reflects reality (a manually-backfilled DB gets an accurate
+    # label even with the refresh scheduler off).
+    asyncio.get_running_loop().create_task(observe_once_on_boot())
     yield
 
 
