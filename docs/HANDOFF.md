@@ -1,6 +1,28 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-07-25 (eve). Read this first to pick up where we left off._
+_Last updated: 2026-07-25 (night). Read this first to pick up where we left off._
+
+## Most recent: STAGE D OPENED — D1 vol-premium probe run, pre-registered verdict **PARTIAL** (recorded, no build)
+
+Per `docs/PHASE_D1_PLAN.md` — the gates were **committed before the first run** (true
+pre-registration; PR #21, merged, CI green both lanes). `seeds/validate_d1_vol_premium.py`:
+our walk-forward RV forecast vs the market's 30-day IV — (USO,^OVX) + (GLD,^GVZ), ~11y,
+549 weekly decisions/pair, all SEs overlap-scaled to n_eff≈131.
+- **G0 ✅** the variance premium replicates (+5.5 / +1.9 vol-pts, ~78% of weeks) — table
+  stakes, labeled as such.
+- **G1 ✗** (needed both): GLD passes (har_log beats GVZ as an RV predictor >1 SE); USO in noise.
+- **G2 ✗** (needed both): **USO/OVX passes cleanly** (monotone terciles +7.6→+5.6→+2.0
+  vol-pts; low−high **+5.59 ± 3.77** — economically large) but GLD is non-monotone and the
+  EWMA robustness arm fails everywhere → the signal is one cell.
+- **VERDICT = PARTIAL:** not crowned; **no D1b surface**; ledger row in `MODEL_DILIGENCE.md`;
+  revisit = more IV pairs (^VIX/SPY through the identical harness) or +2y data on the
+  UNCHANGED gate. The probe is one command to re-run.
+
+**Stage D next options (owner pick):** D2 carry/term-structure (needs contract-month
+ingestion via the C3 spine; the best-documented commodity premium), D5 weather-forecast
+archival (S-effort, starts the validation clock — every week unfetched is data that can
+never exist), D4 storage-day abstention (the 31a surprise proxy is live in the DB).
+D3 depends on D2. D1 revisit is parked with explicit triggers.
 
 ## Most recent: **PHASE 31 COMPLETE — 31d LIVE IN PROD, issue #13 CLOSED. Stage C is done.**
 
