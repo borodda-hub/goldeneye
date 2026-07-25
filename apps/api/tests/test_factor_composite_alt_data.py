@@ -45,6 +45,41 @@ def test_both_sub_signals_agree_gives_medium_confidence():
     assert result.direction == "bearish"
 
 
+# ── Phase 31a.0 — real-EIA shapes (no consensus survey) ───────────────────
+
+
+def test_none_consensus_does_not_crash_and_falls_back():
+    """TypeError regression: real EIA rows put delta_vs_consensus=None in the
+    storage dict (EIA publishes no consensus survey). Pre-31a.0 this raised
+    `float(None)`; it must degrade to the missing-alt-data branch instead."""
+    result = predict(
+        CLOSES, "1d", latest_storage={"delta_vs_consensus": None, "delta_vs_norm": None}
+    )
+    assert "latest_storage" not in result.inputs_used
+    contradicting_factors = [c["factor"] for c in result.contradicting]
+    assert "Missing alt-data" in contradicting_factors
+
+
+def test_seasonal_norm_proxy_carries_storage_leg():
+    """When consensus is absent, the seasonal-norm proxy powers the storage
+    leg — labeled as the consensus-free proxy, never passed off as a survey."""
+    storage = {"delta_vs_consensus": None, "delta_vs_norm": -20.0}
+    result = predict(CLOSES, "1d", latest_storage=storage)
+    assert "latest_storage" in result.inputs_used
+    supporting_factors = [s["factor"] for s in result.supporting]
+    assert (
+        "EIA storage delta vs 5-year seasonal norm (consensus-free proxy)"
+        in supporting_factors
+    )
+
+
+def test_consensus_preferred_over_proxy_when_both_present():
+    storage = {"delta_vs_consensus": -10.0, "delta_vs_norm": 50.0}
+    result = predict(CLOSES, "1d", latest_storage=storage)
+    supporting_factors = [s["factor"] for s in result.supporting]
+    assert "EIA storage delta vs consensus" in supporting_factors
+
+
 def test_supporting_non_empty():
     result = predict(CLOSES, "1d")
     assert len(result.supporting) >= 1

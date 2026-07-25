@@ -245,6 +245,30 @@ gate on any surface change · S7 docs in-commit · `feat/phase-31-*` → `develo
 1. ✅ RESOLVED: `EIA_API_KEY` set + validated (v1).
 2. ✅ RESOLVED (2026-07-24): scope = 31a.0+31a+31b now; 31c conditional; 31d
    separate. (Owner agreed after the v2 audit.)
-3. ⏳ **[V] before 31a.0:** column audit of `eia_storage_reports` — is a
-   per-series discriminator needed for storage scoping, or is the table
-   NG-national only? (Determines whether 31a.0 §1 needs a migration.)
+3. ✅ RESOLVED (2026-07-24, [V] column audit): `eia_storage_reports` has **no
+   per-series discriminator** — every column is Lower-48 NG national storage
+   (`models/orm/eia.py`: report_date UNIQUE, regional `*_bcf` fields). The
+   table is structurally NG-only → no migration; 31a.0 codified the guard as
+   `_storage_as_of`'s NG-only gate (locked in `tests/db/test_context_scoping.py`).
+   Petroleum stays out of this table (its adapter docstring already says so).
+
+## 31a.0 status — ✅ SHIPPED (2026-07-24, `feat/phase-31a0-prefixes`)
+
+All four items landed with locks; `pnpm health` green (974 backend / 420 web),
+gated `tests/db` green (46, incl. the two new real-SQL scoping locks):
+1. Symbol-scoped context — `_cot_as_of(market_code)` required + filtered;
+   `_storage_as_of(symbol)` NG-only; `_context_as_of` maps symbol→market via
+   the adapter `MARKETS` table (ES/ZN → no COT, no NG storage). Locks:
+   `test_cot_as_of_filters_by_market_code` (fail-without/pass-with) +
+   `tests/db/test_context_scoping.py`.
+2. Seasonal-surprise proxy — `services/storage_features.py::delta_vs_seasonal_norm`
+   (5y norm, min 3 years, ±1 ISO-week tolerance); wired into `_storage_as_of`
+   AND the live signals path; `factor_composite` prefers consensus, falls back
+   to the labeled proxy, and never crashes on None (TypeError regression locked).
+   LLM prompt line labels the proxy honestly.
+3. Petroleum `report_date` = publication (week_ending + 5, WPSR Wednesday) —
+   leak defused before any future persistence; date-mapping lock added.
+4. EIA NG adapter drops the no-delta boundary row (NOT NULL insertable shape).
+Note: pre-31a.0 persisted multi-symbol backtest rows contained contaminated
+context (see `MODEL_DILIGENCE.md`) — refresh persisted backtests after this
+promotes, before citing factor_composite calibration numbers.

@@ -39,21 +39,34 @@ def predict(
         }
     ]
 
-    # Storage sub-signal (weight 0.4)
-    if latest_storage is not None and "delta_vs_consensus" in latest_storage:
-        delta = float(latest_storage["delta_vs_consensus"])
+    # Storage sub-signal (weight 0.4). Prefers the surveyed consensus surprise
+    # when present (mock/seed data); real EIA publishes no consensus, so the
+    # consensus-free seasonal-surprise proxy (delta_vs_norm, Phase 31a.0)
+    # carries the leg there. Either key may be None — None means "unavailable"
+    # and falls through to the missing-alt-data branch, never a crash.
+    storage_delta: float | None = None
+    storage_basis = "consensus"
+    if latest_storage is not None:
+        raw_delta = latest_storage.get("delta_vs_consensus")
+        if raw_delta is None:
+            raw_delta = latest_storage.get("delta_vs_norm")
+            storage_basis = "5-year seasonal norm (consensus-free proxy)"
+        if raw_delta is not None:
+            storage_delta = float(raw_delta)
+    if storage_delta is not None:
+        delta = storage_delta
         if delta < 0:
             sub_dir = "bullish"
-            note = f"EIA storage delta vs consensus: {delta:.1f} Bcf (smaller build / larger draw → bullish)."
+            note = f"EIA storage delta vs {storage_basis}: {delta:.1f} Bcf (smaller build / larger draw → bullish)."
         elif delta > 0:
             sub_dir = "bearish"
-            note = f"EIA storage delta vs consensus: {delta:.1f} Bcf (larger build → bearish)."
+            note = f"EIA storage delta vs {storage_basis}: {delta:.1f} Bcf (larger build → bearish)."
         else:
             sub_dir = "neutral"
-            note = "EIA storage delta vs consensus: 0 Bcf (in line with expectations)."
+            note = f"EIA storage delta vs {storage_basis}: 0 Bcf (in line with expectations)."
         sub_votes.append((sub_dir, cfg.factor.storage_weight))
         supporting.append(
-            {"factor": "EIA storage delta vs consensus", "weight": cfg.factor.storage_weight, "note": note}
+            {"factor": f"EIA storage delta vs {storage_basis}", "weight": cfg.factor.storage_weight, "note": note}
         )
         inputs_used.append("latest_storage")
     else:

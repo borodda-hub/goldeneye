@@ -19,6 +19,7 @@ from apps.api.services.model_calibration import model_weights_for
 from apps.api.services.llm_explainer import explain_signal
 from apps.api.services.asset_config import config_for
 from apps.api.services.signal_scoring import score_forecast
+from apps.api.services.storage_features import delta_vs_seasonal_norm
 
 router = APIRouter(prefix="/v1/signals", tags=["signals"])
 
@@ -59,16 +60,46 @@ async def get_current_signal(
         # metals/other (returns None). Both live and table paths emit the same
         # {delta_vs_consensus, actual_bcf} shape that the composite consumes.
         if symbol.upper() == "NG":
-            storage_row = await eia_repo.get_latest(session)
-            if storage_row is not None and storage_row.surprise_bcf is not None:
+            # Fetch enough weekly history for the consensus-free seasonal-
+            # surprise proxy (Phase 31a.0): real EIA publishes no consensus
+            # (surprise_bcf is NULL), so without the proxy the storage leg
+            # would silently die on real data.
+            storage_rows = await eia_repo.get_recent(session, limit=290)
+            if storage_rows:
+                storage_row = storage_rows[0]
                 # surprise_bcf = actual net_change - consensus → matches the
                 # factor composite's "delta_vs_consensus" semantics.
-                latest_storage = {
-                    "delta_vs_consensus": float(storage_row.surprise_bcf),
-                    "actual_bcf": float(storage_row.net_change_bcf)
+                delta_consensus = (
+                    float(storage_row.surprise_bcf)
+                    if storage_row.surprise_bcf is not None
+                    else None
+                )
+                net_change = (
+                    float(storage_row.net_change_bcf)
                     if storage_row.net_change_bcf is not None
-                    else None,
-                }
+                    else None
+                )
+                delta_norm = None
+                if delta_consensus is None:
+                    delta_norm = delta_vs_seasonal_norm(
+                        storage_row.week_ending,
+                        net_change,
+                        [
+                            (
+                                r.week_ending,
+                                float(r.net_change_bcf)
+                                if r.net_change_bcf is not None
+                                else None,
+                            )
+                            for r in storage_rows[1:]
+                        ],
+                    )
+                if delta_consensus is not None or delta_norm is not None:
+                    latest_storage = {
+                        "delta_vs_consensus": delta_consensus,
+                        "delta_vs_norm": delta_norm,
+                        "actual_bcf": net_change,
+                    }
         else:
             energy = get_energy(symbol)
             live_storage = await energy.get_latest_storage()
