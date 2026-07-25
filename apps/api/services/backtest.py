@@ -31,12 +31,14 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from apps.api.adapters.positioning.cftc import MARKETS as CFTC_MARKETS
 from apps.api.models.orm.cot import COTReport
 from apps.api.models.orm.eia import EIAStorageReport
 from apps.api.models.orm.prices import PriceBar
 from apps.api.repos import contracts as contract_repo
 from apps.api.repos import instruments as instr_repo
 from apps.api.services.model_registry import ForecastContext
+from apps.api.services.storage_features import delta_vs_seasonal_norm
 from apps.api.services.models.factor_composite import predict as factor_predict
 from apps.api.services.models.holt_trend import predict as holt_predict
 from apps.api.services.models.logreg_directional import predict as logreg_predict
@@ -221,55 +223,95 @@ async def _closes_as_of(
     return list(reversed(closes))
 
 
+# ~5.5 years of weekly reports — enough history for the 5-year seasonal norm
+# below while staying a trivially small fetch.
+_STORAGE_HISTORY_ROWS = 290
+
+
 async def _storage_as_of(
     session: AsyncSession,
     as_of: datetime,
+    symbol: str,
 ) -> dict[str, Any] | None:
     """Most-recent EIA storage report whose report_date is on or before
     as_of's calendar date. EIA releases Thursdays 10:30 ET — by EOD that
     Thursday the report IS public, so `report_date <= as_of.date()` is correct.
 
-    Returns the dict shape factor_composite reads (delta_vs_consensus +
-    actual_bcf), or None if no qualifying report exists.
+    NG ONLY (Phase 31a.0): eia_storage_reports is the EIA Lower-48 *natural
+    gas* national storage series (UNIQUE report_date, no per-series column) —
+    it is not a per-commodity table. Before this guard, every symbol's
+    backtest consumed NG storage as if it were its own fundamental
+    (cross-commodity contamination); non-NG symbols now honestly get None and
+    the factor composite's missing-alt-data fallback.
+
+    `delta_vs_consensus` is the surveyed surprise when present (mock/seed
+    data); real EIA publishes no consensus, so `delta_vs_norm` carries the
+    consensus-free seasonal-surprise proxy (net change vs the same-calendar-
+    week 5-year average — see services/storage_features.py), computed only
+    from rows already published at as_of.
     """
+    if symbol.upper() != "NG":
+        return None
     as_of_date = as_of.date()
     result = await session.execute(
         select(EIAStorageReport)
         .where(EIAStorageReport.report_date <= as_of_date)
         .order_by(EIAStorageReport.report_date.desc())
-        .limit(1)
+        .limit(_STORAGE_HISTORY_ROWS)
     )
-    row = result.scalar_one_or_none()
-    if row is None:
+    rows = list(result.scalars().all())
+    if not rows:
         return None
-    if row.report_date is not None and row.report_date > as_of_date:
-        raise RuntimeError(
-            f"backtest look-ahead detected: EIA report_date={row.report_date!r} > as_of_date={as_of_date!r}"
-        )
+    row = rows[0]
+    for r in rows:
+        if r.report_date is not None and r.report_date > as_of_date:
+            raise RuntimeError(
+                f"backtest look-ahead detected: EIA report_date={r.report_date!r} > as_of_date={as_of_date!r}"
+            )
+    net_change = float(row.net_change_bcf) if row.net_change_bcf is not None else None
     return {
         "delta_vs_consensus": float(row.surprise_bcf)
         if row.surprise_bcf is not None
         else None,
-        "actual_bcf": float(row.net_change_bcf)
-        if row.net_change_bcf is not None
-        else None,
+        "delta_vs_norm": delta_vs_seasonal_norm(
+            row.week_ending,
+            net_change,
+            [
+                (
+                    r.week_ending,
+                    float(r.net_change_bcf) if r.net_change_bcf is not None else None,
+                )
+                for r in rows[1:]
+            ],
+        ),
+        "actual_bcf": net_change,
     }
 
 
 async def _cot_as_of(
     session: AsyncSession,
     as_of: datetime,
+    market_code: str,
 ) -> dict[str, Any] | None:
     """Compute mm_net_delta = managed_money_net WoW change from the two
     most-recent COT reports whose release_date is on or before as_of's date.
 
     CFTC releases Fridays 15:30 ET — by EOD Friday the data is public, so
     `release_date <= as_of.date()` is correct.
+
+    `market_code` is REQUIRED (Phase 31a.0): cot_reports holds every
+    commodity's markets, so an unfiltered "two most recent rows" mixed
+    different commodities' managed-money nets whenever release dates collide
+    (they collide every week — CFTC releases all markets together). The delta
+    is only meaningful within one market.
     """
     as_of_date = as_of.date()
     result = await session.execute(
         select(COTReport)
-        .where(COTReport.release_date <= as_of_date)
+        .where(
+            COTReport.release_date <= as_of_date,
+            COTReport.cftc_contract_market_code == market_code,
+        )
         .order_by(COTReport.release_date.desc())
         .limit(2)
     )
@@ -299,8 +341,17 @@ async def _context_as_of(
     every leg goes through a chokepoint helper above.
     """
     closes = await _closes_as_of(session, contract_id, as_of)
-    storage = await _storage_as_of(session, as_of)
-    cot = await _cot_as_of(session, as_of)
+    storage = await _storage_as_of(session, as_of, symbol)
+    # Symbol → CFTC market via the adapter's MARKETS table (static metadata,
+    # same codes as instruments.json + the mock COT seed). Symbols with no
+    # registered COT market (e.g. ES/ZN) get None — never another market's
+    # positioning.
+    market = CFTC_MARKETS.get(symbol.upper())
+    cot = (
+        await _cot_as_of(session, as_of, market.contract_code)
+        if market is not None
+        else None
+    )
     return ForecastContext(
         symbol=symbol,
         closes=closes,

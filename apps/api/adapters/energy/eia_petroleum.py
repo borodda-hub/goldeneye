@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import date
+from datetime import date, timedelta
 from typing import Any, NamedTuple
 
 from apps.api.adapters._http import AdapterHTTPClient
@@ -174,7 +174,13 @@ def _pivot(
         context = fields.get("context")
         records.append(
             {
-                "report_date": week_ending,
+                # report_date is the PUBLICATION date everywhere in this
+                # codebase (the backtest gates on `report_date <= as_of`).
+                # The Weekly Petroleum Status Report is released Wednesday
+                # ~10:30 ET for the week ended the prior Friday — setting it
+                # to week_ending would leak ~5 days of look-ahead if these
+                # rows were ever persisted/backtested (Phase 31a.0 guard).
+                "report_date": week_ending + timedelta(days=5),
                 "week_ending": week_ending,
                 "total_lower_48_bcf": primary,  # shape compat — primary stock (mbbl)
                 "actual_bcf": primary,

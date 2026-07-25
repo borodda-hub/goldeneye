@@ -1,8 +1,46 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-07-24. Read this first to pick up where we left off._
+_Last updated: 2026-07-24 (late). Read this first to pick up where we left off._
 
-## Most recent: Stage C audit + Phase 31 plan v2 + Stage D scoped (docs-only, develop)
+## Most recent: Phase 31a.0 SHIPPED on `feat/phase-31a0-prefixes` (`e5fe71d`) — PR to develop pending CI
+
+Same session as the Stage C audit below — the audit's three blockers are now FIXED, gated,
+and locked (this is the prerequisite step for the 31a backfill + 31b verdict):
+
+1. **Symbol-scoped backtest context.** `_cot_as_of` now REQUIRES a CFTC market code and
+   filters on it (the old global query mixed commodities' managed-money nets on every
+   colliding release week — **proven by the red run: without the filter the lock computes
+   `mm_net_delta = −780,000` from an NG−CL cross-market pair instead of +20,000**).
+   `_context_as_of` maps symbol→market via the adapter `MARKETS` table; ES/ZN get None.
+   `_storage_as_of(symbol)` is NG-only (the table is Lower-48 NG national storage — the
+   [V] column audit confirmed no per-series column → no migration needed).
+2. **Consensus-free storage surprise proxy.** New `services/storage_features.py::
+   delta_vs_seasonal_norm` (net change vs same-calendar-week 5-year average, min 3 prior
+   years, ±1 ISO-week tolerance, else honest abstention). Real EIA has no consensus survey
+   → `factor_composite` now prefers consensus, falls back to the **labeled** proxy
+   ("5-year seasonal norm (consensus-free proxy)"), and never `float(None)`-crashes.
+   Wired into BOTH the backtest chokepoint and the live signals path; LLM prompt labels it.
+3. **Petroleum look-ahead defused.** `eia_petroleum` `report_date` = week_ending + 5
+   (WPSR Wednesday publication), so a future persistence can't leak ~5 days. Plus: the NG
+   EIA adapter drops its no-delta boundary row (NOT NULL-insertable shape for 31a).
+
+**Gates:** `pnpm health` GREEN (974 backend / 420 web); gated `tests/db` GREEN locally
+(46 passed, incl. the 2 new real-SQL scoping locks in `tests/db/test_context_scoping.py`);
+fail-without/pass-with demonstrated on `test_cot_as_of_filters_by_market_code`. No endpoint/
+schema change → contracts job unaffected. Docs in-commit: `MODEL_DILIGENCE.md` (2 new ledger
+rows + the re-run warning), `PHASE_31_PLAN.md` (31a.0 closeout + [V] #3 resolved).
+
+**⚠️ Follow-through after promotion:** persisted multi-symbol backtest/calibration rows
+predating 31a.0 contain contaminated factor_composite context — **re-run the backtest
+refresh** (`integration/promote` has the reusable NG refresh seed) before citing its numbers.
+**Known nit (deliberately out of scope):** the live petroleum signals path labels a WoW stock
+change as `delta_vs_consensus` (mislabeled basis, live-only, pre-existing) — fold into 31a.
+
+**Next:** merge PR → develop (CI incl. `db-tests` green) → owner master call. Then **31a**
+(range-fetch + upsert repos + `seeds/backfill_features.py` — templates: `price_backfill.py`,
+`repos/users.py`), then **31b** (alt-data arm of `validate_engine_oos.py`, pre-registered gate).
+
+## Stage C audit + Phase 31 plan v2 + Stage D scoped (docs-only, develop `8443dc1`)
 
 **What happened (2026-07-24, planning session — no code changed):** a full code audit of the
 2026-06-08 `PHASE_31_PLAN.md` draft found four material drifts, including one that broke the

@@ -159,4 +159,10 @@ class EIAAdapter:
             if curr is not None and prev is not None:
                 records[i]["net_change_bcf"] = round(curr - prev, 1)
 
+        # The oldest fetched record has no prior week to diff against — drop
+        # it rather than emit net_change_bcf=None, which the table's NOT NULL
+        # constraint rejects the moment these rows are persisted (Phase 31a).
+        if records and records[-1]["net_change_bcf"] is None:
+            records = records[:-1]
+
         return records

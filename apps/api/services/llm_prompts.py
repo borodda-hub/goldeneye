@@ -214,11 +214,19 @@ def explain_signal_messages(signal: dict, ctx: dict) -> PromptParts:  # type: ig
     )
     rationale_text = "; ".join(confidence_rationale) if confidence_rationale else "N/A"
 
-    storage_text = (
-        f"EIA storage delta vs consensus: {storage.get('delta_vs_consensus', 'N/A')} Bcf"
-        if storage
-        else "N/A"
-    )
+    # Real EIA data carries no consensus survey — the storage dict then holds
+    # delta_vs_consensus=None plus the seasonal-norm proxy (Phase 31a.0).
+    if storage and storage.get("delta_vs_consensus") is not None:
+        storage_text = (
+            f"EIA storage delta vs consensus: {storage['delta_vs_consensus']} Bcf"
+        )
+    elif storage and storage.get("delta_vs_norm") is not None:
+        storage_text = (
+            "EIA storage delta vs 5-year seasonal norm (no consensus survey): "
+            f"{storage['delta_vs_norm']} Bcf"
+        )
+    else:
+        storage_text = "N/A"
     cot_text = (
         f"Managed-money net WoW delta: {cot.get('mm_net_delta', 'N/A')} contracts"
         if cot

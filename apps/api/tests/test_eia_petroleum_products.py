@@ -72,6 +72,22 @@ def test_pivot_two_series_shape_for_cl():
     assert newest["net_change_bcf"] == 500.0  # 25000 - 24500
 
 
+def test_pivot_report_date_is_publication_not_week_ending():
+    """31a.0 look-ahead guard: report_date is the publication date across the
+    codebase (the backtest gates on `report_date <= as_of`). The WPSR is
+    released Wednesday for the week ended the prior Friday — report_date must
+    be week_ending + 5, never week_ending itself (a ~5-day leak if these rows
+    were ever persisted/backtested)."""
+    from datetime import date, timedelta
+
+    out = _pivot(
+        [{"period": "2026-05-08", "series": "WDISTUS1", "value": "120000"}],
+        PETROLEUM_SERIES["HO"],
+    )[0]
+    assert out["week_ending"] == date(2026, 5, 8)
+    assert out["report_date"] == date(2026, 5, 8) + timedelta(days=5)
+
+
 def test_pivot_output_keys_parity_across_symbols():
     """Both paths emit the identical set of keys (shape parity)."""
     ho = _pivot(

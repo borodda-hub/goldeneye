@@ -54,12 +54,16 @@ class _Storage:
     report_date: date
     surprise_bcf: float | None
     net_change_bcf: float | None
+    # Needed by the seasonal-norm proxy (31a.0); None → proxy returns None.
+    week_ending: date | None = None
 
 
 @dataclass(frozen=True)
 class _Cot:
     release_date: date
     managed_money_net: int | None
+    # 31a.0: _cot_as_of filters by market; default = the NG contract code.
+    cftc_contract_market_code: str = "023651"
 
 
 class _FakeResult:
@@ -159,7 +163,8 @@ class FakeSession:
             return _FakeResult([])
         matches = [r for r in self.storage_reports if r.report_date <= as_of_date]
         matches.sort(key=lambda r: r.report_date, reverse=True)
-        return _FakeResult(matches[:1])
+        limit = _extract_limit(sql) or 1
+        return _FakeResult(matches[:limit])
 
     # ─── cot matcher ───
     def _answer_cot(self, stmt: Any, sql: str) -> _FakeResult:
@@ -167,6 +172,15 @@ class FakeSession:
         if as_of_date is None:
             return _FakeResult([])
         matches = [r for r in self.cot_reports if r.release_date <= as_of_date]
+        # Honor the 31a.0 market filter WHEN the statement carries it. When
+        # the clause is absent (a regression to the symbol-blind query), the
+        # fake returns the global rows — which is exactly what makes
+        # test_cot_as_of_filters_by_market_code fail-without/pass-with.
+        market_code = _extract_market_code(sql)
+        if market_code is not None:
+            matches = [
+                r for r in matches if r.cftc_contract_market_code == market_code
+            ]
         matches.sort(key=lambda r: r.release_date, reverse=True)
         return _FakeResult(matches[:2])
 
@@ -213,6 +227,14 @@ def _extract_date_after(sql: str, marker: str) -> date | None:
 def _extract_limit(sql: str) -> int | None:
     m = _LIMIT_RE.search(sql)
     return int(m.group(1)) if m else None
+
+
+_MARKET_CODE_RE = re.compile(r"cftc_contract_market_code\s*=\s*'([^']+)'")
+
+
+def _extract_market_code(sql: str) -> str | None:
+    m = _MARKET_CODE_RE.search(sql)
+    return m.group(1) if m else None
 
 
 # ── Property tests on _closes_as_of ───────────────────────────────────────
@@ -287,7 +309,7 @@ def test_storage_as_of_returns_only_published_reports():
 
     # As-of mid-April should see the Apr 2 release but NOT Apr 9.
     as_of = _eod(date(2026, 4, 5))
-    result = asyncio.run(_storage_as_of(session, as_of))
+    result = asyncio.run(_storage_as_of(session, as_of, "NG"))
     assert result is not None
     assert result["delta_vs_consensus"] == -3.0
     assert result["actual_bcf"] == 20.0
@@ -300,14 +322,60 @@ def test_storage_as_of_excludes_same_day_release_after_as_of_date():
     ]
     session = FakeSession(storage_reports=reports)
     as_of = _eod(date(2026, 4, 8))  # Wednesday — Thursday release not out yet.
-    result = asyncio.run(_storage_as_of(session, as_of))
+    result = asyncio.run(_storage_as_of(session, as_of, "NG"))
     assert result is None
 
 
 def test_storage_as_of_returns_none_when_no_reports():
     session = FakeSession(storage_reports=[])
     as_of = _eod(date(2026, 4, 1))
-    assert asyncio.run(_storage_as_of(session, as_of)) is None
+    assert asyncio.run(_storage_as_of(session, as_of, "NG")) is None
+
+
+def test_storage_as_of_non_ng_symbol_gets_none():
+    """31a.0: eia_storage_reports is NG national storage — feeding it to any
+    other symbol's backtest was cross-commodity contamination. Non-NG symbols
+    must get None even when rows exist."""
+    reports = [
+        _Storage(report_date=date(2026, 4, 2), surprise_bcf=-3.0, net_change_bcf=20.0),
+        _Storage(report_date=date(2026, 3, 26), surprise_bcf=5.0, net_change_bcf=10.0),
+    ]
+    session = FakeSession(storage_reports=reports)
+    as_of = _eod(date(2026, 4, 5))
+    for symbol in ("CL", "GC", "SI", "ES", "ZN"):
+        assert asyncio.run(_storage_as_of(session, as_of, symbol)) is None
+    # The queries never even hit the DB for non-NG symbols.
+    assert session.execute_calls == []
+
+
+def test_storage_as_of_seasonal_norm_proxy_when_no_consensus():
+    """31a.0: real EIA rows carry surprise_bcf=None. The seasonal-surprise
+    proxy (net change vs the same-calendar-week 5-year average) must carry
+    the storage leg instead of the leg silently dying (or crashing)."""
+
+    def storage_row(week_ending: date, net_change: float) -> _Storage:
+        return _Storage(
+            report_date=week_ending + timedelta(days=6),  # publication Thursday
+            surprise_bcf=None,  # real-EIA shape: no consensus survey
+            net_change_bcf=net_change,
+            week_ending=week_ending,
+        )
+
+    current_week = date(2026, 4, 3)  # Friday
+    priors = [
+        storage_row(date(2025, 4, 4), 10.0),
+        storage_row(date(2024, 4, 5), 12.0),
+        storage_row(date(2023, 3, 31), 14.0),
+        storage_row(date(2022, 4, 1), 12.0),
+    ]
+    session = FakeSession(storage_reports=[storage_row(current_week, 20.0), *priors])
+    as_of = _eod(date(2026, 4, 10))
+    result = asyncio.run(_storage_as_of(session, as_of, "NG"))
+    assert result is not None
+    assert result["delta_vs_consensus"] is None
+    # norm = (10 + 12 + 14 + 12) / 4 = 12 → delta = 20 - 12 = 8.
+    assert result["delta_vs_norm"] == pytest.approx(8.0)
+    assert result["actual_bcf"] == 20.0
 
 
 # ── Property tests on _cot_as_of ──────────────────────────────────────────
@@ -320,7 +388,7 @@ def test_cot_as_of_requires_two_reports_for_delta():
     session = FakeSession(cot_reports=reports)
     as_of = _eod(date(2026, 4, 10))
     # Only one report exists → no WoW delta available → None.
-    assert asyncio.run(_cot_as_of(session, as_of)) is None
+    assert asyncio.run(_cot_as_of(session, as_of, "023651")) is None
 
 
 def test_cot_as_of_computes_delta_from_two_most_recent():
@@ -333,7 +401,7 @@ def test_cot_as_of_computes_delta_from_two_most_recent():
 
     # As-of Apr 10 EOD: most recent two are Apr 10 (140k) and Apr 3 (120k).
     as_of = _eod(date(2026, 4, 10))
-    result = asyncio.run(_cot_as_of(session, as_of))
+    result = asyncio.run(_cot_as_of(session, as_of, "023651"))
     assert result == {"mm_net_delta": 20_000.0}
 
 
@@ -347,9 +415,41 @@ def test_cot_as_of_excludes_future_release():
     ]
     session = FakeSession(cot_reports=reports)
     as_of = _eod(date(2026, 4, 9))
-    result = asyncio.run(_cot_as_of(session, as_of))
+    result = asyncio.run(_cot_as_of(session, as_of, "023651"))
     # Pair is Apr 3 (120k) and Mar 27 (100k) → delta = +20k.
     assert result == {"mm_net_delta": 20_000.0}
+
+
+def test_cot_as_of_filters_by_market_code():
+    """31a.0 landmine lock: CFTC releases every market on the same Friday, so
+    an unfiltered "two most recent rows" mixes different commodities'
+    managed-money nets. The delta must come from ONE market only.
+
+    Fail-without/pass-with: if the market filter is removed from the query,
+    the fake session returns the global two most recent rows — one NG + one
+    CL — and the assertion below fails on a cross-commodity delta.
+    """
+    ng_code, cl_code = "023651", "067651"
+    reports = [
+        # Colliding release dates, interleaved — exactly what a real 6-symbol
+        # backfill looks like every week.
+        _Cot(date(2026, 4, 3), 100_000, ng_code),
+        _Cot(date(2026, 4, 3), 500_000, cl_code),
+        _Cot(date(2026, 4, 10), 120_000, ng_code),
+        _Cot(date(2026, 4, 10), 900_000, cl_code),
+    ]
+    session = FakeSession(cot_reports=reports)
+    as_of = _eod(date(2026, 4, 10))
+    assert asyncio.run(_cot_as_of(session, as_of, ng_code)) == {
+        "mm_net_delta": 20_000.0
+    }
+    assert asyncio.run(_cot_as_of(session, as_of, cl_code)) == {
+        "mm_net_delta": 400_000.0
+    }
+    # And the statements actually carried the filter (SQL-level proof).
+    for stmt in session.execute_calls:
+        sql = str(stmt.compile(compile_kwargs={"literal_binds": True})).lower()
+        assert "cftc_contract_market_code" in sql
 
 
 # ── Property test on _context_as_of (full context) ────────────────────────
@@ -371,8 +471,34 @@ def test_context_as_of_assembles_clean_snapshot():
     ctx = asyncio.run(_context_as_of(session, "NG", uuid.uuid4(), as_of))
     assert ctx.symbol == "NG"
     assert len(ctx.closes) > 0
-    assert ctx.latest_storage == {"delta_vs_consensus": -1.0, "actual_bcf": 12.0}
+    # delta_vs_norm is None here: no week_ending / prior-year history in the
+    # fixture, so the seasonal-norm proxy honestly abstains.
+    assert ctx.latest_storage == {
+        "delta_vs_consensus": -1.0,
+        "delta_vs_norm": None,
+        "actual_bcf": 12.0,
+    }
     assert ctx.latest_cot == {"mm_net_delta": 10_000.0}
+
+
+def test_context_as_of_symbol_without_cot_market_gets_no_cot():
+    """31a.0: a symbol with no registered CFTC market (index/rates classes)
+    must get latest_cot=None — never another commodity's positioning — and
+    non-NG symbols get no NG storage."""
+    bars = _bars_from(date(2026, 2, 1), 90)
+    storage = [
+        _Storage(report_date=date(2026, 4, 2), surprise_bcf=-1.0, net_change_bcf=12.0),
+    ]
+    cot = [
+        _Cot(date(2026, 3, 27), 100_000),
+        _Cot(date(2026, 4, 3), 110_000),
+    ]
+    session = FakeSession(bars=bars, storage_reports=storage, cot_reports=cot)
+    as_of = _eod(date(2026, 4, 5))
+
+    ctx = asyncio.run(_context_as_of(session, "ES", uuid.uuid4(), as_of))
+    assert ctx.latest_cot is None
+    assert ctx.latest_storage is None
 
 
 # ── Cheating-model proof ──────────────────────────────────────────────────
