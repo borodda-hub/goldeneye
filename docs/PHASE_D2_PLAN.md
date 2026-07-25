@@ -71,6 +71,30 @@ immutability lock · S3 untouched (probe reads; the only writer is the
 sanctioned backfill CLI) · S4 verdict recorded in `MODEL_DILIGENCE.md`
 either way · S7 SCHEMA.md + this plan in-commit · S8 two-lane promotion.
 
-## D2b verdict (filled after the run)
+## D2b verdict — ❌ **FAIL** (run 2026-07-25; adequately powered, recorded)
 
-See §verdict appended below after execution.
+Coverage (after merging DB bars with direct 5y listed-month fetches — the
+market adapter itself caps ~1y, a data-layer finding recorded here):
+**1,257 curve days per symbol (2021-07 → 2026-07)**; 504 weekly decisions
+@1w (non-overlapping), 498 @1m (n_eff ≈ 116 — **P0 power rule satisfied**).
+
+- **G1 ✗:** carry-sign does NOT beat drift-naive — pooled ΔBrier
+  **+0.0062 ± 0.0037 @1w** and **+0.0043 ± 0.0078 @1m** (worse, not
+  better); carry hit 47–48% vs drift 46–49% vs base ~53%.
+- **G2 ✗:** no monotone tercile pattern on either symbol; NG's contango
+  tercile had the *highest* forward return in this sample (wrong sign).
+
+**VERDICT = FAIL on this design.** Honest boundaries (recorded, not spin):
+this is a **time-series** carry test on TWO commodities over FIVE years,
+with the older half measured on **deferred-pair slope** (coverage
+limitation). It does **not** refute the literature's strongest form —
+**cross-sectional** carry across many commodities over decades — which is
+untestable free today (no historical curves; that is exactly what the D2a
+archive is accumulating). **Re-entry trigger:** ≥ ~2y of daily 6-symbol
+curve vintages → re-run per-symbol front-slope AND add a cross-sectional
+rank test, gates pre-registered then (this one unchanged for the re-run).
+
+**D3 consequence:** the cross-sectional systematic desk depended on a
+validated carry signal — with D2b FAIL and cross-sectional history
+unavailable, **D3 is DEFERRED to the same trigger** (seeding a desk on a
+just-refuted signal would be building on a refuted premise).

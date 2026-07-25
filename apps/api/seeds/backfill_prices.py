@@ -29,10 +29,13 @@ DEFAULT_SYMBOLS = ["NG", "CL", "HO", "RB", "GC", "SI", "ES", "ZN"]
 REPLACE_MOCK_SYMBOLS = {"NG"}
 
 
-async def go(symbols: list[str]) -> None:
+async def go(symbols: list[str], lookback_days: int | None = None) -> None:
     from apps.api.adapters.registry import get_market
     from apps.api.db.session import get_session_factory
-    from apps.api.services.price_backfill import backfill_instrument
+    from apps.api.services.price_backfill import (
+        DEFAULT_LOOKBACK_DAYS,
+        backfill_instrument,
+    )
 
     market = get_market()
     session_factory = get_session_factory()
@@ -45,6 +48,7 @@ async def go(symbols: list[str]) -> None:
                     session,
                     market,
                     symbol,
+                    lookback_days=lookback_days or DEFAULT_LOOKBACK_DAYS,
                     replace_mock=symbol in REPLACE_MOCK_SYMBOLS,
                 )
                 if res.note:
@@ -63,5 +67,11 @@ async def go(symbols: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    args = [a.upper() for a in sys.argv[1:]] or DEFAULT_SYMBOLS
-    asyncio.run(go(args))
+    argv = sys.argv[1:]
+    lookback: int | None = None
+    if "--lookback-days" in argv:
+        i = argv.index("--lookback-days")
+        lookback = int(argv[i + 1])
+        argv = argv[:i] + argv[i + 2 :]
+    args = [a.upper() for a in argv] or DEFAULT_SYMBOLS
+    asyncio.run(go(args, lookback_days=lookback))

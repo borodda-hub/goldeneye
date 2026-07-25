@@ -340,6 +340,24 @@ CREATE TABLE weather_forecast_vintages (
 CREATE INDEX ix_weather_vintages_vintage_date ON weather_forecast_vintages (vintage_date);
 ```
 
+```sql
+-- Phase D2a (migration 013): futures-curve vintage archive. Yahoo drops
+-- expired contract months, so the historical front-of-curve is otherwise
+-- unreconstructible — one row per (vintage_date, symbol) of the market
+-- adapter's curve snapshot that day. Same immutability doctrine as 012:
+-- insert-only repo (ON CONFLICT DO NOTHING); `source` labels mock vs real.
+CREATE TABLE futures_curve_vintages (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  vintage_date  DATE NOT NULL,
+  symbol        TEXT NOT NULL,                 -- NG/CL/HO/RB/GC/SI
+  curve         JSONB NOT NULL,                -- [{contract_code, expiry, mid_price}, ...] verbatim
+  source        TEXT NOT NULL,                 -- configured market adapter
+  fetched_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (vintage_date, symbol)
+);
+CREATE INDEX ix_curve_vintages_vintage_date ON futures_curve_vintages (vintage_date);
+```
+
 ## §hypertables
 
 All bar/tick/observation tables are TimescaleDB hypertables.
