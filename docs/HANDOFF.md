@@ -20,13 +20,17 @@ from master, so prod now SERVES the fixed code.
   factor_composite rows cite only momentum + crude COT (no NG storage); NG keeps all three
   legs. Hit rates ~0.39–0.55 — consistent with the honest no-edge finding.
 
-**⚠️ PROD refresh PENDING (one command, owner-run):** prod NG has **281 pre-fix
-factor_composite rows** (through 2026-06-08) feeding the live scorecard + ensemble weights
-(all other symbols empty in prod — verified via `/v1/backtest/summary`). The write to the
-prod DB was blocked by the session permission classifier (correctly — prod mutation).
-Prod DB is Timescale Cloud (publicly reachable); run from the repo root:
-`DATABASE_URL="$(railway variables --service web --kv | grep '^DATABASE_URL=' | cut -d= -f2-)" uv run --directory apps/api python -m seeds.refresh_backtests NG`
-then spot-check `/v1/backtest/summary?symbol=NG&horizon=1d` shows `to_date` = run date.
+**✅ PROD refresh DONE (owner-initiated + completed 2026-07-25 UTC).** Prod NG's 281
+pre-fix factor_composite rows (all other symbols were empty in prod) are replaced: a clean
+run against the Timescale Cloud prod DB persisted 327 rows/model for all four voters
+("backtest refresh complete", verified via `/v1/backtest/summary?symbol=NG` — factor +
+logreg `to_date=2026-07-24`, hit rates ~0.43–0.49). **The 31a.0 contamination re-run is
+closed on BOTH databases.** Two footnotes: (a) the owner's first attempt hit the in-session
+2-minute command timeout and its orphaned child partially ran with a UTC `_TO=07-25` —
+holt/MA each retain ONE extra legitimate 07-25 row (same fixed code, one day ahead; blends
+in as of tomorrow, deliberately not worth a surgical prod delete); (b) prod-DB writes from
+this environment require the owner to initiate (permission classifier), which is the
+correct posture — keep it.
 
 ## (superseded) 31a.0 merged to develop (`a5ec5f2`, PR #17) — CI green both lanes
 
