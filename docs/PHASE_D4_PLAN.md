@@ -72,6 +72,26 @@ Health green · no schema/endpoint change (contracts untouched) · S3
 untouched (read-only probe; surprise computed walk-forward) · S4 verdict
 recorded either way · S7 docs in-commit · S8 two-lane promotion.
 
-## D4 verdict (filled after the run)
+## D4 verdict — 🚫 **INSUFFICIENT-N, with the premise absent** (run 2026-07-25; recorded, benched)
 
-See §verdict appended after execution.
+559 scored events (2012 → 2026, walk-forward surprise via the unchanged
+31a.0 helper):
+- **P0 binds:** extreme events n=162 < the pre-registered 200 floor (the
+  expanding-tercile flag + 52-event warm-up thins the top third) — formal
+  verdict INSUFFICIENT-N.
+- **But G0 is the real finding:** corr(surprise, release-day move) =
+  **+0.003 ± ~0.042** on the FULL n=559 — a tight zero. The seasonal-norm
+  surprise does not move price even on release day. Interpretation
+  (recorded): the market's expectation is the **analyst consensus**, which
+  already prices in weather-driven deviations from seasonal norms — so
+  deviation-from-5y-norm is largely *anticipated*, not news. That is
+  exactly the consensus data EIA doesn't publish and 31a.0 refused to
+  fabricate.
+- G1 47.5% ± 3.9 vs a 54.3 bar; G2 non-monotone — consistent with G0.
+
+**Consequences:** (a) no abstaining view is built; (b) this sharpens the
+31b record — the factor storage leg's proxy basis carries no event-day
+information either (noted in `MODEL_DILIGENCE.md`); (c) **re-entry requires
+a real expectation source**: either a paid consensus feed, or a
+weather-adjusted expectation model — which itself needs the D5 forecast
+archive to mature first. Gate unchanged for any re-run.

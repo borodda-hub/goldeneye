@@ -1,6 +1,33 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-07-25 (night). Read this first to pick up where we left off._
+_Last updated: 2026-07-25 (late night). Read this first to pick up where we left off._
+
+## Most recent: **STAGE D SWEPT — all testable items probed under pre-registered gates; no new edge crowned; two archives now accumulate toward every re-entry.**
+
+Owner directive executed: "proceed on all, full diligence between sprints." Three sprints,
+each plan-committed-before-run, health + gated tests/db green between every one:
+
+| Item | Verdict | Detail |
+|---|---|---|
+| **D1** vol-premium timing | ⚖️ PARTIAL | crude cell strong (+5.6±3.8 vol-pts), gold + EWMA fail → parked w/ triggers (`PHASE_D1_PLAN`) |
+| **D5** weather archive | ⏳ COLLECTING | migration 012; rides the 31d tick; immutable, source-labeled |
+| **D2a** curve archive | ⏳ COLLECTING | migration 013; same doctrine ([V]: Yahoo drops expired months; CHRIS dead; adapter range-caps ~1y) |
+| **D2b** carry (time-series) | ❌ FAIL | adequately powered (n_eff≈116): worse than drift both horizons; boundaries recorded — does NOT refute cross-sectional literature (`PHASE_D2_PLAN`) |
+| **D3** cross-sectional desk | ⏸️ DEFERRED | to D2's re-entry (≥~2y of 6-symbol curve vintages) |
+| **D4** storage-day abstention | 🚫 INSUFF-N + premise absent | release-day corr ≈ 0 on n=559: the market's "surprise" is analyst consensus, not the 5y norm (`PHASE_D4_PLAN`) |
+
+**The honest Stage-D headline:** the platform's edge remains exactly where Phase 30 found
+it — calibrated vol/range — and every directional/premium hypothesis tested since has been
+recorded, benched, or parked with explicit re-entry triggers rather than crowned. The two
+vintage archives (weather 012, curves 013) are the compounding assets: every future re-entry
+runs on data that starts accumulating in prod automatically (FEATURE_REFRESH_ENABLED).
+Hygiene banked this sweep: vintage tick tests pinned hermetic (a dev .env could leak them to
+real networks); alembic path_separator deprecation silenced.
+
+**Open strategic choices for the owner (no WIP):** (a) D1 revisit via ^VIX/SPY pair (small,
+same harness); (b) product/GTM work on the validated story (vol/range + calibration + honest
+ledger — Stage C1/C2 GTM items); (c) UI polish backlog (Phase 19 leftovers); (d) wait for
+archives to mature (re-entries are dated & recorded).
 
 ## Most recent: STAGE D OPENED — D1 vol-premium probe run, pre-registered verdict **PARTIAL** (recorded, no build)
 
