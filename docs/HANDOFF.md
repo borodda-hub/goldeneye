@@ -2,7 +2,7 @@
 
 _Last updated: 2026-07-24 (late). Read this first to pick up where we left off._
 
-## Most recent: Phase 31a.0 SHIPPED on `feat/phase-31a0-prefixes` (`e5fe71d`) — PR to develop pending CI
+## Most recent: Phase 31a.0 SHIPPED + MERGED TO DEVELOP (`develop == origin/develop == a5ec5f2`, PR #17) — CI green on the PR **and** the develop push (8 jobs incl. `db-tests` + Contracts). NOT yet promoted to master (owner call — master still `b2d60f0`).
 
 Same session as the Stage C audit below — the audit's three blockers are now FIXED, gated,
 and locked (this is the prerequisite step for the 31a backfill + 31b verdict):
