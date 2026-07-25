@@ -34,9 +34,10 @@ class CftcMarket:
 
 # CFTC market-code lookup. Source of truth: CFTC PRE disaggregated docs.
 # Each entry pairs:
-#   contract_code     — the exact 6-digit market code Socrata indexes
-#   name_prefix       — used in the `like` filter to defend against codename
-#                       collisions (NG futures vs the LAST-DAY FINANCIAL row)
+#   contract_code     — the exact 6-digit market code Socrata indexes (the
+#                       ONLY query filter — see _fetch_all; names mutate)
+#   name_prefix       — documentation-only since the 31a name-filter bug fix
+#                       (Socrata renamed NG→"NAT GAS NYME", CL→"WTI-PHYSICAL")
 #   default_market_name — fallback contract_market_name when Socrata omits it
 MARKETS: dict[str, CftcMarket] = {
     "NG": CftcMarket(
@@ -107,6 +108,9 @@ _SHORT_FALLBACKS: dict[str, str] = {
 # Weekly data — 24h in-memory cache is more than enough.
 _CACHE_TTL_SECONDS = 24 * 60 * 60
 
+# Socrata page size for the (uncached) range/backfill path.
+_RANGE_PAGE_SIZE = 1000
+
 
 def _to_int(raw: Any) -> int | None:
     if raw is None:
@@ -159,6 +163,43 @@ class CFTCAdapter:
         reports = await self._get_reports_cached()
         return reports[0] if reports else None
 
+    async def get_cot_reports_range(
+        self, start: date, end: date
+    ) -> list[dict[str, Any]]:
+        """Full history in [start, end] via Socrata offset pagination.
+
+        The live path above is hard-capped at 200 rows (~3.8y) by design; this
+        is the Phase 31a backfill path — uncached, paginated until a short
+        page, so a 10-year request actually returns 10 years. Newest first,
+        same dict shape as the live path.
+        """
+        url = CFTC_BASE_URL + DISAGGREGATED_RESOURCE + ".json"
+        # Code-only filter — see _fetch_all for why a name clause must never
+        # be re-added (Socrata renamed NG/CL market names; the name filter
+        # silently matched zero rows).
+        where = (
+            f"cftc_contract_market_code = '{self._market.contract_code}' "
+            f"AND report_date_as_yyyy_mm_dd >= '{start.isoformat()}T00:00:00.000' "
+            f"AND report_date_as_yyyy_mm_dd <= '{end.isoformat()}T23:59:59.000'"
+        )
+        rows: list[dict[str, Any]] = []
+        offset = 0
+        while True:
+            params: list[tuple[str, str]] = [
+                ("$where", where),
+                ("$order", "report_date_as_yyyy_mm_dd DESC"),
+                ("$limit", str(_RANGE_PAGE_SIZE)),
+                ("$offset", str(offset)),
+            ]
+            response = await self._client.get(url, params=params)
+            body = response.json()
+            page = body if isinstance(body, list) else []
+            rows.extend(page)
+            if len(page) < _RANGE_PAGE_SIZE:
+                break
+            offset += _RANGE_PAGE_SIZE
+        return self._map(rows)
+
     async def _get_reports_cached(self) -> list[dict[str, Any]]:
         now = time.time()
         if self._cache is not None:
@@ -171,15 +212,21 @@ class CFTCAdapter:
         return reports
 
     async def _fetch_all(self) -> list[dict[str, Any]]:
-        # Filter by both name (defensive) and contract code (precise — avoids
-        # codename-adjacent markets like "NATURAL GAS LAST DAY FINANCIAL"
-        # for NG, or financially-settled crude variants for CL).
+        # Filter by contract code ONLY. The code is the precise, stable key
+        # (each market — incl. codename-adjacent ones like "NATURAL GAS LAST
+        # DAY FINANCIAL" — has its own code). A defensive `contract_market_name
+        # like '<prefix>%'` clause used to accompany it, but Socrata renamed
+        # the dataset's market names (NG → "NAT GAS NYME", CL →
+        # "WTI-PHYSICAL"), which made the name clause silently exclude EVERY
+        # NG/CL row — the live adapter returned empty and callers fell back to
+        # mock (found during the Phase 31a backfill; prod issue #13's
+        # observed-mock positioning). Names mutate; codes don't — never
+        # re-add a name filter here.
         url = CFTC_BASE_URL + DISAGGREGATED_RESOURCE + ".json"
         params: list[tuple[str, str]] = [
             (
                 "$where",
-                f"cftc_contract_market_code = '{self._market.contract_code}' "
-                f"AND contract_market_name like '{self._market.name_prefix}%'",
+                f"cftc_contract_market_code = '{self._market.contract_code}'",
             ),
             ("$order", "report_date_as_yyyy_mm_dd DESC"),
             ("$limit", "200"),

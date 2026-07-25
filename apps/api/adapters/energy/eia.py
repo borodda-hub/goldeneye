@@ -63,6 +63,9 @@ _REPORT_FIELDS = (
 # Weekly data only updates Thursdays — 24h in-memory cache is plenty.
 _CACHE_TTL_SECONDS = 24 * 60 * 60
 
+# EIA v2 page size for the (uncached) range/backfill path (API max is 5000).
+_RANGE_PAGE_SIZE = 5000
+
 
 class EIAAdapter:
     """Real EnergyDataAdapter implementation reading EIA Open Data v2."""
@@ -78,6 +81,50 @@ class EIAAdapter:
     async def get_latest_storage(self) -> dict[str, Any] | None:
         reports = await self._get_reports_cached()
         return reports[0] if reports else None
+
+    async def get_storage_reports_range(
+        self, start: date, end: date
+    ) -> list[dict[str, Any]]:
+        """Full weekly history with week_ending in [start, end].
+
+        The live path above is capped at ~2.3y by its fixed `length`; this is
+        the Phase 31a backfill path — EIA v2 `start`/`end` period filters plus
+        offset pagination, uncached. The fetch starts two weeks early so the
+        oldest *requested* week keeps its WoW `net_change_bcf` (the pivot
+        drops its own boundary row); results are then trimmed back to the
+        requested range. Newest first, same dict shape as the live path.
+        """
+        api_key = settings.eia_api_key
+        if not api_key:
+            return []
+        fetch_start = start - timedelta(days=14)
+        raw: list[dict[str, Any]] = []
+        offset = 0
+        while True:
+            params: list[tuple[str, str]] = [
+                ("api_key", api_key),
+                ("frequency", "weekly"),
+                ("data[]", "value"),
+                ("start", fetch_start.isoformat()),
+                ("end", end.isoformat()),
+                ("sort[0][column]", "period"),
+                ("sort[0][direction]", "desc"),
+                ("length", str(_RANGE_PAGE_SIZE)),
+                ("offset", str(offset)),
+            ]
+            for series in _SERIES_TO_FIELD.keys():
+                params.append(("facets[series][]", series))
+            response = await self._client.get(url=EIA_BASE_URL + STORAGE_ROUTE, params=params)
+            body = response.json()
+            page = body.get("response", {}).get("data", [])
+            if not isinstance(page, list):
+                page = []
+            raw.extend(page)
+            if len(page) < _RANGE_PAGE_SIZE:
+                break
+            offset += _RANGE_PAGE_SIZE
+        records = self._pivot(raw)
+        return [r for r in records if start <= r["week_ending"] <= end]
 
     async def _get_reports_cached(self) -> list[dict[str, Any]]:
         now = time.time()

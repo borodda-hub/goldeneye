@@ -93,6 +93,16 @@ class EIAPetroleumAdapter:
         reports = await self._get_reports_cached()
         return reports[0] if reports else None
 
+    async def get_storage_reports_range(
+        self, start: date, end: date
+    ) -> list[dict[str, Any]]:
+        """Protocol parity only — petroleum history is deliberately NOT
+        backfilled in Phase 31a (the eia_storage_reports table is NG-shaped;
+        see the module docstring + PHASE_31_PLAN §design decisions). Serves
+        the cached live window filtered to the range, never a deep fetch."""
+        reports = await self._get_reports_cached()
+        return [r for r in reports if start <= r["week_ending"] <= end]
+
     async def _get_reports_cached(self) -> list[dict[str, Any]]:
         now = time.time()
         if self._cache is not None:
