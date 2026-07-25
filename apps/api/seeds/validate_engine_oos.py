@@ -23,10 +23,19 @@ guards the engine's chokepoint. No future bar is ever visible.
 WHAT IT CAN / CANNOT TEST
 -------------------------
 - ``ma_cross``, ``vol_regime``, ``holt`` are price-only → fully testable.
-- ``logreg`` and ``factor_composite`` are run **price-only here** (``latest_storage`` /
-  ``latest_cot`` = None): this tests their PRICE behaviour. Their alt-data legs
-  (COT/storage) stay UNVALIDATED until real feature history is ingested (Phase 31/C3);
-  marked with ``*`` in the output. See ``docs/MODEL_DILIGENCE.md``.
+- ``logreg`` and ``factor_composite`` are run **price-only in the daily section**
+  (``latest_storage`` / ``latest_cot`` = None): that tests their PRICE behaviour;
+  marked with ``*`` in the output.
+- **Phase 31b section (the alt-data verdict):** a second, WEEKLY pass feeds
+  ``factor_composite`` REAL point-in-time COT/storage from the database (backfilled by
+  ``seeds/backfill_features.py``) through the LOCKED production chokepoint
+  (``backtest._cot_as_of`` / ``_storage_as_of`` — symbol-scoped, release-date-gated).
+  Decision points are Fridays (COT released Fri 15:30 ET, storage Thu — both fresh),
+  horizons 1w/1m only (weekly features are stale 4 of 5 days — 1d is out of scope).
+  1w outcomes from weekly points are NON-overlapping → n_eff = n. The PRE-REGISTERED
+  gate (``docs/PHASE_31_PLAN.md §31b``): real-feature factor must beat BOTH the
+  drift-naive baseline AND the best price-only arm on OOS Brier at 1w by ≳1 SE
+  (paired), with a monotone confidence gradient. See ``docs/MODEL_DILIGENCE.md``.
 
 COLUMNS
 -------
@@ -185,15 +194,207 @@ def _brier_s(b):
     return "  —  " if not b else f"{b:.4f}"
 
 
-async def main() -> None:
+# ── Phase 31b — weekly alt-data arm (real DB features, pre-registered gate) ──
+
+ALT_HZ = {"1w": 7, "1m": 30}
+ALT_ARMS = ["factor_ALT", "factor_price", "ma_cross", "holt", "logreg", "drift"]
+_PRICE_ARMS = ("factor_price", "ma_cross", "holt", "logreg")
+
+
+def _paired_brier_delta(pa, pb, ru):
+    """Mean paired Brier difference (arm A − arm B) ± its standard error.
+
+    Negative = A better. Paired per decision point, so the SE is the honest
+    one for the pre-registered ~1 SE separation requirement.
+    """
+    n = len(ru)
+    if n < 2:
+        return None, None
+    d = [(pa[i] - ru[i]) ** 2 - (pb[i] - ru[i]) ** 2 for i in range(n)]
+    mean = sum(d) / n
+    var = sum((x - mean) ** 2 for x in d) / (n - 1)
+    return mean, (var / n) ** 0.5
+
+
+async def _alt_data_arm(sym_pairs: dict[str, list[tuple[str, float]]]) -> None:
+    from datetime import datetime
+    from datetime import time as dtime
+
+    from apps.api.adapters.positioning.cftc import MARKETS as CFTC_MARKETS
+    from apps.api.db.session import get_session_factory
+    from apps.api.services.backtest import _cot_as_of, _storage_as_of
+
+    pooled = {(a, hz): _new_cell() for a in ALT_ARMS for hz in ALT_HZ}
+    tiers: dict[str, list[tuple[int, int]]] = {"high": [], "medium": [], "low": []}
+    per_sym: dict[str, dict] = {}
+    points = with_cot = with_storage = 0
+
+    async with get_session_factory()() as session:
+        for sym, pairs in sym_pairs.items():
+            market = CFTC_MARKETS.get(sym)
+            if market is None:
+                continue
+            dates = [date.fromisoformat(d) for d, _ in pairs]
+            closes = [c for _, c in pairs]
+            acc = {(a, hz): _new_cell() for a in ALT_ARMS for hz in ALT_HZ}
+            for t in range(MIN_CLOSES - 1, len(closes)):
+                if dates[t].weekday() != 4:  # Friday decisions — both feeds fresh
+                    continue
+                as_of = datetime.combine(dates[t], dtime(23, 59, 59))
+                cot = await _cot_as_of(session, as_of, market.contract_code)
+                storage = await _storage_as_of(session, as_of, sym)
+                if cot is None and storage is None:
+                    continue  # nothing alt-data to test at this point
+                points += 1
+                with_cot += cot is not None
+                has_storage_delta = storage is not None and (
+                    storage.get("delta_vs_consensus") is not None
+                    or storage.get("delta_vs_norm") is not None
+                )
+                with_storage += has_storage_delta
+                window = closes[max(0, t + 1 - LOOKBACK) : t + 1]
+                ups = sum(
+                    1 for i in range(1, len(window)) if window[i] > window[i - 1]
+                )
+                drift_p = ups / max(1, len(window) - 1)
+                for hz, hd in ALT_HZ.items():
+                    r = _realized_pct(dates, closes, t, hd)
+                    if r is None:
+                        continue
+                    ru = 1 if r > 0 else 0
+                    fa = factor_p(window, hz, storage, cot)
+                    calls = {
+                        "factor_ALT": (fa.direction, fa.confidence),
+                        "factor_price": _dc(factor_p(window, hz, None, None)),
+                        "ma_cross": _dc(ma_p(window, hz)),
+                        "holt": _dc(holt_p(window, hz)),
+                        "logreg": _dc(logreg_p(window, hz)),
+                    }
+                    for arm, (dirn, conf) in calls.items():
+                        c = acc[(arm, hz)]
+                        c["ru"].append(ru)
+                        c["pup"].append(_p_up(dirn, conf))
+                        if dirn in ("bullish", "bearish") and abs(r) >= 0.003:
+                            hit = (1 if dirn == "bullish" else 0, ru)
+                            c["dec"].append(hit)
+                            if arm == "factor_ALT" and hz == "1w":
+                                tiers.setdefault(conf, []).append(hit)
+                    cd = acc[("drift", hz)]
+                    cd["ru"].append(ru)
+                    cd["pup"].append(drift_p)
+                    if drift_p != 0.5 and abs(r) >= 0.003:
+                        cd["dec"].append((1 if drift_p > 0.5 else 0, ru))
+            per_sym[sym] = acc
+            for k in pooled:
+                for f in ("ru", "pup", "dec"):
+                    pooled[k][f].extend(acc[k][f])
+
+    print("\n" + "=" * 100)
+    print("PHASE 31B — factor_composite with REAL point-in-time COT/storage "
+          "(weekly Friday decisions)")
+    print("=" * 100)
+    if points == 0:
+        print("NO decision points had alt-data context — is the feature "
+              "backfill loaded in this DATABASE_URL? (seeds.backfill_features)")
+        return
+    print(f"decision points: {points}  with COT: {with_cot}  with storage "
+          f"delta (NG only): {with_storage}")
+    print("1w outcomes from weekly points are NON-overlapping -> n_eff = n. "
+          "1m overlaps ~4x.")
+    print(f"\n{'arm':<13}{'hz':<4}{'n':>6}{'base%':>7}{'dec_n':>7}{'dec_acc%':>9}"
+          f"{'edge%':>7}{'Brier':>8}{'skill%':>8}")
+    for a in ALT_ARMS:
+        for hz in ALT_HZ:
+            x = _metrics(pooled[(a, hz)])
+            if not x:
+                continue
+            print(f"{a:<13}{hz:<4}{x['n']:>6}{_pc(x['base']):>7}{x['dec_n']:>7}"
+                  f"{_pc(x['dec_acc']):>9}{_signed(x['edge']):>7}"
+                  f"{_brier_s(x['brier']):>8}{_signed(x['skill']):>8}")
+
+    # ── THE PRE-REGISTERED GATE (1w, pooled) ──────────────────────────────
+    alt = pooled[("factor_ALT", "1w")]
+    d_drift, se_drift = _paired_brier_delta(
+        alt["pup"], pooled[("drift", "1w")]["pup"], alt["ru"]
+    )
+    best_arm, best_delta, best_se = None, None, None
+    for arm in _PRICE_ARMS:
+        d, se = _paired_brier_delta(alt["pup"], pooled[(arm, "1w")]["pup"], alt["ru"])
+        pm = _metrics(pooled[(arm, "1w")])
+        if pm is None or d is None:
+            continue
+        if best_arm is None or (pm["brier"] or 9) < (
+            _metrics(pooled[(best_arm, "1w")])["brier"] or 9
+        ):
+            best_arm, best_delta, best_se = arm, d, se
+    print("\nGATE (pre-registered, docs/PHASE_31_PLAN.md §31b) — OOS Brier @1w, paired:")
+    beats_drift = d_drift is not None and se_drift and d_drift < -se_drift
+    beats_price = best_delta is not None and best_se and best_delta < -best_se
+    print(f"  vs drift-naive:      dBrier = {d_drift:+.5f} +/- {se_drift:.5f}  "
+          f"-> {'BEATS (>1 SE)' if beats_drift else 'does NOT beat'}")
+    print(f"  vs best price arm ({best_arm}): dBrier = {best_delta:+.5f} +/- "
+          f"{best_se:.5f}  -> {'BEATS (>1 SE)' if beats_price else 'does NOT beat'}")
+    print("  confidence gradient (factor_ALT decisive @1w — factor emits "
+          "medium/low only):")
+    grad_ok = None
+    grad = {}
+    for tname in ("high", "medium", "low"):
+        rows = tiers.get(tname) or []
+        if rows:
+            grad[tname] = (sum(1 for p, y in rows if p == y) / len(rows), len(rows))
+            print(f"    {tname:<7} hit={grad[tname][0] * 100:5.1f}%  n={grad[tname][1]}")
+    if "medium" in grad and "low" in grad and grad["medium"][1] >= 30 and grad["low"][1] >= 30:
+        grad_ok = grad["medium"][0] > grad["low"][0]
+        print(f"    monotone (medium > low): {'YES' if grad_ok else 'NO'}")
+    else:
+        print("    insufficient per-tier n for a gradient read")
+    verdict = bool(beats_drift and beats_price and grad_ok)
+    print(f"\n  >>> GATE VERDICT: {'PASS — real alt-data edge' if verdict else 'FAIL — no alt-data edge beyond price-only'} <<<")
+
+    print("\nper-symbol factor_ALT @1w (consistency — no cherry-pick):")
+    print(f"{'sym':<5}{'n':>6}{'dec_n':>7}{'dec_acc%':>9}{'base%':>7}{'Brier':>8}"
+          f"{'dBrier vs drift':>17}")
+    for sym, acc in per_sym.items():
+        x = _metrics(acc[("factor_ALT", "1w")])
+        if not x:
+            continue
+        d, se = _paired_brier_delta(
+            acc[("factor_ALT", "1w")]["pup"],
+            acc[("drift", "1w")]["pup"],
+            acc[("factor_ALT", "1w")]["ru"],
+        )
+        ds = f"{d:+.5f}" if d is not None else "—"
+        print(f"{sym:<5}{x['n']:>6}{x['dec_n']:>7}{_pc(x['dec_acc']):>9}"
+              f"{_pc(x['base']):>7}{_brier_s(x['brier']):>8}{ds:>17}")
+    print("\nNOTE: probabilities are the same IMPOSED PMAP as the daily section — "
+          "the paired-delta SIGN is robust; absolute Brier is mapping-dependent. "
+          "Storage leg exists for NG only; other symbols test the COT leg.")
+
+
+def _dc(res) -> tuple[str, str]:
+    return (res.direction, res.confidence)
+
+
+async def main(alt_only: bool = False) -> None:
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
     except Exception:  # noqa: BLE001
         pass
 
+    if alt_only:
+        sym_pairs_only: dict[str, list[tuple[str, float]]] = {}
+        for sym in SYMBOLS:
+            try:
+                sym_pairs_only[sym] = await _fetch_real_daily_closes(sym)
+            except Exception as e:  # noqa: BLE001
+                print(f"{sym}: fetch failed — {type(e).__name__}: {e}")
+        await _alt_data_arm(sym_pairs_only)
+        return
+
     pooled = {(m, hz): _new_cell() for m in MODELS for hz in HZ}
     per_sym: dict[str, dict] = {}
     cov: dict[str, dict] = {}
+    sym_pairs: dict[str, list[tuple[str, float]]] = {}
     for sym in SYMBOLS:
         try:
             pairs = await _fetch_real_daily_closes(sym)
@@ -203,6 +404,7 @@ async def main() -> None:
         if len(pairs) < MIN_CLOSES + 40:
             print(f"{sym}: too thin ({len(pairs)}) — skipping")
             continue
+        sym_pairs[sym] = pairs
         dates = [date.fromisoformat(d) for d, _ in pairs]
         closes = [c for _, c in pairs]
         acc = {(m, hz): _new_cell() for m in MODELS for hz in HZ}
@@ -260,6 +462,13 @@ async def main() -> None:
         m95 = sum(v95) / len(v95) if v95 else None
         print(f"MEAN {h}: cov80={_pc(m80)}  cov95={_pc(m95)}")
 
+    # Phase 31b — the alt-data verdict (needs the feature backfill in the DB).
+    try:
+        await _alt_data_arm(sym_pairs)
+    except Exception as e:  # noqa: BLE001
+        print(f"\n31b alt-data arm SKIPPED — {type(e).__name__}: {e} "
+              f"(DB up? seeds.backfill_features loaded?)")
+
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main(alt_only="--alt-only" in sys.argv))

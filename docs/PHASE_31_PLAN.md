@@ -318,3 +318,41 @@ proxy derives its own 5-yr norm from `net_change_bcf` history (31a.0).
 
 **Next: 31b** — alt-data arm of `seeds/validate_engine_oos.py` on this real
 feature history, pre-registered gate per §31b above.
+
+## 31b status — ✅ RUN, GATE **FAIL** (2026-07-25) — the honest verdict, recorded
+
+Built as planned: a weekly (Friday, post-release) alt-data arm inside
+`validate_engine_oos.py` (`--alt-only` for a fast re-run), feeding
+`factor_composite` REAL point-in-time features through the **locked
+symbol-scoped chokepoint** (`_cot_as_of`/`_storage_as_of`), horizons 1w/1m,
+against drift-naive + all four price-only arms at the SAME decision points.
+Feature depth extended to **14y** first (`backfill_features --years 14`:
+731 COT rows/symbol, 730 storage rows) so the seasonal-norm proxy is warm
+across the whole 10y price sample. Coverage: 2,964 decision points, COT at
+100%, storage delta at 494 (NG, as designed).
+
+**Pre-registered gate (OOS Brier @1w, paired, n=2,958 non-overlapping):**
+- vs drift-naive: **+0.00487 ± 0.00156 — WORSE by ~3 SE** (gate needed better)
+- vs best price arm (its own price-only variant): **+0.00536 ± 0.00089 —
+  WORSE by ~6 SE**
+- decisive hit 48.4% vs base 53.3%; worse-than-drift in 5/6 commodities
+  (CL −0.0006, within noise); confidence gradient unreadable (one tier).
+
+**VERDICT: FAIL — real COT/storage add no 1w/1m directional edge through
+these rules; they actively hurt.** Recorded in `MODEL_DILIGENCE.md`
+(directional lineup now fully real-OOS tested, no edge anywhere; the
+structural gap is CLOSED). Most-likely outcome realized — a diligence win,
+a prediction miss, exactly as framed in §honest framing.
+
+## 31c — ✋ CLOSED, does not fire
+
+Its pre-registered condition ("only if 31b is promising") was not met.
+`logreg` stays price-only (already real-OOS tested, no edge). No alt-data
+logreg will be built off this evidence.
+
+## Remaining in Phase 31: only **31d** (prod EIA flow + observed-derived
+caveat + prod feature backfill together — issue #13; separate promotion).
+Note (correcting an earlier assumption): `/v1/positioning` reads the **DB**
+(`services/positioning.py` → `cot_repo`), not the live adapter — so prod
+positioning stays mock until 31d's prod backfill, which is the correct
+ordering (the caveat must flip in the same promotion as the data).

@@ -1,6 +1,29 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-07-25. Read this first to pick up where we left off._
+_Last updated: 2026-07-25 (pm). Read this first to pick up where we left off._
+
+## Most recent: 31a PROMOTED TO LIVE + **Phase 31b VERDICT: FAIL (no alt-data edge) — the diligence arc is CLOSED**
+
+Three owner-approved steps executed this session:
+1. **31a promoted** (`master == develop` at the 31a merge; CI green on the master push).
+2. **31b run — GATE FAIL, recorded.** Features deepened to 14y first
+   (`backfill_features --years 14`; proxy warm across the whole price sample). The weekly
+   alt-data arm (now in `validate_engine_oos.py`, `--alt-only`) fed real point-in-time
+   COT/storage through the locked chokepoint: **n=2,958 non-overlapping @1w — factor's
+   alt-data legs are WORSE than drift-naive (+0.0049 ± 0.0016, ~3 SE) and worse than its own
+   price-only variant (+0.0054 ± 0.0009, ~6 SE); worse-than-drift 5/6 commodities; no
+   gradient.** `MODEL_DILIGENCE.md` updated: **every directional model is now real-OOS
+   tested, no edge anywhere; the structural gap is CLOSED.** 31c does NOT fire (condition
+   unmet). The one validated edge remains vol/range.
+3. **Prod data deliberately untouched** (approved ordering): real features + the
+   observed-derived caveat flip together in **31d** — the only remaining Phase 31 item.
+   **Correction to the 31a note below:** `/v1/positioning` reads the **DB**, not the live
+   adapter — so the CFTC name-filter fix alone does NOT flip prod positioning to real; that
+   happens at 31d's prod backfill. (The adapter fix still matters — it's what every
+   backfill/refresh path uses.)
+
+**Next session options:** 31d (closes #13, small), or the Stage D discussion the owner
+deferred ("will discuss 4 after") — D1 implied-vs-realized vol is the recommended opener.
 
 ## Most recent: Phase 31a SHIPPED + MERGED TO DEVELOP (`develop == origin/develop == 953e23a`, PR #18; CI green on the PR and the develop push, 8 jobs). Master promotion = owner call (master at `714b7bc`). Real 10y COT+EIA history in the dev DB, all gates met.
 
