@@ -90,6 +90,24 @@ diagnostic (network-dependent → not a hermetic CI lock, per the
 `validate_*_real` precedent) · S6 no UI surface this phase · S7 docs
 in-commit · S8 feat branch → develop → master sign-off.
 
-## 31-style closeout (filled after the run)
+## D1 verdict — ⚖️ **PARTIAL** (run 2026-07-25, `seeds/validate_d1_vol_premium.py`; record, no build, revisit)
 
-See `§D1 verdict` appended below after execution.
+Sample: 2015-08 → 2026-06, 549 weekly Friday decisions per pair, n_eff ≈ 131.
+
+- **G0 ✅ (anchor):** the premium replicates — mean(IV − RV_next) = **+5.54
+  vol-pts (USO/OVX)** and **+1.88 (GLD/GVZ)**, positive ~78% of weeks. As
+  expected; table stakes, not an edge.
+- **G1 ✗ (needed both):** GLD **passes** (MAE 3.58 vs 3.91, paired −0.32 ±
+  0.27 — our har_log beats GVZ as an RV predictor >1 SE); USO better in
+  point estimate (−0.51) but within noise (±0.71).
+- **G2 ✗ (needed both):** **USO/OVX passes cleanly** — monotone terciles
+  +7.61 → +5.55 → +2.03 vol-pts, low−high **+5.59 ± 3.77** (economically
+  large: the premium nearly quadruples when our forecast sits far below
+  OVX). **GLD fails** (non-monotone, +0.98 ± 1.06). EWMA robustness arm
+  fails everywhere → the signal is specific to the har_log/crude cell.
+- **VERDICT = PARTIAL per pre-registration:** one strong cell, no
+  cross-asset replication, estimator-fragile — not crowned. **No D1b
+  surface.** Revisit triggers: (a) more IV pairs to break the 1-of-2 tie
+  (e.g. ^VIX/SPY via the identical harness — free), (b) ~2 more years of
+  data on the same pre-registered gate, unchanged. The probe re-runs in
+  one command; the gate must NOT be re-tuned to fit this sample.
