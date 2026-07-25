@@ -17,11 +17,15 @@ develop + master pushes). Sequence executed on owner's "proceed with 31d":
   as_of 2026-07-17 (3,056 Bcf, +32); `/v1/positioning?symbol=NG` `source:"cftc"` report
   07-21/released 07-24, MM net −102,694; LLM envelope caveat reads *"positioning/storage
   inputs are real published CFTC/EIA data."* **Issue #13 CLOSED** with the verification.
-- **Optional hygiene (not acceptance, owner-run — my prod-DB writes are classifier-blocked,
-  which is the right posture):** one-time deep prod backfill purges legacy mock COT rows +
-  gives full 14y history:
-  `DATABASE_URL="$(railway variables --service web --kv | grep '^DATABASE_URL=' | cut -d= -f2-)" uv run --directory apps/api python -m seeds.backfill_features --years 14`
-  (run from a normal terminal, NOT the 2-min `!` prompt).
+- **✅ Deep prod backfill DONE (owner-run, 2026-07-25):** 731 real COT reports/symbol × 6
+  (2012-07-24 → 2026-07-21), all 600 legacy mock rows purged, dup-guard silent; 730 real NG
+  storage rows. Table math proves purity: cot_reports 4,386 = 6×731 exactly; storage 730.
+  Prod now holds the full 14y real feature history; the refresh scheduler keeps it current.
+- **Optional final coherence step (owner-run, small):** prod's persisted NG backtest rows
+  were refreshed earlier today while prod features were still mock — re-running
+  `... python -m seeds.refresh_backtests NG` against prod once more makes the scorecard's
+  factor rows consume the now-real features (no verdict change expected — factor is
+  tested-no-edge either way; this is display coherence, not diligence).
 
 **PHASE 31 FINAL LEDGER:** 31a.0 correctness pre-fixes ✅ · 31a 14y real ingestion ✅ ·
 31b verdict ✅ (**GATE FAIL — no directional alt-data edge; diligence gap CLOSED**) ·
