@@ -319,6 +319,27 @@ CREATE TRIGGER decision_ledger_events_no_mutate
   FOR EACH ROW EXECUTE FUNCTION decision_ledger_events_immutable();
 ```
 
+```sql
+-- Phase D5 (migration 012): weather-forecast vintage archive. Forecasts are
+-- unbacktestable without an archive of what was forecast AT THE TIME — one
+-- row per (vintage_date, region) of whatever the configured weather adapter
+-- served that day. Vintages are IMMUTABLE HISTORY: the repo is insert-only
+-- (ON CONFLICT DO NOTHING) — a past vintage is never updated. `source`
+-- labels mock vs nws vintages so mock rows are excludable from validation.
+-- Plain table (7 rows/day), not a hypertable.
+CREATE TABLE weather_forecast_vintages (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  vintage_date          DATE NOT NULL,
+  region                TEXT NOT NULL,                 -- 6 regions + 'US' aggregate
+  forecast              JSONB NOT NULL,                -- the adapter's daily list, verbatim
+  national_hdd_anomaly  NUMERIC,                       -- on the region='US' row only
+  source                TEXT NOT NULL,                 -- configured adapter: 'nws' | 'mock'
+  fetched_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (vintage_date, region)
+);
+CREATE INDEX ix_weather_vintages_vintage_date ON weather_forecast_vintages (vintage_date);
+```
+
 ## §hypertables
 
 All bar/tick/observation tables are TimescaleDB hypertables.
