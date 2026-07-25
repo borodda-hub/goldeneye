@@ -1,8 +1,52 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-06-28. Read this first to pick up where we left off._
+_Last updated: 2026-07-24. Read this first to pick up where we left off._
 
-## Most recent: UI / responsive arc (theme + mobile) — PROMOTING (`feat/theme-iris` shipped; `fix/dashboard-responsive-split` in flight)
+## Most recent: Stage C audit + Phase 31 plan v2 + Stage D scoped (docs-only, develop)
+
+**What happened (2026-07-24, planning session — no code changed):** a full code audit of the
+2026-06-08 `PHASE_31_PLAN.md` draft found four material drifts, including one that broke the
+plan's central premise, plus two blockers the plan didn't list. The plan was rewritten as **v2**
+(same file), `MASTER_PLAN.md` gained the corrected Stage C entries + a new **Stage D — edge
+expansion**, and the owner agreed the scope call: **31a.0 → 31a → 31b now; 31c conditional;
+31d (prod EIA flow, issue #13) as a separate promotion.**
+
+**The audit findings (each verified with file:line, recorded in `PHASE_31_PLAN.md §v2 changelog`):**
+1. **"zero model changes" was FALSE** — `factor_composite.py:43-44` does
+   `float(latest_storage["delta_vs_consensus"])` and the real EIA adapter never populates
+   `surprise_bcf` → `TypeError` on real data. Fix = consensus-free surprise proxy
+   (`delta_vs_5yr_seasonal_norm`), not a bare guard (a guard silently kills the leg under test).
+2. **Symbol-blind as-of context** — `_cot_as_of`/`_storage_as_of` don't filter by market;
+   `mm_net_delta` mixes commodities when release dates collide. Must fix + lock before 31b
+   or the verdict measures a bug. (`repos/cot.py:11` already has the filter param.)
+3. **`eia_storage_reports` has no `release_date`** (plan claimed it did). NG storage is safe by
+   naming accident (adapter's `report_date` = publication Thursday), but
+   **`eia_petroleum.py:177` sets `report_date = week_ending` → ~5-day look-ahead leak** if
+   petroleum is ever backfilled. Petroleum excluded from 31a; mapping fix lands in 31a.0.
+4. **Adapter ceilings:** CFTC hard-pinned to 200 rows (~3.8y, no pagination); EIA NG ~2.3y;
+   oldest EIA row emits `net_change_bcf=None` (violates NOT NULL). Range+pagination methods
+   are genuinely required.
+5. **Assets the plan missed:** `seeds/validate_engine_oos.py` (2026-06-28) is the natural 31b
+   harness (extend it with an alt-data arm — the price-only control comparison comes free);
+   `services/price_backfill.py` + `repos/users.py` upsert idiom are the 31a templates.
+
+**Stage D (new, in `MASTER_PLAN.md §4`):** hunt edge where the platform has proven skill —
+D1 implied-vs-realized vol (CL+GC pilot via OVX/GVZ, probe-first, independent of 31b),
+D2 carry/term-structure (best-documented commodity premium; reuses the C3 ingestion spine),
+D3 cross-sectional blind carry/momentum paper desks (judged by the existing Wilson verdict),
+D4 storage-day selective abstention (needs 31a's surprise proxy), D5 weather-forecast
+**archival starting now** (forecasts can't be backtested without vintages — start the clock).
+All gate-first (S4), bench-and-say-so.
+
+**Sync state:** `master == origin/master == develop == origin/develop == b2d60f0` at session
+start; this session adds doc-only commits on `develop` (this HANDOFF + `PHASE_31_PLAN.md` v2 +
+`MASTER_PLAN.md`). Master promotion of the docs is the owner's call (no code risk either way).
+**Open issues:** #13 (→ 31d), #10, #8 — unchanged.
+**Recommended next session:** implement **31a.0** (the three pre-fixes + locks), starting with
+the open **[V]** item — column-audit `eia_storage_reports` for a per-series discriminator
+(`PHASE_31_PLAN.md §open questions #3`).
+
+## UI / responsive arc (theme + mobile) — ✅ done (`feat/theme-iris` shipped; responsive + hamburger promoted)
 
 A UX pass, not a roadmap phase. Three things:
 1. **Iris theme — ✅ PROMOTED TO LIVE (`master == df9aa00`, PR #14).** A new built-in

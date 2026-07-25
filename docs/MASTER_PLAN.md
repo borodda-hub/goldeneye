@@ -85,12 +85,34 @@ Four stages, strictly dependency-ordered. Each item lists: **maps-to** (prior pl
 
 ### Stage C — Validation / proof *(real-data verdict + the structural gap)*
 
-- **C3 — Real feature-history ingestion.** *maps-to:* Phase 31 (`PHASE_31_PLAN.md`) + ROADMAP #1 (real CFTC/NWS) / DD risk R2. *status:* BUILD. *depends-on:* B1. *effort:* L.
-  Ingest real historical COT + EIA, persist to hypertables, re-run the existing harnesses on real features→price. **DoD:** `logreg_directional` + `factor_composite` move out of `unvalidated` in `MODEL_DILIGENCE.md` — validated *or* honestly retired (S4).
-- **C3b — Trained model (conditional).** *maps-to:* CALIBRATION P8 / ROADMAP #5. *status:* BUILD (later). *depends-on:* C3. *effort:* M–L.
-  Only if C3 yields real features and a trained model beats the hand-set composite on a pre-registered OOS gate; else keep the honest baseline and say so. **DoD:** S4 gate decided and recorded.
+- **C3 — Real feature-history ingestion.** *maps-to:* Phase 31 (`PHASE_31_PLAN.md` **v2**, revised 2026-07-24 after a code audit of the v1 draft) + ROADMAP #1 (real CFTC/NWS) / DD risk R2. *status:* BUILD — **scope decided: 31a.0 (correctness pre-fixes: symbol-scoped as-of context, consensus-free surprise proxy for `factor_composite`, petroleum release-date trap) → 31a (backfill: COT ×6 + NG storage, paginated range fetch, idempotent upserts) → 31b (pre-registered verdict via an alt-data arm of `validate_engine_oos.py`)**. *depends-on:* B1 ✅. *effort:* L (≈2.5–3 days).
+  **DoD:** `factor_composite` moves out of `unvalidated` in `MODEL_DILIGENCE.md` — validated *or* honestly retired (S4); the symbol-scoping + proxy fixes are test-locked (S5).
+- **C3b — Trained model / alt-data logreg (conditional).** *maps-to:* Phase 31c / CALIBRATION P8 / ROADMAP #5. *status:* BUILD (only if C3's 31b gate PASSES). *depends-on:* C3. *effort:* M–L.
+  If 31b shows real alt-data signal, extend `logreg` (weather degree-day features rank ahead of COT — see D5); else keep the honest baseline and say so. **DoD:** S4 gate decided and recorded.
+- **C3-prod — Live EIA flow + observed-derived caveat.** *maps-to:* Phase 31d / **issue #13** / HANDOFF caveat-fragility flag. *status:* BUILD. *depends-on:* C3 (shares adapters; separate promotion by design). *effort:* S.
+  Scheduled prod refresh so `/v1/fundamentals` serves `source:"eia"` with a fresh `as_of`; `data_provenance_caveat()` storage clause becomes observed-derived so the caveat tracks reality in both states. **DoD:** issue #13 acceptance met + caveat test matrix covers real-storage config; #13 closed on promotion.
 
 *(GTM/non-code, tracked but not Claude-Code phases: C1 design-partner pilots, C2 skill-vs-luck methodology artifact — these consume the outputs of Stage B/C.)*
+
+### Stage D — Edge expansion *(added 2026-07-24; hunt edge where the platform has proven skill, not where it has proven none)*
+
+> Rationale: Phases 26/30 + the real-OOS diligence established *where not to look* — price-only
+> direction is dead (36/36 cells), and the one validated skill is second-moment (vol/range)
+> forecasting. Stage D follows the skill and the commodity-risk-premia literature instead of
+> re-mining price direction. **Every D item is a hypothesis with a pre-registered gate (S4),
+> benched loudly on failure — none is a promised edge.** Shared prerequisite: the C3 ingestion
+> spine (range fetch → upsert → point-in-time as-of) generalizes to every new data type below.
+
+- **D1 — Implied-vs-realized vol probe.** *maps-to:* the Phase-30 vol edge, extended against a market price. *status:* BUILD (probe-first). *depends-on:* nothing (independent of C3's verdict). *effort:* M.
+  The calibrated vol forecast is currently judged only vs *realized* outcomes; the classic monetizable form is forecast-RV vs **implied** vol. Pilot CL+GC via free proxies (CBOE OVX/GVZ through the existing Yahoo path; ETF option chains as fallback). Probe script first (the Phase-30 `vol-predictability probe` pattern) — UI only if the gate passes. **Pre-registered gate:** walk-forward, does (forecast RV − IV) predict the subsequent realized variance premium beyond the "IV is unbiased" baseline, at ≥ ~1 SE on `n_eff`? **DoD:** verdict recorded in `MODEL_DILIGENCE.md`; if PASS, a research surface ("market prices X% vol; our calibrated engine says Y%") ships behind S6 framing.
+- **D2 — Carry / term-structure feature.** *maps-to:* the best-documented commodity risk premium (Gorton–Rouwenhorst; Koijen et al. "Carry"). *status:* BUILD. *depends-on:* C3 spine (contract-month ingestion reuses it). *effort:* M.
+  Ingest individual contract-month closes (Yahoo serves them; curve data already touched by the chart curve overlay), derive `curve_slope` (front vs 3rd/6th month, annualized), run it through the **unchanged locked harness** vs drift-naive + price-only models. Side benefit: a *daily-updating* fundamental input for `factor_composite` (its weekly features are stale 4 of 5 days). **DoD:** S4 verdict recorded; feature test-locked if adopted.
+- **D3 — Cross-sectional systematic desk.** *maps-to:* the B1/B2 desk machinery, reused. *status:* ACTIVATE. *depends-on:* D2 (carry signal) + B2 ✅. *effort:* S–M.
+  Ranking beats timing statistically: blind carry-ranked (and momentum-ranked) long-short **paper** desks seeded beside momentum/contrarian/random, resolved by the real engine against real prices, judged by the existing Wilson skill-vs-luck verdict. Zero new judging machinery; doubles as the product demo of the calibration moat crowning (or refusing to crown) a real academic factor. **DoD:** desks live on the leaderboard with honest verdicts; no new resolution path (S3 untouched).
+- **D4 — Event-window selective abstention (storage-day).** *maps-to:* the queued selective-abstention quick-win + C3's surprise proxy. *status:* BUILD. *depends-on:* C3 (31a surprise proxy + real storage history). *effort:* M.
+  Weekly features are stale except on release day; EIA storage Thursdays have a documented announcement effect in NG. Test the sharp question only: *conditional on a large surprise vs the 5-yr norm, is the same/next-day move predictable?* The system abstains 4 days a week and emits a view only in the event window, carrying its own conditional calibration readout. **Pre-registered gate:** conditional hit-rate clears the Wilson bar vs 0.50 on event days only (multiplicity-honest — one pre-declared window, not a scan). **DoD:** S4 verdict; if PASS, ships as an abstaining view, never an always-on signal.
+- **D5 — Weather degree-day data collection (start the clock now).** *maps-to:* the one causally-forward NG demand driver; C3b's preferred feature. *status:* ACTIVATE (collection), BUILD later (validation). *depends-on:* nothing. *effort:* S (collection).
+  HDD/CDD **forecasts** cannot be backtested without an archive of what was forecast *at the time* — so validation is impossible until history accumulates. Land a tiny scheduled fetch (NOAA/CPC degree-day outlooks, free; the NWS adapter pattern) persisting forecasts + vintages now; validate after ~2 seasons. **DoD (collection):** idempotent scheduled persist with vintage stamps; explicitly labeled `collecting — unvalidatable yet` in `MODEL_DILIGENCE.md` so the claim can't outrun the data.
 
 ---
 
@@ -105,10 +127,17 @@ F0 ─┬─ F1 ─── A2 ───────────────┐
    B1 ──────┼── B2 ── B4        │  (A2 independent; slot before/with B)
             │                   │
             └── B5 (after B1–B2 stable)
-   B1 ── C3 ── C3b
+   B1 ── C3 ──┬── C3b (conditional on 31b PASS)
+              ├── C3-prod (31d, separate promotion — issue #13)
+              ├── D2 ── D3
+              └── D4
+   D1 (independent — extends the validated vol edge)
+   D5 (independent — data collection only; validation waits on the archive)
 ```
 
-**Critical path:** F0 → F1 → B3 → B1 → B2 → B4 → C3 → C3b.
+**Critical path:** F0 → F1 → B3 → B1 → B2 → B4 → C3 (31a.0 → 31a → 31b) → C3-prod → D1 → D2 → D3.
+**Stage D ordering:** D1 first after C3 (highest expected value, independent of 31b's verdict);
+D2 → D3 next; D4 opportunistic once 31a lands; D5 collection starts anytime (S-effort, parallel-safe).
 **Legitimately parallel (disjoint files, per S1):** F2, A1, A3 (docs/content/GTM) alongside any code phase; B5 may overlap C3 only if file-disjoint and WIP discipline holds.
 **Opportunistic (pull in only when file-disjoint and slack exists):** Phase 29 charting differentiators (+ TradingView UDF), scenario-fidelity momentum shocks, 30c regime-conditional vol, selective abstention (only after C3).
 **Deferred with re-entry triggers (not killed):** Phase 27 concierge copilot (re-enter after Stage B + a partner asks; build it as an explain-only agent over the proprietary substrate, never advisory); Databento/CME tick feed (a paying customer needs intraday); mobile responsive pass (partner demand); calibrated-consensus meta-signal (year-2, needs scale).
@@ -182,5 +211,13 @@ Sequenced for stability and leverage; each is small and self-contained:
 ## 9. Summary (paste-ready for Claude Code)
 
 > **Goldeneye master build plan — single SOT, stability-first.** Supersede the three prior roadmaps (banner + `docs/archive/` + a new `docs/README.md` index); `HANDOFF.md` stays the living-state log pointing here; `MODEL_DILIGENCE.md` stays the claims SOT. Stability doctrine governs every phase: WIP=1 primary thread promoted before the next, full `pnpm health` gate, look-ahead-safety invariant + cheating-model proof, honest-gate (pre-registered acceptance + provenance, bench-and-say-so on failure), test-lock validated claims, a claims gate so no UI/site surface ever outruns the code, docs-in-commit, two-lane promotion. Build order is dependency-strict: **Stage F** (promote 30d → fix+CI-lock the contracts → reconcile docs) → **Stage A** (site↔code, honest derived confidence, validation page) → **Stage B, the moat** (schedule the built auto-resolution → finish accounts/per-user scoping → surface the per-analyst skill-vs-luck scorecards → immutable decision/audit ledger + observability → make the engine per-asset and add a second asset class) → **Stage C** (real COT/EIA feature-history ingestion = Phase 31, validating or honestly retiring the directional models → conditional trained model). The moat is already built — Stage B is mostly *activation*, not new code. Charting, the agentic copilot, tick feed, and mobile are parked with explicit re-entry triggers; quick-wins stay opportunistic under WIP discipline. Each ACTIVATE/BUILD item becomes one `/plan` session → one committed `docs/PHASE_*_PLAN.md` (template in §7.2) before code, gated by the universal DoD in §7.4. Start with: (1) F0+F1, (2) A2, (3) B3.
+
+> **Addendum 2026-07-24:** Stages F/A/B are complete and promoted. Stage C is scoped via
+> `PHASE_31_PLAN.md` **v2** (code-audit-corrected: 31a.0 pre-fixes → 31a backfill → 31b
+> pre-registered verdict; 31c conditional; C3-prod/31d resolves issue #13 separately). A new
+> **Stage D — edge expansion** follows the platform's proven skill (vol) and the commodity
+> risk-premia literature: D1 implied-vs-realized vol, D2 carry/term-structure, D3 cross-sectional
+> systematic desks, D4 storage-day selective abstention, D5 weather-forecast archival. Every D
+> item is gate-first (S4) — a hypothesis to test honestly, never a promised edge.
 
 *Lineage: consolidates `BUILD_ROADMAP.md`, `ROADMAP.md`, `CALIBRATION_ROADMAP.md`; aligned to the strategy realignment; grounded in the technical DD audit at commit `2c5daad`.*
