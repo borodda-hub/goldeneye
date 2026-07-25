@@ -2,7 +2,7 @@
 
 _Last updated: 2026-07-25. Read this first to pick up where we left off._
 
-## Most recent: Phase 31a SHIPPED on `feat/phase-31a-backfill` — real 10y COT+EIA history in the dev DB, all gates met
+## Most recent: Phase 31a SHIPPED + MERGED TO DEVELOP (`develop == origin/develop == 953e23a`, PR #18; CI green on the PR and the develop push, 8 jobs). Master promotion = owner call (master at `714b7bc`). Real 10y COT+EIA history in the dev DB, all gates met.
 
 Per `docs/PHASE_31_PLAN.md §31a status` (full closeout there). Highlights:
 - **Data landed + gates met:** `cot_reports` = 522 real weekly reports/symbol × 6 markets
