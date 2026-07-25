@@ -114,6 +114,7 @@ def data_provenance_caveat() -> str:
     illustrative. Per `docs/MODEL_DILIGENCE.md` — no claim (including a
     self-deprecating one) without provenance.
     """
+    from apps.api.services.feature_provenance import cached_feature_provenance
     from apps.api.src.settings import settings
 
     narrative = (
@@ -123,9 +124,28 @@ def data_provenance_caveat() -> str:
     )
     market_real = settings.adapter_market.strip().lower() not in ("", "mock")
     data = "delayed real market prices" if market_real else "delayed/seeded market data"
+    # 31d: the positioning/storage clause is OBSERVED-derived (what the DB
+    # actually holds — issue #13's configured≠observed lesson), refreshed at
+    # boot + by the feature-refresh scheduler. No observation yet → the
+    # conservative wording; stale-real also reads as not-real upstream.
+    prov = cached_feature_provenance()
+    if prov is not None and prov.cot_real and prov.storage_real:
+        alt = "positioning/storage inputs are real published CFTC/EIA data"
+    elif prov is not None and prov.storage_real:
+        alt = (
+            "storage inputs are real EIA data; positioning inputs are "
+            "illustrative"
+        )
+    elif prov is not None and prov.cot_real:
+        alt = (
+            "positioning inputs are real CFTC data; storage inputs are "
+            "illustrative"
+        )
+    else:
+        alt = "some positioning/storage inputs are illustrative"
     return (
-        f"{narrative[0].upper()}{narrative[1:]} over {data}; some positioning/"
-        "storage inputs are illustrative. Research only."
+        f"{narrative[0].upper()}{narrative[1:]} over {data}; {alt}. "
+        "Research only."
     )
 
 
