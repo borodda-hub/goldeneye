@@ -24,9 +24,10 @@ Built in three gated phases per the owner-approved plan:
 
 Gates: `pnpm health` green (990 backend incl. 5 drift-lock tests / 424 web incl. new vitest).
 `MASTER_PLAN.md` A3 marked SHIPPED — **Stage A is now fully complete.**
-**On promotion:** verify prod `goldeneyeterminal.com/validation` renders with live numbers +
-`/v1/validation` answers (Railway migrates 012/013 on boot; the archives card shows real
-counts as prod ticks accumulate).
+**✅ PROD VERIFIED 2026-07-26:** `/v1/validation` live (Railway applied migrations 012/013 on
+boot) and `goldeneyeterminal.com/validation` renders the page; the archives card already shows
+**real accumulation — 2 weather + 2 curve vintage days** from the prod scheduler. A3 closed
+end-to-end; **Stage A complete.**
 
 ## Most recent: **STAGE D SWEPT — all testable items probed under pre-registered gates; no new edge crowned; two archives now accumulate toward every re-entry.**
 
