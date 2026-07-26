@@ -128,5 +128,19 @@ what the tie-breaker means — decided now, before the run:
 - No third outcome; no re-tuning; the equity pair gets no special
   treatment (the tercile machinery is scale-free by construction).
 
-### Revisit result (filled after the run)
-See below.
+### Revisit result — ⬆️ **UPGRADED: PARTIAL → PROMISING** (run 2026-07-25, per the rule above)
+
+(SPY, ^VIX), 2015-08 → 2026-06, n=549 weekly, n_eff ≈ 131:
+- **G0 ✅:** premium +3.28 vol-pts, positive 82% of weeks.
+- **G1 ✅ (strongest yet):** our har_log beats VIX as an RV predictor —
+  MAE 5.41 vs 6.15, paired **−0.73 ± 0.34 (>2 SE)**.
+- **G2 ✅:** monotone terciles +4.62 → +2.50 → +2.31; low−high
+  **+2.32 ± 2.07 (>1 SE)**.
+
+**G2 now passes 2-of-3 (crude + equities), consistent direction; gold is
+the odd one out. Per the pre-registered rule: PROMISING → schedule a D1b
+design review.** Still NOT a validated edge — G1 is not universal and the
+EWMA fragility stands; any product surface (a "vol rich/cheap" research
+view) must carry its own pre-registered gate before shipping. The A3
+validation page should present exactly this status: promising, tested,
+not crowned.
