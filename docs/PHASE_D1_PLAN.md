@@ -111,3 +111,22 @@ Sample: 2015-08 → 2026-06, 549 weekly Friday decisions per pair, n_eff ≈ 131
   (e.g. ^VIX/SPY via the identical harness — free), (b) ~2 more years of
   data on the same pre-registered gate, unchanged. The probe re-runs in
   one command; the gate must NOT be re-tuned to fit this sample.
+
+## D1 revisit — trigger (a) exercised: add (SPY, ^VIX) — interpretation pre-registered BEFORE the run (2026-07-25)
+
+The third pair runs through the **identical harness** (same PMAP, same
+walk-forward terciles, same overlap-scaled SEs, har_log primary). The
+original 2-pair verdict above stands untouched; this section only resolves
+what the tie-breaker means — decided now, before the run:
+
+- **G2 passes on (SPY,^VIX) → 2-of-3 with consistent direction:** upgrade
+  PARTIAL → **PROMISING** — schedule a D1b *design review* (still NOT a
+  validated edge: G1 remains unmet and the EWMA fragility stands; any
+  product surface needs its own gate).
+- **G2 fails on (SPY,^VIX) → 1-of-3:** downgrade the crude cell to
+  **likely noise**; park D1 until trigger (b), full stop.
+- No third outcome; no re-tuning; the equity pair gets no special
+  treatment (the tercile machinery is scale-free by construction).
+
+### Revisit result (filled after the run)
+See below.
