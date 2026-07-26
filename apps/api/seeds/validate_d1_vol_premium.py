@@ -37,6 +37,10 @@ from apps.api.adapters.market.yahoo_delayed import (  # noqa: E402
 from apps.api.services.models.vol_range import _sigma_path  # noqa: E402
 
 PAIRS = [("USO", "^OVX"), ("GLD", "^GVZ")]
+# Revisit trigger (a), interpretation pre-registered in PHASE_D1_PLAN.md
+# BEFORE the run: the third pair is a tie-breaker printed separately — the
+# original 2-pair verdict computation above stays untouched.
+REVISIT_PAIRS = [("SPY", "^VIX")]
 H_TDAYS = 21  # matches the indices' 30-calendar-day tenor
 ANN = float(np.sqrt(252.0))
 WARMUP_CLOSES = 260  # estimator stability before the first decision
@@ -199,6 +203,48 @@ async def main() -> None:
             if primary:
                 gate_g1[und_t] = r["g1_passes"]
                 gate_g2[und_t] = bool(r["g2"] and r["g2"]["passes"])
+
+    # ── Revisit tie-breaker (SPY, ^VIX) — har_log only, printed separately ──
+    print("\n" + "=" * 92)
+    print("D1 REVISIT — tie-breaker pair(s), har_log (interpretation "
+          "pre-registered in PHASE_D1_PLAN.md)")
+    print("=" * 92)
+    revisit_g2: dict[str, bool] = {}
+    for und_t, iv_t in REVISIT_PAIRS:
+        for t in (und_t, iv_t):
+            if t not in data:
+                data[t] = await _fetch(t)
+                print(f"fetched {t}: {len(data[t])} closes")
+        r = _run_pair(data[und_t], data[iv_t], ESTIMATORS[0])
+        if r is None:
+            print(f"{und_t}/{iv_t}: insufficient data")
+            continue
+        print(f"\n{und_t} vs {iv_t}  ({r['span'][0]} -> {r['span'][1]}, "
+              f"n={r['n']} weekly, n_eff~{r['n_eff']})")
+        print(f"  G0 premium: mean(IV - RV_next) = {r['g0_mean_prem'] * 100:+.2f} "
+              f"vol-pts, positive {r['g0_share'] * 100:.0f}% of weeks")
+        print(f"  G1: MAE(ours)={r['mae_f'] * 100:.2f} vs MAE(IV)="
+              f"{r['mae_iv'] * 100:.2f}; d={r['g1_delta'] * 100:+.3f} +/- "
+              f"{r['g1_se'] * 100:.3f} -> "
+              f"{'BEATS IV' if r['g1_passes'] else 'does NOT beat IV'}")
+        for name in ("low", "mid", "high"):
+            t3 = r["terciles"][name]
+            if t3:
+                print(f"    {name:<5} mean={t3[0] * 100:+.2f} +/- {t3[1] * 100:.2f}  n={t3[2]}")
+        if r["g2"]:
+            print(f"    low-high = {r['g2']['diff'] * 100:+.2f} +/- "
+                  f"{r['g2']['se'] * 100:.2f}; monotone="
+                  f"{'YES' if r['g2']['monotone'] else 'NO'}  -> "
+                  f"{'PASSES' if r['g2']['passes'] else 'fails'}")
+        revisit_g2[und_t] = bool(r["g2"] and r["g2"]["passes"])
+    hits3 = sum(1 for u, _ in PAIRS if gate_g2.get(u, False)) + sum(
+        1 for v in revisit_g2.values() if v
+    )
+    total3 = len(PAIRS) + len(REVISIT_PAIRS)
+    print(f"\n  REVISIT RULE: G2 {hits3}/{total3} -> "
+          + ("UPGRADE PARTIAL -> PROMISING (D1b design review; still not a "
+             "validated edge)" if hits3 >= 2 else
+             "DOWNGRADE crude cell to LIKELY NOISE; park until trigger (b)"))
 
     g1_all = all(gate_g1.get(u, False) for u, _ in PAIRS)
     g2_hits = sum(1 for u, _ in PAIRS if gate_g2.get(u, False))
