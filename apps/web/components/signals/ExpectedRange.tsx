@@ -3,6 +3,7 @@
 import type { VolEstimator } from "@/components/signals/SignalViewControls";
 import type { InstrumentRow } from "@/lib/api";
 import { useInstruments, useRangeForecast } from "@/lib/queries";
+import Link from "next/link";
 
 interface Props {
   symbol: string;
@@ -123,7 +124,13 @@ export function ExpectedRange({ symbol, estimator = "har_log" }: Props) {
         <span className="text-up">ⓘ</span> Range only — no directional (up/down)
         claim. The 80% band is the calibrated surface (coverage measured
         walk-forward, not guaranteed); the central vol level is not a reliable
-        point forecast. This is the measured edge the directional call lacks.
+        point forecast. This is the measured edge the directional call lacks.{" "}
+        <Link
+          href="/validation"
+          className="text-accent hover:text-accent-bright"
+        >
+          How we validate →
+        </Link>
       </p>
     </div>
   );
