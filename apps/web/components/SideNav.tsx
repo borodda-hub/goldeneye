@@ -6,6 +6,7 @@ import {
   Gauge,
   LayoutDashboard,
   type LucideIcon,
+  Microscope,
   NotebookPen,
   Radar,
   ScrollText,
@@ -24,6 +25,9 @@ export const NAV_ITEMS: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: "/ledger", label: "Ledger", Icon: ScrollText },
   { href: "/paper", label: "Paper Trading", Icon: Wallet },
   { href: "/calibration", label: "Calibration", Icon: Gauge },
+  // The two honesty surfaces sit together: Calibration ("how good are your
+  // decisions") and Validation ("how good are our models").
+  { href: "/validation", label: "Validation", Icon: Microscope },
   { href: "/admin", label: "Admin", Icon: Server },
 ];
 

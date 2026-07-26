@@ -77,8 +77,8 @@ export const DASHBOARD_TOUR: WalkthroughStep[] = [
   {
     id: "side-nav",
     targetSelector: 'nav[class*="border-r"]',
-    title: "Six more screens",
-    body: "The rest of the terminal — Chart, Signal Lab, Scenario Lab, Journal, Paper Trading, Calibration, Admin. We'll visit the headline feature on each.",
+    title: "The rest of the terminal",
+    body: "Chart, Signal Lab, Scenario Lab, Journal, Ledger, Paper Trading, Calibration, Validation, Admin. We'll visit the headline feature on each.",
     side: "right",
     routeRequired: "/dashboard",
   },
@@ -141,6 +141,16 @@ export const DASHBOARD_TOUR: WalkthroughStep[] = [
     body: "Reliability diagram across your resolved journal entries: claimed conviction vs actual hit rate. The DQ Coach panel synthesizes per-bucket patterns — what wins, what fails, one actionable suggestion per band.",
     side: "left",
     routeRequired: "/calibration",
+  },
+
+  // ── Validation ────────────────────────────────────────────────
+  {
+    id: "validation",
+    targetSelector: '[data-tour="validation-shell"]',
+    title: "How We Validate",
+    body: "Every claim the models make, with its verdict and data provenance — including the failures. Pre-registered gates, walk-forward tests, and live calibration numbers the page doesn't control.",
+    side: "center",
+    routeRequired: "/validation",
   },
 
   // ── Farewell ──────────────────────────────────────────────────

@@ -1004,3 +1004,40 @@ export async function getChartSeasonality(params: {
   if (params.years) q.set("years", String(params.years));
   return apiFetch(`/v1/chart/seasonality?${q.toString()}`);
 }
+
+// ── Validation (Phase A3 — the "How We Validate" provenance ledger) ────────
+
+export type ValidationVerdict =
+  | "edge"
+  | "no_edge"
+  | "promising"
+  | "insufficient"
+  | "collecting"
+  | "benched"
+  | "methodology"
+  | "unvalidated";
+
+export interface ValidationLedgerRow {
+  key: string;
+  claim: string;
+  verdict: ValidationVerdict;
+  provenance: string;
+  summary: string;
+  evidence: string;
+  rerun: string | null;
+  gate_ref: string;
+  updated: string;
+}
+
+export interface ValidationResponse {
+  rows: ValidationLedgerRow[];
+  archives: {
+    weather_vintage_days: number;
+    curve_vintage_days: number;
+  };
+  generated_at: string;
+}
+
+export async function getValidation(): Promise<ValidationResponse> {
+  return apiFetch("/v1/validation");
+}
