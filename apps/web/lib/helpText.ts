@@ -78,6 +78,16 @@ export const HELP = {
     "Overlays each year's price on a shared Jan–Dec axis so you can compare seasonal patterns.",
   indicators:
     "Add studies like moving averages, RSI, MACD, or Bollinger Bands to the chart.",
+  // ── Validation ─────────────────────────────────────────────
+  preRegistered:
+    "The pass/fail criteria for each test are committed to the code repository before the test is run, so results can't move the goalposts afterward.",
+  walkForward:
+    "Every prediction is made using only data that existed at that moment — no peeking at the future. Tests in CI guard this invariant.",
+  provenance:
+    "The data each claim was tested on: real out-of-sample market data, synthetic seed data, or 'collecting' when the needed history doesn't exist yet.",
+  realOos:
+    "Real out-of-sample: tested walk-forward on real market data the model never fit. The only provenance that counts as evidence of an edge.",
+  nEff: "Effective sample size. Overlapping test windows share information, so significance is judged on the smaller non-overlapping count, not the raw one.",
 } as const;
 
 export type HelpKey = keyof typeof HELP;

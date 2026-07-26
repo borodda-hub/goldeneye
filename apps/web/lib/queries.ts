@@ -39,6 +39,7 @@ import {
   getThesisSeed,
   getTickerNews,
   getTickerQuotes,
+  getValidation,
   listJournalEntries,
   listPaperTrades,
   patchJournalEntry,
@@ -296,6 +297,14 @@ export function useRangeForecast(
     queryFn: () => getRangeForecast({ symbol, horizon, estimator }),
     staleTime: 30_000,
     refetchInterval: 60_000,
+  });
+}
+
+export function useValidation() {
+  return useQuery({
+    queryKey: ["validation"],
+    queryFn: () => getValidation(),
+    staleTime: 5 * 60_000,
   });
 }
 

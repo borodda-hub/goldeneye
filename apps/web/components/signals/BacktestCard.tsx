@@ -3,6 +3,7 @@
 import { HelpTip } from "@/components/HelpTip";
 import { useBacktestSummary, useRunBacktest } from "@/lib/queries";
 import { Gauge } from "lucide-react";
+import Link from "next/link";
 
 interface ModelSummary {
   name: string;
@@ -195,7 +196,13 @@ export function BacktestCard({ symbol = "NG" }: BacktestCardProps = {}) {
       )}
 
       <div className="px-3 py-1 text-[10px] font-mono text-ink-4 border-t border-line-1">
-        Honest backtest · look-ahead-safe · 50% line = coin-flip baseline
+        Honest backtest · look-ahead-safe · 50% line = coin-flip baseline ·{" "}
+        <Link
+          href="/validation"
+          className="text-accent hover:text-accent-bright"
+        >
+          how we validate →
+        </Link>
       </div>
     </div>
   );

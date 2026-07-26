@@ -67,8 +67,7 @@ Four stages, strictly dependency-ordered. Each item lists: **maps-to** (prior pl
   Site + in-app copy match the code: drop "Prophet," lead with the decision/calibration story over the directional hero, honest data labeling (real vs delayed/seeded). **DoD:** S6 claims gate passes on every public + in-app surface.
 - **A2 — Honest derived confidence.** *maps-to:* CALIBRATION P4 / DD risk R4. *status:* BUILD. *depends-on:* F1. *effort:* S.
   Replace the hardcoded LLM-envelope `"medium"` with confidence derived from ensemble agreement + vol-band width (inputs already exist in `ensemble.py`). **DoD:** no hardcoded confidence on LLM outputs; values are explainable; gate green; tests added.
-- **A3 — Validation page.** *maps-to:* new. *status:* BUILD (content). *depends-on:* —. *effort:* S.
-  Externalize `MODEL_DILIGENCE.md` into a public "how we validate" page (honesty as marketing). **DoD:** page published; matches the provenance ledger.
+- **A3 — Validation page.** *maps-to:* new. *status:* ✅ **SHIPPED 2026-07-26** (plan `PHASE_A3_PLAN.md`). `/validation` in-app page (thesis → method strip → the 19-row provenance ledger → live-proof strip → reproduce-it footer) backed by `GET /v1/validation`, **CI-drift-locked to `MODEL_DILIGENCE.md`** (edit either side alone and the build fails — the DoD's "matches the provenance ledger" is enforced by test, not review); landing §05 + cover CTA + cross-links from every calibrated readout; the stale "Prophet"/"hit rates are honest" landing copy corrected (A1 residue). **DoD met:** page published, ledger-locked.
 
 ### Stage B — Moat / activate the calibration platform *(the defensible core; mostly activation, not new build)*
 

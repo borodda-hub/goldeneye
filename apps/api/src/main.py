@@ -46,6 +46,7 @@ from apps.api.routers import (  # noqa: E402
     signals,
     thesis,
     ticker,
+    validation,
 )
 from apps.api.services.safety import SafetyViolation  # noqa: E402
 
@@ -137,6 +138,7 @@ app.include_router(indicators.router)
 app.include_router(fundamentals.router)
 app.include_router(positioning.router)
 app.include_router(patterns.router)
+app.include_router(validation.router)
 
 
 @app.get("/v1/health")

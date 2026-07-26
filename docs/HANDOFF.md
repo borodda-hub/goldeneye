@@ -1,6 +1,32 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-07-25 (late night). Read this first to pick up where we left off._
+_Last updated: 2026-07-26. Read this first to pick up where we left off._
+
+## Most recent: **PHASE A3 SHIPPED — the Validation Page** (`feat/phase-a3-validation`; plan `PHASE_A3_PLAN.md`)
+
+Built in three gated phases per the owner-approved plan:
+- **A3.1 backend:** `services/validation_ledger.py` (19 structured rows, failures first-class)
+  + `GET /v1/validation` (+ vintage-archive day counts) + **the drift-lock**
+  (`tests/test_validation_ledger.py`: doc-anchor uniqueness, verdict-marker consistency, row
+  parity vs `MODEL_DILIGENCE.md` — proven red→green; the first red run itself caught a weak
+  marker). Contracts regenerated hermetically; parity OK.
+- **A3.2 page:** `/validation` — serif thesis ("We publish what our models *can't* do."),
+  method strip, THE LEDGER (full badge vocabulary, no_edge at full weight), live-proof strip
+  (live range coverage; Wilson desk verdicts w/ honest account-gated fallback; archive
+  counts), SampleDeskBanner (mandatory), reproduce-it footer. Nav position 9 (pairs with
+  Calibration), tour step + stale tour copy fixed, 5 new HelpTip keys. **Visually verified
+  (Playwright 390/768/1440): rendered exactly to design; dev DB migrated to 013 en route.**
+- **A3.3 landing + spokes:** new landing **"05 · How we validate"** (condensed 5-row ledger,
+  sections renumbered 06/07), cover-row GhostCta, the **A1 copy fixes** (stale "Prophet"
+  lineup + "the hit rates are honest" overclaim → honest calibration framing), and
+  "How we validate →" links from ExpectedRange, DeskCalibrationCard, and BacktestCard.
+  S6 forbidden-phrase sweep clean (only the sanctioned "not guaranteed" construction).
+
+Gates: `pnpm health` green (990 backend incl. 5 drift-lock tests / 424 web incl. new vitest).
+`MASTER_PLAN.md` A3 marked SHIPPED — **Stage A is now fully complete.**
+**On promotion:** verify prod `goldeneyeterminal.com/validation` renders with live numbers +
+`/v1/validation` answers (Railway migrates 012/013 on boot; the archives card shows real
+counts as prod ticks accumulate).
 
 ## Most recent: **STAGE D SWEPT — all testable items probed under pre-registered gates; no new edge crowned; two archives now accumulate toward every re-entry.**
 

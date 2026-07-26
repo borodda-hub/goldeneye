@@ -43,11 +43,12 @@ function PrimaryCta({
 function GhostCta({
   href,
   children,
-}: { href: string; children: React.ReactNode }) {
+  className = "",
+}: { href: string; children: React.ReactNode; className?: string }) {
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-eyebrow border border-line-2 px-5 py-3 text-ink-2 hover:bg-surface-2 hover:text-ink-1 transition-colors"
+      className={`inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-eyebrow border border-line-2 px-5 py-3 text-ink-2 hover:bg-surface-2 hover:text-ink-1 transition-colors ${className}`}
     >
       {children}
     </Link>
@@ -122,9 +123,10 @@ export default function LandingPage() {
             <GoldItalic>distributions</GoldItalic>, not directions.
           </p>
 
-          <div className="flex items-center gap-3 mt-8">
+          <div className="flex flex-wrap items-center gap-3 mt-8">
             <PrimaryCta href="/dashboard">Enter Terminal →</PrimaryCta>
             <GhostCta href="#thesis">Read the thesis</GhostCta>
+            <GhostCta href="/validation">How we validate</GhostCta>
           </div>
 
           <span className="font-mono text-[11px] tracking-[0.32em] uppercase text-accent mt-12">
@@ -301,10 +303,57 @@ export default function LandingPage() {
 
       <GoldRule className="mx-8 md:mx-32 max-w-[1400px] xl:mx-auto" />
 
+      {/* ── How we validate ────────────────────────────────────────── */}
+      <section className="px-8 md:px-32 py-32 max-w-[1400px] mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+          <div className="md:col-span-5 flex flex-col gap-6">
+            <Eyebrow>05 · How we validate</Eyebrow>
+            <h2 className="font-serif font-light text-[40px] md:text-[48px] leading-[1.05] tracking-[-0.015em]">
+              We publish what our models <GoldItalic>can’t</GoldItalic> do.
+            </h2>
+            <p className="text-base leading-relaxed text-ink-2 max-w-[60ch]">
+              Every predictive claim carries a verdict from a pre-registered,
+              walk-forward test on real data — including the failures, which
+              stay published. One claim has earned an edge; the rest of the
+              ledger says so plainly.
+            </p>
+            <GhostCta href="/validation" className="self-start">
+              Read the full ledger →
+            </GhostCta>
+          </div>
+          <div className="md:col-span-7 flex flex-col border-t border-line-1">
+            {VALIDATION_SAMPLE.map((row) => (
+              <div
+                key={row.claim}
+                className="flex flex-col gap-1 border-b border-line-1 py-4 sm:flex-row sm:items-baseline sm:gap-4"
+              >
+                <span
+                  className={`inline-block w-fit whitespace-nowrap rounded-sm border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${row.cls}`}
+                >
+                  {row.badge}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm text-ink-1">{row.claim}</p>
+                  <p className="mt-0.5 text-[12px] leading-relaxed text-ink-3">
+                    {row.result}
+                  </p>
+                </div>
+              </div>
+            ))}
+            <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-4">
+              Condensed — the terminal renders the full ledger with live
+              calibration numbers
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <GoldRule className="mx-8 md:mx-32 max-w-[1400px] xl:mx-auto" />
+
       {/* ── Architecture badge row ─────────────────────────────────── */}
       <section className="px-8 md:px-32 py-24 max-w-[1400px] mx-auto">
         <div className="flex flex-col gap-6">
-          <Eyebrow>05 · Built to last</Eyebrow>
+          <Eyebrow>06 · Built to last</Eyebrow>
           <h3 className="font-serif text-[28px] md:text-[32px] leading-[1.08] tracking-[-0.01em] text-ink-1 max-w-3xl">
             Production-grade infrastructure with{" "}
             <GoldItalic>research-grade transparency</GoldItalic>.
@@ -341,7 +390,7 @@ export default function LandingPage() {
           }}
         />
         <div className="relative z-10 flex flex-col items-center text-center gap-8 max-w-4xl mx-auto">
-          <Eyebrow>06 · The Ask</Eyebrow>
+          <Eyebrow>07 · The Ask</Eyebrow>
           <p
             className="font-serif font-light text-[40px] md:text-[64px] leading-[1.05] tracking-[-0.02em]"
             style={{ fontVariationSettings: '"opsz" 144, "SOFT" 40' }}
@@ -458,12 +507,12 @@ const CAPABILITIES = [
   {
     tag: "Explainable Forecasts",
     title:
-      "Four models, weighted reasoning steps, an honest hit-rate against history.",
-    body: "The ensemble reads weather, storage, positioning, and price-only signals. Each model's directional call carries its supporting + contradicting factors with weights. A backtest engine replays the same models against real history under strict look-ahead controls — the hit rates are honest.",
+      "Four models, weighted reasoning steps — and a public record of what they can't do.",
+    body: "The ensemble reads storage, positioning, and price signals; every call carries its supporting and contradicting factors with weights. A backtest engine replays the same models against real history under strict look-ahead controls — and where testing found no directional edge, the terminal says so and frames direction as views, never probabilities. The validated edge is the calibrated price-range band.",
     bullets: [
-      "Moving Average · Volatility Regime · Prophet · Factor Composite",
+      "Moving Average · Holt Trend · Factor Composite · Logistic Regression",
       "Look-ahead-safe replay with cheating-model property tests",
-      "Per-model hit rates displayed inline with the live signal",
+      "Every verdict published on the validation ledger — failures included",
     ],
   },
   {
@@ -485,6 +534,47 @@ const CAPABILITIES = [
       "Auto-generated headline copy when calibration drifts ≥ 5 pp",
       "LLM coaching with explicit pattern-not-position framing",
     ],
+  },
+];
+
+// Condensed from docs/MODEL_DILIGENCE.md — the terminal's /validation page
+// renders the full drift-locked ledger with live calibration numbers.
+// Badge classes mirror components/validation/VerdictTag.tsx.
+const VALIDATION_SAMPLE = [
+  {
+    badge: "edge · real-oos",
+    cls: "border-up/40 bg-up/10 text-up",
+    claim: "The 80% price-range band is calibrated",
+    result:
+      "Walk-forward coverage 78–81% across six commodities on ~10 years of real prices.",
+  },
+  {
+    badge: "no edge · tested",
+    cls: "border-down/40 bg-down/10 text-down",
+    claim: "Directional prediction",
+    result:
+      "Every directional model tested on real data — none earned a claim. Direction ships as views, never probabilities.",
+  },
+  {
+    badge: "no edge · tested",
+    cls: "border-down/40 bg-down/10 text-down",
+    claim: "Curve carry as a timing signal",
+    result:
+      "Adequately powered, pre-registered — and it failed. The verdict is published, not buried.",
+  },
+  {
+    badge: "promising",
+    cls: "border-conf-medium/40 bg-conf-medium/10 text-conf-medium",
+    claim: "Vol-premium timing vs implied vol",
+    result:
+      "Passes on 2 of 3 asset pairs. Not crowned — it earns a surface only by passing its own gate.",
+  },
+  {
+    badge: "collecting",
+    cls: "border-cyan/40 bg-cyan/10 text-cyan",
+    claim: "Weather & curve feature archives",
+    result:
+      "Untestable claims say so — immutable daily archives accumulate until honest validation is possible.",
   },
 ];
 

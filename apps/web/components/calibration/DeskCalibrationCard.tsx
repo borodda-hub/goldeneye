@@ -3,6 +3,7 @@
 import type { DeskAnalyst, SkillVerdict } from "@/lib/api";
 import { useDeskCalibration } from "@/lib/queries";
 import { Users } from "lucide-react";
+import Link from "next/link";
 
 /** Brier: lower = better-calibrated; 0.25 ≈ a 50/50 coin flip. */
 function brierColor(b: number | null): string {
@@ -152,7 +153,13 @@ export function DeskCalibrationCard() {
         on Luck by design — that's the test working.{" "}
         <span className="text-ink-3">Calibration</span> (Brier on stated
         conviction) separately measures whether confidence is reliable.
-        Descriptive decision-quality diagnostics, not advice.
+        Descriptive decision-quality diagnostics, not advice.{" "}
+        <Link
+          href="/validation"
+          className="text-accent hover:text-accent-bright"
+        >
+          How we validate →
+        </Link>
       </p>
     </section>
   );

@@ -1068,6 +1068,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/validation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Validation */
+        get: operations["get_validation_v1_validation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/health": {
         parameters: {
             query?: never;
@@ -1137,6 +1154,13 @@ export interface components {
              * @enum {string}
              */
             verdict: "skill" | "luck" | "insufficient";
+        };
+        /** ArchivesOut */
+        ArchivesOut: {
+            /** Weather Vintage Days */
+            weather_vintage_days: number;
+            /** Curve Vintage Days */
+            curve_vintage_days: number;
         };
         /** CloseTradeRequest */
         CloseTradeRequest: {
@@ -1353,6 +1377,27 @@ export interface components {
             /** Decisions */
             decisions: components["schemas"]["LedgerDecisionOut"][];
         };
+        /** LedgerRowOut */
+        LedgerRowOut: {
+            /** Key */
+            key: string;
+            /** Claim */
+            claim: string;
+            /** Verdict */
+            verdict: string;
+            /** Provenance */
+            provenance: string;
+            /** Summary */
+            summary: string;
+            /** Evidence */
+            evidence: string;
+            /** Rerun */
+            rerun: string | null;
+            /** Gate Ref */
+            gate_ref: string;
+            /** Updated */
+            updated: string;
+        };
         /** LngExportShock */
         LngExportShock: {
             /**
@@ -1525,6 +1570,17 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** ValidationOut */
+        ValidationOut: {
+            /** Rows */
+            rows: components["schemas"]["LedgerRowOut"][];
+            archives: components["schemas"]["ArchivesOut"];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
         };
         /** WeatherShock */
         WeatherShock: {
@@ -3513,6 +3569,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_validation_v1_validation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationOut"];
                 };
             };
         };
