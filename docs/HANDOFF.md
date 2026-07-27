@@ -1,6 +1,27 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-07-26. Read this first to pick up where we left off._
+_Last updated: 2026-07-27. Read this first to pick up where we left off._
+
+## Most recent: **D1b SHIPPED — the "Vol vs Market" card** (`feat/phase-d1b-vol-premium`; plan `PHASE_D1_PLAN.md §D1b`, gates pre-registered BEFORE build)
+
+- **The claim split held in code:** Layer 1 (a fact — our 1m forecast vs the implied index +
+  walk-forward spread percentile) gated by a LIVE per-request ship-gate (our forecast must not
+  be worse than the market's own as an RV predictor, paired MAE < +1 SE); Layer 2 (tercile
+  premium stats) displayed as tested-not-crowned with n_eff + SE, gold labeled FAILED, link to
+  /validation. **No signal chip / no RICH-CHEAP word** — the percentile gauge is position, not
+  pronouncement.
+- **Drift-lock philosophy on computation:** `services/vol_premium.py::analyze_pair` is the
+  single implementation; `validate_d1_vol_premium.py` is now a thin harness over it (regression
+  run reproduced the recorded verdicts — same conclusions, last-digit drift from one new week);
+  `GET /v1/vol-premium` serves the same math (safety-wrapped; unsupported symbols — NG — return
+  the honest shape, and the card renders NOTHING rather than fabricate).
+- Card sits under ExpectedRange in the vol views (CL/GC/ES only). **Verified by running the
+  app and looking:** dev CL renders live real numbers (our 52.8% vs OVX 61.7%, 18th pct, low
+  tercile active). Hermetic service tests + 4 card vitest; `pnpm health` green (995/428);
+  contracts regenerated, parity OK. Ledger + MODEL_DILIGENCE D1 row updated in sync
+  (drift-lock anchors preserved).
+- **Standing rules recorded:** promotion gate = the ORIGINAL D1 gate on ≥1y new data;
+  demotion = pooled crude+equity tercile spread < 0.5 SE on a re-run → Layer 2 comes off.
 
 ## Most recent: **PHASE A3 SHIPPED — the Validation Page** (`feat/phase-a3-validation`; plan `PHASE_A3_PLAN.md`)
 

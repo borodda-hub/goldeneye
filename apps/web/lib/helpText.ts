@@ -88,6 +88,8 @@ export const HELP = {
   realOos:
     "Real out-of-sample: tested walk-forward on real market data the model never fit. The only provenance that counts as evidence of an edge.",
   nEff: "Effective sample size. Overlapping test windows share information, so significance is judged on the smaller non-overlapping count, not the raw one.",
+  volPremium:
+    "Our walk-forward 1-month volatility forecast next to what the options market is pricing (an implied-vol index on the same underlying). A measured comparison, not a prediction.",
 } as const;
 
 export type HelpKey = keyof typeof HELP;

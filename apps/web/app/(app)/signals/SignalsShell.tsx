@@ -16,6 +16,7 @@ import {
   SignalViewControls,
   type VolEstimator,
 } from "@/components/signals/SignalViewControls";
+import { VolPremiumCard } from "@/components/signals/VolPremiumCard";
 import { useCurrentSignal } from "@/lib/queries";
 import { useChannel } from "@/lib/realtime";
 import { useActiveInstrument } from "@/lib/useActiveInstrument";
@@ -90,7 +91,12 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
 
       {/* Row 1b — THE CALIBRATED EDGE: volatility range (direction has none). */}
       {showRange && (
-        <ExpectedRange symbol={activeSymbol} estimator={estimator} />
+        <>
+          <ExpectedRange symbol={activeSymbol} estimator={estimator} />
+          {/* D1b: implied-vs-forecast comparison — renders only where a free
+              implied-vol index exists (CL/GC/ES); never fabricates one. */}
+          <VolPremiumCard symbol={activeSymbol} />
+        </>
       )}
 
       {/* Row 2 — THE EVIDENCE: the per-model ensemble vote. */}
