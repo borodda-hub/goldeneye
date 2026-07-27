@@ -118,6 +118,7 @@ async def get_summary(
     # AI summary
     market_ctx = {
         "symbol": symbol,
+        "name": instrument.name,
         "last_price": last_price,
         "vol_regime": ensemble.get("vol_regime"),
         "direction": ensemble.get("direction"),

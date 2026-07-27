@@ -78,10 +78,11 @@ async def test_tick_value_is_contract_size_not_10000(asset_class, contract_size,
     assert tv == contract_size  # ES 50 / ZN 1000 — NOT the legacy 10000
 
 
-async def test_existing_commodities_still_pinned_to_legacy_tick():
-    """The deferral guard (#10): existing commodity/metal keep 10000 paper-MTM."""
-    for ac, cs in [("commodity", 1000.0), ("metal", 100.0)]:
+async def test_every_class_resolves_real_contract_size():
+    """Issue #10 CLOSED (demo-polish): the B5-era 10000 pin is gone — every
+    class resolves its real contract_size (CL 1000, GC 100, SI 5000)."""
+    for ac, cs in [("commodity", 1000.0), ("metal", 100.0), ("metal", 5000.0)]:
         instr = SimpleNamespace(asset_class=ac, contract_size=cs)
         with patch.object(paper_engine.instr_repo, "get_by_id", AsyncMock(return_value=instr)):
             tv = await paper_engine._resolve_tick_value(AsyncMock(), None)
-        assert tv == 10_000.0  # pinned, not cs — demo continuity
+        assert tv == cs  # the real multiplier, never the legacy pin

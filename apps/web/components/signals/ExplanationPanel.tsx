@@ -1,5 +1,6 @@
 import type { SafetyEnvelope } from "@/app/(app)/signals/types";
 import { HelpTip } from "@/components/HelpTip";
+import { InlineMarkdown } from "@/components/InlineMarkdown";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 import { FileText } from "lucide-react";
 
@@ -23,7 +24,7 @@ export function ExplanationPanel({ explanation, safety }: Props) {
       </div>
       {explanation ? (
         <p className="min-h-0 flex-1 overflow-y-auto text-sm text-ink-2 leading-relaxed">
-          {explanation}
+          <InlineMarkdown text={explanation} />
         </p>
       ) : (
         <p className="text-sm text-ink-4 italic">

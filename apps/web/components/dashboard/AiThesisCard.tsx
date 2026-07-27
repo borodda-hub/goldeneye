@@ -3,6 +3,7 @@
 import type { AiThesis, Instrument } from "@/app/(app)/dashboard/types";
 import { CollapseToggle } from "@/components/CollapseToggle";
 import { HelpTip } from "@/components/HelpTip";
+import { InlineMarkdown } from "@/components/InlineMarkdown";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 import { useCollapsed } from "@/lib/useCollapsed";
 
@@ -54,7 +55,7 @@ export function AiThesisCard({ instrument, thesis }: Props) {
             <div>
               {hasThesis ? (
                 <p className="text-sm text-ink-2 leading-relaxed">
-                  {thesis.thesis}
+                  <InlineMarkdown text={thesis.thesis} />
                 </p>
               ) : (
                 <p className="text-sm text-ink-4 italic">

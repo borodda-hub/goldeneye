@@ -4,6 +4,7 @@ import type {
 } from "@/app/(app)/dashboard/types";
 import { ConfidenceBar } from "@/components/ConfidenceBar";
 import { HelpTip } from "@/components/HelpTip";
+import { InlineMarkdown } from "@/components/InlineMarkdown";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 import { Compass } from "lucide-react";
 
@@ -71,7 +72,7 @@ export function DirectionalBiasCard({ bias, aiSummary, safety }: Props) {
       {/* Phase U1: the narrative scrolls WITHIN the card instead of spilling
           521px past it (the harness's worst finding — at every width). */}
       <p className="min-h-0 flex-1 overflow-y-auto text-sm text-ink-1-soft leading-relaxed">
-        {aiSummary}
+        <InlineMarkdown text={aiSummary} />
       </p>
 
       <div className="mt-auto shrink-0">

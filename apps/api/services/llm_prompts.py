@@ -84,10 +84,13 @@ def _task_block(task_instructions: str) -> dict[str, Any]:
 def summarize_market_messages(ctx: dict) -> PromptParts:  # type: ignore[type-arg]
     """Build messages for summarize_market.
 
-    Recognized ctx keys: price, intraday_change, vol_regime, storage_delta,
-    storage_vs_5y, cot_mm_change, top_events (list), temp_anomaly. Additional
-    keys are ignored (caller can pass a fuller dict without inflating tokens).
+    Recognized ctx keys: symbol, name, price, intraday_change, vol_regime,
+    storage_delta, storage_vs_5y, cot_mm_change, top_events (list),
+    temp_anomaly. Additional keys are ignored (caller can pass a fuller dict
+    without inflating tokens).
     """
+    symbol = ctx.get("symbol", "?")
+    name = ctx.get("name", symbol)
     price = ctx.get("price", ctx.get("last_price", "N/A"))
     intraday_change = ctx.get("intraday_change", "N/A")
     vol_regime = ctx.get("vol_regime", "unknown")
@@ -101,10 +104,13 @@ def summarize_market_messages(ctx: dict) -> PromptParts:  # type: ignore[type-ar
 
     task_instructions = (
         "Task: summarize_market. Write 2-3 sentences. Lead with the most informative data point. "
-        "Mark inference. Include one caveat."
+        "Mark inference. Include one caveat. "
+        "Refer to the instrument ONLY by the identity given in Inputs — never guess or "
+        "substitute a different commodity name from the price level."
     )
     user_content = (
         "Inputs:\n"
+        f"- Instrument: {symbol} ({name})\n"
         f"- Front-month price: {price}, intraday change: {intraday_change}\n"
         f"- Volatility regime: {vol_regime}\n"
         f"- Storage delta vs consensus: {storage_delta} Bcf; vs 5-year average: {storage_vs_5y} Bcf\n"
@@ -183,6 +189,8 @@ def generate_thesis_messages(ctx: dict) -> PromptParts:  # type: ignore[type-arg
 
 def explain_signal_messages(signal: dict, ctx: dict) -> PromptParts:  # type: ignore[type-arg]
     """Build messages for explain_signal. Caps supporting/contradicting to top-2 per model."""
+    symbol = ctx.get("symbol", "?")
+    name = ctx.get("name", symbol)
     direction = signal.get("direction", "neutral")
     confidence = signal.get("confidence", "low")
     models = signal.get("models", [])
@@ -237,10 +245,13 @@ def explain_signal_messages(signal: dict, ctx: dict) -> PromptParts:  # type: ig
         "Task: explain_signal. Write 3-5 sentences. First sentence states the ensemble view. "
         "Following sentences walk through the strongest supporting factor and the strongest "
         "contradicting factor. Conclude with the confidence band and one caveat about what "
-        "could invalidate."
+        "could invalidate. "
+        "Refer to the instrument ONLY by the identity given in Inputs — never guess or "
+        "substitute a different commodity name from the price level."
     )
     user_content = (
         "Inputs:\n"
+        f"- Instrument: {symbol} ({name})\n"
         f"- Ensemble direction: {direction}, confidence: {confidence}\n"
         f"- Model agreement: {agreement_text}\n"
         f"- Confidence rationale: {rationale_text}\n"

@@ -2,6 +2,7 @@
 
 import { PageHeader } from "@/components/PageHeader";
 import { AlertsList } from "@/components/admin/AlertsList";
+import { ArchiveClocksCard } from "@/components/admin/ArchiveClocksCard";
 import { DataHealthGrid } from "@/components/admin/DataHealthGrid";
 import { EnvironmentBlock } from "@/components/admin/EnvironmentBlock";
 import { ModelHealthGrid } from "@/components/admin/ModelHealthGrid";
@@ -48,11 +49,14 @@ export function AdminShell({
       <DataHealthGrid adapters={health?.adapters ?? []} />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ModelHealthGrid models={health?.models ?? []} />
-        <EnvironmentBlock
-          gitSha={gitSha}
-          buildTime={buildTime}
-          envFlags={envFlags}
-        />
+        <div className="flex flex-col gap-4">
+          <EnvironmentBlock
+            gitSha={gitSha}
+            buildTime={buildTime}
+            envFlags={envFlags}
+          />
+          <ArchiveClocksCard />
+        </div>
       </div>
       <AlertsList alerts={alerts?.alerts ?? []} />
     </div>
