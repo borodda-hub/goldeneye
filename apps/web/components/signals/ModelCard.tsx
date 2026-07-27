@@ -14,11 +14,11 @@ export function ModelCard({ model }: Props) {
 
   return (
     <div
-      className={`card-interactive border border-line-1 bg-surface-1 p-3 flex flex-col gap-2 ${dimmed ? "opacity-60" : ""}`}
+      className={`card-interactive min-w-0 border border-line-1 bg-surface-1 p-3 flex flex-col gap-2 ${dimmed ? "opacity-60" : ""}`}
     >
       {/* Header: model name + horizon */}
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 font-mono text-xs text-ink-2">
+        <span className="flex min-w-0 items-center gap-1.5 truncate font-mono text-xs text-ink-2">
           <Cpu
             size={12}
             strokeWidth={1.5}
@@ -33,7 +33,7 @@ export function ModelCard({ model }: Props) {
       </div>
 
       {/* Direction + confidence + expected pct */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <DirectionChip direction={model.direction} />
         <ConfidenceBar confidence={model.confidence} />
         {model.expected_pct !== null && model.expected_pct !== undefined && (

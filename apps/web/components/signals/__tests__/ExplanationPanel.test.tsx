@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { ExplanationPanel } from "../ExplanationPanel";
 
 const mockSafety = {
@@ -24,15 +24,22 @@ describe("ExplanationPanel", () => {
     expect(screen.getByText(/Explanation unavailable/)).toBeInTheDocument();
   });
 
-  it("renders SafetyEnvelopeNote open — shows caveats", () => {
+  it("SafetyEnvelopeNote is collapsed by default and expands to show caveats", () => {
+    // Phase U3: the envelope starts collapsed (the panel's height goes to
+    // the narrative, which scrolls in-card); caveats are one click away.
     render(<ExplanationPanel explanation="Some text." safety={mockSafety} />);
+    expect(
+      screen.queryByText(/Model outputs are statistical inferences/),
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /as of/i }));
     expect(
       screen.getByText(/Model outputs are statistical inferences/),
     ).toBeInTheDocument();
   });
 
-  it("renders disclaimer text", () => {
+  it("renders disclaimer text when expanded", () => {
     render(<ExplanationPanel explanation="Some text." safety={mockSafety} />);
+    fireEvent.click(screen.getByRole("button", { name: /as of/i }));
     expect(
       screen.getByText(/Goldeneye is a research terminal/),
     ).toBeInTheDocument();

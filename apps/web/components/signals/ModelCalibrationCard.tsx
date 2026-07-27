@@ -41,7 +41,7 @@ function BucketBar({ b }: { b: ModelReliabilityBucket }) {
           ? "underconfident"
           : "calibrated";
   return (
-    <div className="flex items-center gap-2 text-[10px] font-mono">
+    <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono">
       <span className="w-12 text-ink-3 uppercase tracking-widest">
         {b.confidence}
       </span>
@@ -57,12 +57,12 @@ function BucketBar({ b }: { b: ModelReliabilityBucket }) {
           aria-hidden="true"
         />
       </div>
-      <span className="w-24 text-right tabular-nums text-ink-2">
+      <span className="w-20 text-right tabular-nums text-ink-2">
         {pct(b.claimed_prob)}→{pct(actual)}
       </span>
       <span className="w-8 text-right tabular-nums text-ink-4">n={b.n}</span>
       <span
-        className={`w-24 ${
+        className={`w-20 ${
           label === "overconfident"
             ? "text-down"
             : label === "underconfident"
@@ -78,8 +78,8 @@ function BucketBar({ b }: { b: ModelReliabilityBucket }) {
 
 function ModelRow({ m, byRegime }: { m: ModelCalibration; byRegime: boolean }) {
   return (
-    <div className="border border-line-1 bg-surface-1 p-2.5 flex flex-col gap-2">
-      <div className="flex items-baseline justify-between">
+    <div className="min-w-0 border border-line-1 bg-surface-1 p-2.5 flex flex-col gap-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
         <span className="font-mono text-xs text-ink-1">{m.name}</span>
         <span className="font-mono text-[10px] text-ink-3 tabular-nums">
           Brier{" "}
@@ -152,7 +152,7 @@ export function ModelCalibrationCard({ symbol = "NG" }: { symbol?: string }) {
           No backtest forecasts yet — run a backtest to populate calibration.
         </p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 2xl:grid-cols-2">
           {models.map((m) => (
             <ModelRow key={m.name} m={m} byRegime={byRegime} />
           ))}

@@ -74,7 +74,7 @@ export function PaperStatStrip({ open, closed, equity }: Props) {
     v > 0 ? "text-up" : v < 0 ? "text-down" : "text-flat";
 
   return (
-    <div className="flex gap-3">
+    <div className="flex flex-wrap gap-3">
       <Tile
         label="Net Liquidity"
         icon={Wallet}

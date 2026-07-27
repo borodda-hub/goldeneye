@@ -56,7 +56,7 @@ function ShockRow({
   onRemove: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 border border-line-1 bg-surface-1 px-3 py-2">
+    <div className="flex flex-wrap items-center gap-3 border border-line-1 bg-surface-1 px-3 py-2">
       <span className="font-mono text-xs text-ink-2 uppercase tracking-widest w-24 shrink-0">
         {shock.type.replace(/_/g, " ")}
       </span>
