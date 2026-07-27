@@ -22,6 +22,9 @@ _Last updated: 2026-07-27. Read this first to pick up where we left off._
   (drift-lock anchors preserved).
 - **Standing rules recorded:** promotion gate = the ORIGINAL D1 gate on ≥1y new data;
   demotion = pooled crude+equity tercile spread < 0.5 SE on a re-run → Layer 2 comes off.
+- **✅ PROD VERIFIED 2026-07-27:** `/v1/vol-premium?symbol=CL` live (our 52.6% vs OVX 61.5%,
+  17th pct, low bucket, ship_gate true); NG returns the honest `supported:false` shape.
+  **D1b closed end-to-end.**
 
 ## Most recent: **PHASE A3 SHIPPED — the Validation Page** (`feat/phase-a3-validation`; plan `PHASE_A3_PLAN.md`)
 
