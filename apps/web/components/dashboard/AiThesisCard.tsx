@@ -1,9 +1,9 @@
 "use client";
 
-import { InlineMarkdown } from "@/components/InlineMarkdown";
 import type { AiThesis, Instrument } from "@/app/(app)/dashboard/types";
 import { CollapseToggle } from "@/components/CollapseToggle";
 import { HelpTip } from "@/components/HelpTip";
+import { InlineMarkdown } from "@/components/InlineMarkdown";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 import { useCollapsed } from "@/lib/useCollapsed";
 

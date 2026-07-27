@@ -17,7 +17,7 @@ describe("InlineMarkdown", () => {
 
   it("never injects HTML — markup in model output renders as literal text", () => {
     const { container } = render(
-      <InlineMarkdown text={'<img src=x onerror=alert(1)> **<b>bold</b>**'} />,
+      <InlineMarkdown text={"<img src=x onerror=alert(1)> **<b>bold</b>**"} />,
     );
     expect(container.querySelector("img")).toBeNull();
     expect(container.querySelector("b")).toBeNull();

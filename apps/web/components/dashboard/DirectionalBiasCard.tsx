@@ -1,10 +1,10 @@
-import { InlineMarkdown } from "@/components/InlineMarkdown";
 import type {
   DirectionalBias,
   SafetyEnvelope,
 } from "@/app/(app)/dashboard/types";
 import { ConfidenceBar } from "@/components/ConfidenceBar";
 import { HelpTip } from "@/components/HelpTip";
+import { InlineMarkdown } from "@/components/InlineMarkdown";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 import { Compass } from "lucide-react";
 

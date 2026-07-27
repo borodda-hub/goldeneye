@@ -1,8 +1,8 @@
-import { InlineMarkdown } from "@/components/InlineMarkdown";
 import type { ScenarioResult } from "@/app/(app)/scenarios/types";
 import { ConfidenceBar } from "@/components/ConfidenceBar";
 import { DirectionChip } from "@/components/DirectionChip";
 import { HelpTip } from "@/components/HelpTip";
+import { InlineMarkdown } from "@/components/InlineMarkdown";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 import { ClipboardCheck } from "lucide-react";
 

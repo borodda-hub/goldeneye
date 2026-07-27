@@ -51,14 +51,8 @@ function ClockRow({
           <span className="text-ink-4"> / {target}d</span>
         </span>
       </div>
-      <div
-        className="h-1 w-full overflow-hidden bg-line-1"
-        role="progressbar"
-        aria-label={label}
-        aria-valuenow={days ?? 0}
-        aria-valuemin={0}
-        aria-valuemax={target}
-      >
+      {/* Decorative — the "n / target d" text above carries the value. */}
+      <div aria-hidden className="h-1 w-full overflow-hidden bg-line-1">
         <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
       </div>
       <span className="font-mono text-[10px] text-ink-4">{gate}</span>

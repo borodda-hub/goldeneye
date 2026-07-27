@@ -24,7 +24,10 @@ const MIN_RESOLVED = 10;
 const MIN_GAP_PTS = 10;
 
 /** The live overconfidence figure, or null when the data doesn't support one. */
-function useOverconfidenceFigure(): { claimed: number; realized: number } | null {
+function useOverconfidenceFigure(): {
+  claimed: number;
+  realized: number;
+} | null {
   const { data } = useCalibration("NG", 5);
   if (!data) return null;
   // Highest-conviction bucket with a scoreable sample (buckets are ascending).

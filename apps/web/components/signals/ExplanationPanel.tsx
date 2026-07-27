@@ -1,6 +1,6 @@
-import { InlineMarkdown } from "@/components/InlineMarkdown";
 import type { SafetyEnvelope } from "@/app/(app)/signals/types";
 import { HelpTip } from "@/components/HelpTip";
+import { InlineMarkdown } from "@/components/InlineMarkdown";
 import { SafetyEnvelopeNote } from "@/components/SafetyEnvelopeNote";
 import { FileText } from "lucide-react";
 
