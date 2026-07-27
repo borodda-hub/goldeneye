@@ -1,6 +1,33 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-07-27. Read this first to pick up where we left off._
+_Last updated: 2026-07-27 (late). Read this first to pick up where we left off._
+
+## Most recent: **PHASE U COMPLETE — the UI audit is CLEAN: 0 defects across all 10 pages × 7 widths, from a 103-defect baseline** (PRs #28–#31)
+
+Owner directive ("unusable off ultrawide; type illegible; must read premiere") executed in
+four gated steps, each harness-verified:
+- **U0 — the evidence harness** (`pnpm run ui:audit`): Playwright, 10 pages × 390–1920,
+  typed defects (overlap/spill/h-overflow/clip/crush) + screenshots; exit non-zero.
+  **STANDING UI DoD: every future UI PR runs it clean for touched pages.** Baseline: 103.
+- **U1 — structure:** ResizableSplit is CONTAINER-aware (ResizeObserver + render-time px
+  clamping + stacks when panes can't fit); rails re-gated (watchlist ≥2xl, paper ≥xl,
+  `minViewport` prop) with the shell row direction aligned; bias narrative scrolls in-card
+  (was spilling 521px at EVERY width); HeaderRow wraps/truncates; TopBar progressive
+  disclosure (cleared phone h-scroll on ALL pages). Dashboard clean at all widths.
+- **U2 — type:** 10px floor app-wide (53 sub-10px instances promoted, zero remain); ONE
+  canonical card-title idiom (`font-mono text-[11px] uppercase tracking-eyebrow
+  text-accent`) across every card h2/h3; codified in `FRONTEND_COMPONENTS.md §tokens`
+  (+ stale-hex correction). 7/10 pages fully clean.
+- **U3 — sweeps:** signals (responsive ModelGrid; calibration inner grid gated ≥2xl — a
+  viewport-gated `md:grid-cols-2` inside a narrow card was the trap; stacked
+  Explanation/History with in-card scroll), paper (tables `min-w-[600px]` in scroll
+  wrappers), scenarios (responsive gallery + wrapping rows). **FINAL: CLEAN, 70/70 cells.**
+- Contract changes locked in tests: SafetyEnvelopeNote now defaults COLLAPSED on the bias
+  card + ExplanationPanel (one click away; the space goes to the narrative).
+- **Not done (honest):** this pass made the app *correct and consistent* at every width —
+  the U3 "density/hierarchy per page" ambition (spending ultrawide slack on content, hero
+  rebalancing) was NOT exhausted; it's now incremental polish on a sound base, doable
+  page-by-page whenever, under the standing audit gate.
 
 ## Most recent: **D1b SHIPPED — the "Vol vs Market" card** (`feat/phase-d1b-vol-premium`; plan `PHASE_D1_PLAN.md §D1b`, gates pre-registered BEFORE build)
 
