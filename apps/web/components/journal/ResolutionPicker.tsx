@@ -83,7 +83,7 @@ export function ResolutionPicker({ entryId, value }: Props) {
             aria-checked={isActive}
             disabled={mutation.isPending}
             onClick={() => pick(opt.key)}
-            className={`font-mono text-[10px] uppercase tracking-eyebrow border px-2 py-1 transition-colors disabled:opacity-50 ${cls}`}
+            className={`font-mono text-[11px] uppercase tracking-eyebrow border px-2 py-1 transition-colors disabled:opacity-50 ${cls}`}
           >
             {opt.label}
           </button>

@@ -75,21 +75,21 @@ export function ValidationShell({ initialData }: Props) {
       <LiveProofStrip data={data ?? null} />
 
       <div className="rounded-md border border-line-1 bg-surface-1 px-4 py-3">
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
           Reproduce it
         </span>
-        <p className="mt-1.5 font-mono text-[9px] leading-relaxed text-ink-4">
+        <p className="mt-1.5 font-mono text-[10px] leading-relaxed text-ink-4">
           Each verdict re-runs from the repository (
           <span className="text-ink-3">uv run --directory apps/api …</span>):
         </p>
         <ul className="mt-1 flex flex-col gap-0.5">
           {RERUN_COMMANDS.map((c) => (
-            <li key={c} className="font-mono text-[9px] text-ink-3">
+            <li key={c} className="font-mono text-[10px] text-ink-3">
               {c}
             </li>
           ))}
         </ul>
-        <p className="mt-2 border-t border-line-1 pt-2 font-mono text-[9px] leading-relaxed text-ink-4">
+        <p className="mt-2 border-t border-line-1 pt-2 font-mono text-[10px] leading-relaxed text-ink-4">
           Gates live in <span className="text-ink-3">docs/PHASE_*_PLAN.md</span>
           , committed before each run · the claims ledger is{" "}
           <span className="text-ink-3">docs/MODEL_DILIGENCE.md</span> ·

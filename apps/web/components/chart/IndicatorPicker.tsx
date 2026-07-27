@@ -170,7 +170,7 @@ export function IndicatorPicker({
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-line-1 pb-3">
           <div className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+            <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
               ─── Chart · Indicators
             </span>
             <h2 className="font-serif text-[24px] leading-none text-ink-1">
@@ -189,7 +189,7 @@ export function IndicatorPicker({
 
         {/* Presets */}
         <div className="flex items-center gap-3 border-b border-line-1 pb-3">
-          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+          <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
             Presets
           </span>
           {hasRibbon(indicators) ? (
@@ -198,7 +198,7 @@ export function IndicatorPicker({
               onClick={() =>
                 onReplaceAll(indicators.filter((i) => i.tag !== "ribbon"))
               }
-              className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-3 py-1.5 text-ink-2 hover:bg-surface-2 hover:text-ink-1"
+              className="font-mono text-[11px] uppercase tracking-eyebrow border border-line-1 px-3 py-1.5 text-ink-2 hover:bg-surface-2 hover:text-ink-1"
               aria-label="Remove ribbon preset"
             >
               Remove Ribbon
@@ -207,7 +207,7 @@ export function IndicatorPicker({
             <button
               type="button"
               onClick={() => onReplaceAll([...indicators, ...ribbonSpecs()])}
-              className="font-mono text-[10px] uppercase tracking-eyebrow border border-accent bg-accent-soft px-3 py-1.5 text-accent-bright hover:bg-accent hover:text-bg"
+              className="font-mono text-[11px] uppercase tracking-eyebrow border border-accent bg-accent-soft px-3 py-1.5 text-accent-bright hover:bg-accent hover:text-bg"
               aria-label="Add ribbon preset"
             >
               Add Ribbon (12 EMAs)
@@ -220,7 +220,7 @@ export function IndicatorPicker({
 
         {/* Oscillators & bands — one-click presets (default params) */}
         <div className="flex flex-wrap items-center gap-2 border-b border-line-1 pb-3">
-          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+          <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
             Add
           </span>
           {OSC_TYPES.map((t) => (
@@ -231,7 +231,7 @@ export function IndicatorPicker({
               title={`${OSC_CATALOG[t].label} · ${OSC_CATALOG[t].category} · ${
                 OSC_CATALOG[t].pane === "sub" ? "sub-pane" : "overlay"
               }`}
-              className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1.5 text-ink-2 hover:bg-surface-2 hover:text-ink-1"
+              className="font-mono text-[11px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1.5 text-ink-2 hover:bg-surface-2 hover:text-ink-1"
             >
               {OSC_CATALOG[t].label}
             </button>
@@ -347,7 +347,7 @@ export function IndicatorPicker({
             <button
               type="button"
               onClick={cancelEdit}
-              className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-3 py-1.5 text-ink-2 hover:bg-surface-2 hover:text-ink-1"
+              className="font-mono text-[11px] uppercase tracking-eyebrow border border-line-1 px-3 py-1.5 text-ink-2 hover:bg-surface-2 hover:text-ink-1"
             >
               Cancel edit
             </button>
@@ -356,7 +356,7 @@ export function IndicatorPicker({
             type="button"
             onClick={submit}
             disabled={!canSubmit}
-            className="font-mono text-[10px] uppercase tracking-eyebrow border border-accent bg-accent-soft px-3 py-1.5 text-accent-bright hover:bg-accent hover:text-bg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="font-mono text-[11px] uppercase tracking-eyebrow border border-accent bg-accent-soft px-3 py-1.5 text-accent-bright hover:bg-accent hover:text-bg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {editingId ? "Save changes" : "Add"}
           </button>
@@ -364,7 +364,7 @@ export function IndicatorPicker({
 
         {/* Current indicators */}
         <div className="flex flex-col gap-2 border-t border-line-1 pt-4">
-          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+          <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
             Active ({indicators.length})
           </span>
           {indicators.length === 0 ? (
@@ -396,7 +396,7 @@ export function IndicatorPicker({
                   <button
                     type="button"
                     onClick={() => onToggleVisible(s.id)}
-                    className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3 hover:text-ink-1 px-1"
+                    className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3 hover:text-ink-1 px-1"
                     aria-label={s.visible ? "Hide" : "Show"}
                   >
                     {s.visible ? "Hide" : "Show"}
@@ -405,7 +405,7 @@ export function IndicatorPicker({
                     <button
                       type="button"
                       onClick={() => startEdit(s)}
-                      className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3 hover:text-ink-1 px-1"
+                      className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3 hover:text-ink-1 px-1"
                       aria-label={`Edit ${specToLabel(s)}`}
                     >
                       Edit
@@ -414,7 +414,7 @@ export function IndicatorPicker({
                   <button
                     type="button"
                     onClick={() => onDelete(s.id)}
-                    className="font-mono text-[10px] uppercase tracking-eyebrow text-down hover:text-ink-1 px-1"
+                    className="font-mono text-[11px] uppercase tracking-eyebrow text-down hover:text-ink-1 px-1"
                     aria-label={`Delete ${specToLabel(s)}`}
                   >
                     Delete
@@ -440,7 +440,7 @@ function Field({
 }) {
   return (
     <div className={`flex flex-col gap-1 ${span === 2 ? "col-span-2" : ""}`}>
-      <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+      <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
         {label}
       </span>
       {children}

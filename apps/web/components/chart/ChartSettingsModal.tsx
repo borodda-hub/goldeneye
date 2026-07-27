@@ -91,7 +91,7 @@ function Section({
 }) {
   return (
     <div className="border-t border-line-1 pt-2">
-      <h3 className="font-mono text-[10px] text-accent uppercase tracking-widest mb-1">
+      <h3 className="font-mono text-[11px] text-accent uppercase tracking-eyebrow mb-1">
         {title}
       </h3>
       {children}
@@ -131,7 +131,7 @@ export function ChartSettingsModal({ open, onClose, style, onChange }: Props) {
         className="relative w-80 max-h-[80vh] overflow-y-auto rounded-md border border-line-2 bg-surface-1 p-4 shadow-2xl"
       >
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-mono text-[11px] text-ink-1 uppercase tracking-widest">
+          <h2 className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
             Chart Appearance
           </h2>
           <button

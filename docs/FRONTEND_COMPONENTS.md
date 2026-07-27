@@ -45,10 +45,24 @@ Tailwind config in `apps/web/tailwind.config.ts`. Treat these as the only colors
 - `text-conf-high`    `#34d399`
 
 **Type**
-- Body: Inter, 14px / 1.5
-- Numbers: JetBrains Mono, tabular-nums, 14px / 1.4
-- Headers: Inter SemiBold, 16/20/24/32 step
+- Body: 14px / 1.5 (`text-sm`); compact data 12px (`text-xs`).
+- Numbers: mono, `tabular-nums`.
+- Headers: Inter SemiBold, 16/20/24/32 step; page heroes may use the serif
+  display register (see the Calibration/Validation shells).
 - All number elements use `font-mono tabular-nums` Tailwind classes.
+- **Card/section title — ONE canonical idiom (Phase U2):**
+  `font-mono text-[11px] uppercase tracking-eyebrow text-accent`
+  (+ optional 12px lucide icon in `text-ink-4`, + `HelpTip`). Applies to
+  every card `h2`/`h3` and gold-eyebrow header. Secondary sub-labels use
+  `text-ink-3`/`text-ink-4` mono — that contrast IS the hierarchy; never
+  a second title style.
+- **Type floor (Phase U2): nothing below `text-[10px]` ships.** Footnotes,
+  chips, table headers included. `tracking-eyebrow` and other wide
+  letterspacing only at ≥11px.
+- NOTE: the hex values elsewhere in this doc are historical; the token
+  NAMES are the contract — live values are `lib/theme/themes.ts` +
+  `app/globals.css` (10 themes, drift-tested). Never hardcode hex in
+  components.
 
 **Spacing**
 - 4 / 8 / 12 / 16 / 24 / 32 / 48 — no other values.

@@ -28,7 +28,7 @@ function Card({
 }) {
   return (
     <div className="card-interactive rounded-md border border-line-1 bg-surface-1 p-3">
-      <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+      <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent">
         <Icon
           size={12}
           strokeWidth={1.5}

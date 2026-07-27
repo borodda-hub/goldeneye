@@ -18,14 +18,14 @@ export function ValidationLedgerTable({
 }: { rows: ValidationLedgerRow[] }) {
   return (
     <div className="card-interactive rounded-md border border-line-1 bg-surface-1 px-4 py-4">
-      <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+      <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent">
         The validation ledger
         <HelpTip k="provenance" className="ml-1" />
       </span>
       <div className="mt-2 overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
-            <tr className="text-left text-[9px] uppercase tracking-widest text-ink-4">
+            <tr className="text-left text-[10px] uppercase tracking-widest text-ink-4">
               <th className="py-1.5 pr-3 font-normal">Verdict</th>
               <th className="py-1.5 pr-2 font-normal">Claim & result</th>
               <th className="py-1.5 pr-2 font-normal">
@@ -45,7 +45,7 @@ export function ValidationLedgerTable({
                   <p className="mt-1 text-[11px] leading-relaxed text-ink-3">
                     {r.summary}
                   </p>
-                  <p className="mt-1.5 font-mono text-[9px] leading-relaxed text-ink-4">
+                  <p className="mt-1.5 font-mono text-[10px] leading-relaxed text-ink-4">
                     {r.evidence}
                     <span className="text-ink-4"> · gate: </span>
                     <span className="text-ink-3">{r.gate_ref}</span>
@@ -60,7 +60,7 @@ export function ValidationLedgerTable({
           </tbody>
         </table>
       </div>
-      <p className="mt-3 border-t border-line-1 pt-2 font-mono text-[9px] leading-relaxed text-ink-4">
+      <p className="mt-3 border-t border-line-1 pt-2 font-mono text-[10px] leading-relaxed text-ink-4">
         Every row mirrors{" "}
         <span className="text-ink-3">docs/MODEL_DILIGENCE.md</span> — a CI test
         fails the build if this page and the claims ledger ever disagree.

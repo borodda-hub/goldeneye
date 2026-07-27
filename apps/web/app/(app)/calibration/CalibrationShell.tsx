@@ -61,7 +61,7 @@ export function CalibrationShell({ initialData, initialSymbol = "NG" }: Props) {
   if (!data) {
     return (
       <div className="flex flex-col gap-6 py-12 max-w-3xl">
-        <span className="inline-flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+        <span className="inline-flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent">
           <span
             aria-hidden="true"
             className="inline-block w-[18px] h-px bg-accent"
@@ -83,7 +83,7 @@ export function CalibrationShell({ initialData, initialSymbol = "NG" }: Props) {
         title="Decision Calibration"
         subtitle="Forecast reliability · diagnostics"
         right={
-          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent border border-line-1 bg-surface-1 px-2 py-1 rounded-sm">
+          <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent border border-line-1 bg-surface-1 px-2 py-1 rounded-sm">
             {data.instrument_code}
           </span>
         }

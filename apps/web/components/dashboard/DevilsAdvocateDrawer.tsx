@@ -22,7 +22,7 @@ function ListSection({
 }) {
   return (
     <div className="flex flex-col gap-2 border-t border-line-1 pt-4">
-      <h3 className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+      <h3 className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
         {title}
       </h3>
       {items.length === 0 ? (
@@ -83,7 +83,7 @@ export function DevilsAdvocateDrawer({
       <div className="w-full max-w-xl h-full overflow-y-auto border-l border-line-2 bg-surface-1 p-6 flex flex-col gap-5">
         <div className="flex items-start justify-between gap-4 border-b border-line-1 pb-3">
           <div className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+            <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
               ─── Devil's Advocate
             </span>
             <h2 className="font-serif text-[24px] leading-none text-ink-1">
@@ -113,7 +113,7 @@ export function DevilsAdvocateDrawer({
         ) : review ? (
           <>
             <div className="flex flex-col gap-2">
-              <h3 className="font-mono text-[10px] uppercase tracking-eyebrow text-down">
+              <h3 className="font-mono text-[11px] uppercase tracking-eyebrow text-down">
                 Steelmanned counter-case
               </h3>
               <p className="text-sm text-ink-1 leading-relaxed border-l-2 border-down pl-3">
@@ -132,7 +132,7 @@ export function DevilsAdvocateDrawer({
             />
 
             <div className="border-t border-line-1 pt-4 mt-auto flex flex-col gap-2">
-              <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+              <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
                 Safety
               </span>
               <p className="text-xs text-ink-3 leading-relaxed">

@@ -35,8 +35,8 @@ export function DirectionalBiasCard({ bias, aiSummary, safety }: Props) {
   const tone = DIRECTION_TONE[bias.direction];
   return (
     <div className="card-interactive border border-line-1 rounded-md p-4 bg-surface-1 flex flex-col gap-4 h-full">
-      <div className="flex items-baseline justify-between">
-        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-accent uppercase tracking-eyebrow">
           <Compass
             size={12}
             strokeWidth={1.5}
@@ -46,9 +46,9 @@ export function DirectionalBiasCard({ bias, aiSummary, safety }: Props) {
           Directional Bias
           <HelpTip k="directionalBias" className="ml-1" />
         </span>
-        <span className="font-mono text-[10px] text-ink-3 uppercase tracking-widest">
-          {bias.confidence} confidence
-        </span>
+        {/* Phase U2: the right-side "<tier> confidence" label was redundant
+            with the ConfidenceBar row below AND forced a 22px horizontal
+            spill in the 288px pane — one confidence display, not two. */}
       </div>
 
       {/* Hero direction — large serif so the verdict is unmistakable */}

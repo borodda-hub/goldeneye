@@ -22,7 +22,7 @@ function BrandPill() {
       className="inline-flex items-baseline gap-2 px-4 py-1.5 shrink-0 whitespace-nowrap"
       aria-hidden="true"
     >
-      <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+      <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
         Bloomberg
       </span>
       <span className="text-ink-4">·</span>
@@ -66,7 +66,7 @@ export function NewsTicker() {
         className="border-t border-line-1 bg-surface-1 h-8 flex items-center px-4"
         aria-label="News ticker loading"
       >
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-4">
           Loading Bloomberg…
         </span>
       </div>
@@ -79,7 +79,7 @@ export function NewsTicker() {
         className="border-t border-line-1 bg-surface-1 h-8 flex items-center px-4"
         aria-label="News ticker unavailable"
       >
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-down">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-down">
           News feed unavailable
         </span>
       </div>

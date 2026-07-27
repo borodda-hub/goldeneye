@@ -73,7 +73,7 @@ function ReadView({
       {/* Conviction + meta */}
       <div className="flex items-center gap-6 flex-wrap">
         <div className="flex items-center gap-3">
-          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+          <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
             Conviction
           </span>
           <div className="flex items-center gap-2">
@@ -88,7 +88,7 @@ function ReadView({
             </span>
           </div>
         </div>
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3 ml-auto">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3 ml-auto">
           Updated · {relativeAgo(thesis.updated_at)}
         </span>
       </div>
@@ -115,7 +115,7 @@ function ReadView({
             type="button"
             onClick={onCritique}
             disabled={critiqueLoading}
-            className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-50"
+            className="font-mono text-[11px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-50"
           >
             {critiqueLoading ? "…" : "→ Critique"}
           </button>
@@ -123,14 +123,14 @@ function ReadView({
             type="button"
             onClick={onDevilsAdvocate}
             disabled={devilsLoading}
-            className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-50"
+            className="font-mono text-[11px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-50"
           >
             {devilsLoading ? "…" : "→ Devil's Advocate"}
           </button>
           <button
             type="button"
             onClick={onEdit}
-            className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1"
+            className="font-mono text-[11px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1"
           >
             ⚙ Edit
           </button>
@@ -160,7 +160,7 @@ function CountBlock({
         className={`inline-block h-1.5 w-1.5 rounded-full ${dot[tone]}`}
         aria-hidden="true"
       />
-      <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+      <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
         {label}
       </span>
       <span className="font-mono tabular-nums text-sm text-ink-1">{n}</span>
@@ -179,7 +179,7 @@ function EmptyView({ onDraft }: { onDraft: () => void }) {
       <button
         type="button"
         onClick={onDraft}
-        className="font-mono text-[10px] uppercase tracking-eyebrow border border-accent bg-accent-soft px-3 py-1.5 text-accent-bright hover:bg-accent hover:text-bg"
+        className="font-mono text-[11px] uppercase tracking-eyebrow border border-accent bg-accent-soft px-3 py-1.5 text-accent-bright hover:bg-accent hover:text-bg"
       >
         ↑ Draft a thesis
       </button>
@@ -286,7 +286,7 @@ export function WorkingThesisCard({
       data-tour="working-thesis"
     >
       <div className="flex items-center justify-between">
-        <span className="inline-flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+        <span className="inline-flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent">
           <span
             aria-hidden="true"
             className="inline-block w-[18px] h-px bg-accent"

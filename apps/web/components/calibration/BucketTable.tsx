@@ -21,7 +21,7 @@ export function BucketTable({ buckets }: Props) {
       aria-label="Calibration buckets"
       className="card-interactive border border-line-1 bg-surface-1 p-5 flex flex-col gap-3"
     >
-      <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+      <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
         <Table2
           size={12}
           strokeWidth={1.5}
@@ -84,7 +84,7 @@ function Th({
 }) {
   return (
     <th
-      className={`px-3 py-2 font-mono text-[10px] uppercase tracking-eyebrow text-ink-3 text-${align}`}
+      className={`px-3 py-2 font-mono text-[11px] uppercase tracking-eyebrow text-ink-3 text-${align}`}
     >
       {children}
     </th>

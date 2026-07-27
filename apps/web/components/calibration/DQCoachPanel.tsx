@@ -47,13 +47,13 @@ function BucketCard({ bucket }: { bucket: DqCoachingBucket }) {
   return (
     <article className="card-interactive border border-line-1 bg-surface-2 p-4 flex flex-col gap-3">
       <header className="flex items-baseline justify-between border-b border-line-1 pb-2">
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
           Bucket {bucket.label}%
         </span>
       </header>
 
       <div className="flex flex-col gap-2">
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
           Effective patterns
         </span>
         <PatternList
@@ -64,7 +64,7 @@ function BucketCard({ bucket }: { bucket: DqCoachingBucket }) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
           Failure patterns
         </span>
         <PatternList
@@ -76,7 +76,7 @@ function BucketCard({ bucket }: { bucket: DqCoachingBucket }) {
 
       {bucket.recommendation ? (
         <div className="border-t border-line-1 pt-2">
-          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent-bright">
+          <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent-bright">
             Coach
           </span>
           <p className="text-xs text-ink-1 leading-relaxed mt-1">
@@ -91,7 +91,7 @@ function BucketCard({ bucket }: { bucket: DqCoachingBucket }) {
 function EmptyState({ caveats }: { caveats: string[] }) {
   return (
     <div className="border border-line-1 bg-surface-1 p-5 flex flex-col gap-3">
-      <span className="inline-flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+      <span className="inline-flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent">
         <span
           aria-hidden="true"
           className="inline-block w-[18px] h-px bg-accent"
@@ -138,7 +138,7 @@ export function DQCoachPanel({ instrumentCode = "NG" }: Props) {
         aria-label="DQ Coach"
         className="border border-line-1 bg-surface-1 p-5 flex flex-col gap-3"
       >
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
           DQ Coach
         </span>
         <p className="text-sm text-down font-mono">
@@ -147,7 +147,7 @@ export function DQCoachPanel({ instrumentCode = "NG" }: Props) {
         <button
           type="button"
           onClick={() => refetch()}
-          className="self-start font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1"
+          className="self-start font-mono text-[11px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1"
         >
           Retry
         </button>
@@ -168,7 +168,7 @@ export function DQCoachPanel({ instrumentCode = "NG" }: Props) {
     <section aria-label="DQ Coach" className="flex flex-col gap-4">
       <div className="card-interactive border border-line-1 bg-surface-1 p-5 flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="inline-flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+          <span className="inline-flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent">
             <span
               aria-hidden="true"
               className="inline-block w-[18px] h-px bg-accent"
@@ -179,7 +179,7 @@ export function DQCoachPanel({ instrumentCode = "NG" }: Props) {
             type="button"
             onClick={() => refetch()}
             disabled={isFetching}
-            className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-2 py-1 text-ink-3 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-50"
+            className="font-mono text-[11px] uppercase tracking-eyebrow border border-line-1 px-2 py-1 text-ink-3 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-50"
             aria-label="Re-run coaching"
           >
             {isFetching ? "…" : "↻"}
@@ -196,7 +196,7 @@ export function DQCoachPanel({ instrumentCode = "NG" }: Props) {
 
         {coaching.overall.top_recommendation ? (
           <div className="border-t border-line-1 pt-3">
-            <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent-bright">
+            <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent-bright">
               Top recommendation
             </span>
             <p className="text-sm text-ink-1 leading-relaxed mt-1">

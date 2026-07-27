@@ -33,7 +33,7 @@ export function PageHeader({
           {title}
         </h1>
         {subtitle && (
-          <span className="font-mono text-[10px] uppercase tracking-widest text-ink-4">
+          <span className="truncate font-mono text-[10px] uppercase tracking-widest text-ink-4">
             {subtitle}
           </span>
         )}

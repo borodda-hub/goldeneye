@@ -38,7 +38,7 @@ export function VerdictTag({ verdict }: { verdict: ValidationVerdict }) {
   const s = STYLES[verdict] ?? STYLES.methodology;
   return (
     <span
-      className={`inline-block whitespace-nowrap rounded-sm border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${s.cls}`}
+      className={`inline-block whitespace-nowrap rounded-sm border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide ${s.cls}`}
     >
       {s.label}
     </span>

@@ -152,7 +152,7 @@ export function BacktestCard({ symbol = "NG" }: BacktestCardProps = {}) {
       data-testid="backtest-card"
     >
       <div className="flex items-center justify-between px-3 pt-2 pb-1">
-        <span className="flex items-center gap-2 text-xs text-ink-3 uppercase tracking-widest">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent">
           <Gauge
             size={12}
             strokeWidth={1.5}

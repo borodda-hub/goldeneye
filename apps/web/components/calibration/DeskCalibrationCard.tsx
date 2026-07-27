@@ -45,7 +45,7 @@ function VerdictBadge({ verdict }: { verdict: SkillVerdict }) {
   const s = styles[verdict];
   return (
     <span
-      className={`inline-block rounded-sm border px-1.5 py-0.5 text-[9px] uppercase tracking-wide ${s.cls}`}
+      className={`inline-block rounded-sm border px-1.5 py-0.5 text-[10px] uppercase tracking-wide ${s.cls}`}
     >
       {s.text}
     </span>
@@ -74,7 +74,7 @@ function Row({ a, rank }: { a: DeskAnalyst; rank: number }) {
         ) : (
           <span>
             {hitPct}%{" "}
-            {ci && <span className="text-[9px] text-ink-4">{ci}</span>}
+            {ci && <span className="text-[10px] text-ink-4">{ci}</span>}
           </span>
         )}
       </td>
@@ -107,8 +107,13 @@ export function DeskCalibrationCard() {
 
   return (
     <section className="card-interactive border border-line-1 bg-surface-1 p-3 flex flex-col gap-2.5">
-      <h2 className="flex items-center gap-2 font-mono text-[10px] text-ink-3 uppercase tracking-widest">
-        <Users size={12} strokeWidth={1.5} aria-hidden="true" />
+      <h2 className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent">
+        <Users
+          size={12}
+          strokeWidth={1.5}
+          aria-hidden="true"
+          className="text-ink-4"
+        />
         Desk Calibration · skill vs. luck
       </h2>
 
@@ -121,7 +126,7 @@ export function DeskCalibrationCard() {
       ) : (
         <table className="w-full text-xs font-mono">
           <thead>
-            <tr className="text-[9px] uppercase tracking-widest text-ink-4 text-left">
+            <tr className="text-[10px] uppercase tracking-widest text-ink-4 text-left">
               <th className="font-normal pr-2">#</th>
               <th className="font-normal pr-2">Analyst</th>
               <th className="font-normal pr-2">Verdict</th>
@@ -140,7 +145,7 @@ export function DeskCalibrationCard() {
         </table>
       )}
 
-      <p className="text-[9px] text-ink-4 font-mono leading-relaxed">
+      <p className="text-[10px] text-ink-4 font-mono leading-relaxed">
         <span className="text-ink-3">Verdict</span> is the test that separates
         skill from luck — and correctly refuses to call noise skill. We take
         each desk's directional hit-rate and ask whether its 95% confidence

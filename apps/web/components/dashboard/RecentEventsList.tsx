@@ -64,7 +64,7 @@ function EventPopup({
     >
       <div className="flex items-start justify-between gap-3 px-3 pt-2.5 pb-2 border-b border-line-1">
         <div className="flex-1 min-w-0">
-          <div className="font-mono text-[10px] text-accent uppercase tracking-eyebrow mb-1">
+          <div className="font-mono text-[11px] text-accent uppercase tracking-eyebrow mb-1">
             {event.source ?? "News"} · {relativeAgo(event.published_at)}
           </div>
           <div className="text-sm font-semibold text-ink-1 leading-snug">
@@ -124,7 +124,7 @@ export function RecentEventsList({ events }: Props) {
         <Link
           href="/signals"
           aria-label="Open Signal Lab"
-          className="accent-pulse inline-flex items-center rounded-full border border-accent bg-accent-soft px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent-bright hover:bg-accent hover:text-bg transition-colors"
+          className="accent-pulse inline-flex items-center rounded-full border border-accent bg-accent-soft px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent-bright hover:bg-accent hover:text-bg transition-colors"
         >
           Signal Lab →
         </Link>

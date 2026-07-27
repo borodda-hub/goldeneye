@@ -33,7 +33,7 @@ export function EvidenceList({ label, items, onChange, tone }: Props) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
           {label}
         </span>
         <span className="font-mono text-[10px] tabular-nums text-ink-4">
@@ -59,7 +59,7 @@ export function EvidenceList({ label, items, onChange, tone }: Props) {
                   <span className="text-ink-3"> — {item.note}</span>
                 ) : null}
                 {item.source ? (
-                  <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4 ml-2">
+                  <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4 ml-2">
                     {item.source}
                   </span>
                 ) : null}
@@ -95,7 +95,7 @@ export function EvidenceList({ label, items, onChange, tone }: Props) {
           type="button"
           onClick={addItem}
           disabled={!newFactor.trim() || items.length >= 20}
-          className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-2 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="font-mono text-[11px] uppercase tracking-eyebrow border border-line-1 px-2 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Add
         </button>

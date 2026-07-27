@@ -24,7 +24,7 @@ export function GettingStarted() {
       className="fade-up fixed bottom-4 right-4 z-40 w-80 rounded-md border border-line-2 bg-surface-1 shadow-2xl"
     >
       <div className="flex items-center gap-2 border-b border-line-1 px-4 py-2.5">
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
           Your first decision loop
         </span>
         <span className="ml-auto font-mono text-[11px] tabular-nums text-ink-2">

@@ -47,7 +47,7 @@ export function WelcomeModal() {
         aria-label="Welcome to Goldeneye"
         className="fade-up relative w-full max-w-lg rounded-md border border-line-2 bg-surface-1 p-6 shadow-2xl"
       >
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent-deep">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent-deep">
           Welcome
         </span>
         <h2
@@ -88,7 +88,7 @@ export function WelcomeModal() {
               <button
                 type="button"
                 onClick={markSeen}
-                className="font-mono text-[10px] uppercase tracking-eyebrow text-accent-deep transition-colors hover:text-accent"
+                className="font-mono text-[11px] uppercase tracking-eyebrow text-accent-deep transition-colors hover:text-accent"
               >
                 or create an account to save your work →
               </button>

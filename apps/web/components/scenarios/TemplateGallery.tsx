@@ -55,7 +55,7 @@ export function TemplateGallery({ templates, onSelect, selectedId }: Props) {
                 {t.name}
               </span>
               {selected && (
-                <span className="shrink-0 font-mono text-[9px] text-accent uppercase tracking-eyebrow">
+                <span className="shrink-0 font-mono text-[10px] text-accent uppercase tracking-eyebrow">
                   loaded
                 </span>
               )}

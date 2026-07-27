@@ -41,7 +41,7 @@ function ScoreBar({
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline justify-between">
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
           {label}
         </span>
         <span className="font-mono tabular-nums text-xs text-ink-1">
@@ -93,7 +93,7 @@ function Popover({
       className="absolute right-0 top-full mt-2 z-50 w-72 border border-line-2 bg-surface-1 p-4 flex flex-col gap-3 shadow-xl"
     >
       <div className="flex items-baseline justify-between border-b border-line-1 pb-2">
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
           Signal Quality
         </span>
         <span className="font-serif text-2xl text-ink-1 leading-none">
@@ -129,7 +129,7 @@ function Popover({
         }
       />
       <div className="flex justify-between border-t border-line-1 pt-2">
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
           Total
         </span>
         <span className="font-mono tabular-nums text-sm text-accent-bright">

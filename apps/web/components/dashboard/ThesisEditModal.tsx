@@ -90,7 +90,7 @@ export function ThesisEditModal({
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-line-1 pb-3">
           <div className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+            <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
               ─── Working Thesis · NG
             </span>
             <h2 className="font-serif text-[28px] leading-none text-ink-1">
@@ -111,7 +111,7 @@ export function ThesisEditModal({
         <div className="flex flex-col gap-2">
           <label
             htmlFor="thesis-statement"
-            className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3"
+            className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3"
           >
             Statement
           </label>
@@ -162,7 +162,7 @@ export function ThesisEditModal({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-3 py-1.5 text-ink-2 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-50"
+            className="font-mono text-[11px] uppercase tracking-eyebrow border border-line-1 px-3 py-1.5 text-ink-2 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -178,7 +178,7 @@ export function ThesisEditModal({
               })
             }
             disabled={!canSave}
-            className="font-mono text-[10px] uppercase tracking-eyebrow border border-accent bg-accent-soft px-3 py-1.5 text-accent-bright hover:bg-accent hover:text-bg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="font-mono text-[11px] uppercase tracking-eyebrow border border-accent bg-accent-soft px-3 py-1.5 text-accent-bright hover:bg-accent hover:text-bg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? "Saving…" : "Save thesis"}
           </button>

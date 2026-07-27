@@ -52,7 +52,7 @@ export function PaperEquityCard() {
       aria-label="Paper equity"
     >
       <div className="flex items-baseline justify-between">
-        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-accent uppercase tracking-eyebrow">
           <Wallet
             size={12}
             strokeWidth={1.5}

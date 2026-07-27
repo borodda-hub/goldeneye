@@ -81,7 +81,26 @@ two-lane promotion per step.
   Remaining 63 defects are U3 scope: /signals spills (model grid +
   calibration card, 390–1680), /paper table crush (390+1024),
   /scenarios@390, /calibration@390.
-- U2–U3: pending.
+- U2: ✅ **SHIPPED 2026-07-27 — one type system, 7/10 pages fully clean;
+  app 103 → 60 defects.** What changed: (1) **the 10px floor** — every
+  `text-[8px]`/`text-[9px]` in the app promoted (53 instances,
+  zero remain); (2) **one canonical card-title idiom** —
+  `font-mono text-[11px] uppercase tracking-eyebrow text-accent` — applied
+  to every card `h2`/`h3` (the ~10 old ink-3/`tracking-widest` stragglers
+  converted; all tracked eyebrow labels bumped 10→11px for readability);
+  sub-labels stay ink-3/ink-4 BY DESIGN (contrast is the hierarchy);
+  (3) codified in `FRONTEND_COMPONENTS.md §tokens` (+ the stale-hex note:
+  token NAMES are the contract, themes.ts/globals.css are the values);
+  (4) opportunistic geometry fixes the type bump surfaced: PageHeader
+  subtitle truncates; the bias card's redundant right-side confidence
+  label removed (was duplicating the ConfidenceBar AND spilling 22px);
+  instrument-switcher name capped at 88px below `sm` (killed the last 5px
+  mobile h-scroll); CalibrationSummary grid responsive.
+  **Clean at all 7 widths: dashboard, chart, journal, ledger, calibration,
+  validation, admin.** Remainder (U3): /signals spills (model grid +
+  calibration card, 390–1680), /paper table crush (390+1024),
+  /scenarios@390.
+- U3: pending.
 
 ## §baseline — first full run (2026-07-27): **103 defects across 22 page/width cells**
 

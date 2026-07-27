@@ -31,7 +31,7 @@ export function OpenPositionsCard() {
       aria-label="Open positions"
     >
       <div className="flex items-baseline justify-between px-3 pt-2 pb-1.5 border-b border-line-1">
-        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-accent uppercase tracking-eyebrow">
           <Layers
             size={12}
             strokeWidth={1.5}
@@ -53,7 +53,7 @@ export function OpenPositionsCard() {
       ) : (
         <table className="w-full text-[11px] font-mono">
           <thead>
-            <tr className="text-ink-4 text-[9px] uppercase tracking-widest">
+            <tr className="text-ink-4 text-[10px] uppercase tracking-widest">
               <th className="text-left px-3 py-1">Symbol</th>
               <th className="text-right px-3 py-1">Qty</th>
               <th className="text-right px-3 py-1">Entry</th>
@@ -84,7 +84,7 @@ export function OpenPositionsCard() {
                       {t.contract_id ? t.contract_id.slice(0, 6) : "NG"}
                     </span>
                     <span
-                      className={`ml-1 text-[9px] uppercase ${
+                      className={`ml-1 text-[10px] uppercase ${
                         t.side === "long" ? "text-up" : "text-down"
                       }`}
                     >
@@ -111,7 +111,7 @@ export function OpenPositionsCard() {
           </tbody>
         </table>
       )}
-      <div className="px-3 py-1 border-t border-line-1 text-[9px] font-mono text-ink-4 uppercase tracking-widest text-right">
+      <div className="px-3 py-1 border-t border-line-1 text-[10px] font-mono text-ink-4 uppercase tracking-widest text-right">
         tick value ${NG_TICK_VALUE_USD.toLocaleString()}
       </div>
     </div>
