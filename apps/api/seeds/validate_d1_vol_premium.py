@@ -13,16 +13,18 @@ from 5d steps overlap ~4.2x — never quote raw-n significance).
 
 Manual diagnostic (network) — never CI. Run:
     uv run --directory apps/api python -m seeds.validate_d1_vol_premium
+
+D1b NOTE: the spread/tercile/MAE machinery now lives in
+`services/vol_premium.py::analyze_pair` — the SAME function the live
+`/v1/vol-premium` surface serves. This probe is a thin harness over it, so
+the surface structurally cannot diverge from what this file tests.
 """
 
 from __future__ import annotations
 
 import asyncio
 import sys
-from datetime import date
 from pathlib import Path
-
-import numpy as np
 
 _REPO = Path(__file__).resolve().parents[3]
 if str(_REPO) not in sys.path:
@@ -34,18 +36,13 @@ from apps.api.adapters.market.yahoo_delayed import (  # noqa: E402
     YAHOO_BASE_URL,
     _parse_chart,
 )
-from apps.api.services.models.vol_range import _sigma_path  # noqa: E402
+from apps.api.services.vol_premium import analyze_pair  # noqa: E402
 
 PAIRS = [("USO", "^OVX"), ("GLD", "^GVZ")]
 # Revisit trigger (a), interpretation pre-registered in PHASE_D1_PLAN.md
 # BEFORE the run: the third pair is a tie-breaker printed separately — the
 # original 2-pair verdict computation above stays untouched.
 REVISIT_PAIRS = [("SPY", "^VIX")]
-H_TDAYS = 21  # matches the indices' 30-calendar-day tenor
-ANN = float(np.sqrt(252.0))
-WARMUP_CLOSES = 260  # estimator stability before the first decision
-BUCKET_WARMUP = 52  # weekly spreads needed before walk-forward terciles
-OVERLAP = 4.2  # 21d horizon / 5d step -> n_eff = n / OVERLAP
 ESTIMATORS = ("har_log", "ewma")  # primary first (the production default)
 
 
@@ -65,96 +62,20 @@ async def _fetch(ticker: str) -> dict[str, float]:
     return {b["ts"].date().isoformat(): float(b["close"]) for b in bars if b["close"] > 0}
 
 
-def _se(x: np.ndarray) -> float:
-    """Overlap-honest standard error of the mean."""
-    n_eff = max(2.0, len(x) / OVERLAP)
-    return float(np.std(x, ddof=1) / np.sqrt(n_eff))
-
-
-def _realized_vol(rets: np.ndarray, start: int) -> float | None:
-    w = rets[start : start + H_TDAYS]
-    if len(w) < H_TDAYS:
-        return None
-    return float(np.std(w, ddof=1) * ANN)
-
-
 def _run_pair(
     und: dict[str, float], iv: dict[str, float], estimator: str
 ) -> dict | None:
-    days = sorted(set(und) & set(iv))
-    if len(days) < WARMUP_CLOSES + H_TDAYS + 60:
+    """Thin harness: the math lives in services/vol_premium.analyze_pair —
+    the SAME function the live surface serves (D1b drift-lock). Terciles
+    are adapted back to (mean, se, n) tuples for this file's printing."""
+    r = analyze_pair(und, iv, estimator)
+    if r is None:
         return None
-    closes = np.array([und[d] for d in days])
-    ivs = np.array([iv[d] / 100.0 for d in days])  # index points -> annualized frac
-    rets = np.diff(np.log(closes))
-    # sigma[i] is the walk-forward forecast for return i (uses rets[:i] only).
-    sigma = _sigma_path(rets, H_TDAYS, estimator) * ANN
-
-    rows = []  # (t, sigma_f, iv, rv_next)
-    for t in range(WARMUP_CLOSES, len(days)):
-        if date.fromisoformat(days[t]).weekday() != 4:  # Friday decisions
-            continue
-        if t >= len(sigma):
-            continue
-        rv = _realized_vol(rets, t)  # rets[t:] are strictly after close t
-        if rv is None:
-            continue
-        rows.append((t, float(sigma[t]), float(ivs[t]), rv))
-    if len(rows) < 100:
-        return None
-
-    sig_f = np.array([r[1] for r in rows])
-    iv_a = np.array([r[2] for r in rows])
-    rv_n = np.array([r[3] for r in rows])
-    prem = iv_a - rv_n
-
-    # G0 — the premium exists (sanity anchor, literature replication).
-    g0 = float(np.mean(prem))
-    g0_share = float(np.mean(prem > 0))
-
-    # G1 — our forecast vs the market's as an RV predictor (paired MAE).
-    d = np.abs(sig_f - rv_n) - np.abs(iv_a - rv_n)
-    g1_delta, g1_se = float(np.mean(d)), _se(d)
-
-    # G2 — walk-forward spread terciles -> subsequent premium.
-    spread = sig_f - iv_a
-    buckets: list[int] = []
-    for i in range(len(spread)):
-        past = spread[:i]
-        if len(past) < BUCKET_WARMUP:
-            buckets.append(-1)
-            continue
-        lo, hi = np.percentile(past, [33.0, 67.0])
-        buckets.append(0 if spread[i] <= lo else (2 if spread[i] >= hi else 1))
-    b = np.array(buckets)
-    terc = {}
-    for k, name in ((0, "low"), (1, "mid"), (2, "high")):
-        sel = prem[b == k]
-        terc[name] = (float(np.mean(sel)), _se(sel), len(sel)) if len(sel) >= 20 else None
-    g2 = None
-    if terc["low"] and terc["high"]:
-        diff = terc["low"][0] - terc["high"][0]
-        se = float(np.hypot(terc["low"][1], terc["high"][1]))
-        mono = (
-            terc["mid"] is not None
-            and terc["low"][0] > terc["mid"][0] > terc["high"][0]
-        )
-        g2 = {"diff": diff, "se": se, "monotone": bool(mono), "passes": bool(diff > se and mono)}
-
-    return {
-        "n": len(rows),
-        "n_eff": round(len(rows) / OVERLAP),
-        "span": (days[rows[0][0]], days[rows[-1][0]]),
-        "g0_mean_prem": g0,
-        "g0_share": g0_share,
-        "mae_f": float(np.mean(np.abs(sig_f - rv_n))),
-        "mae_iv": float(np.mean(np.abs(iv_a - rv_n))),
-        "g1_delta": g1_delta,
-        "g1_se": g1_se,
-        "g1_passes": bool(g1_delta < -g1_se),
-        "terciles": terc,
-        "g2": g2,
+    r["terciles"] = {
+        name: ((t.mean, t.se, t.n) if t is not None else None)
+        for name, t in r["terciles"].items()
     }
+    return r
 
 
 async def main() -> None:

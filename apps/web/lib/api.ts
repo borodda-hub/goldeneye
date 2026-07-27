@@ -1041,3 +1041,48 @@ export interface ValidationResponse {
 export async function getValidation(): Promise<ValidationResponse> {
   return apiFetch("/v1/validation");
 }
+
+// ── Vol premium (Phase D1b — implied vs forecast comparison) ───────────────
+
+export interface VolPremiumTercile {
+  mean: number;
+  se: number;
+  n: number;
+}
+
+export interface VolPremiumResponse {
+  symbol: string;
+  supported: boolean;
+  reason?: string;
+  pair?: { underlying: string; iv_index: string };
+  current?: {
+    date: string;
+    sigma_f: number;
+    iv: number;
+    spread: number;
+    percentile: number;
+    bucket: "low" | "mid" | "high";
+  } | null;
+  ship_gate?: boolean;
+  g1?: {
+    mae_forecast: number;
+    mae_iv: number;
+    delta: number;
+    se: number;
+    passes: boolean;
+  };
+  terciles?: {
+    low: VolPremiumTercile | null;
+    mid: VolPremiumTercile | null;
+    high: VolPremiumTercile | null;
+  };
+  timing_tested?: boolean;
+  sample?: { n: number; n_eff: number; span: string[]; mean_premium: number };
+}
+
+export async function getVolPremium(
+  symbol: string,
+): Promise<VolPremiumResponse> {
+  const q = new URLSearchParams({ symbol });
+  return apiFetch(`/v1/vol-premium?${q.toString()}`);
+}

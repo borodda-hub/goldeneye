@@ -40,6 +40,7 @@ import {
   getTickerNews,
   getTickerQuotes,
   getValidation,
+  getVolPremium,
   listJournalEntries,
   listPaperTrades,
   patchJournalEntry,
@@ -304,6 +305,14 @@ export function useValidation() {
   return useQuery({
     queryKey: ["validation"],
     queryFn: () => getValidation(),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useVolPremium(symbol: string) {
+  return useQuery({
+    queryKey: ["vol-premium", symbol],
+    queryFn: () => getVolPremium(symbol),
     staleTime: 5 * 60_000,
   });
 }

@@ -209,8 +209,10 @@ ROWS: tuple[LedgerRow, ...] = (
         summary="Premium-timing passes on 2 of 3 asset pairs (crude, "
         "equities) with consistent direction; on equities our forecast beats "
         "VIX as a realized-vol predictor by >2 SE. Not crowned: gold fails "
-        "and the EWMA robustness arm fails — a design review is scheduled, "
-        "and any surface needs its own gate first.",
+        "and the EWMA robustness arm fails. Surfaced as a DESCRIPTIVE "
+        "comparison only (the Vol vs Market card), computed by the same "
+        "function this probe validates and gated live per request; timing "
+        "stats display as tested-not-crowned.",
         evidence="validate_d1_vol_premium · ~11y weekly, n_eff≈131/pair",
         rerun="uv run --directory apps/api python -m seeds.validate_d1_vol_premium",
         gate_ref="docs/PHASE_D1_PLAN.md (gate + tie-breaker rule pre-registered)",

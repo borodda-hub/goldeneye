@@ -144,3 +144,50 @@ EWMA fragility stands; any product surface (a "vol rich/cheap" research
 view) must carry its own pre-registered gate before shipping. The A3
 validation page should present exactly this status: promising, tested,
 not crowned.
+
+## D1b — the surface (design review resolved 2026-07-27; gates pre-registered BEFORE build)
+
+**The claim split (the load-bearing design decision):** the surface ships
+in two layers with different evidentiary standards.
+- **Layer 1 — the comparison (a fact):** our calibrated 1-month vol
+  forecast vs the market's implied index (30-day tenor matched, 21
+  trading days), plus the spread's walk-forward percentile. No prediction
+  claimed. Pairs: CL→(USO,^OVX), GC→(GLD,^GVZ), ES→(SPY,^VIX). No free
+  NG implied-vol index exists → unsupported symbols get the honest
+  degradation state, never a fabricated number.
+- **Layer 2 — conditional context (tested-not-crowned):** the probe's
+  per-tercile historical premium means ± SE with n, labeled "tested, not
+  crowned," linked to the /validation D1 row. Gold's tercile line is
+  labeled as having FAILED the timing test. **No signal chip, no
+  RICH/CHEAP verdict word, no arrow** — the percentile gauge conveys
+  position, not pronouncement.
+
+**Pre-registered SHIP GATE (Layer 1, per pair):** our forecast must be at
+least competitive with the IV index as an RV predictor — paired MAE delta
+< +1 SE (not WORSE than the market's own number) — computed LIVE by the
+serving code itself on every response; a pair that fails renders the
+honest note instead of the comparison. (All three pairs pass today: SPY
+−0.73±0.34, GLD −0.32±0.27, USO −0.51±0.71.)
+
+**Pre-registered PROMOTION GATE (ever upgrading Layer 2 to a signal):**
+the ORIGINAL D1 gate, unchanged, on a re-run with ≥1 year of new data
+(G1 AND G2 on all supported pairs).
+
+**Pre-registered DEMOTION RULE:** if any scheduled re-run shows the
+pooled crude+equity tercile low−high spread below **0.5 SE**, the Layer-2
+conditional-context lines come OFF the card and the ledger row reverts
+from PROMISING. Both lifecycle directions are written down now — neither
+is discretionary later.
+
+**Architecture mandate (drift-lock philosophy applied to computation):**
+the live service and the probe MUST share the same functions —
+`services/vol_premium.py` owns the spread/tercile/MAE machinery;
+`validate_d1_vol_premium.py` becomes a thin harness over it; the endpoint
+serves the same math. The surface structurally cannot diverge from what
+was tested.
+
+**Build:** D1b-1 shared service + probe refactor + hermetic tests →
+D1b-2 `GET /v1/vol-premium` + Signal Lab card (hero numbers, tercile
+percentile gauge, honesty strip, /validation link; ExpectedRange sibling;
+token-only) + visual verification → D1b-3 ledger/doc sync + contracts
+regen. Universal §7.4 gates throughout.
