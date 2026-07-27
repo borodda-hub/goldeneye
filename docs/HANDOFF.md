@@ -1,6 +1,33 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-07-27 (demo-polish). Read this first to pick up where we left off._
+_Last updated: 2026-07-27 (Phase A4). Read this first to pick up where we left off._
+
+## Most recent: **PHASE A4 — THE ABOUT PAGE (white paper) SHIPPED** (plan `docs/PHASE_A4_ABOUT_PLAN.md`, committed before build)
+
+Owner directive: "an about section that fully explains the platform's methodology,
+architecture, value in white paper level detail."
+- **`/about`** — a landing-sibling long-form document (server component, landing design
+  language: serif display + GoldItalic + mono eyebrows + token colors). 11 deep-linkable
+  sections: positioning, problem, **methodology doctrine (5 commitments each naming its
+  enforcement mechanism)**, forecast engine (honest no-edge frame), vol/range engine (the
+  validated edge w/ real-OOS numbers), data layer (adapters/as-of/archives), decision
+  intelligence (journal→ledger→calibration→skill-vs-luck), AI containment, architecture
+  (+stack grid & CI lanes), results (condensed dated verdict table → /validation), and
+  limitations & roadmap (dated archive gates). Abstract block + contents nav up top;
+  §disclaimer verbatim in the footer.
+- **Truth discipline:** every number traces to `MODEL_DILIGENCE.md`, dated "as of July
+  2026"; live numbers stay on /validation (drift-locked). Locked by
+  `app/about/__tests__/page.test.tsx`: §disclaimer verbatim, forbidden-phrase scan,
+  section-id contract, honest-headline assertions, link contract (5 tests).
+- **Integration:** landing chrome bar "White Paper" link, cover ghost CTA, §06 →
+  `/about#architecture`; /validation header cross-link. NOT in the SideNav (a document,
+  not a working screen). `/about` added to the ui:audit page list (now 11 pages).
+- **Drive-by fixes:** landing hero `text-[120px]` overflowed 390w on PROD (pre-existing,
+  caught while verifying) → responsive `text-[64px] sm:…`; stack grid was a U-trap
+  (`md:grid-cols-4` in a 72ch container) → gated to lg; ARCHITECTURE.md §6 stale issue-#10
+  pin text corrected.
+- Verified: `pnpm health` exit 0, `ui:audit` /about CLEAN 7/7 widths, landing 390/768
+  overflow 0, visual pass (cover + doctrine).
 
 ## Most recent: **DEMO-POLISH SPRINT SHIPPED + PROMOTED** (PR #32; `master==develop==origin 7b36c19`)
 

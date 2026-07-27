@@ -33,6 +33,7 @@ const ALL_PAGES = [
   "/calibration",
   "/validation",
   "/admin",
+  "/about",
 ];
 const ALL_WIDTHS = [390, 768, 1024, 1280, 1440, 1680, 1920];
 

@@ -65,6 +65,12 @@ export function ValidationShell({ initialData }: Props) {
           views, never probabilities. Everything below is a tested verdict with
           its data provenance, reproducible from the repository in one command.
         </p>
+        <a
+          href="/about"
+          className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3 hover:text-accent transition-colors self-start"
+        >
+          Full methodology — the white paper →
+        </a>
       </header>
 
       <MethodStrip />

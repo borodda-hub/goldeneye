@@ -74,6 +74,9 @@ export default function LandingPage() {
         </div>
         <div className="flex items-center gap-6 pointer-events-auto">
           <LandingAccountControls />
+          <Link href="/about" className="hover:text-accent transition-colors">
+            White Paper
+          </Link>
           <Link
             href="/dashboard"
             className="hover:text-accent transition-colors"
@@ -107,7 +110,7 @@ export default function LandingPage() {
           <Eyebrow>Decision Infrastructure · Goldeneye Capital</Eyebrow>
 
           <h1
-            className="font-serif font-light text-[120px] md:text-[172px] leading-[0.85] tracking-[-0.04em]"
+            className="font-serif font-light text-[64px] sm:text-[120px] md:text-[172px] leading-[0.85] tracking-[-0.04em]"
             style={{ fontVariationSettings: '"opsz" 144, "SOFT" 30' }}
           >
             Gold
@@ -125,7 +128,7 @@ export default function LandingPage() {
 
           <div className="flex flex-wrap items-center gap-3 mt-8">
             <PrimaryCta href="/dashboard">Enter Terminal →</PrimaryCta>
-            <GhostCta href="#thesis">Read the thesis</GhostCta>
+            <GhostCta href="/about">Read the white paper</GhostCta>
             <GhostCta href="/validation">How we validate</GhostCta>
           </div>
 
@@ -358,6 +361,12 @@ export default function LandingPage() {
             Production-grade infrastructure with{" "}
             <GoldItalic>research-grade transparency</GoldItalic>.
           </h3>
+          <Link
+            href="/about#architecture"
+            className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3 hover:text-accent transition-colors self-start"
+          >
+            Full methodology &amp; architecture — the white paper →
+          </Link>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-6">
             {ARCHITECTURE.map((row) => (
               <div
