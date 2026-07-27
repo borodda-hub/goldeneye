@@ -1,8 +1,46 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-07-27 (late). Read this first to pick up where we left off._
+_Last updated: 2026-07-27 (demo-polish). Read this first to pick up where we left off._
 
-## Most recent: **PHASE U COMPLETE — the UI audit is CLEAN: 0 defects across all 10 pages × 7 widths, from a 103-defect baseline** (PRs #28–#31)
+## Most recent: **DEMO-POLISH SPRINT SHIPPED + PROMOTED** (PR #32; `master==develop==origin 7b36c19`)
+
+The five small first-impression debts + the archive-clocks card, all in one PR:
+- **InlineMarkdown** (`components/InlineMarkdown.tsx`): injection-safe `**bold**`/`*italic*`
+  renderer (pure string split, no HTML parsing, other markdown stays literal) wired into all
+  4 LLM narrative surfaces (DirectionalBias, ExplanationPanel, ResultPanel, AiThesisCard).
+- **Issue #8 CLOSED:** SampleDeskBanner's "~87% claimed → ~29% realized" is now DERIVED from
+  the live calibration endpoint (top-conviction bucket, n≥10 gate, qualitative fallback) —
+  visually confirmed matching the calibration headline exactly. Can never drift again.
+- **Issue #10 CLOSED:** paper-engine B5-era 10000 tick pin removed — every asset class
+  resolves real `contract_size` (CL 1000, GC 100, SI 5000). Non-NG paper MTM moved once,
+  deliberately. Pin-guard test inverted; MODEL_DILIGENCE deferral paragraph closed out.
+- **LLM instrument hardening:** `summarize_market` + `explain_signal` prompts now name the
+  instrument (symbol + name) and forbid guessing the commodity from the price level (the
+  June "crude $32.79" mislabel). AI_BEHAVIOR §prompt_templates synced same commit.
+- **PR #7 (Clerk accounts):** audit found it already MERGED 2026-06-06 — nothing to decide.
+- **ArchiveClocksCard (Admin):** live weather/curve vintage-day counts from `/v1/validation`
+  vs pre-registered targets — weather 180d (~Jan 2027 probe), curve ~730d (~mid-2028
+  cross-sectional carry), + the dated D1 re-run window (~Jul 2027). The "what's quietly
+  accumulating" state is now visible instead of memorized.
+- Verified: `pnpm health` exit 0 (995 backend + 434 web), `ui:audit` CLEAN 49/49 cells on
+  all touched pages.
+- **PROD VERIFIED 2026-07-27:** /admin renders Archive Clocks with LIVE prod counts
+  (weather 3/180d, curve 3/730d — the scheduler has been ticking since 07-25), env sha
+  7b36c19; prod /calibration shows the banner's QUALITATIVE branch — correct, since prod's
+  desk data has no material top-bucket miss to quote (the honest-fallback path working).
+- **Prod-audit catch → follow-up fix:** running `ui:audit --base goldeneyeterminal.com`
+  surfaced a DATA-DEPENDENT Phase-U miss — DeskCalibrationCard's 8-column leaderboard
+  spills 167px at 390w when populated (local desk is empty, so the local audit never saw
+  it). Fixed with the U3 idiom (`overflow-x-auto` wrapper + `min-w-[560px]`).
+  **Lesson recorded: audit prod (populated data) after promotion, not just local.**
+
+**Sync state (2026-07-27):** `master == origin/master == develop == origin/develop ==
+7b36c19`. Nothing un-promoted, nothing unpushed (bar this HANDOFF commit). Issues #8 and
+#10 closed; **no open issues, no open PRs.** Recommended next: density/hierarchy polish
+page-by-page under the standing `ui:audit` gate, GTM/demo narrative work, or wait for the
+archive clocks (now visible on /admin) to unlock the next probe.
+
+## Prior: **PHASE U COMPLETE — the UI audit is CLEAN: 0 defects across all 10 pages × 7 widths, from a 103-defect baseline** (PRs #28–#31)
 
 Owner directive ("unusable off ultrawide; type illegible; must read premiere") executed in
 four gated steps, each harness-verified:

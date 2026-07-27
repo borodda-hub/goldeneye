@@ -124,25 +124,27 @@ export function DeskCalibrationCard() {
           No resolved decisions yet — calibration appears as decisions resolve.
         </p>
       ) : (
-        <table className="w-full text-xs font-mono">
-          <thead>
-            <tr className="text-[10px] uppercase tracking-widest text-ink-4 text-left">
-              <th className="font-normal pr-2">#</th>
-              <th className="font-normal pr-2">Analyst</th>
-              <th className="font-normal pr-2">Verdict</th>
-              <th className="font-normal pr-2 text-right">Hit · 95% CI</th>
-              <th className="font-normal pr-2 text-right">Calibration</th>
-              <th className="font-normal pr-2 text-right">Conv</th>
-              <th className="font-normal pr-2 text-right">Bias</th>
-              <th className="font-normal text-right">n</th>
-            </tr>
-          </thead>
-          <tbody>
-            {analysts.map((a, i) => (
-              <Row key={a.user_id ?? "unattributed"} a={a} rank={i + 1} />
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-xs font-mono">
+            <thead>
+              <tr className="text-[10px] uppercase tracking-widest text-ink-4 text-left">
+                <th className="font-normal pr-2">#</th>
+                <th className="font-normal pr-2">Analyst</th>
+                <th className="font-normal pr-2">Verdict</th>
+                <th className="font-normal pr-2 text-right">Hit · 95% CI</th>
+                <th className="font-normal pr-2 text-right">Calibration</th>
+                <th className="font-normal pr-2 text-right">Conv</th>
+                <th className="font-normal pr-2 text-right">Bias</th>
+                <th className="font-normal text-right">n</th>
+              </tr>
+            </thead>
+            <tbody>
+              {analysts.map((a, i) => (
+                <Row key={a.user_id ?? "unattributed"} a={a} rank={i + 1} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       <p className="text-[10px] text-ink-4 font-mono leading-relaxed">
