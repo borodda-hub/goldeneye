@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "biome check .",
     "typecheck": "tsc --noEmit",
+    "ui:audit": "node scripts/ui-audit.mjs",
     "test": "vitest run"
   },
   "dependencies": {
