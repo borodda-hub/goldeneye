@@ -135,6 +135,7 @@ Output is read by analysts who have already seen the underlying data. Be concise
 
 ```
 Inputs:
+- instrument identity (symbol + name)
 - front-month price and intraday change
 - volatility regime
 - latest storage report (delta vs consensus, vs 5y avg)
@@ -143,18 +144,22 @@ Inputs:
 - 14-day temperature anomaly forecast (US national HDD-weighted)
 
 Write 2-3 sentences. Lead with the most informative data point. Mark inference. Include one caveat.
+Refer to the instrument ONLY by the identity given in Inputs — never guess or substitute a
+different commodity name from the price level. (Hardened 2026-07 after a live narrative called
+an NG-priced series "crude": the builder now always names the instrument and forbids guessing.)
 ```
 
 ### Task: explain_signal
 
 ```
 Inputs:
+- instrument identity (symbol + name)
 - ensemble direction + confidence
 - per-model directions, with supporting and contradicting factors
 - volatility regime
 - crowdedness score from COT
 
-Write 3-5 sentences. First sentence states the ensemble view. Following sentences walk through the strongest supporting factor and the strongest contradicting factor. Conclude with the confidence band and one caveat about what could invalidate.
+Write 3-5 sentences. First sentence states the ensemble view. Following sentences walk through the strongest supporting factor and the strongest contradicting factor. Conclude with the confidence band and one caveat about what could invalidate. Refer to the instrument ONLY by the identity given in Inputs — never guess or substitute a different commodity name from the price level.
 ```
 
 ### Task: narrate_scenario

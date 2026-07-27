@@ -1,3 +1,4 @@
+import { InlineMarkdown } from "@/components/InlineMarkdown";
 import type { ScenarioResult } from "@/app/(app)/scenarios/types";
 import { ConfidenceBar } from "@/components/ConfidenceBar";
 import { DirectionChip } from "@/components/DirectionChip";
@@ -136,7 +137,7 @@ export function ResultPanel({ result, name, runId }: Props) {
         </h3>
         {result.narrative ? (
           <p className="text-sm text-ink-2 leading-relaxed whitespace-pre-wrap">
-            {result.narrative}
+            <InlineMarkdown text={result.narrative} />
           </p>
         ) : (
           <p className="text-sm text-ink-4 italic">

@@ -34,34 +34,25 @@ LEVERAGE_CAP: float = 10.0
 
 # B5: only the asset classes introduced in B5 use the instrument's REAL per-contract
 # multiplier (contract_size). Every pre-existing class is pinned to the legacy value
-# below — see _resolve_tick_value for the rationale.
-_REAL_TICK_ASSET_CLASSES = frozenset({"index", "rates"})
-
-
 async def _resolve_tick_value(
     session: AsyncSession, instrument_id: uuid.UUID
 ) -> float:
     """Per-$1-move USD value of one contract, for the paper engine.
 
-    DELIBERATE, DOCUMENTED PIN (B5) — NOT a statement that 10000 is correct:
-    only the asset classes introduced in B5 (``index``/``rates`` — ES uses its real
-    contract_size 50, ZN 1000) resolve the true ``contract_size``. EVERY pre-existing
-    class (commodity/metal/energy/grain/soft/livestock) is intentionally pinned to the
-    legacy NG multiplier (``NG_TICK_VALUE_USD`` = 10000) so the deployed demo's
-    paper-trading equity curve stays byte-identical.
+    ISSUE #10 CLOSED (demo-polish sprint): every instrument now resolves its
+    REAL ``contract_size`` (NG 10000, CL 1000, GC 100, SI 5000, ES 50,
+    ZN 1000, …). The B5-era pin — every pre-existing class forced to the
+    legacy NG 10000 so the demo equity curve wouldn't move — was a
+    deliberate, labeled deferral; with the demo now shown to outsiders, a
+    known-wrong multiplier on a money-looking screen is the bigger risk.
+    The equity curve for open/closed non-NG paper trades moves ONCE with
+    this change, deliberately (before/after reviewed in #10).
 
-    This pin is WRONG for non-NG commodities (CL should be ×1000, GC ×100, SI ×5000 —
-    their real contract_size); the ``contract_size``-correct value is the real fix,
-    **deliberately DEFERRED to a post-B5 follow-up** so no live demo number moves this
-    week. Tracked as issue #10. A future reader: do not "tidy" this into using
-    contract_size everywhere without doing the demo before/after review in #10.
-
-    Falls back to the legacy value when the instrument can't be resolved to a numeric
-    size (e.g. the mocked unit tests' AsyncMock session)."""
+    Falls back to the legacy value when the instrument can't be resolved to
+    a numeric size (e.g. the mocked unit tests' AsyncMock session)."""
     instr = await instr_repo.get_by_id(session, instrument_id)
-    asset_class = getattr(instr, "asset_class", None)
     cs = getattr(instr, "contract_size", None)
-    if asset_class in _REAL_TICK_ASSET_CLASSES and isinstance(cs, (int, float, Decimal)):
+    if isinstance(cs, (int, float, Decimal)) and float(cs) > 0:
         return float(cs)
     return NG_TICK_VALUE_USD
 

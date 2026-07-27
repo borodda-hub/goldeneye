@@ -74,15 +74,14 @@ fully satisfied for direction: the claim is **tested-no-edge**, not unproven. Th
 one validated predictive edge remains **vol/range**; direction ships only as labeled,
 caveated views.
 
-**Paper-engine tick value — deliberate, labeled deferral (B5, issue #10).** The paper engine's
-per-$1-move USD multiplier should be each instrument's real `contract_size` (NG 10000, CL 1000,
-GC 100, SI 5000, ES 50, ZN 1000). B5 wired this for the **new** classes (`index`/`rates`) but
-**deliberately pinned every pre-existing commodity/metal class to the legacy `10000`** so the
-deployed demo's paper-trading equity curve does not move (the open-position MTM of a non-NG
-trade would shift up to 10×). NG is correct either way (its `contract_size` *is* 10000); CL/GC/SI
-keep a known-wrong multiplier **on purpose, as-shipped**, until the correction is reviewed
-against the demo. The pin is documented in `services/paper_engine.py::_resolve_tick_value` and
-tracked as **issue #10** — it is not a claim that 10000 is correct for those instruments.
+**Paper-engine tick value — deferral CLOSED (issue #10, 2026-07-27 demo-polish).** The
+B5-era pin (every pre-existing commodity/metal class forced to the legacy NG `10000`
+multiplier to keep the demo equity curve frozen) is removed: `_resolve_tick_value` now
+returns each instrument's real `contract_size` for every class (NG 10000, CL 1000, GC 100,
+SI 5000, ES 50, ZN 1000). The equity curve for non-NG paper trades moved ONCE with this
+change, deliberately — with the demo now shown to outsiders, a known-wrong multiplier on a
+money-denominated screen was the bigger honesty risk. Locked by the updated
+`test_cross_asset_loop.py` tick tests (the old pin-guard test now asserts the inverse).
 
 ## How to re-run
 
