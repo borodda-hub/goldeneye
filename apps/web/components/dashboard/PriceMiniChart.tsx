@@ -127,11 +127,12 @@ export function PriceMiniChart({ contractCode, symbol = "NG" }: Props) {
       className="border border-line-1 rounded-md bg-surface-1 flex flex-col h-full"
       data-testid="price-mini-chart"
     >
-      <div className="flex items-center justify-between gap-3 px-3 pt-2 pb-1">
+      {/* Phase U1: wraps at narrow widths instead of spilling past the card. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 pt-2 pb-1">
         <span className="text-xs text-ink-3 uppercase tracking-widest">
           {symbol} · {spec.label}
         </span>
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
           <ChartColorSwatch value={chartColor.key} onChange={setChartColor} />
           <div
             className="flex items-center gap-1"

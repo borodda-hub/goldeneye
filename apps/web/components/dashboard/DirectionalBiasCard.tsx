@@ -68,10 +68,14 @@ export function DirectionalBiasCard({ bias, aiSummary, safety }: Props) {
         </span>
       </div>
 
-      <p className="text-sm text-ink-1-soft leading-relaxed">{aiSummary}</p>
+      {/* Phase U1: the narrative scrolls WITHIN the card instead of spilling
+          521px past it (the harness's worst finding — at every width). */}
+      <p className="min-h-0 flex-1 overflow-y-auto text-sm text-ink-1-soft leading-relaxed">
+        {aiSummary}
+      </p>
 
-      <div className="mt-auto">
-        <SafetyEnvelopeNote envelope={safety} defaultOpen={true} />
+      <div className="mt-auto shrink-0">
+        <SafetyEnvelopeNote envelope={safety} defaultOpen={false} />
       </div>
     </div>
   );

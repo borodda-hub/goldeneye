@@ -55,10 +55,17 @@ function TopBar() {
     <header className="flex h-12 items-center justify-between border-b border-line-1 bg-surface-1 px-4 gap-3 lg:px-6 lg:gap-4">
       <MobileNav />
       <Wordmark />
-      <InstrumentSwitcher className="ml-auto" />
-      <ThemeSwitcher />
-      <GettingStartedChip />
-      <WalkthroughButton />
+      <InstrumentSwitcher className="ml-auto min-w-0" />
+      {/* Phase U1: the chips row forced ~760px min width — EVERY page
+          h-scrolled on phones. Progressive disclosure: theme at ≥sm,
+          onboarding chips at ≥md; hamburger/wordmark/switcher/bell always. */}
+      <div className="hidden sm:block">
+        <ThemeSwitcher />
+      </div>
+      <div className="hidden md:flex items-center gap-3 lg:gap-4">
+        <GettingStartedChip />
+        <WalkthroughButton />
+      </div>
       <button
         type="button"
         className="text-ink-3 hover:text-accent transition-colors"

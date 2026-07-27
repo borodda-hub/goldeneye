@@ -63,8 +63,25 @@ two-lane promotion per step.
 
 ## Status
 
-- U0: built + baseline recorded (see §baseline below).
-- U1–U3: pending.
+- U0: ✅ built + baseline recorded (see §baseline below).
+- U1: ✅ **SHIPPED 2026-07-27 — 103 → 63 defects; failing cells 22 → 10;
+  /dashboard CLEAN at all 7 widths** (was defective at every width).
+  What fixed it: (1) `ResizableSplit` is now CONTAINER-aware — it measures
+  its own width with a ResizeObserver, clamps the persisted px pane at
+  RENDER time (not just during drag), and stacks when two panes honestly
+  can't fit; (2) rails re-gated (watchlist ≥2xl, paper rail ≥xl via a new
+  `minViewport` prop) and the shell's row direction aligned to match —
+  a stacked full-width rail inside a horizontal row was the 8px-column
+  bug; (3) the Directional Bias narrative scrolls WITHIN its card
+  (envelope collapsed by default) instead of spilling 521px; (4) HeaderRow
+  wraps + truncates the instrument name (no more 40px one-word column);
+  (5) the TopBar progressively discloses (theme ≥sm, onboarding chips
+  ≥md) — this alone cleared the 390px h-scroll on ALL TEN pages;
+  (6) PriceMiniChart's toolbar wraps at narrow widths.
+  Remaining 63 defects are U3 scope: /signals spills (model grid +
+  calibration card, 390–1680), /paper table crush (390+1024),
+  /scenarios@390, /calibration@390.
+- U2–U3: pending.
 
 ## §baseline — first full run (2026-07-27): **103 defects across 22 page/width cells**
 

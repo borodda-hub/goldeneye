@@ -54,11 +54,15 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
   const feedMode: "live" | "delayed" = tick?.delayed ? "delayed" : "live";
 
   return (
-    <div className="flex flex-col lg:flex-row lg:items-start">
-      {/* Left rail: watchlist (sticky, resizable right edge). Hidden below `lg` —
-          the TopBar instrument switcher covers symbol selection on mobile, and a
-          full-height instrument list above the dashboard reads poorly on a phone. */}
-      <div className="hidden lg:block sticky top-0 self-start">
+    // Phase U1: the row direction must match the rails' thresholds (xl for
+    // the paper rail) — a stacked full-width rail inside a horizontal row
+    // crushes the main column to slivers.
+    <div className="flex flex-col xl:flex-row xl:items-start">
+      {/* Left rail: watchlist (sticky, resizable right edge). Phase U1: shown
+          only at ≥2xl — three fixed columns over-commit anything narrower
+          (the middle column was squeezed to ~250px at 1024). The TopBar
+          instrument switcher covers symbol selection below that. */}
+      <div className="hidden 2xl:block sticky top-0 self-start">
         <ResizableColumn
           side="right"
           defaultWidth={240}
@@ -193,12 +197,14 @@ export function DashboardShell({ initialData, initialSymbol }: Props) {
       </div>
 
       {/* Right rail: paper equity + open positions + recent trades.
-          Resizable left edge. */}
+          Resizable left edge. Phase U1: side-rail mode only at ≥xl (1280);
+          at lg it stacks below the main column instead of squeezing it. */}
       <ResizableColumn
         side="left"
         defaultWidth={320}
         minWidth={260}
         maxWidth={480}
+        minViewport={1280}
         storageKey="goldeneye:dashboard:rail-width"
         className="sticky top-0 self-start"
       >
