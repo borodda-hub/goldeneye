@@ -112,14 +112,14 @@ export function SignalsShell({ initialSignal, initialSymbol = "NG" }: Props) {
       </div>
 
       {/* Row 3: Explanation + History */}
-      <div className="flex gap-4 min-h-0 h-[40vh]">
-        <div className="flex-[3] min-h-0">
+      <div className="flex min-h-0 flex-col gap-4 lg:h-[40vh] lg:flex-row">
+        <div className="h-[40vh] min-h-0 lg:h-auto lg:flex-[3]">
           <ExplanationPanel
             explanation={signal.explanation}
             safety={signal.safety}
           />
         </div>
-        <div className="flex-[2] min-h-0">
+        <div className="h-[40vh] min-h-0 lg:h-auto lg:flex-[2]">
           <HistoryTable symbol={activeSymbol} />
         </div>
       </div>

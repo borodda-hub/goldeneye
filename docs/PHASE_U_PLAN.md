@@ -100,7 +100,24 @@ two-lane promotion per step.
   validation, admin.** Remainder (U3): /signals spills (model grid +
   calibration card, 390–1680), /paper table crush (390+1024),
   /scenarios@390.
-- U3: pending.
+- U3: ✅ **SHIPPED 2026-07-27 — THE AUDIT IS CLEAN: 0 defects across all
+  10 pages × 7 widths (70/70 cells), from a 103-defect baseline.**
+  The sweeps: signals — ModelGrid responsive columns
+  (1/sm:2/lg:3/2xl:5) + min-w-0/truncate/wrap inside ModelCard;
+  ModelCalibrationCard inner grid gated to ≥2xl (a viewport-gated
+  `md:grid-cols-2` was forcing two ~170px columns inside a narrow card —
+  Tailwind can't see container width; gate to viewports where the card is
+  honestly wide) + bucket-row wrap + tighter fixed spans; Explanation/
+  History row stacks below lg with explicit stacked heights + the
+  explanation prose scrolls in-card + envelope collapsed by default;
+  BacktestCard's H/M counts hidden below sm (progressive disclosure —
+  the hit-rate % remains). Paper — both trade tables get
+  `min-w-[600px]` inside their scroll wrappers (cells stop crushing; the
+  wrapper scrolls) + the stat strip wraps. Scenarios — TemplateGallery
+  responsive (1/sm:2/lg:3) + shock rows and the name/Run row wrap.
+  **Phase U complete: U0 harness (the standing gate) + U1 structure +
+  U2 type + U3 sweeps.** Future UI work inherits the DoD: `pnpm run
+  ui:audit` clean for touched pages.
 
 ## §baseline — first full run (2026-07-27): **103 defects across 22 page/width cells**
 

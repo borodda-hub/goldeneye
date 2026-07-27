@@ -165,7 +165,7 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
         {/* Left — build, then recent runs under the shock builder */}
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <div className="relative flex items-center gap-3">
+            <div className="relative flex flex-wrap items-center gap-3">
               <label className="flex items-center gap-2 flex-1">
                 <span className="font-mono text-[10px] text-accent uppercase tracking-widest">
                   Name

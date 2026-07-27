@@ -105,7 +105,7 @@ function ModelRow({
       <span className="font-mono tabular-nums text-ink-3 w-24 text-right text-[10px]">
         {model.scored} scored
       </span>
-      <span className="font-mono tabular-nums text-ink-4 w-20 text-right text-[10px]">
+      <span className="hidden whitespace-nowrap text-right font-mono text-[10px] tabular-nums text-ink-4 sm:inline">
         {model.hits}H · {model.misses}M
         {model.indeterminate > 0 ? ` · ${model.indeterminate}∅` : ""}
       </span>

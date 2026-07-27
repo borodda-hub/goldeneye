@@ -19,7 +19,7 @@ export function ModelGrid({ models }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
       {models.map((model) => (
         <ModelCard key={model.model_name} model={model} />
       ))}
