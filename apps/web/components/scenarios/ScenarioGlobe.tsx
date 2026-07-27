@@ -339,7 +339,7 @@ export function ScenarioGlobe({
       </div>
 
       {/* legend */}
-      <div className="absolute bottom-2 left-3 flex items-center gap-3 font-mono text-[9px] uppercase tracking-widest text-ink-4 pointer-events-none">
+      <div className="absolute bottom-2 left-3 flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-ink-4 pointer-events-none">
         <span>
           <span className="text-up">●</span> bullish
         </span>

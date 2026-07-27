@@ -56,7 +56,7 @@ export function InstrumentSwitcher({ className = "" }: Props) {
           {label}
         </span>
         {name ? (
-          <span className="text-[10px] text-ink-3 max-w-[120px] truncate">
+          <span className="max-w-[88px] truncate text-[10px] text-ink-3 sm:max-w-[120px]">
             {name}
           </span>
         ) : null}

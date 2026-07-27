@@ -24,7 +24,7 @@ function Banner() {
         className="mt-0.5 h-4 w-4 shrink-0 text-accent"
       />
       <div className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
           Illustrative scenario
         </span>
         <p className="text-xs leading-relaxed text-ink-2">

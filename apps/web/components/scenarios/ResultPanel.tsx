@@ -101,14 +101,14 @@ export function ResultPanel({ result, name, runId }: Props) {
       {/* Three columns: assumptions, counterarguments, data needed */}
       <div className="grid grid-cols-3 gap-6 border-t border-line-1 pt-4">
         <div className="flex flex-col gap-2">
-          <h3 className="font-mono text-[10px] text-accent uppercase tracking-widest">
+          <h3 className="font-mono text-[11px] text-accent uppercase tracking-eyebrow">
             Assumptions
             <HelpTip k="assumptions" className="ml-1" />
           </h3>
           <NumberedList items={result.assumptions} empty="No assumptions." />
         </div>
         <div className="flex flex-col gap-2">
-          <h3 className="font-mono text-[10px] text-accent uppercase tracking-widest">
+          <h3 className="font-mono text-[11px] text-accent uppercase tracking-eyebrow">
             Counterarguments
             <HelpTip k="counterarguments" className="ml-1" />
           </h3>
@@ -118,7 +118,7 @@ export function ResultPanel({ result, name, runId }: Props) {
           />
         </div>
         <div className="flex flex-col gap-2">
-          <h3 className="font-mono text-[10px] text-accent uppercase tracking-widest">
+          <h3 className="font-mono text-[11px] text-accent uppercase tracking-eyebrow">
             Data needed to validate
             <HelpTip k="dataNeeded" className="ml-1" />
           </h3>
@@ -131,7 +131,7 @@ export function ResultPanel({ result, name, runId }: Props) {
 
       {/* Narrative */}
       <div className="flex flex-col gap-2 border-t border-line-1 pt-4">
-        <h3 className="font-mono text-[10px] text-accent uppercase tracking-widest">
+        <h3 className="font-mono text-[11px] text-accent uppercase tracking-eyebrow">
           Narrative
         </h3>
         {result.narrative ? (

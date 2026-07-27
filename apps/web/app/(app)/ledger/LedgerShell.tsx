@@ -52,7 +52,7 @@ function IntegrityBadge({ decision }: { decision: LedgerDecision }) {
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="font-mono text-[9px] uppercase tracking-wider text-ink-4">
+      <span className="font-mono text-[10px] uppercase tracking-wider text-ink-4">
         {label}
       </span>
       <span className="text-[12px] text-ink-1 tabular-nums">{value}</span>
@@ -71,7 +71,7 @@ function CreatedEvent({ event }: { event: LedgerEvent }) {
   return (
     <div className="flex flex-col gap-3">
       <div>
-        <p className="mb-1.5 font-mono text-[9px] uppercase tracking-wider text-ink-4">
+        <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-ink-4">
           What you decided
         </p>
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
@@ -119,7 +119,7 @@ function CreatedEvent({ event }: { event: LedgerEvent }) {
       </div>
 
       <div>
-        <p className="mb-1.5 font-mono text-[9px] uppercase tracking-wider text-ink-4">
+        <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-ink-4">
           What the system knew
         </p>
         {captured ? (
@@ -163,7 +163,7 @@ function ResolvedEvent({ event }: { event: LedgerEvent }) {
   return (
     <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
       <div className="flex flex-col gap-0.5">
-        <span className="font-mono text-[9px] uppercase tracking-wider text-ink-4">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-ink-4">
           Outcome
         </span>
         <span className={`text-[12px] font-medium capitalize ${cls}`}>

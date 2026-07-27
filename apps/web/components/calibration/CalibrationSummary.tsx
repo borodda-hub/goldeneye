@@ -10,10 +10,10 @@ export function CalibrationSummary({ data }: Props) {
   return (
     <section
       aria-label="Calibration summary"
-      className="card-interactive grid grid-cols-3 gap-6 border border-line-1 bg-surface-1 p-5"
+      className="card-interactive grid grid-cols-1 gap-6 border border-line-1 bg-surface-1 p-5 sm:grid-cols-3"
     >
       <div className="col-span-2 flex flex-col gap-3 border-r border-line-1 pr-6">
-        <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+        <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
           <Newspaper
             size={12}
             strokeWidth={1.5}
@@ -49,7 +49,7 @@ export function CalibrationSummary({ data }: Props) {
       </div>
 
       <div className="flex flex-col gap-3">
-        <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+        <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
           <Sigma
             size={12}
             strokeWidth={1.5}
@@ -71,7 +71,7 @@ export function CalibrationSummary({ data }: Props) {
 function SampleRow({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+      <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
         {label}
       </span>
       <span className="font-mono tabular-nums text-sm text-ink-1">{value}</span>

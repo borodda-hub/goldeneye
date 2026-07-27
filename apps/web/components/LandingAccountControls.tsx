@@ -18,7 +18,7 @@ export function LandingAccountControls() {
         <SignInButton mode="modal">
           <button
             type="button"
-            className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3 hover:text-accent transition-colors"
+            className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3 hover:text-accent transition-colors"
           >
             Sign in
           </button>

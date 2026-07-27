@@ -82,7 +82,7 @@ export function ReliabilityDiagram({ buckets }: Props) {
       className="card-interactive border border-line-1 bg-surface-1 p-5 flex flex-col gap-3"
     >
       <div className="flex items-baseline justify-between">
-        <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+        <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
           <ScatterIcon
             size={12}
             strokeWidth={1.5}
@@ -92,7 +92,7 @@ export function ReliabilityDiagram({ buckets }: Props) {
           Reliability diagram
         </span>
         {hasPoints ? (
-          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
+          <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-4">
             {points.length} buckets · diagonal = perfect calibration
           </span>
         ) : null}

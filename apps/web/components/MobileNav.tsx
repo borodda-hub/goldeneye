@@ -61,7 +61,7 @@ export function MobileNav() {
           {/* drawer */}
           <nav className="absolute left-0 top-0 flex h-full w-64 max-w-[82vw] flex-col border-r border-line-1 bg-surface-1 pt-3 shadow-2xl">
             <div className="flex items-center justify-between border-b border-line-1 px-4 pb-3">
-              <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
+              <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-4">
                 Navigate
               </span>
               <button

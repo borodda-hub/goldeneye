@@ -47,7 +47,7 @@ export function ThemeSwitcher() {
           role="menu"
           className="absolute right-0 top-full z-50 mt-2 w-44 rounded-sm border border-line-1 bg-surface-1 py-1 shadow-xl"
         >
-          <div className="px-3 py-1 font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+          <div className="px-3 py-1 font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
             Theme
           </div>
           {themes.map((t) => {

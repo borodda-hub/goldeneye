@@ -21,7 +21,7 @@ const STATUS_CHIP: Record<Status, string> = {
 function StatusChip({ status }: { status: Status }) {
   return (
     <span
-      className={`inline-block px-1.5 py-px text-[9px] font-mono uppercase tracking-widest border rounded-sm ${STATUS_CHIP[status]}`}
+      className={`inline-block px-1.5 py-px text-[10px] font-mono uppercase tracking-widest border rounded-sm ${STATUS_CHIP[status]}`}
     >
       {STATUS_LABEL[status]}
     </span>
@@ -73,7 +73,7 @@ export function RecentTradesCard() {
       aria-label="Recent paper trades"
     >
       <div className="flex items-baseline justify-between px-3 pt-2 pb-1.5 border-b border-line-1">
-        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-accent uppercase tracking-eyebrow">
           <History
             size={12}
             strokeWidth={1.5}
@@ -95,7 +95,7 @@ export function RecentTradesCard() {
       ) : (
         <table className="w-full text-[11px] font-mono">
           <thead>
-            <tr className="text-ink-4 text-[9px] uppercase tracking-widest">
+            <tr className="text-ink-4 text-[10px] uppercase tracking-widest">
               <th className="text-left px-3 py-1">Symbol</th>
               <th className="text-left px-3 py-1">Status</th>
               <th className="text-left px-3 py-1">Side</th>

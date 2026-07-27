@@ -35,7 +35,7 @@ export function HelpTip({ k, text, align = "left", className = "" }: Props) {
         type="button"
         aria-label="What is this?"
         aria-describedby={open ? id : undefined}
-        className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-accent/40 text-accent/70 text-[9px] font-semibold normal-case leading-none cursor-help transition-colors hover:border-accent/80 hover:text-accent focus:text-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/60"
+        className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-accent/40 text-accent/70 text-[10px] font-semibold normal-case leading-none cursor-help transition-colors hover:border-accent/80 hover:text-accent focus:text-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/60"
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
         onFocus={() => setOpen(true)}

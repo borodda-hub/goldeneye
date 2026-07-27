@@ -18,7 +18,7 @@ export function ConvictionSlider({ value, onChange, disabled }: Props) {
       <div className="flex items-center justify-between gap-3">
         <label
           htmlFor={id}
-          className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3"
+          className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3"
         >
           Conviction
         </label>
@@ -38,7 +38,7 @@ export function ConvictionSlider({ value, onChange, disabled }: Props) {
         aria-label="Conviction percentage"
         className="w-full accent-accent"
       />
-      <div className="flex justify-between font-mono text-[9px] tabular-nums text-ink-4">
+      <div className="flex justify-between font-mono text-[10px] tabular-nums text-ink-4">
         {BUCKET_TICKS.map((t) => (
           <span key={t}>{t}</span>
         ))}

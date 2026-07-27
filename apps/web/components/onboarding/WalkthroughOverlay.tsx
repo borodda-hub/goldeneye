@@ -216,7 +216,7 @@ export function WalkthroughOverlay({
         data-testid="walkthrough-tooltip"
       >
         <div className="flex items-baseline justify-between gap-3 border-b border-line-1 pb-2">
-          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+          <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
             ─── {step.id}
           </span>
           <span className="font-mono text-[10px] tabular-nums text-ink-3">
@@ -253,7 +253,7 @@ export function WalkthroughOverlay({
           <button
             type="button"
             onClick={onClose}
-            className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3 hover:text-ink-1 transition-colors"
+            className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3 hover:text-ink-1 transition-colors"
             aria-label="Skip walkthrough"
           >
             Skip tour
@@ -264,14 +264,14 @@ export function WalkthroughOverlay({
               type="button"
               onClick={onPrev}
               disabled={isFirst}
-              className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="font-mono text-[11px] uppercase tracking-eyebrow border border-line-1 px-2.5 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               ← Back
             </button>
             <button
               type="button"
               onClick={isLast ? onClose : onNext}
-              className="font-mono text-[10px] uppercase tracking-eyebrow border border-accent bg-accent-soft px-3 py-1 text-accent-bright hover:bg-accent hover:text-bg"
+              className="font-mono text-[11px] uppercase tracking-eyebrow border border-accent bg-accent-soft px-3 py-1 text-accent-bright hover:bg-accent hover:text-bg"
             >
               {isLast ? "Done" : "Next →"}
             </button>

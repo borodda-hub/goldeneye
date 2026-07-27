@@ -22,7 +22,7 @@ function Section({
 }) {
   return (
     <div className="flex flex-col gap-2 border-t border-line-1 pt-4 first:border-t-0 first:pt-0">
-      <h3 className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+      <h3 className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
         {title}
       </h3>
       {items.length === 0 ? (
@@ -84,7 +84,7 @@ export function ThesisCritiqueDrawer({
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-line-1 pb-3">
           <div className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+            <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
               ─── Critique
             </span>
             <h2 className="font-serif text-[24px] leading-none text-ink-1">
@@ -128,7 +128,7 @@ export function ThesisCritiqueDrawer({
 
             {/* Safety envelope */}
             <div className="border-t border-line-1 pt-4 mt-auto flex flex-col gap-2">
-              <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+              <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
                 Safety
               </span>
               <p className="text-xs text-ink-3 leading-relaxed">

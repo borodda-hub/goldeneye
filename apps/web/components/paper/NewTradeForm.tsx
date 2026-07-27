@@ -93,10 +93,10 @@ export function NewTradeForm({ journalEntries }: Props) {
           aria-hidden="true"
           className="text-accent"
         />
-        <h2 className="font-mono text-[11px] font-semibold text-accent uppercase tracking-widest">
+        <h2 className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
           New Trade
         </h2>
-        <span className="ml-auto font-mono text-[9px] text-ink-4 uppercase tracking-eyebrow">
+        <span className="ml-auto font-mono text-[10px] text-ink-4 uppercase tracking-eyebrow">
           Paper
         </span>
       </div>

@@ -28,7 +28,7 @@ export function MissingDataList({ items, onChange }: Props) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
           Missing data
         </span>
         <span className="font-mono text-[10px] tabular-nums text-ink-4">
@@ -81,7 +81,7 @@ export function MissingDataList({ items, onChange }: Props) {
           type="button"
           onClick={add}
           disabled={!draft.trim() || items.length >= 20}
-          className="font-mono text-[10px] uppercase tracking-eyebrow border border-line-1 px-2 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="font-mono text-[11px] uppercase tracking-eyebrow border border-line-1 px-2 py-1 text-ink-2 hover:bg-surface-2 hover:text-ink-1 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Add
         </button>

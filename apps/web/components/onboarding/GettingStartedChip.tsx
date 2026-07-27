@@ -17,7 +17,7 @@ export function GettingStartedChip({ className = "" }: { className?: string }) {
       type="button"
       onClick={() => setDismissed(false)}
       aria-label="Open getting started checklist"
-      className={`inline-flex items-center gap-1.5 border border-accent bg-accent-soft px-2.5 py-1 font-mono text-[10px] uppercase tracking-eyebrow text-accent-bright transition-colors hover:bg-accent hover:text-bg ${className}`}
+      className={`inline-flex items-center gap-1.5 border border-accent bg-accent-soft px-2.5 py-1 font-mono text-[11px] uppercase tracking-eyebrow text-accent-bright transition-colors hover:bg-accent hover:text-bg ${className}`}
       data-testid="getting-started-chip"
     >
       <ListChecks size={12} strokeWidth={1.75} aria-hidden="true" />

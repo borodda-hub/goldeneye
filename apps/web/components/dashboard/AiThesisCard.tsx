@@ -37,7 +37,7 @@ export function AiThesisCard({ instrument, thesis }: Props) {
             onToggle={toggle}
             label="AI thesis"
           />
-          <span className="font-mono text-[10px] text-accent uppercase tracking-eyebrow">
+          <span className="font-mono text-[11px] text-accent uppercase tracking-eyebrow">
             AI Thesis · {instrument.symbol}
             <HelpTip k="aiThesis" className="ml-1" />
           </span>

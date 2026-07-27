@@ -42,7 +42,7 @@ function Wordmark() {
       </span>
       <span
         aria-hidden="true"
-        className="font-mono text-[9px] uppercase tracking-eyebrow text-accent-deep relative -top-[2px]"
+        className="font-mono text-[10px] uppercase tracking-eyebrow text-accent-deep relative -top-[2px]"
       >
         Terminal
       </span>

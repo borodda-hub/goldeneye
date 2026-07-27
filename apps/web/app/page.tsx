@@ -12,7 +12,7 @@ export const metadata = {
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+    <span className="inline-flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent">
       <span
         aria-hidden="true"
         className="inline-block w-[18px] h-px bg-accent"
@@ -61,7 +61,7 @@ export default function LandingPage() {
   return (
     <main className="min-h-screen bg-bg text-ink-1">
       {/* ── Chrome bar ──────────────────────────────────────────────── */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 font-mono text-[10px] uppercase tracking-eyebrow text-ink-3 pointer-events-none">
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 font-mono text-[11px] uppercase tracking-eyebrow text-ink-3 pointer-events-none">
         <div className="flex items-center gap-6">
           <span className="inline-flex items-center gap-2 pointer-events-auto">
             <span
@@ -184,7 +184,7 @@ export default function LandingPage() {
               <h3 className="font-serif text-[22px] leading-tight text-ink-1 mt-auto">
                 {force.name}
               </h3>
-              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-ink-3 mt-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-3 mt-3">
                 {force.detail}
               </p>
             </article>
@@ -328,7 +328,7 @@ export default function LandingPage() {
                 className="flex flex-col gap-1 border-b border-line-1 py-4 sm:flex-row sm:items-baseline sm:gap-4"
               >
                 <span
-                  className={`inline-block w-fit whitespace-nowrap rounded-sm border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${row.cls}`}
+                  className={`inline-block w-fit whitespace-nowrap rounded-sm border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide ${row.cls}`}
                 >
                   {row.badge}
                 </span>
@@ -364,7 +364,7 @@ export default function LandingPage() {
                 key={row.label}
                 className="border border-line-1 bg-surface-1 p-5 flex flex-col gap-2 hover:bg-surface-2 transition-colors"
               >
-                <span className="font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+                <span className="font-mono text-[11px] uppercase tracking-eyebrow text-accent">
                   {row.label}
                 </span>
                 <span className="font-mono text-sm text-ink-1">
@@ -415,7 +415,7 @@ export default function LandingPage() {
 
       {/* ── Footer ─────────────────────────────────────────────────── */}
       <footer className="border-t border-line-1 px-8 md:px-32 py-8 max-w-[1400px] mx-auto">
-        <div className="flex flex-wrap items-center justify-between gap-4 font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 font-mono text-[11px] uppercase tracking-eyebrow text-ink-4">
           <span>© 2026 Goldeneye Capital · Chicago, IL</span>
           <span>
             Research and decision-support terminal — not financial advice
@@ -437,7 +437,7 @@ function Stat({ value, label }: { value: string; label: string }) {
       >
         {value}
       </span>
-      <span className="font-mono text-[9px] uppercase tracking-[0.22em] text-ink-3 leading-relaxed">
+      <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-3 leading-relaxed">
         {label}
       </span>
     </div>

@@ -147,7 +147,7 @@ export function ScenariosShell({ initialTemplates, initialRuns }: Props) {
 
       {/* Templates */}
       <section className="flex flex-col gap-2">
-        <h2 className="font-mono text-[10px] text-accent uppercase tracking-widest">
+        <h2 className="font-mono text-[11px] text-accent uppercase tracking-eyebrow">
           Templates
           <HelpTip k="templates" className="ml-1" />
         </h2>

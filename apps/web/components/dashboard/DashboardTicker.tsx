@@ -30,7 +30,7 @@ function Cell({ item }: { item: TickerItem }) {
       className="inline-flex items-baseline gap-2 px-4 py-1.5 shrink-0"
       data-symbol={item.symbol}
     >
-      <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-3">
+      <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
         {item.label}
       </span>
       <span className="font-mono tabular-nums text-xs text-ink-1">
@@ -58,7 +58,7 @@ export function DashboardTicker() {
         className="border-t border-line-1 bg-surface-1 h-8 flex items-center px-4"
         aria-label="Market ticker loading"
       >
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-4">
           Loading ticker…
         </span>
       </div>
@@ -71,7 +71,7 @@ export function DashboardTicker() {
         className="border-t border-line-1 bg-surface-1 h-8 flex items-center px-4"
         aria-label="Market ticker unavailable"
       >
-        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-down">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-down">
           Ticker unavailable
         </span>
       </div>

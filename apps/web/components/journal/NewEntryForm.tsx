@@ -119,7 +119,7 @@ export function NewEntryForm({ onCreated }: Props) {
       }}
       className="card-interactive border border-line-1 bg-surface-1 p-3 flex flex-col gap-3"
     >
-      <h2 className="flex items-center gap-2 font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+      <h2 className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent">
         <FilePlus2
           size={12}
           strokeWidth={1.5}

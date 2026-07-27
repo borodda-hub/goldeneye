@@ -90,7 +90,7 @@ export function EntryDetailDrawer({ entry, onClose }: Props) {
       aria-label={`Journal entry — ${resolutionLabel(entry.resolved_direction)}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <h2 className="flex items-center gap-2 font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+        <h2 className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent">
           <FileText
             size={12}
             strokeWidth={1.5}
@@ -122,7 +122,7 @@ export function EntryDetailDrawer({ entry, onClose }: Props) {
             {entry.confidence_pct}%
           </span>
           {entry.thesis_conviction_at_write !== null ? (
-            <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4 ml-2">
+            <span className="font-mono text-[11px] uppercase tracking-eyebrow text-ink-4 ml-2">
               Thesis at write · {entry.thesis_conviction_at_write}%
             </span>
           ) : null}

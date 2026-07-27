@@ -41,7 +41,7 @@ function TercileNote({
       }`}
     >
       <span
-        className={`font-mono text-[8px] uppercase tracking-wide ${
+        className={`font-mono text-[10px] uppercase tracking-wide ${
           active ? "text-accent" : "text-ink-4"
         }`}
       >
@@ -72,7 +72,7 @@ export function VolPremiumCard({ symbol }: { symbol: string }) {
   return (
     <div className="card-interactive rounded-md border border-line-1 bg-surface-1 px-4 py-3">
       <div className="flex items-center justify-between">
-        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-eyebrow text-accent">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent">
           <Scale
             size={12}
             strokeWidth={1.5}
@@ -82,7 +82,7 @@ export function VolPremiumCard({ symbol }: { symbol: string }) {
           Vol vs Market
           <HelpTip k="volPremium" className="ml-1" />
         </span>
-        <span className="rounded-sm border border-line-2 bg-surface-2 px-1 py-px font-mono text-[8px] normal-case tracking-normal text-ink-3">
+        <span className="rounded-sm border border-line-2 bg-surface-2 px-1 py-px font-mono text-[10px] normal-case tracking-normal text-ink-3">
           {pair?.underlying} / {pair?.iv_index}
         </span>
       </div>
@@ -123,7 +123,7 @@ export function VolPremiumCard({ symbol }: { symbol: string }) {
                 aria-label={`spread percentile ${Math.round(current.percentile)}`}
               />
             </div>
-            <div className="mt-1 flex justify-between font-mono text-[8px] uppercase tracking-wide text-ink-4">
+            <div className="mt-1 flex justify-between font-mono text-[10px] uppercase tracking-wide text-ink-4">
               <span>forecast below market</span>
               <span>
                 {Math.round(current.percentile)}th pct of walk-forward history
@@ -152,7 +152,7 @@ export function VolPremiumCard({ symbol }: { symbol: string }) {
               />
             </div>
           ) : null}
-          <p className="mt-1.5 font-mono text-[9px] leading-relaxed text-ink-4">
+          <p className="mt-1.5 font-mono text-[10px] leading-relaxed text-ink-4">
             Historical mean 1m premium (implied − realized) per spread tercile,
             walk-forward{sample ? ` · n_eff≈${sample.n_eff}` : ""}.{" "}
             {timing_tested
@@ -181,7 +181,7 @@ export function VolPremiumCard({ symbol }: { symbol: string }) {
         </p>
       )}
 
-      <p className="mt-2 border-t border-line-1 pt-1.5 font-mono text-[9px] text-ink-4">
+      <p className="mt-2 border-t border-line-1 pt-1.5 font-mono text-[10px] text-ink-4">
         har_log estimator · 30-day tenor matched · comparison is measured, not
         predicted
         {g1

@@ -57,7 +57,7 @@ export function EnsembleHeader({ ensemble }: Props) {
       <div className="flex items-center gap-x-8 gap-y-3 flex-wrap">
         {/* Direction — the visual anchor */}
         <div className="flex flex-col gap-0.5">
-          <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
             Ensemble signal · 1-day
           </span>
           <span
@@ -71,7 +71,7 @@ export function EnsembleHeader({ ensemble }: Props) {
 
         {/* Expected move */}
         <div className="flex flex-col gap-0.5">
-          <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
             Expected move
           </span>
           {expected_pct !== null && expected_pct !== undefined ? (
@@ -96,7 +96,7 @@ export function EnsembleHeader({ ensemble }: Props) {
 
         {/* Agreement — honest framing of the vote, NOT a confidence/hit-rate claim */}
         <div className="flex flex-col gap-1">
-          <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
             Agreement
           </span>
           <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ export function EnsembleHeader({ ensemble }: Props) {
 
         {/* Agreement — right-aligned support */}
         <div className="ml-auto flex flex-col items-end gap-1 text-right">
-          <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
             Model agreement
           </span>
           <span className="font-mono text-sm tabular-nums text-ink-2">

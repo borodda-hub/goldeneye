@@ -53,9 +53,9 @@ export function ExpectedRange({ symbol, estimator = "har_log" }: Props) {
       <div className="flex items-center gap-x-8 gap-y-3 flex-wrap">
         {/* The band — the calibrated headline */}
         <div className="flex flex-col gap-0.5">
-          <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4 flex items-center gap-1.5">
+          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4 flex items-center gap-1.5">
             Expected range · 1 week · 80% band
-            <span className="rounded-sm border border-line-2 bg-surface-2 px-1 py-px text-[8px] tracking-normal text-ink-3 normal-case">
+            <span className="rounded-sm border border-line-2 bg-surface-2 px-1 py-px text-[10px] tracking-normal text-ink-3 normal-case">
               {ESTIMATOR_LABEL[data.estimator] ?? data.estimator}
             </span>
           </span>
@@ -78,7 +78,7 @@ export function ExpectedRange({ symbol, estimator = "har_log" }: Props) {
 
         {/* Daily vol */}
         <div className="flex flex-col gap-0.5">
-          <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
             Daily volatility
           </span>
           <span className="font-mono tabular-nums text-lg leading-none text-ink-2">
@@ -88,7 +88,7 @@ export function ExpectedRange({ symbol, estimator = "har_log" }: Props) {
 
         {/* Live calibration readout — the honest track record */}
         <div className="flex flex-col gap-0.5">
-          <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
             Walk-forward coverage
           </span>
           {cov80 != null ? (
@@ -106,7 +106,7 @@ export function ExpectedRange({ symbol, estimator = "har_log" }: Props) {
         {/* Forward-vol correlation — the evidence it carries information */}
         {corr != null && (
           <div className="flex flex-col gap-0.5">
-            <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+            <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
               Forward-vol signal
             </span>
             <span className="font-mono tabular-nums text-lg leading-none text-up">

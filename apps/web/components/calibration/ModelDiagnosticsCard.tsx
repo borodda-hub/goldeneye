@@ -49,7 +49,7 @@ function Metric({
 }) {
   return (
     <div className="flex flex-col">
-      <span className="text-[9px] uppercase tracking-widest text-ink-4">
+      <span className="text-[10px] uppercase tracking-widest text-ink-4">
         {label}
       </span>
       <span className={`tabular-nums ${tone}`}>{value}</span>
@@ -107,7 +107,7 @@ function ModelBlock({ m }: { m: ModelDiagnostic }) {
       </div>
 
       {regimes.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 font-mono text-[9px] text-ink-4">
+        <div className="flex flex-wrap gap-1.5 font-mono text-[10px] text-ink-4">
           {regimes.map(([reg, v]) => (
             <span key={reg} className="border border-line-1 px-1.5 py-0.5">
               {reg} <span className="text-ink-2">{pct(v.hit_rate)}</span>
@@ -118,7 +118,7 @@ function ModelBlock({ m }: { m: ModelDiagnostic }) {
       )}
 
       {topShift && (
-        <p className="font-mono text-[9px] text-ink-4">
+        <p className="font-mono text-[10px] text-ink-4">
           Feature drift: <span className="text-ink-2">{topShift.factor}</span>{" "}
           {Math.round(topShift.early_share * 100)}%→
           {Math.round(topShift.late_share * 100)}%
@@ -141,7 +141,7 @@ export function ModelDiagnosticsCard({ symbol }: { symbol: string }) {
 
   return (
     <section className="card-interactive border border-line-1 bg-surface-1 p-3 flex flex-col gap-2.5">
-      <h2 className="flex items-center gap-2 font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+      <h2 className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent">
         <Stethoscope size={12} strokeWidth={1.5} aria-hidden="true" />
         Model Health · how each model fails
       </h2>
@@ -161,7 +161,7 @@ export function ModelDiagnosticsCard({ symbol }: { symbol: string }) {
         </div>
       )}
 
-      <p className="text-[9px] text-ink-4 font-mono leading-relaxed">
+      <p className="text-[10px] text-ink-4 font-mono leading-relaxed">
         <span className="text-ink-3">Calib err</span> (reliability) is how far
         stated confidence sits from realized hit-rate — lower is better;{" "}
         <span className="text-ink-3">Sharpness</span> (resolution) is how much

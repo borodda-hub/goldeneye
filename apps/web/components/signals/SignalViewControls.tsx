@@ -69,7 +69,7 @@ export function SignalViewControls({
   return (
     <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
       <div className="flex items-center gap-2">
-        <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+        <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
           View
         </span>
         <Segmented
@@ -82,7 +82,7 @@ export function SignalViewControls({
 
       {showEstimator && (
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[9px] uppercase tracking-eyebrow text-ink-4">
+          <span className="font-mono text-[10px] uppercase tracking-eyebrow text-ink-4">
             Vol estimator
           </span>
           <Segmented

@@ -106,7 +106,7 @@ function ModelRow({ m, byRegime }: { m: ModelCalibration; byRegime: boolean }) {
           {Object.entries(m.by_regime).map(([regime, r]) => (
             <span
               key={regime}
-              className="font-mono text-[9px] uppercase tracking-widest text-ink-3 border border-line-1 px-1.5 py-0.5"
+              className="font-mono text-[10px] uppercase tracking-widest text-ink-3 border border-line-1 px-1.5 py-0.5"
             >
               {regime}{" "}
               <span className={brierColor(r.brier)}>
@@ -128,7 +128,7 @@ export function ModelCalibrationCard({ symbol = "NG" }: { symbol?: string }) {
   return (
     <section className="card-interactive border border-line-1 bg-surface-1 p-3 flex flex-col gap-2.5">
       <header className="flex items-center justify-between">
-        <h2 className="flex items-center gap-2 font-mono text-[10px] text-ink-3 uppercase tracking-widest">
+        <h2 className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-eyebrow text-accent">
           <Gauge size={12} strokeWidth={1.5} aria-hidden="true" />
           Model Calibration
           <HelpTip k="ensemble" />
@@ -158,7 +158,7 @@ export function ModelCalibrationCard({ symbol = "NG" }: { symbol?: string }) {
           ))}
         </div>
       )}
-      <p className="text-[9px] text-ink-4 font-mono leading-relaxed">
+      <p className="text-[10px] text-ink-4 font-mono leading-relaxed">
         Reliability of each model's stated confidence vs. its realized hit-rate
         over backtested history. The tick is what the model claimed; the bar is
         what happened. Brier scores the gap (lower is better; 0.25 ≈ coin flip).
