@@ -46,6 +46,34 @@ export function ResizableSplit({
   // and overlaps; stack vertically instead. Defaults to wide on SSR/first paint
   // so desktop markup is stable (no hydration mismatch), then syncs after mount.
   const isWide = useMediaQuery("(min-width: 1024px)", true);
+  // Phase U1: the split must be CONTAINER-aware, not just viewport-aware — a
+  // wide viewport with rails can still hand this component a container
+  // narrower than leftMin+rightMin (the 2px-wide-card bug). Measure the
+  // available width and (a) stack when two panes can't honestly fit,
+  // (b) clamp the persisted px width to what the container affords at
+  // RENDER time, not only during drag.
+  const [containerW, setContainerW] = useState<number | null>(null);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width;
+      if (typeof w === "number") setContainerW(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  });
+  const fitsSideBySide =
+    containerW === null
+      ? isWide
+      : containerW >= leftMinWidth + rightMinWidth + HANDLE_WIDTH_PX;
+  const effectiveRight =
+    containerW === null
+      ? rightWidth
+      : Math.max(
+          rightMinWidth,
+          Math.min(rightWidth, containerW - leftMinWidth - HANDLE_WIDTH_PX),
+        );
 
   // Hydrate from localStorage after mount to avoid SSR mismatch.
   useEffect(() => {
@@ -134,9 +162,13 @@ export function ResizableSplit({
   // cards size exactly as on desktop — they just stack instead of sitting side by
   // side. This is what makes the dashboard reflow like every other page on
   // tablet/mobile instead of overlapping.
-  if (!isWide) {
+  if (!isWide || !fitsSideBySide) {
     return (
-      <div className="flex flex-col gap-4" data-testid="resizable-split">
+      <div
+        ref={containerRef}
+        className="flex flex-col gap-4"
+        data-testid="resizable-split"
+      >
         <div className={`w-full min-w-0 ${className}`}>{left}</div>
         <div className={`w-full min-w-0 ${className}`}>{right}</div>
       </div>
@@ -171,7 +203,7 @@ export function ResizableSplit({
           className="h-full w-px bg-line-1 group-hover:bg-accent group-focus:bg-accent transition-colors"
         />
       </div>
-      <div className="shrink-0" style={{ width: `${rightWidth}px` }}>
+      <div className="shrink-0" style={{ width: `${effectiveRight}px` }}>
         {right}
       </div>
     </div>

@@ -68,9 +68,10 @@ export function HeaderRow({
   const pctSign = hasChange && (changePct as number) > 0 ? "+" : "";
 
   return (
-    <div className="flex items-center justify-between gap-6 pb-3 border-b border-line-1">
-      {/* Left: identifiers */}
-      <div className="flex items-center gap-2 text-xs">
+    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 pb-3 border-b border-line-1">
+      {/* Left: identifiers. Phase U1: min-w-0 + truncate so the long name
+          shortens gracefully instead of wrapping one word per 40px line. */}
+      <div className="flex min-w-0 items-center gap-2 text-xs">
         <span className="font-mono text-sm font-semibold text-ink-1">
           {instrument.symbol}
         </span>
@@ -79,7 +80,9 @@ export function HeaderRow({
           {frontMonth.contract_code}
         </span>
         <span className="text-ink-4">·</span>
-        <span className="text-xs text-ink-3">{instrument.name}</span>
+        <span className="min-w-0 truncate text-xs text-ink-3">
+          {instrument.name}
+        </span>
       </div>
 
       {/* Center: price */}

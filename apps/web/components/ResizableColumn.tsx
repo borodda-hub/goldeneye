@@ -17,6 +17,10 @@ interface Props {
   storageKey?: string;
   /** Applied to the outer container (e.g. for sticky positioning, height). */
   className?: string;
+  /** Minimum viewport width (px) for the side-rail mode; below it the column
+   * renders full-width and stacks. Default 1024 (`lg`). Phase U1: rails that
+   * over-commit mid-width screens pass a higher threshold. */
+  minViewport?: number;
   children: React.ReactNode;
 }
 
@@ -38,15 +42,16 @@ export function ResizableColumn({
   maxWidth = 560,
   storageKey,
   className = "",
+  minViewport = 1024,
   children,
 }: Props) {
   const [width, setWidth] = useState<number>(defaultWidth);
   const draggingRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  // Below `lg` a fixed-px rail crushes the main column; render full-width and
-  // let it stack in the (now vertical) dashboard layout. Defaults to wide on
-  // SSR/first paint so desktop markup is stable.
-  const isWide = useMediaQuery("(min-width: 1024px)", true);
+  // Below the threshold a fixed-px rail crushes the main column; render
+  // full-width and let it stack in the (now vertical) layout. Defaults to
+  // wide on SSR/first paint so desktop markup is stable.
+  const isWide = useMediaQuery(`(min-width: ${minViewport}px)`, true);
 
   useEffect(() => {
     if (!storageKey) return;
