@@ -62,7 +62,10 @@ function auditPage() {
     const r = el.getBoundingClientRect();
     const s = getComputedStyle(el);
     return (
-      r.width > 0 && r.height > 0 && s.visibility !== "hidden" && s.display !== "none"
+      r.width > 0 &&
+      r.height > 0 &&
+      s.visibility !== "hidden" &&
+      s.display !== "none"
     );
   };
   const main = document.querySelector("main") ?? document.body;
@@ -71,7 +74,9 @@ function auditPage() {
   const hOverflow = [];
   for (const el of [document.documentElement, main]) {
     if (el.scrollWidth > el.clientWidth + 4) {
-      hOverflow.push(`${describe(el)} scrollW=${el.scrollWidth} clientW=${el.clientWidth}`);
+      hOverflow.push(
+        `${describe(el)} scrollW=${el.scrollWidth} clientW=${el.clientWidth}`,
+      );
     }
   }
 
@@ -93,7 +98,9 @@ function auditPage() {
       const w = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left);
       const h = Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top);
       if (w > 8 && h > 8) {
-        overlaps.push(`${describe(a)}  ×  ${describe(b)}  (${Math.round(w)}×${Math.round(h)}px)`);
+        overlaps.push(
+          `${describe(a)}  ×  ${describe(b)}  (${Math.round(w)}×${Math.round(h)}px)`,
+        );
       }
     }
   }
@@ -110,8 +117,14 @@ function auditPage() {
       (s.overflowY === "hidden" || s.overflowY === "clip");
     const hasClamp = s.webkitLineClamp && s.webkitLineClamp !== "none";
     const cls = [...el.classList].join(" ");
-    if (clipsY && !hasClamp && !/overflow-y-(auto|scroll)|line-clamp/.test(cls)) {
-      clipped.push(`${describe(el)} scrollH=${el.scrollHeight} clientH=${el.clientHeight}`);
+    if (
+      clipsY &&
+      !hasClamp &&
+      !/overflow-y-(auto|scroll)|line-clamp/.test(cls)
+    ) {
+      clipped.push(
+        `${describe(el)} scrollH=${el.scrollHeight} clientH=${el.clientHeight}`,
+      );
     }
   }
 
@@ -140,7 +153,9 @@ function auditPage() {
     if (text.length < 15) continue;
     const r = el.getBoundingClientRect();
     if (r.width < 80 && r.height > 60) {
-      crushed.push(`${describe(el)} ${Math.round(r.width)}×${Math.round(r.height)}px`);
+      crushed.push(
+        `${describe(el)} ${Math.round(r.width)}×${Math.round(r.height)}px`,
+      );
     }
   }
 
@@ -170,7 +185,10 @@ for (const width of widths) {
   for (const path of pages) {
     const key = `${path}@${width}`;
     try {
-      await page.goto(`${base}${path}`, { waitUntil: "networkidle", timeout: 90000 });
+      await page.goto(`${base}${path}`, {
+        waitUntil: "networkidle",
+        timeout: 90000,
+      });
       await page.waitForTimeout(2200);
       const result = await page.evaluate(auditPage);
       const n =
@@ -198,5 +216,7 @@ for (const width of widths) {
 }
 await browser.close();
 await writeFile(`${outDir}/report.json`, JSON.stringify(report, null, 2));
-console.log(`\n${defects === 0 ? "CLEAN" : `${defects} defect(s)`} — report: ${outDir}/report.json`);
+console.log(
+  `\n${defects === 0 ? "CLEAN" : `${defects} defect(s)`} — report: ${outDir}/report.json`,
+);
 process.exit(defects === 0 ? 0 : 1);
