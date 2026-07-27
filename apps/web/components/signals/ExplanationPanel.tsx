@@ -22,7 +22,9 @@ export function ExplanationPanel({ explanation, safety }: Props) {
         <HelpTip k="explanation" className="ml-1" />
       </div>
       {explanation ? (
-        <p className="min-h-0 flex-1 overflow-y-auto text-sm text-ink-2 leading-relaxed">{explanation}</p>
+        <p className="min-h-0 flex-1 overflow-y-auto text-sm text-ink-2 leading-relaxed">
+          {explanation}
+        </p>
       ) : (
         <p className="text-sm text-ink-4 italic">
           Explanation unavailable — see per-model factors above.
