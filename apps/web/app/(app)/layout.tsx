@@ -3,6 +3,7 @@ import { MobileNav } from "@/components/MobileNav";
 import { ProfileSync } from "@/components/ProfileSync";
 import { SideNav } from "@/components/SideNav";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { ConciergeWidget } from "@/components/concierge/ConciergeWidget";
 import { InstrumentSwitcher } from "@/components/instruments/InstrumentSwitcher";
 import { GettingStarted } from "@/components/onboarding/GettingStarted";
 import { GettingStartedChip } from "@/components/onboarding/GettingStartedChip";
@@ -115,6 +116,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
           <WelcomeModal />
           <GettingStarted />
+          <ConciergeWidget />
           {clerkEnabled && <ProfileSync />}
         </WalkthroughProvider>
       </ThemeProvider>

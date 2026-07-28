@@ -1102,6 +1102,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/concierge/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Concierge Chat Endpoint */
+        post: operations["concierge_chat_endpoint_v1_concierge_chat_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/health": {
         parameters: {
             query?: never;
@@ -1185,6 +1202,27 @@ export interface components {
             exit_price?: number | null;
             /** Reflection */
             reflection?: string | null;
+        };
+        /** ConciergeRequest */
+        ConciergeRequest: {
+            /** Message */
+            message: string;
+            /** History */
+            history?: components["schemas"]["ConciergeTurn"][];
+            /**
+             * Symbol
+             * @default NG
+             */
+            symbol: string;
+            /** Route */
+            route?: string | null;
+        };
+        /** ConciergeTurn */
+        ConciergeTurn: {
+            /** Role */
+            role: string;
+            /** Content */
+            content: string;
         };
         /** DemandShock */
         DemandShock: {
@@ -3620,6 +3658,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    concierge_chat_endpoint_v1_concierge_chat_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConciergeRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
