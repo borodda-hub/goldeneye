@@ -1086,3 +1086,37 @@ export async function getVolPremium(
   const q = new URLSearchParams({ symbol });
   return apiFetch(`/v1/vol-premium?${q.toString()}`);
 }
+
+// ── Concierge (Phase C) ────────────────────────────────────────────────────
+export interface ConciergeTurn {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ConciergeSuggestion {
+  route: string;
+  label: string;
+}
+
+export interface ConciergeResponse {
+  reply: string;
+  suggestions: ConciergeSuggestion[];
+  safety: {
+    confidence: string;
+    caveats: string[];
+    as_of: string;
+    disclaimer: string;
+  };
+}
+
+export async function postConciergeChat(body: {
+  message: string;
+  history: ConciergeTurn[];
+  symbol?: string;
+  route?: string;
+}): Promise<ConciergeResponse> {
+  return apiFetch("/v1/concierge/chat", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}

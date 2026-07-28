@@ -27,6 +27,7 @@ from apps.api.routers import (  # noqa: E402
     backtest,
     calibration,
     chart,
+    concierge,
     dashboard,
     explain,
     forecast,
@@ -141,6 +142,7 @@ app.include_router(positioning.router)
 app.include_router(patterns.router)
 app.include_router(validation.router)
 app.include_router(vol_premium.router)
+app.include_router(concierge.router)
 
 
 @app.get("/v1/health")

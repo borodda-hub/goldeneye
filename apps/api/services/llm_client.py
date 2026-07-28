@@ -63,6 +63,16 @@ _CANNED: dict[str, str] = {
         '"rationale": "Thesis reads as a near-term bullish lean on a '
         'storage-deficit setup."}'
     ),
+    "concierge": (
+        "Happy to help. Goldeneye is a research and paper-trading terminal: the "
+        "dashboard shows the current market read, the **expected range band** is "
+        "the platform's one validated product (directional views carry no "
+        "validated edge — the Validation page explains why), and the Decision "
+        "Journal plus Calibration pages score your own judgment over time. This "
+        "appears to be a good place to start: log a thesis on the Journal screen "
+        "and watch how it resolves (see /journal). What would you like to "
+        "explore?"
+    ),
     "critique_thesis": (
         '{"missed_risks": ['
         '"LNG export tail-risk if a major terminal trips during peak demand",'
