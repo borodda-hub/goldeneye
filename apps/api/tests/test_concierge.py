@@ -149,6 +149,45 @@ async def test_concierge_chat_truncates_history_and_message():
     assert captured["history"][-1]["content"] == "turn 19"
 
 
+async def test_live_context_scales_band_fractions_to_percent():
+    """band*_pct fields are fractions (-0.066 = -6.6%) — the prompt must say
+    -6.60%, not -0.07% (the 100× understatement caught in the live probe)."""
+    from apps.api.services.models.vol_range import RangeForecast
+
+    rng = RangeForecast(
+        horizon="1w",
+        sigma_daily=0.02,
+        sigma_horizon=0.045,
+        band80_low_pct=-0.066,
+        band80_high_pct=0.066,
+        band95_low_pct=-0.121,
+        band95_high_pct=0.121,
+        method="har_log",
+        note="",
+    )
+    instrument = type("I", (), {"id": 1, "name": "Henry Hub", "asset_class": "commodity"})()
+    closes = [3.0 + 0.01 * i for i in range(60)]
+    with (
+        patch.object(svc.instr_repo, "get_by_symbol", AsyncMock(return_value=instrument)),
+        patch.object(svc.contract_repo, "get_front_month", AsyncMock(return_value=None)),
+        patch.object(svc, "get_latest_closes", AsyncMock(return_value=closes)),
+        patch.object(svc, "run_all", AsyncMock(return_value=[])),
+        patch.object(svc, "model_weights_for", AsyncMock(return_value=None)),
+        patch.object(
+            svc,
+            "compute_ensemble",
+            lambda *a, **k: {"direction": "neutral", "confidence": "low", "vol_regime": "normal"},
+        ),
+        patch.object(svc, "range_predict", lambda *a, **k: rng),
+        patch.object(svc, "get_news") as news_mock,
+    ):
+        news_mock.return_value.get_recent_events = AsyncMock(return_value=[])
+        ctx = await svc.build_live_context(AsyncMock(), "NG")
+    assert "-6.60% to +6.60%" in ctx
+    assert "-12.10%" in ctx
+    assert "-0.07%" not in ctx
+
+
 # ── HTTP wrapper ─────────────────────────────────────────────────────────
 
 

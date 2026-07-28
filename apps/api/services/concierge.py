@@ -131,11 +131,14 @@ async def build_live_context(session: AsyncSession, symbol: str) -> str:
             )
             rng = range_predict(closes, "1w", estimator="har_log")
             if rng is not None:
+                # band*_pct fields are FRACTIONS (-0.066 = -6.6%) — same
+                # convention ExpectedRange.tsx consumes with spot*(1+pct).
                 lines.append(
                     f"- 1w expected range band (the validated product): 80% band "
-                    f"{rng.band80_low_pct:+.2f}% to {rng.band80_high_pct:+.2f}%, "
-                    f"95% band {rng.band95_low_pct:+.2f}% to "
-                    f"{rng.band95_high_pct:+.2f}% (log-HAR)"
+                    f"{rng.band80_low_pct * 100:+.2f}% to "
+                    f"{rng.band80_high_pct * 100:+.2f}%, 95% band "
+                    f"{rng.band95_low_pct * 100:+.2f}% to "
+                    f"{rng.band95_high_pct * 100:+.2f}% (log-HAR)"
                 )
     except Exception as exc:  # pragma: no cover - degradation path
         logger.warning("concierge live context (market leg) failed: %s", exc)
