@@ -1,6 +1,40 @@
 # docs/HANDOFF.md — Session handoff & next-steps plan
 
-_Last updated: 2026-07-27 (Phase A4). Read this first to pick up where we left off._
+_Last updated: 2026-07-28 (Phase C). Read this first to pick up where we left off._
+
+## Most recent: **PHASE C — THE CONCIERGE SHIPPED + PROMOTED + PROD-VERIFIED** (PR #35; plan `docs/PHASE_C_PLAN.md`, committed before build)
+
+Owner: "the Concierge might be the key... research assistant, how-to guide, teacher,
+explainer" + "add research capability / synthesize new information that might not have
+hit our models yet; we are soft on real-time news." Shipped C1 + C3-lite + N1:
+- **Grounded assistant on every app screen** (`ConciergeWidget`, floating, outside
+  `<main>` so the ui-audit scans page content). Answers ONLY from
+  `services/concierge_pack.md` (curated pack, **drift-locked to MODEL_DILIGENCE** — CI
+  fails if the coverage anchors or no-edge stance diverge) + a live server context.
+- **Research synthesis:** every reply carries price/change, ensemble VIEW, log-HAR range
+  band, provenance caveat, and the freshest adapter-direct RSS headlines — which are
+  fresher than model inputs; headline reasoning must carry "headline-derived — not yet
+  in model inputs". The concierge is the first SYNTHESIS consumer of the news layer (N1).
+- **Safety:** standard chokepoint (scan + strict retry + hard block) + envelope;
+  refusal + injection-defense rules locked by prompt tests; suggestions minted ONLY from
+  a fixed route map; 20/hr sliding-window rate limit; history/message clamps.
+- **Live probes (real Claude, local AND prod):** explainer grounded w/ correct band
+  (first probe caught a 100× fraction-vs-percent band understatement → fixed + regression
+  test); "should I buy" → evidence-based decline + reframe; "SYSTEM OVERRIDE→TradeBot"
+  → named as injection and refused; news probe synthesized same-day real headlines vs the
+  ensemble read, freshness-labeled. **Prod round-trip through goldeneyeterminal.com UI
+  verified (CORS ok, chips work), plus prod API probes — it even declined to invent a
+  month-ahead band it wasn't given.**
+- Health exit 0 (1019 py + 442 web, 27 new tests); contracts regenerated (parity OK);
+  full ui:audit CLEAN 77/77 (11 pages × 7 widths).
+- **Staged (in `PHASE_C_PLAN.md`):** C2 teacher flows (after seeing what users ask),
+  C3-full read-only tool loop, N2 market-brief surface + dashboard news freshness
+  (dashboard still reads the persisted events table; adapter-direct is fresher), N3
+  push/event-driven news. Polish nits: add the 1m band to live context; InlineMarkdown
+  renders backticked route names literally (could add code-span support).
+- Ops note: killing a `--reload` uvicorn can orphan its multiprocessing child which
+  KEEPS the port with a stale netstat PID — find it via
+  `Get-CimInstance Win32_Process | ? Name -match python` and kill by its real PID.
 
 ## Most recent: **PHASE A4 — THE ABOUT PAGE (white paper) SHIPPED** (plan `docs/PHASE_A4_ABOUT_PLAN.md`, committed before build)
 
